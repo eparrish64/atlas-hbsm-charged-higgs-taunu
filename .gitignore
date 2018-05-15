@@ -1,0 +1,50 @@
+# Compiled source #
+###################
+*.pyc
+*.exe
+*.o
+*.so
+*.pyo
+
+# Packages #
+############
+*.pdf
+*.dmg
+*.gz
+*.iso
+*.jar
+*.rar
+*.tar
+*.zip
+*.tgz
+
+# Logs and databases #
+######################
+*.log
+
+# Other #
+#########
+*~
+*.root
+*.bak
+*.tex
+
+# Compilation #
+###############
+RootCoreBin/
+.RootCoreBin
+rcSetup.*
+.asetup.save
+CMakeLists.txt
+!source/**/CMakeLists.txt
+build/
+run/
+
+# External packages #
+#####################
+LPXKfactorTool/
+
+# Should be moved to run/ by xRTT #
+##################################
+reference_testresults*/
+testresults*/

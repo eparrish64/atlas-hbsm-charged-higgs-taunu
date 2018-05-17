@@ -1,4 +1,5 @@
 import ROOT
+__all__ = ["WEIGHTS"]
 
 ## scale factors 
 WEIGHTS = {

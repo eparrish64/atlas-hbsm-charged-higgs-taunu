@@ -103,7 +103,6 @@ for channel in [o for o in os.listdir(__HERE) if
         SAMPLES[channel][_year] = yaml.load(
                 open(SAMPLES_YML[channel][_year]))
 
-
 ##-------------------------------------------------------------------------------
 ##
 def filter_with_patterns(samples, patterns):
@@ -185,9 +184,10 @@ def get_systematics_mc(channel, year):
 ##-------------------------------------------------------------------------------
 ##
 def get_sample(channel, year, sample_class, name):
-
+    """
+    """
     channel = channel.lower()
-    year = year % 1000
+    year = int(year) % 1000
     sample_class = sample_class.lower()
     if sample_class == 'signal':
         sample_class = SIGNALS[channel][year]

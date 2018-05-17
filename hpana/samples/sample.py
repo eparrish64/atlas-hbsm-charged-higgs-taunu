@@ -7,72 +7,36 @@ import pickle
 from operator import add, itemgetter
 from collections import namedtuple
 
-# numpy imports
-import numpy as np
-#from numpy.lib import recfunctions
-from matplotlib.mlab import rec_append_fields
-
-# mpl imports
-from matplotlib import mlab
-
-# rootpy imports
+# ROOT imorts 
 import ROOT
-from rootpy.plotting import Hist, Hist2D, Canvas, HistStack
-from rootpy.plotting.hist import _HistBase
-from rootpy.tree import Tree, Cut
-from rootpy.stats import histfactory
-from rootpy import asrootpy
-
-# root_numpy imports
-from root_numpy import rec2array, stack, fill_hist
-
-# higgstautau imports
-from hhdb import samples as samples_db, datasets
 
 # local imports
-from . import log; log = log[__name__]
-from ..variables import *
-from .. import LH_REGIONS, HH_REGIONS, LH_REGIONS_SYSTEMATICS, HH_REGIONS_SYSTEMATICS
-from .. import NTUPLE_PATH, DEFAULT_STUDENT, ETC_DIR, CACHE_DIR
-from ..utils import print_hist, ravel_hist, uniform_hist
-from ..classify import histogram_scores, Classifier
-from mva.defaults import TRIGGER_TYPE
-from mva.regressor import BRT_FEATURES
-from ..systematics import (
-    get_systematics, SYSTEMATICS_BY_WEIGHT,
-    iter_systematics, systematic_name)
+from . import log
+
+from ..db import samples as samples_db, datasets
+from ..db.decorators import cached_property
+from ..config import Configuration
 from ..lumi import LUMI, get_lumi_uncert
-from .db import TEMPFILE, get_file #, DB
-from ..cachedtable import CachedTable
-from mva.categories import get_trigger
-from mva.categories.lephad import cutYearRunNum
-try:
-    from moments import HCM
-except:
-    log.warning('moments module is not installed')
+from ..systematics import get_systematics, iter_systematics, systematic_name
 
 
 ##---------------------------------------------------------------------------------------
 ## consts
-BCH_UNCERT = pickle.load(open(os.path.join(CACHE_DIR, 'bch_cleaning.cache')))
-YEAR_ENERGY = {"2011": 7, "2012": 8 , "2015": 13, "2016": 13, "2017": 13, "2018": 13}
+
 
 ##---------------------------------------------------------------------------------------
 ## 
-class Dataset(namedtuple('Dataset',
-                         ('ds','events','xs', 'kfact', 'effic'))):
+class Dataset(namedtuple('Dataset', ('ds','files', 'events'))):
     @property
     def name(self):
         return self.ds.name
-
-
+    
     
 ##---------------------------------------------------------------------------------------
 ## 
 class Sample(object):
-
     """
-    base class for preparing analysis samples.
+    base class for analysis samples.
 
     Attributes
     ----------
@@ -88,46 +52,32 @@ class Sample(object):
     label: string; sample's lable (used for plotting, etc.) 
     """
 
-    def __init__(self, year,
+    def __init__(self, config,
                  weight_fields=[],
                  scale=1.,
                  cuts=None,
-                 ntuple_path=NTUPLE_PATH,
-                 student=DEFAULT_STUDENT,
-                 force_reopen=False,
                  trigger=True,
-                 trigger_type = TRIGGER_TYPE,
-                 channel='hadhad',
+                 channel='taujet',
                  name='Sample',
                  label='Sample',
-                 ntuples_version = 'v3',
-                 events_cutflow_bin=8,
-                 events_cutflow_hist="hmtadata",
-                 treename="NOMINAL",
                  **hist_decor):
-        
-        self.year = year
-        self.energy = YEAR_ENERGY[year]
+        # - - - - - - - - passing main configurations to the sample
+        self.config = config
 
+        # - - - - - - - - minimal flags
         self.scale = scale
-        if cuts is None:
-            self._cuts = Cut()
-        else:
-            self._cuts = cuts
-        self.ntuple_path = ntuple_path
-        self.student = student
-        self.force_reopen = force_reopen
         self.name = name
         self.label = label
+        self.trigger = trigger
+        self.weight_fields = weight_fields 
+        if cuts is None:
+            self._cuts = ROOT.TCut("")
+        else:
+            self._cuts = cuts
         self.hist_decor = hist_decor
         if 'fillstyle' not in hist_decor:
             self.hist_decor['fillstyle'] = 'solid'
 
-        self.trigger = trigger
-        self.channel = channel
-        self.ntuples_version = ntuples_version
-        self.weight_fields = weight_fields
-    
     
     def decorate(self, name=None, label=None, **hist_decor):
         """update Sample object to decorate hists.
@@ -171,7 +121,7 @@ class Sample(object):
                 fields_scale[var] = var.scale
                 continue
             
-            bins = field.binning(self.year, category)
+            bins = field.binning(self.config.year, category)
             log.debug("var: %S; binning: %s"%(var, bins))
 
             hist = Hist(list(bins),
@@ -232,7 +182,7 @@ class Sample(object):
         if do_systematics and systematics_components is None:
             systematics_components = self.systematics_components()
 
-        histname = '{0}_category_{1}_{2}'.format(self.channel, category.name, self.name)
+        histname = '{0}_category_{1}_{2}'.format(self.config.channel, category.name, self.name)
         if suffix is not None:
             histname += suffix
 
@@ -247,7 +197,7 @@ class Sample(object):
             new_hist.title = self.label
             field_hist[field] = new_hist
 
-        return field_hist, rec, weights
+        return field_hist
 
     def weights(self, systematic='NOMINAL'):
 
@@ -263,28 +213,31 @@ class Sample(object):
 
         """
 
-        weight_fields = self.weight_fields()
-        if isinstance(self, SystematicsSample):
-            systerm, variation = \
-                SystematicsSample.get_sys_term_variation(systematic)
-            for term, variations in self.weight_systematics().items():
-                # handle cases like TAU_ID and TAU_ID_STAT
-                if (systerm is not None
-                    and systerm.startswith(term)
-                    and systematic[0][len(term) + 1:] in variations):
-                    weight_fields += variations[systematic[0][len(term) + 1:]]
-                elif term == systerm:
-                    weight_fields += variations[variation]
-                else:
-                    weight_fields += variations['NOMINAL']
+        weight_fields = self.weight_fields
+
+        #@ FIX ME
+        # if isinstance(self, SystematicsSample):
+        #     systerm, variation = \
+        #         SystematicsSample.get_sys_term_variation(systematic)
+        #     for term, variations in self.config.weight_systematics.items():
+        #         # handle cases like TAU_ID and TAU_ID_STAT
+        #         if (systerm is not None
+        #             and systerm.startswith(term)
+        #             and systematic[0][len(term) + 1:] in variations):
+        #             weight_fields += variations[systematic[0][len(term) + 1:]]
+        #         elif term == systerm:
+        #             weight_fields += variations[variation]
+        #         else:
+        #             weight_fields += variations['NOMINAL']
        
         return weight_fields
 
     def cuts(self,
              category=None,
-             region_cut=None,
-             trigger_cut=None,
+             region=None,
+             trigger=None,
              systematic='NOMINAL',
+             tauid=True,
              **kwargs):
         """ to apply some cuts on the sample.
         
@@ -298,34 +251,39 @@ class Sample(object):
       
         Returns
         -------
-        cuts: TCut object
-        
+        cuts: ROOT.TCut object
         """
 
         cuts = ROOT.TCut(self._cuts)
         if category is not None:
-            cuts &= category.cuts
+            cuts += category.cuts
         if region is not None:
-            cuts &= region
-        if self.trigger:
-            cuts &= trigger
+            cuts += region.cuts
+        if trigger is not None:
+            cuts += trigger.cuts
 
-        if isinstance(self, SystematicsSample):
-            systerm, variation = SystematicsSample.get_sys_term_variation(
-                systematic)
-            for term, variations in self.cut_systematics().items():
-                if term == systerm:
-                    cuts &= variations[variation]
-                else:
-                    cuts &= variations['NOMINAL']
+        # - - - - - - - - apply tau ID on MC only
+        if tauid:
+            if self.__class__.__name__ != "Fakes" and self.__class__.__name__ != "Data":
+                cuts += self.config.tauid
+            
+        # if isinstance(self, SystematicsSample):
+        #     systerm, variation = SystematicsSample.get_sys_term_variation(
+        #         systematic)
+        #     for term, variations in self.cut_systematics().items():
+        #         if term == systerm:
+        #             cuts &= variations[variation]
+        #         else:
+        #             cuts &= variations['NOMINAL']
         return cuts
 
-    @cached_property
     def events(self,
                systematic="NOMINAL",
                category=None,
                region=None,
-               cuts=None,
+               trigger=None,
+               extra_cuts=None,
+               tauid=True,
                weighted=True,
                scale=1.):
         """ see self.events. 
@@ -359,32 +317,40 @@ class Sample(object):
 
         total_events_weighted = 0
         for ds in self.datasets:
+            log.debug(ds)
             total_events = 0
-            #files = glob.glob("%s/%s"%(ntuples_path, file_pattern))
             ds_chain = ROOT.TChain(systematic)
             for _file in ds.files:
                 ds_chain.Add(_file)
                 rfile = ROOT.TFile(_file, "READ")
                 try:
                     total_events = ds.events
-                    continue
+                    break
                 except KeyError:
                     # - - - - calcualte on the fly 
-                    h_metadata = rfile.Get("%s"%events_cutflow_hist)
-                    total_events += h_metadata.GetBinContent(events_cutflow_bin)
+                    h_metadata = rfile.Get("%s"%self.config.events_cutflow_hist)
+                    total_events += h_metadata.GetBinContent(self.config.events_cutflow_bin)
                     
-            selection =  (self.cuts(category, region) & cuts)
+            selection =  self.cuts(category=category,
+                                   region=region, trigger=trigger,
+                                   tauid=tauid, systematic=systematic)
+            if extra_cuts:
+                selection &= extra_cuts
             if weighted:
-                lumi_weight = LUMI[self.year] * scale * ds.xs * ds.kfact * ds.effic / total_events
+                lumi_weight = self.config.data_lumi * reduce(
+                    lambda x,y:x*y, ds.xsec_kfact_effic) / total_events
+                
                 weight_branches = self.weights()
-                selection *= Cut(str(lumi_weight * scale))
-                selection *= Cut('*'.join(weight_branches))
+                selection *= ROOT.TCut(str(lumi_weight * scale))
+                #selection *= ROOT.TCut('*'.join(weight_branches))
                 log.debug("requesting number of events from %s using cuts: %s"
                           % (ds.name, selection))
                 
             ds_chain.Draw("1 >> htmp(1, -100, 100)", selection) 
             htmp = ROOT.gPad.GetPrimitive("htmp")
             total_events_weighted += htmp.Integral()
+            htmp.Delete()
+            ds_chain.Reset()
             
         return total_events_weighted
      
@@ -411,21 +377,17 @@ class SystematicsSample(Sample):
     """ base class for providing methods specific to the systematics sample
         which inherits from Sample class.
     """
-    def __init__(self, year,
-                 db=None,
-                 components=["NOMINAL"],
-                 weight_systematics=[],
-                 channel='lephad',
-                 **kwargs):
+    def __init__(self, *args, **kwargs):
 
+        db = kwargs.pop("db", None) 
         # - - - - - - - - instantiate the base class
-        super(SystematicsSample, self).__init__(year=year, channel=channel, **kwargs)
+        super(SystematicsSample, self).__init__(*args, **kwargs)
 
         # - - - - - - - - backgrounds
         if isinstance(self, Background):
             sample_key = self.__class__.__name__.lower()
             sample_info = samples_db.get_sample(
-                self.channel, year, 'background', sample_key)
+                self.config.channel, self.config.year, 'background', sample_key)
             kwargs.setdefault('name', sample_info['name'])
             kwargs.setdefault('label', sample_info['root'])
             if 'color' in sample_info and 'color' not in kwargs:
@@ -449,33 +411,28 @@ class SystematicsSample(Sample):
                 self.__class__.__name__)
 
         self.datasets = []
-        self.components = components
+        self.components = kwargs.pop("components", [])
         self.norms = {}
         
         # - - - - - - - - Database 
-        self.db = datasets.Database(self.year,
-                                    channel=self.channel, 
-                                    version=self.ntuples_version, 
-                                    verbose=False)
-
-        #  - - - - - - - loop over samples and get datasets for each
+        self.db = self.config.database
+        
+        # - - - - - - - loop over samples and get datasets for each
         for i, name in enumerate(self.samples):
             log.debug(name)
-            ds = self.db[name]
-            
-            if hasattr(self, 'xsec_kfact_effic'):
-                xs, kfact, effic = self.xsec_kfact_effic(i)
-            else:
-                xs, kfact, effic = ds.xsec_kfact_effic
+            try:
+                ds = self.db[name]
+            except KeyError:
+                log.warning("%s is missing in %s database"%(name, self.db.name))
+            xsec, kfact, effic = ds.xsec_kfact_effic
             log.debug(
                 "dataset: {0}  cross section: {1} [pb] "
                 "k-factor: {2} "
                 "filtering efficiency: {3}"
                 "events {4}".format(
-                    ds.name, xs, kfact, effic, ds.nevents))
-            dataset = Dataset(ds=ds, events=events,
-                              xs=xs, kfact=kfact, effic=effic)
-            self.datasets.append(dataset)
+                    ds.name, xsec, kfact, effic, ds.events))
+            #dataset = Dataset(ds=ds, events=self.events)
+            self.datasets.append(ds)
     
     @classmethod
     def get_sys_term_variation(cls, systematic):
@@ -534,7 +491,7 @@ class SystematicsSample(Sample):
             all_sys_hists[field] = hist.systematics
 
         for systematic in iter_systematics(False,
-                year=self.year,
+                year=self.config.year,
                 components=systematics_components):
 
             sys_field_hist = {}
@@ -585,14 +542,10 @@ class MC(SystematicsSample):
         -------
         cut: Cut, updated Cut type.
         """
-        # make sure year is a 4 digits number
-        year = self.year % 1000 + 2000
-        run_cut = cutYearRunNum[str(year)]['mc']
         cut = super(MC, self).cuts(*args, **kwargs)
-        cut &= run_cut
         return cut
     
-    def weights(self):
+    def weights(self, **kwargs):
         """ additional weights for MC
         Parameters
         ----------
@@ -601,16 +554,11 @@ class MC(SystematicsSample):
         -------
         weights: list, extended weights list
         """
-        weights = super(MC, self).weights(*args, **kwargs)
+        weights = super(MC, self).weights(**kwargs)
 
         # - - - - - - - - MC
         mc_weights = ["mc_weight"]
-
         
-        # - - - - - - - - lumi weight
-        h_metadata =  
-         
-        weights 
         
     
 

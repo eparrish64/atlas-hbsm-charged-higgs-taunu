@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from math import pi
 import ROOT
 from ROOT import TCut
@@ -42,6 +44,8 @@ One_Lep = TCut("(n_electrons+n_muons)==1")
 Tau_isLEP = TCut("abs(tau_0_truth_universal_pdgId)==11||abs(tau_0_truth_universal_pdgId)==13")
 Tau_isTRUE = TCut("abs(tau_0_truth_universal_pdgId)==15") 
 Tau_isFAKE = TCut("!"+(Tau_isTRUE.GetTitle()+"||"+Tau_isLEP.GetTitle()))
+
+TRUTH_MATCH = TCut("abs(tau_0_truth_universal_pdgId)==15")
 
 ## jets
 nBJets1 = TCut("n_bjets>0")

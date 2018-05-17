@@ -1,23 +1,13 @@
 # numpy imports
 import numpy as np
-from numpy.lib import recfunctions
-from matplotlib.mlab import rec_append_fields
-# rootpy imports
-from rootpy import asrootpy
-from rootpy.plotting import Hist
 
 # local imports
-from . import log; log = log[__name__]
+from . import log
 from .sample import Sample, SystematicsSample
-from .db import TEMPFILE, get_file
-from ..cachedtable import CachedTable
 from ..lumi import LUMI
-from root_numpy import rec2array
-from mva.categories.lephad.common import cutYearRunNum
-try:
-    from moments import HCM
-except:
-    log.warning('moments module not installed')
+
+##----------------------------------------------------------------------------------
+##
 class DataInfo():
     """
     Class to hold lumi and collision energy info for plot labels
@@ -53,26 +43,21 @@ class DataInfo():
         return label
 
 
+##----------------------------------------------------------------------------------
+##
 class Data(Sample):
-
-    def __init__(self, year, name='Data', label='Data', **kwargs):
-        super(Data, self).__init__(
-            year=year, scale=1.,
-            name=name, label=label,
-            **kwargs)
-        h5file = get_file(self.ntuple_path, self.student, hdf=True)
-        if year == 2015:
-            if self.channel == 'hadhad':
-                stream_name = 'Main'
-            else:
-                stream_name = 'Main'
-        else:
-            stream_name = 'Main'
-        dataname = 'data{0:1d}_{1}'.format(
-            int(year % 1E3), stream_name)
-        self.h5data = CachedTable.hook(getattr(h5file.root, dataname))
-        self.info = DataInfo(LUMI[self.year] / 1e3, self.energy)
-
+    """
+    """
+    
+    def __init__(self, config, name='Data', label='Data', **kwargs):
+        super(Data, self).__init__(config,
+                                   scale=1.,
+                                   name=name,
+                                   label=label,
+                                   **kwargs)
+        self.config = config
+        dataname = 'data%i_Main'%(int(int(self.config.year)) % 1E3)
+        self.info = DataInfo(LUMI[self.config.year] / 1e3, self.config.energy)
     
     def cuts(self, *args, **kwargs):
         """Additional run number specific cuts.
@@ -85,7 +70,7 @@ class Data(Sample):
         cut: Cut, updated Cut type.
         """
         # make sure year is as 4 digits
-        year = self.year % 1000 + 2000
+        year = self.config.year % 1000 + 2000
         run_cut = cutYearRunNum[str(year)]['data']
         cut = super(Data, self).cuts(*args, **kwargs)
         cut &= run_cut 
@@ -125,50 +110,3 @@ class Data(Sample):
                                       regressor=regressor,
                                       bootstrap_data=bootstrap_data)
 
-    def scores(self, clf, category, region,
-               cuts=None,
-               systematics=True,
-               systematics_components=None):
-        return clf.classify(self,
-                category=category,
-                region=region,
-                cuts=cuts)
-
-    def records(self,
-                category=None,
-                region=None,
-                fields=None,
-                cuts=None,
-                regressor=None,
-                include_weight=True,
-                systematic='NOMINAL',
-                return_idx=False,
-                **kwargs):
-        
-        if include_weight and fields is not None:
-            if 'weight' not in fields:
-                fields = list(fields) + ['weight']
-
-        selection = self.cuts(category, region) & cuts
-        log.info("requesting table from Data %d" % self.year)
-        log.debug("using selection: %s" % selection)
-        # read the table with a selection
-        if selection:
-            rec = self.h5data.read_where(selection.where(),**kwargs)
-        else:
-            rec = self.h5data.read(**kwargs)
-        # add weight field
-        if include_weight:
-            # data is not weighted
-            weights = np.ones(rec.shape[0], dtype='f8')
-            rec = rec_append_fields(rec,
-                names='weight',
-                arrs=weights,
-                dtypes=np.dtype('f8'))
-        if fields is not None:
-            rec = rec[fields]
-        if return_idx:
-            # only valid if selection is non-empty
-            idx = self.h5data.get_where_list(selection.where(), **kwargs)
-            return zip(recs, idxs)
-        return [rec]

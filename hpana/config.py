@@ -3,21 +3,89 @@ config.py
 contains a simple class for analysis channel specific settings, 
 like selections , variables, weights, etc.
 """
-from . import variables, categories, weights
+from . import variables, categories, weights, systematics
+from . import (NTUPLES_PATH, NTUPLES_VERSION, CACHE_DIR, YEAR_ENERGY,
+               EVENTS_CUTFLOW_HIST, EVENTS_CUTFLOW_BIN, SIGNAL_MASSES, NORM_FIELD)
+from .lumi import LUMI, LUMI_UNCERT, get_lumi_uncert
+from .systematics import *
+from .categories import *
+from .trigger import *
+from db.datasets import Database
+from db.decorators import cached_property
 
-
+##--------------------------------------------------------------------------------------------------
+## 
 class Configuration():
-    def __init__(self, channel):
+    """ simple class for wrapping different analysis configurations.
+    assuming variables/categories/weights are all the same for all years.
+    """
+    def __init__(self, channel, year=2017):
         self.channel = channel
-        
+        self.year = year
+        self.cache_dir = CACHE_DIR
+        self.ntuples_version = NTUPLES_VERSION
+        self.norm_field = NORM_FIELD
     @property
     def variables(self):
-        return self.VARIABLES[self.channel]
+        return self.VARIABLES[self.channel][self.year]
 
     @property
+    def trigger(self):
+        print TRIGGERS
+        return TRIGGERS[self.channel][self.year]
+    
+    @property
     def weights(self):
-        return WEIGHTS[self.channel]
+        """common weights 
+        """
+        return WEIGHTS[self.channel][self.year]
 
     @property
     def categories(self):
-        return CATEGORIES[self.channel]
+        return CATEGORIES[self.channel][self.year]
+
+    @property
+    def systematics(self):
+        """common systematics components
+        """
+        return COMMON_SYSTEMATICS[self.channel][self.year]
+
+    @property
+    def data_lumi(self):
+        return LUMI[self.year]
+
+    @property
+    def energy(self):
+        return YEAR_ENERGY[self.year]
+
+    @property
+    def ntuples_path(self):
+        return NTUPLES_PATH[self.channel][self.year]
+    
+    @property
+    def events_cutflow_hist(self):
+        return EVENTS_CUTFLOW_HIST[self.year]
+    
+    @property
+    def events_cutflow_bin(self):
+        return EVENTS_CUTFLOW_BIN[self.year]
+    
+
+    @property
+    def weight_systematics(self):
+        return WEIGHT_SYSTEMATICS
+    
+    @property
+    def tauid(self):
+        return TauID_MED
+
+    @property
+    def signal_masses(self):
+        return SIGNAL_MASSES
+
+    @cached_property
+    def database(self):
+        return Database(
+            name="datasets_%s%s"%(self.channel, self.ntuples_version),
+            verbose=False)
+    

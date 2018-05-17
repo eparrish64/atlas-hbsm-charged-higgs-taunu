@@ -1,0 +1,29 @@
+#! /usr/bin/env python
+# PYTHON_ARGCOMPLETE_OK
+
+# stdlib 
+from argparse import ArgumentParser
+import argcomplete
+
+# local 
+from hpana.samples import Sh_Ztautau
+from hpana.config import Configuration
+
+from hpana.analysis import Analysis
+
+##--------------------------------------------------------------------------------------------------
+## setup cmd line args
+parser = ArgumentParser("Analysis")
+parser.add_argument("--year", "-y", type=str, choices=("2017", "2018", "2016"), default="2017")
+parser.add_argument("--channel", "-c", choices=("taujet", "taulep"), default="taujet")
+parser.add_argument("--systs", "-s", action="store_true")
+argcomplete.autocomplete(parser)
+args = parser.parse_args()
+
+# - - - - - - - - build analysis main configuration object
+config = Configuration(args.channel, year=args.year)
+
+analysis = Analysis(config)
+
+for bkg in analysis.backgrounds:
+    print bkg.name, bkg.events()

@@ -1,6 +1,6 @@
 # local imports
 from .sample import SystematicsSample, Background
-from . import log; log = log[__name__]
+from . import log
 
 
 class Fakes(SystematicsSample, Background):
@@ -8,7 +8,6 @@ class Fakes(SystematicsSample, Background):
     def __init__(self, base_sample, sr, cr, **kwargs):
         """
         """
-        log.info(base_sample.year)
         super(SystematicsSample, self).__init__(year=base_sample.year, **kwargs)
         
         self.sample = base_sample

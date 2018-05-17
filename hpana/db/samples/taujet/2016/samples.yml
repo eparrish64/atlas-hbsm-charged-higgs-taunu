@@ -51,7 +51,7 @@ sh_wlnu:
     - Sherpa_221_NNPDF30NNLO_Wmunu_MAXHTPTV500_1000
     - Sherpa_221_NNPDF30NNLO_Wmunu_MAXHTPTV70_140_BFilter
     - Sherpa_221_NNPDF30NNLO_Wmunu_MAXHTPTV70_140_CFilterBVeto
-    # - Sherpa_221_NNPDF30NNLO_Wmunu_MAXHTPTV70_140_CVetoBVeto
+    - Sherpa_221_NNPDF30NNLO_Wmunu_MAXHTPTV70_140_CVetoBVeto
 
 
 sh_ztautau:

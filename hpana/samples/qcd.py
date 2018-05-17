@@ -7,10 +7,8 @@ import numpy as np
 
 # local imports
 from .sample import Sample, Background
-from . import log; log = log[__name__]
+from . import log
 from ..systematics import systematic_name
-from .. import LH_REGIONS_SYSTEMATICS, HH_REGIONS_SYSTEMATICS
-from ..defaults import FAKES_REGION
 
 class QCD(Sample, Background):
     # don't include MC systematics in workspace for QCD
@@ -61,7 +59,7 @@ class QCD(Sample, Background):
                  scale_error=0.,
                  data_scale=1.,
                  mc_scales=None,
-                 shape_region=FAKES_REGION,
+                 shape_region=None,
                  decouple_shape=False,
                  coherent_shape=True,
                  workspace_norm=None,
@@ -98,10 +96,6 @@ class QCD(Sample, Background):
         self.shape_systematic = shape_systematic
         self.systematics = mc[0].systematics
         
-        if self.channel=='lephad':
-            REGION_SYSTEMATICS = LH_REGIONS_SYSTEMATICS
-        else:
-            REGION_SYSTEMATICS = HH_REGIONS_SYSTEMATICS
 
     def draw_array(self, field_hist, category, region,
                    cuts=None,

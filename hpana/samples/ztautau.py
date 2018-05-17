@@ -1,15 +1,7 @@
 import os
 
-# rootpy imports
-from rootpy.tree import Cut
-from rootpy.io import root_open
-
-# root_numpy imports
-from root_numpy import rec2array, evaluate
-
 # local imports
 from .sample import SystematicsSample, Background, MC
-from .. import DAT_DIR
 
 
 class Ztautau(Background):
@@ -48,7 +40,7 @@ class Ztautau(Background):
         the normalization is determined by a fit to the data
         """
         self.scale_error = 0.
-        self.channel=kwargs.pop('channel', 'lephad')
+        self.channel=kwargs.pop('channel', None)
         self.workspace_norm = kwargs.pop('workspace_norm', None)
         self.constrain_norm = kwargs.pop('constrain_norm', False)
         super(Ztautau, self).__init__(*args, **kwargs)
@@ -64,6 +56,7 @@ class Mg_Ztautau(Ztautau, MC):
 ## Sherpa
 class Sh_Ztautau(Ztautau, MC):
     pass
+
 ## Sherpa2.2
 class Sh2_Ztautau(Ztautau, MC):
     pass

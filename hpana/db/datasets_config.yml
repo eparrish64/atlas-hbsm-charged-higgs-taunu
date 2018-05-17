@@ -4,7 +4,7 @@
           grl: ""
    
    taujet:
-          mc_path: /home/sbahrase/WorkDesk/SAMPLES/HBSM/nTuples/2017/1017v02/
+          mc_path: /home/sbahrase/WorkDesk/SAMPLES/HBSM/nTuples/2017/mc_1017v03/
           mc_prefix: "user."
           mc_pattern: '*hist-output.root*'
           mc_treename: 'NOMINAL'

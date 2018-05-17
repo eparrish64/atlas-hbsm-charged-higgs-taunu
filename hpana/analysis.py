@@ -2,62 +2,18 @@
 import random
 from collections import namedtuple
 
-# numpy imports
-import numpy as np
-
 # local imports
-from . import log; log = log[__name__]
-from . import norm_cache, CONST_PARAMS
+from . import log
 from . import samples
-from .samples import Higgs
-from .categories.hadhad import CATEGORIES as HH_CATEGORIES
-from .categories.lephad import CATEGORIES as LH_CATEGORIES
-from .classify import histogram_scores, Classifier
-from .regressor import Regressor, BRT_FEATURES
-from .defaults import (
-    TRAIN_FAKES_REGION, 
-    FAKES_REGION, TARGET_REGION, 
-    NORM_FIELD, NORM_FIELD_LH,
-    TRIGGER_TYPE)
+#from .samples import Higgs
 
 from .config import Configuration
 
+##---------------------------------------------------------------------------------
+## consts
 
-MC_GENERATORS={
-    'ztt': 'sherpa2', 
-    'zll': 'sherpa2', 
-    'wj' : 'sherpa2', 
-    'diboson':'powpy' 
-    }
-
-def get_analysis(args, **kwargs):
-    if 'year' in kwargs:
-        year = kwargs.pop('year')
-    else:
-        year = args.year
-    for name, value in kwargs.items():
-        if hasattr(args, name):
-            setattr(args, name, value)
-        else:
-            raise ValueError("invalid Analysis kwarg {0}".format(name))
-    analysis = Analysis(
-        year=year,
-        channel=args.channel,
-        systematics=args.systematics,
-        use_embedding=args.embedding,
-        target_region=args.target_region,
-        fakes_region=args.fakes_region,
-        decouple_qcd_shape=args.decouple_qcd_shape,
-        constrain_norms=args.constrain_norms,
-        qcd_shape_systematic=args.qcd_shape_systematic,
-        random_mu=args.random_mu,
-        mu=args.mu,
-        ggf_weight=args.ggf_weight,
-        suffix=args.suffix,
-        trigger_type=args.trigger_type)
-    return analysis
-
-
+##---------------------------------------------------------------------------------
+## 
 class Analysis(object):
 
     """ main analysis class.
@@ -135,40 +91,23 @@ class Analysis(object):
         return analysis
 
 
-    def __init__(self, year,
-                 systematics=False,
-                 use_embedding=False,
-                 trigger=True,
-                 trigger_type=TRIGGER_TYPE,
-                 target_region=TARGET_REGION,
-                 fakes_region=FAKES_REGION,
-                 decouple_qcd_shape=False,
-                 coherent_qcd_shape=True,
+    def __init__(self, config,
                  qcd_workspace_norm=None,
                  ztt_workspace_norm=None,
+                 suffix=None,
+                 use_embedding=False,
+                 decouple_qcd_shape=False,
+                 coherent_qcd_shape=True,
                  constrain_norms=False,
                  qcd_shape_systematic=True,
                  random_mu=False,
-                 mu=1.,
-                 ggf_weight=True,
-                 suffix=None,
-                 channel='hadhad',
-                 norm_field=NORM_FIELD_LH,
-                 mc_generator=MC_GENERATORS):
-
-        # - - - - - - - - basic flags
-        self.year = year
-        self.systematics = systematics
+                 mu=1.):
+        # - - - - - - - - main configurer 
+        self.conf = config 
+        
+        # - - - - - - - - some basic flags
         self.use_embedding = use_embedding
-        self.target_region = target_region
-        self.fakes_region = fakes_region
         self.suffix = suffix
-        self.channel=channel
-        self.norm_field = norm_field
-        if self.channel == 'lephad':
-            self.norm_field = NORM_FIELD_LH 
-        self.trigger = trigger
-        self.trigger_type = trigger_type
         if random_mu:
             log.info("using a random mu (signal strength)")
             self.mu = random.uniform(10, 1000)
@@ -176,106 +115,82 @@ class Analysis(object):
             log.info("using a mu (signal strength) of {0:.1f}".format(mu))
             self.mu = mu
 
-        self.qcd.scale = 1.
-        self.ztautau.scale = 1.
-        self.ggf_weight = ggf_weight
-
-        mc_params = {}
-        mc_params['year'] = year
-        mc_params['channel'] =self.channel
-        mc_params['trigger'] =self.trigger
-        mc_params['trigger_type'] = self.trigger_type
-        #mc_params['systematics'] = self.systematics,
-
-        # - - - - - - - - analysis' main configuration 
-        self.conf = Configuration(self.channel)
-
-
         # - - - - - - - - analysis MC samples 
         if use_embedding:
             log.info("Using embedded Ztautau")
-            self.ztautau = samples.Embedded_Ztautau(
+            self.ztautau = samples.Embedded_Ztautau(self.conf,
                 workspace_norm=ztt_workspace_norm,
                 constrain_norm=constrain_norms,
-                color='#00A3FF',
-                **mc_params)
+                color='#00A3FF')
         else:
-            log.info("Using Pythia Ztautau")
-            self.ztautau = samples.Pythia_Ztautau(
+            log.info("Using Sherpa2 .2 Ztautau")
+            self.ztautau = samples.Sh_Ztautau(self.conf, 
                 name='ZTauTau',
                 label='Z#rightarrow#tau#tau',
                 workspace_norm=ztt_workspace_norm,
                 constrain_norm=constrain_norms,
-                color='#157991',#'#00A3FF',
-                **mc_params)
+                color='#157991')
 
-        self.others = samples.Others(
+        self.others = samples.Others(self.conf, 
             name='Others',
             label='Others',
-            color='#8A0F0F',
-            **mc_params)
-        self.diboson = samples.Diboson(
+            color='#8A0F0F')
+        self.diboson = samples.Diboson(self.conf,
             name='DiBoson',
             label='DiBoson',
-            color='#7D560C',
-            **mc_params)
-        self.top = samples.Top(
-            name='Top',
-            label='Top',
-            color='#B0AF0B',
-            **mc_params)
-        self.zll = samples.MC_Zll(
+            color='#7D560C')
+        # self.top = samples.Top(self.conf,
+        #     name='Top',
+        #     label='Top',
+        #     color='#B0AF0B')
+        self.zll = samples.Sh_Zll(self.conf,
             name='Zll',
             label='Z#rightarrow ll',
-            color='#061c44',
-            **mc_params)
-        self.wj = samples.MC_WJ(
-            name='WJets',
-            label='W+J',
-            color='#B00B71',
-            **mc_params)
+            color='#061c44')
+        self.wtaunu = samples.Sh_Wtaunu(self.conf,
+            name='Wtaunu',
+            label='W#rightarrow#tau#nu',
+            color='#B00B71')
         
-        # - - - - - - - - Fakes drived from FF method
-        self.qcd = samples.Fakes(
-            name='Fakes',
-            label='fakes',
-            data=self.data,
-            mc=[self.ztautau, self.zll, self.wj, self.others], #order Ztt then Others
-            channel=self.channel,
-            trigger = self.trigger,
-            trigger_type = self.trigger_type,
-            shape_region=fakes_region,
-            decouple_shape=decouple_qcd_shape,
-            coherent_shape=coherent_qcd_shape,
-            workspace_norm=qcd_workspace_norm,
-            constrain_norm=constrain_norms,
-            shape_systematic=qcd_shape_systematic,
-            color='#f8970c')
+        self.wlnu = samples.Sh_Wlnu(self.conf,
+            name='Wlnu',
+            label='W#rightarrow l#nu',
+            color='#B00B71')
+        
+        #WIP - - - - - - - - Fakes drived from FF method
+        # self.qcd = samples.Fakes(self.conf,
+        #     name='Fakes',
+        #     label='fakes',
+        #     data=self.data,
+        #     mc=[self.ztautau, self.zll, self.wj, self.others], #order Ztt then Others
+        #     decouple_shape=decouple_qcd_shape,
+        #     coherent_shape=coherent_qcd_shape,
+        #     workspace_norm=qcd_workspace_norm,
+        #     constrain_norm=constrain_norms,
+        #     shape_systematic=qcd_shape_systematic,
+        #     color='#f8970c')
 
         # - - - - - - - - BKG components 
         self.backgrounds = [
-            self.qcd,
+            #self.qcd,
             self.others,
             self.zll,
-            self.wj,
+            self.wtaunu,
+            self.wlnu,
             #self.top,
-            #self.diboson,
+            self.diboson,
             self.ztautau,
             ]
 
         # - - - - - - - - DATA 
-        self.data = samples.Data(
-            year=year,
+        self.data = samples.Data(self.conf,
             name='Data',
             label='Data',
-            channel=self.channel,
-            trigger=self.trigger,
-            trigger_type=self.trigger_type,
             markersize=1.2,
             linewidth=1)
 
-        # - - - - - - - - signals 
-        self.signals = self.get_signals(mass=125)
+        #WIP - - - - - - - - signals 
+        #self.signals = self.get_signals(masses=self.config.signal_masses)
         
         
     def get_signals(self, masses=[], mode=None, scale=False):
@@ -298,11 +213,11 @@ class Analysis(object):
             masses = [masses]
         for m in masses:
             signals.append(samples.Higgs(
-                year=self.year,
-                channel=self.channel,
+                year=self.config.year,
+                channel=self.config.channel,
                 mass=m,
                 mode=mode,
-                systematics=self.systematics,
+                systematics=self.config.systematics,
                 scale=self.mu,
                 ggf_weight=self.ggf_weight))
             
@@ -322,7 +237,7 @@ class Analysis(object):
             ztautau=self.ztautau,
             qcd=self.qcd,
             category=category,
-            param=self.norm_field,
+            param=self.config.norm_field,
             target_region=self.target_region)
         return self
 
@@ -363,8 +278,8 @@ class Analysis(object):
          output_suffix: str; output suffix
         """
         
-        output_suffix += '_%d' % (self.year % 1000)
-        if not self.systematics:
+        output_suffix += '_%d' % (self.config.year % 1000)
+        if not self.config.systematics:
             output_suffix += '_stat'
         return  output_suffix
 
@@ -405,7 +320,7 @@ class Analysis(object):
                 template, field, [category],
                 region, include_signal=False,
                 normalize=False)
-
+        
             # create a workspace
             measurement = histfactory.make_measurement(
                 'normalization_{0}'.format(field), channels,POI=None,
@@ -418,9 +333,9 @@ class Analysis(object):
 
             # get fitted norms and errors
             qcd = fit_result.floatParsFinal().find(
-                'ATLAS_norm_HH_{0:d}_QCD'.format(self.year))
+                'ATLAS_norm_HH_{0:d}_QCD'.format(self.config.year))
             ztt = fit_result.floatParsFinal().find(
-                'ATLAS_norm_HH_{0:d}_Ztt'.format(self.year))
+                'ATLAS_norm_HH_{0:d}_Ztt'.format(self.config.year))
             qcd_scale_new = qcd.getVal()
             qcd_scale_error = qcd.getError()
             ztt_scale_new = ztt.getVal()

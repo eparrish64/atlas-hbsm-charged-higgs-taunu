@@ -11,14 +11,18 @@ import atexit
 import fnmatch
 from collections import namedtuple
 
+# ROOT
+import ROOT
+
 # PyPI
 import yaml
 
 # local
-from . import log; #log = log[__name__]
+from . import log
 from .decorators import cached_property
 from .yaml_utils import Serializable
 from . import xsec
+from .. import EVENTS_CUTFLOW_HIST, EVENTS_CUTFLOW_BIN
 
 # ATLAS 
 USE_PYAMI = False
@@ -118,9 +122,13 @@ DS_NOPROV = {}
 # Cross-sections are cached so that we don't need to keep asking AMI
 # for them over and over
 XSEC_FILE = os.path.join(HERE, 'xsec',"13TeV.txt")
-XSEC_CACHE_FILE = os.path.join(HERE, 'xsec', 'cache.pickle')
+XSEC_CACHE_FILE = os.path.join(HERE, 'xsec', 'xsec.pkl')
 XSEC_CACHE_MODIFIED = False
 XSEC_CACHE = {}
+if os.path.isfile(XSEC_CACHE_FILE):
+    with open(XSEC_CACHE_FILE) as cache:
+        log.info("Loading cross section cache in %s ..." % XSEC_CACHE_FILE)
+        XSEC_CACHE = pickle.load(cache)
 
 if USE_PYAMI:
     amiclient = AMIClient()
@@ -194,14 +202,15 @@ class Database(dict):
                 match.group('stream'),
                 match.group('tag'))
 
-    def __init__(self, name='datasets', verbose=False, stream=sys.stdout):
+    def __init__(self, name='datasets', version="", verbose=False, stream=sys.stdout):
         super(Database, self).__init__()
         self.name = name
         self.verbose = verbose
         self.stream = stream
-
+        self.version = version
+        
         # - - - - - - - - where to put the database yml file
-        self.filepath = os.path.join(HERE, '%s.yml' % self.name)
+        self.filepath = os.path.join(HERE, '%s%s.yml' % (self.name, self.version))
         if os.path.isfile(self.filepath):
             with open(self.filepath) as db:
                 log.info("Loading database '%s' ..." % self.name)
@@ -488,34 +497,43 @@ class Dataset(Serializable):
         self.grl = grl
         self.year = year
         self.stream = stream
-        self.events = -1000
-
-    @cached_property
-    def nevents(self, events_cutflow_hist="h_metadata", events_cutflow_bin=8):
+        
+    @property
+    def events(self, events_cutflow_hist=EVENTS_CUTFLOW_HIST, events_cutflow_bin=EVENTS_CUTFLOW_BIN):
         nevents = 0
-        try:
-            year = self.year % 1E3
-            nevents = xsec.nevts(year, self.id)
-        except:
-            assert (events_cutflow_hist and events_cutflow_bin), "metadata hist info is not provided!"
-            for f in self.files():
-                rf = ROOT.TFile(f, "READ")
-                hmetadata = rf.Get(events_cutflow_hist)
-                nevents += hmetadata.GetBinContent(events_cutflow_bin)
+        assert (events_cutflow_hist and events_cutflow_bin), "metadata hist info is not provided!"
+        for f in self.files:
+            rf = ROOT.TFile(f, "READ")
+            hmetadata = rf.Get(events_cutflow_hist)
+            num = hmetadata.GetBinContent(events_cutflow_bin)
+            log.debug("%s, #events: %i"%(f, num))
+            nevents += num
+            rf.Close()
         return nevents
-
     
     @cached_property
     def xsec_kfact_effic(self):
         global XSEC_CACHE_MODIFIED
+        global XSEC_CACHE
         year = self.year % 1E3
         if self.datatype == DATA:
             return 1., 1., 1.
-        if year in XSEC_CACHE and self.name in XSEC_CACHE[year]:
-            log.warning("using cached cross section for dataset %s" % self.ds)
-            return XSEC_CACHE[year][self.name]
+        if year in XSEC_CACHE and self.id in XSEC_CACHE[year]:
+            log.debug("using cached cross section for dataset %s" % self.ds)
+            return XSEC_CACHE[year][self.id]
         try:
-            return xsec.xsec_kfact_effic(self.year, self.id)
+            XSEC_CACHE[year] = {}
+            # - - - - cache XSEC 
+            with open(XSEC_FILE, "r") as xfile:
+                for line in xfile:
+                    line.strip()
+                    if line[0].isdigit():
+                        line = line.split()
+                        XSEC_CACHE[year][int(line[0])] = (float(line[2]),
+                                                          float(line[3]), float(line[4]))
+            XSEC_CACHE_MODIFIED = True
+            return XSEC_CACHE[year][self.id]
+        
         except KeyError:
             log.warning("cross section of dataset %s not available locally. "
                         "Looking it up in AMI instead. AMI cross sections can be very"
@@ -532,7 +550,7 @@ class Dataset(Serializable):
             XSEC_CACHE_MODIFIED = True
             return xs, 1., effic
         raise Exception("cross section of dataset %s is not known!" % self.ds)
-
+    
     @cached_property
     def files(self):
         if not self.dirs:
@@ -579,11 +597,6 @@ def dataset_constructor(loader, node):
         raise
 
 yaml.add_constructor(u'!Dataset', dataset_constructor)
-
-if os.path.isfile(XSEC_CACHE_FILE):
-    with open(XSEC_CACHE_FILE) as cache:
-        log.info("Loading cross section cache in %s ..." % XSEC_CACHE_FILE)
-        XSEC_CACHE = pickle.load(cache)
 
 
 ##--------------------------------------------------------------------------------

@@ -10,6 +10,8 @@ from .lumi import LUMI, LUMI_UNCERT, get_lumi_uncert
 from .systematics import *
 from .categories import *
 from .trigger import *
+from .weights import *
+
 from db.datasets import Database
 from db.decorators import cached_property
 
@@ -33,13 +35,29 @@ class Configuration():
     def trigger(self):
         print TRIGGERS
         return TRIGGERS[self.channel][self.year]
-    
+
     @property
     def weights(self):
-        """common weights 
+        """weights dictionary with keys as weight type 
+        and items as a list of weight string
         """
         return WEIGHTS[self.channel][self.year]
+    
+    @property
+    def weight_fields(self):
+        """weight fields list
+        """
+        weight_fields = []
+        for wt, w in WEIGHTS[self.channel][self.year]:
+            weight_fields.append(w)
+        return weight_fields
 
+    @property
+    def event_total_weight(self):
+        """overall weight string for the event
+        """
+        return "*".join(self.weigh_fields)
+    
     @property
     def categories(self):
         return CATEGORIES[self.channel][self.year]

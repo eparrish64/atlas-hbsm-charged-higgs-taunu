@@ -4,6 +4,7 @@ from math import pi
 import ROOT
 from ROOT import TCut
 
+from db.decorators import cached_property
 
 """
 This module provides all selections needed for the analysis.
@@ -12,16 +13,16 @@ This module provides all selections needed for the analysis.
 ##------------------------------------------------------------------------------------
 ## TAUJET BASIC CUTS
 
-# - - - - event 
+# - - - - - - - - event 
 CLEAN_EVT = ROOT.TCut("(event_clean==1) && (n_vx>=1) && (bsm_tj_dirty_jet==0)")
 
-# - - - - MET 
+# - - - - - - - - MET 
 MET100 = TCut("met_et>100000")
 MET150 = TCut("met_et>150000")
 MT100   = TCut("tau_0_met_mt > 100000")
 MT50   = TCut("tau_0_met_mt > 50000")
 
-# - - - - tau
+# - - - - - - - - tau
 Tau_Q = TCut("abs(tau_0_q)==1")
 TAU_TRACKS = TCut("tau_0_n_tracks==1 || tau_0_n_tracks==3")
 Tau_DECAY_MODE = TCut("tau_0_decay_mode==0")
@@ -30,17 +31,17 @@ TauID_MED = TCut("tau_0_jet_bdt_medium==1")
 TauID_TIGHT = TCut("tau_0_jet_bdt_tight==1")
 Tau_PT40 = TCut("tau_0_pt>40000")
 
-# - - - - lep
+# - - - - - - - - lep
 LEP_VETO = TCut("(n_electrons+n_muons)==0")
 ONE_LEP = TCut("(n_electrons+n_muons)==1")
 
-# - - - - tau ID
+# - - - - - - - - tau ID
 TAU_IS_LEP = TCut("abs(tau_0_truth_universal_pdgId)==11||abs(tau_0_truth_universal_pdgId)==13")
 TAU_IS_TRUE = TCut("abs(tau_0_truth_universal_pdgId)==15") 
 TAU_IS_FAKE = TCut("!"+(TAU_IS_TRUE.GetTitle()+"||"+TAU_IS_LEP.GetTitle()))
 TRUTH_MATCH = TCut("abs(tau_0_truth_universal_pdgId)==15")
 
-# - - - - jets
+# - - - - - - - - jets
 NUM_BJETS1 = TCut("n_bjets>0")
 NUM_BJETS2 = TCut("n_bjets>1")
 BVETO = TCut("n_bjets==0")
@@ -210,6 +211,16 @@ SELECTIONS["SR"] = {
 ##------------------------------------------------------------------------------------
 ## 
 class Category(object):
+    """base class for selection categories.
+
+    Attributes
+    ----------
+    
+    Examples
+    --------
+    >>> presel = Category("Preselection", label="presel", channel="taujet", year="2017")
+    >>> categories = Category.factory()
+    """
     NAMES = {
         "Preselection": "Presel",
         "TTBar_CR": "ttbar CR",
@@ -222,7 +233,7 @@ class Category(object):
     
     @classmethod
     def factory(cls):
-        """ factory method for building categories
+        """ factory method for categories
         """
         categories = {}
         for channel in cls.CHANNELS:
@@ -232,38 +243,39 @@ class Category(object):
                 if year not in categories[channel]:
                     categories[channel][year] = []
                 for name, label in cls.NAMES.iteritems():
-                    categories[channel][year].append(
-                        cls(name, label=label, channel=channel, year=year))
+                    cat = cls(name, label=label, channel=channel, year=year)
+                    categories[channel][year].append(cat)
+                    
         return categories
     
     def __init__(self, name, label="", channel="taujet", year="2017"):
+        assert name in self.NAMES.keys(), "%s Category is not supported; see categories.Category"%name
         self.name = name
         self.label = label
         self.channel = channel
         self.year = year
 
-    @property
+    @cached_property
     def cuts(self):
         """
         """
-        assert self.name in self.NAMES.keys(), "%s Category is not supported; see categories.Category"%self.name
 
         # - - - - - - - -  read selections from SELECTION dictionary
-        selection = SELECTIONS["BASE"][self.channel][self.year]
+        base = SELECTIONS["BASE"][self.channel][self.year]
         try:
-            selection += SELECTIONS[self.name.upper()][self.channel][self.year]
+            selection = base + SELECTIONS[self.name.upper()][self.channel][self.year]
+            return selection
         except KeyError:
             log.warning(
                 "couldn't find selections for %s : %s: %s  !; continuing with the base selections ... "%(self.name, self.channel, self.year))
-
-        return selection
+            return base
     
     
     def __repr__(self):
         return "CATEGORY:: name=%r, channel=%r, year=%r, cuts=%r\t\n"%(
-            self.name, self.channel, self.year, self.cuts().GetTitle())
+            self.name, self.channel, self.year, self.cuts.GetTitle())
     
-
+    
 # - - - - - - - - build categories
 CATEGORIES = Category.factory()
 

@@ -46,7 +46,8 @@ class Variable:
         self.scale = scale
         self.binning = binning
         self.bins = bins
-
+        self.tform = tformula
+        
         # - - - - variable might have different binning for plotting and WS
         self.workspace_binning = kwargs.pop("workspace_binning", None)
         
@@ -54,13 +55,24 @@ class Variable:
         if blind_cut:
             self.blind_cut = blind_cut
 
-        # - - - - build a flexible ROOT.TFormula string
-        self.tformula = name
-        if tformula:
-            self.tformula = tformula
-        if scale:
-            self.tformula = "({0}) * ({1})".format(scale, self.tformula)
-            
+    
+    def tformula(self, year):
+        """build a flexible ROOT.TFormula string
+        """
+        
+        tformula = self.name
+        if self.tform:
+            if isinstance(self.tform, dict):
+                if year in self.tform:
+                    tformula = self.tform[year]
+                else:
+                    tformula = self.tform["default"]
+            else:
+                tformula = self.tform
+        if self.scale:
+            tformula = "({0}) * ({1})".format(self.scale, tformula)
+        return tformula
+    
     @property 
     def label(self):
         if self._label is None:
@@ -109,7 +121,9 @@ class Variable:
 tau_0_pt = Variable(
     "tau_0_pt", 
     title='#font[52]{p}_{T}(#tau_{1}) GeV',
-    tformula="tau_0_p4->Pt()",
+    tformula={
+        "default": "tau_0_p4->Pt()",
+        "2016": "tau_0_pt"},
     binning=(20, 0, 400),
     unit='GeV',
     scale=0.001)
@@ -117,12 +131,17 @@ tau_0_pt = Variable(
 tau_0_eta = Variable(
     "tau_0_eta" , 
     title='#eta(#tau)',
-    tformula="tau_0_p4->Eta()",
+    tformula={
+        "default": "tau_0_p4->Eta()",
+        "2016": "tau_0_eta"},
     binning=(60, -3., 3.))
 
 tau_0_n_charged_tracks = Variable(
     "tau_0_n_charged_tracks",
     title='#font[152]{#tau}_{1} #font[52]{Tracks}',
+    tformula={
+        "default": "tau_0_n_charged_tracks",
+        "2016": "tau_0_n_tracks"},
     binning=(5, -.5, 4.5))
 
 tau_0_q = Variable(
@@ -140,7 +159,9 @@ upsilon = Variable(
 met_et = Variable(
     "met_et", 
     title='#font[52]{E}^{miss}_{T} GeV',
-    tformula="met_p4->Et()",
+    tformula={
+        "default":"met_p4->Et()",
+        "2016": "met_et"},
     binning=(1000, 0, 1000),
     scale=0.001,
     unit='GeV')
@@ -148,7 +169,9 @@ met_et = Variable(
 met_etx = Variable(
     "met_etx",
     title='#font[52]{E}^{miss}_{T_{x}}GeV',
-    tformula="met_p4->Px()",
+    tformula={
+        "default":"met_p4->Px()",
+        "2016": "met_etx"},
     binning=(20, -75, 75),
     scale=0.001,
     unit='GeV')   
@@ -156,7 +179,9 @@ met_etx = Variable(
 met_ety = Variable(
     "met_ety",
     title='#font[52]{E}^{miss}_{T_{y}}GeV',
-    tformula="met_p4->Py()",
+    tformula={
+        "default":"met_p4->Py()",
+        "2016": "met_ety"},
     binning=(20, -75, 75),
     scale=0.001,
     unit='GeV')
@@ -164,7 +189,9 @@ met_ety = Variable(
 met_phi = Variable(
     "met_phi", 
     title='#font[52]{E}^{miss}_{T} #phi',
-    tformula="met_p4->Phi()",
+    tformula={
+        "default":"met_p4->Phi()",
+        "2016": "met_phi"},
     binning=(5, -math.pi, math.pi))
 
 # - - - - - - - - tau + MET
@@ -204,7 +231,9 @@ n_bjets = Variable(
 jet_0_pt =  Variable(
     "jet_0_pt",
     title='#font[52]{p}_{T}(j_{1}) GeV',
-    tformula="jet_0_p4->Pt()",
+    tformula={
+        "default": "jet_0_p4->Pt()",
+        "2016": "jet_0_pt",},
     binning=(20, 0, 500),
     scale=0.001,
     unit='GeV')
@@ -212,7 +241,9 @@ jet_0_pt =  Variable(
 bjet_0_pt =  Variable(
     "bjet_0_pt",
     title='#font[52]{p}_{T}lead b-jet GeV',
-    tformula="bjet_0_p4->Pt()",
+    tformula={
+        "default": "bjet_0_p4->Pt()",
+        "2016": "bjet_0_pt",},
     binning=(20, 0, 500),
     scale=0.001,
     unit='GeV')
@@ -221,7 +252,9 @@ bjet_0_pt =  Variable(
 jet_1_pt = Variable(
     "jet_1_pt",
     title='#font[52]{p}_{T}(sub-leading jet) GeV',
-    tformula="jet_1_p4->Pt()",
+    tformula={
+        "default": "jet_1_p4->Pt()",
+        "2016": "jet_1_pt",},
     binning=(20, 0, 500),
     scale=0.001,
     unit='GeV')
@@ -229,27 +262,33 @@ jet_1_pt = Variable(
 jet_0_eta = Variable(
     "jet_0_eta",
     title='#font[152]{#eta}(j_{1})',
-    tformula="jet_0_p4->Eta()",
+    tformula={
+        "default":"jet_0_p4->Eta()",
+        "2016":"jet_0_eta",},
     binning=(60, -4, 4))
 
 # - - - - - - - -  BDT input features 
 MVA_bjet_0_met_dphi = Variable(
     "MVA_bjet_0_met_dphi", 
     title='#font[52]{#Delta#phi}(b-jet ,E^{miss}_{T})',
-    tformula="bjet_0_p4->DeltaPhi(met_0_p4)",
+    tformula={
+        "default": "bjet_0_p4->DeltaPhi(met_0_p4)",
+        "2016": "acos(cos(met_phi-bjet_0_phi))",},
     binning=(12, -1., 4))
 
 MVA_bjet_0_tau_0_dr = Variable(
     "MVA_bjet_0_tau_0_dr", 
     title='#font[52]{#Delta}R(#tau, b-jet)',
-    tformula="bjet_0_p4->DeltaR(tau_0_p4)",
+    tformula={
+        "default": "bjet_0_p4->DeltaR(tau_0_p4)",
+        "2016": "sqrt(acos(cos(tau_0_phi-bjet_0_phi))**2 + (tau_0_eta-bjet_0_eta)**2)",},
     binning=(20, 0, 6.4))
 
 
 #WIP: - - - - - - - - BDT scores
 
 # - - - - - - - - taujet channel variables list
-VARIABLES_TAUJET_2017 = [
+VARIABLES_TAUJET = [
     tau_0_pt,
     tau_0_eta, 
     tau_0_n_charged_tracks,
@@ -274,18 +313,6 @@ VARIABLES_TAUJET_2017 = [
 
 # - - - - - - - - prep all varibales dictionary 
 VARIABLES = {}
-VARIABLES["taujet"] = {
-    "default":VARIABLES_TAUJET_2017,
-    "2015":[],
-    "2016":[],
-    "2017":VARIABLES_TAUJET_2017,
-    "2018":[],
-}
+VARIABLES["taujet"] = VARIABLES_TAUJET
 
-VARIABLES["taulep"] = {
-    "default":[],
-    "2015":[],
-    "2016":[],
-    "2017":VARIABLES_TAUJET_2017,
-    "2018":[],
-}
+VARIABLES["taulep"] = VARIABLES_TAUJET

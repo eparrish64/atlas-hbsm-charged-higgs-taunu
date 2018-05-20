@@ -7,6 +7,8 @@ import pickle
 from operator import add, itemgetter
 from collections import namedtuple
 
+import datetime
+
 # ROOT imorts 
 import ROOT
 
@@ -60,7 +62,7 @@ class Sample(object):
                  channel='taujet',
                  name='Sample',
                  label='Sample',
-                 **hist_decor):
+                 **kwargs):
         # - - - - - - - - passing main configurations to the sample
         self.config = config
 
@@ -68,15 +70,11 @@ class Sample(object):
         self.scale = scale
         self.name = name
         self.label = label
-        self.trigger = trigger
-        self.weight_fields = weight_fields 
         if cuts is None:
             self._cuts = ROOT.TCut("")
         else:
             self._cuts = cuts
-        self.hist_decor = hist_decor
-        if 'fillstyle' not in hist_decor:
-            self.hist_decor['fillstyle'] = 'solid'
+        self.hist_decor = kwargs
 
     
     def decorate(self, name=None, label=None, **hist_decor):
@@ -95,142 +93,6 @@ class Sample(object):
         if hist_decor:
             self.hist_decor.update(hist_decor)
         return self
-
-    def get_field_hist(self, fields, category, templates=None):
-
-        """retrieve a histogram for the requested
-        variables in the given category
-        Parameters
-        ----------
-        - vars: Variable type (see variables.py)
-        - category: Category type; see categories.py
-        - template: TH1F; hist template 
-        Returns
-        -------
-        hist: the histogram of the specifid varibale.
-        
-        """
-
-        fields_hist  = {}
-        fields_scale = {}
-        for var in fields:
-            if templates is not None and field in templates:
-                hist = template.Clone(
-                    title=self.label, **self.hist_decor)
-                fields_hist[var] = hist
-                fields_scale[var] = var.scale
-                continue
-            
-            bins = field.binning(self.config.year, category)
-            log.debug("var: %S; binning: %s"%(var, bins))
-
-            hist = Hist(list(bins),
-                        title=self.label,
-                        type='D',
-                        **self.hist_decor)
-            fields_hist[var] = hist
-            fields_scale[var] = var.scale
-
-        return fields_hist, fields_scale
-
-    def get_hist_array(self,
-                       field_hist_template,
-                       category, region,
-                       cuts=None,
-                       clf=None,
-                       scores=None,
-                       min_score=None,
-                       max_score=None,
-                       regressor=None,
-                       systematics=False,
-                       systematics_components=None,
-                       suffix=None,
-                       field_scale=None,
-                       weight_hist=None,
-                       weighted=True,
-                       bootstrap_data=False):
-        """
-        
-        Parameters
-        ----------
-        field_hist_template: a dictionary of Histogram templates for different variables.
-        category: Category object; specific category oof analysis.
-        region: Region object; for dealing with signal or control region.
-        cuts: TCut objetc; to apply cuts for plotting.
-        clf: trained classifier for separating sig-bkg;
-        scores: np array; classifier'e predicted scores.
-        min_score: float; min scores
-        max_score: float; max scores
-        systematics: bool; wethere to do systematics or not.
-        systematic_components: specific systematics to be applied.
-        suffix: string; a lable used for saving plots.
-        field_scale: scaled variable(normalized hists).
-        weighted_hist: weighted hist.
-        weighted: bool(default True); 
-        bootstrap_data: bool; wethere to random sample data with replacement or not for testing purposes
-
-        Returns
-        -------
-        field_hist: a dictionary of the field histograms.
-        rec: mereged-record; table of all fields.
-        weights: weights array.
-        """
-        
-        do_systematics = (isinstance(self, SystematicsSample)
-                          and self.systematics
-                          and systematics)
-        if do_systematics and systematics_components is None:
-            systematics_components = self.systematics_components()
-
-        histname = '{0}_category_{1}_{2}'.format(self.config.channel, category.name, self.name)
-        if suffix is not None:
-            histname += suffix
-
-        field_hist = {}
-        for field, hist in field_hist_template.items():
-            if isinstance(field, basestring):
-                new_hist = hist.Clone(name=histname + '_{0}'.format(field))
-            else:
-                new_hist = hist.Clone(name=histname)
-            new_hist.Reset()
-            new_hist.decorate(**self.hist_decor)
-            new_hist.title = self.label
-            field_hist[field] = new_hist
-
-        return field_hist
-
-    def weights(self, systematic='NOMINAL'):
-
-        """ to weight the fields.
-
-        Parameters
-        ----------
-        systematics: string; systematics type.
-
-        Returns
-        -------
-        weight_fields: weighted fields.
-
-        """
-
-        weight_fields = self.weight_fields
-
-        #@ FIX ME
-        # if isinstance(self, SystematicsSample):
-        #     systerm, variation = \
-        #         SystematicsSample.get_sys_term_variation(systematic)
-        #     for term, variations in self.config.weight_systematics.items():
-        #         # handle cases like TAU_ID and TAU_ID_STAT
-        #         if (systerm is not None
-        #             and systerm.startswith(term)
-        #             and systematic[0][len(term) + 1:] in variations):
-        #             weight_fields += variations[systematic[0][len(term) + 1:]]
-        #         elif term == systerm:
-        #             weight_fields += variations[variation]
-        #         else:
-        #             weight_fields += variations['NOMINAL']
-       
-        return weight_fields
 
     def cuts(self,
              category=None,
@@ -283,13 +145,11 @@ class Sample(object):
                region=None,
                trigger=None,
                extra_cuts=None,
-               tauid=True,
+               tauid=False,
                weighted=True,
                scale=1.):
-        """ see self.events. 
-        This method returns the number of events selected.  The selection is
-        specified by the different arguments.  By default, the output is a
-        one-bin histogram with number of event as content.
+        """ This method returns the number of events selected.  The selection is
+        specified by the different arguments.  
 
         Parameters
         ----------
@@ -316,20 +176,27 @@ class Sample(object):
         """
 
         total_events_weighted = 0
+        # - - - - - - - - loop over sample's datasets 
         for ds in self.datasets:
-            log.debug(ds)
-            total_events = 0
+            # - - - - - - - - dataset chain 
             ds_chain = ROOT.TChain(systematic)
             for _file in ds.files:
                 ds_chain.Add(_file)
-                rfile = ROOT.TFile(_file, "READ")
+
+            # - - - - - - - - total events
+            total_events = 0
+            for _file in ds.files:
                 try:
+                    # - - - - read total number of events for dataset from database (just once)
                     total_events = ds.events
                     break
                 except KeyError:
-                    # - - - - calcualte on the fly 
+                    # - - - - count them on the fly
+                    rfile = ROOT.TFile(_file, "READ")
                     h_metadata = rfile.Get("%s"%self.config.events_cutflow_hist)
                     total_events += h_metadata.GetBinContent(self.config.events_cutflow_bin)
+                    rfile.Close()
+                    h_metadata.Delete()
                     
             selection =  self.cuts(category=category,
                                    region=region, trigger=trigger,
@@ -340,9 +207,8 @@ class Sample(object):
                 lumi_weight = self.config.data_lumi * reduce(
                     lambda x,y:x*y, ds.xsec_kfact_effic) / total_events
                 
-                weight_branches = self.weights()
-                selection *= ROOT.TCut(str(lumi_weight * scale))
-                #selection *= ROOT.TCut('*'.join(weight_branches))
+                weight_branches = self.weights + [str(lumi_weight)]
+                selection *= ROOT.TCut('*'.join(weight_branches))
                 log.debug("requesting number of events from %s using cuts: %s"
                           % (ds.name, selection))
                 
@@ -353,7 +219,140 @@ class Sample(object):
             ds_chain.Reset()
             
         return total_events_weighted
-     
+
+    def hists(self, category,
+              systematic="NOMINAL",
+              field_names=[],
+              extra_cuts=None,
+              weighted=True,
+              trigger=None,
+              tauid=None,
+              suffix=None,
+              write=False,
+              ofile=None):
+        """
+        Parameters
+        ----------
+        category: 
+            Category object; specific category oof analysis.
+        field_names:
+            list of variable to be histograms for them
+        cuts: 
+            TCut objetc; to apply cuts for plotting.
+        systematic: 
+            str; systematic tree name.
+        suffix: 
+            string; a lable used for saving plots.
+        
+        Returns
+        -------
+        field_hist: a dictionary of the field histograms.
+        """
+        
+        hists  = {}
+        if field_names:
+            fields = filter(lambda fl: fl.name in field_names, self.config.variables)
+        else:
+            log.info(
+                "creating hists for all the variables %r\n"%[var.name for var in self.config.variables])
+            fields = self.config.variables
+            
+        # - - - - - - - - loop over sample's datasets 
+        for ds in self.datasets:
+            # - - - - - - - - dataset chain 
+            ds_chain = ROOT.TChain(systematic)
+            for _file in ds.files:
+                ds_chain.Add(_file)
+
+            # - - - - - - - - total events
+            total_events = 0
+            for _file in ds.files:
+                try:
+                    # - - - - read total number of events for dataset from database (just once)
+                    total_events = ds.events
+                    break
+                except KeyError:
+                    # - - - - count them on the fly
+                    rfile = ROOT.TFile(_file, "READ")
+                    h_metadata = rfile.Get("%s"%self.config.events_cutflow_hist)
+                    total_events += h_metadata.GetBinContent(self.config.events_cutflow_bin)
+                    rfile.Close()
+                    h_metadata.Delete()
+                
+            # - - - - - - - - filters
+            selection = self.cuts(
+                category=category,
+                trigger=trigger,
+                tauid=tauid,
+                systematic=systematic)
+
+            if extra_cuts:
+                selection += extra_cuts
+            if tauid:
+                selection +=tauid
+                
+            # - - - - - - - - event weight
+            if weighted:
+                lumi_weight = self.config.data_lumi * reduce(
+                    lambda x,y:x*y, ds.xsec_kfact_effic) / total_events
+                weights = self.weights + [str(lumi_weight)]
+                event_weight = "*".join(weights)
+                selection *= ROOT.TCut(event_weight)
+                
+            log.debug("requesting number of events from %s using cuts: %s"
+                      % (ds.name, selection))
+
+            # - - - - - - - - loop over variables    
+            for var in fields:
+                log.debug(var)
+                histname = '{0}_channel_{1}_category_{2}_{3}'.format(
+                    ds.name, self.config.channel, category.name, var.name)
+                if suffix is not None:
+                    histname += suffix
+
+                # - - draw histogram
+                ds_chain.Draw("{0} >> {1}{2}".format(
+                    var.tformula(self.config.year), histname, var.binning), selection)
+                
+                log.info("TTree.Drawing:: {0} >> {1}{2}; selection: {3}".format(
+                    var.tformula(self.config.year), histname, var.binning, selection))
+                
+                htmp = ROOT.gPad.GetPrimitive(histname)
+                log.debug("%s: Integral: %.4f"%(histname, htmp.Integral()))
+                hists[histname]= htmp.Clone()
+                ds_chain.Reset()
+
+        # - - - - - - - - add the sample's datasets hists
+        field_hists = {}
+        for field in fields:
+            fname = "%s_%s_%s_%s"%(self.name, self.config.channel, category.name, field.name)
+            field_hists[fname] = []
+            for hname, hist in hists.iteritems():
+                if field.name in hname:
+                    #WIP: decorate hists here - - - - set the x axis label
+                    hist.SetXTitle(field.title)
+                    
+                    field_hists[fname].append(hist)
+                    
+        for fname, hist_list in field_hists.iteritems():
+            hsum = reduce(lambda x, y: x + y, hist_list)
+            hsum.SetName(fname)
+            hsum.SetTitle(fname)
+            
+            field_hists[fname] = hsum
+
+        # - - - - - - - - if you wish to write the hists to disk
+        if write:
+            if not ofile:
+                ofile = self.config.hists_file
+            tf = ROOT.TFile(ofile, "UPDATE")
+            tf.cd()
+            for f, hf in field_hists.iteritems():
+                hf.Write()
+            tf.Close()
+            
+        return field_hists
+    
     
 
     
@@ -379,10 +378,10 @@ class SystematicsSample(Sample):
     """
     def __init__(self, *args, **kwargs):
 
-        db = kwargs.pop("db", None) 
         # - - - - - - - - instantiate the base class
         super(SystematicsSample, self).__init__(*args, **kwargs)
 
+        db = kwargs.pop("db", None) 
         # - - - - - - - - backgrounds
         if isinstance(self, Background):
             sample_key = self.__class__.__name__.lower()
@@ -433,7 +432,24 @@ class SystematicsSample(Sample):
                     ds.name, xsec, kfact, effic, ds.events))
             #dataset = Dataset(ds=ds, events=self.events)
             self.datasets.append(ds)
-    
+
+    @cached_property
+    def weights(self):
+        """ weight vars
+        """
+        
+        weight_fields = []
+        
+        # - - - - - - - - FF weights only apply to Fakes sample; added in fake.Fakes class
+        for wtype, wlist in self.config.weights.items():
+            if wtype=="FF":
+                continue
+            for w in wlist:
+                weight_fields.append(w)
+            
+        return [w.name for w in weight_fields]
+
+            
     @classmethod
     def get_sys_term_variation(cls, systematic):
         """ to get the systematic terms and syst variations.
@@ -450,6 +466,9 @@ class SystematicsSample(Sample):
             systerm, variation = systematic[0].rsplit('_', 1)
         return systerm, variation
 
+    def systematics(self):
+        pass
+        
     def draw(self, field_hist,
              scale=1.,
              category=None,
@@ -544,22 +563,6 @@ class MC(SystematicsSample):
         """
         cut = super(MC, self).cuts(*args, **kwargs)
         return cut
-    
-    def weights(self, **kwargs):
-        """ additional weights for MC
-        Parameters
-        ----------
-        
-        Returns
-        -------
-        weights: list, extended weights list
-        """
-        weights = super(MC, self).weights(**kwargs)
-
-        # - - - - - - - - MC
-        mc_weights = ["mc_weight"]
-        
-        
     
 
 

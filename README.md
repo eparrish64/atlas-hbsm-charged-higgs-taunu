@@ -8,10 +8,14 @@ After the skims are finished and downloaded, update the paths in
 
 Running the analysis
 --------------------
-    ./run-analysis --help   
-    ``fakes and signals parts are under construction yet``
+    ./run-analysis --help
 
+    <span style="background-color: #FF6133">
+    fakes and signals parts are under construction yet
+    </span>      
 Plotting hists
 --------------
     ./draw-plots --help
-    ``under development``
+    <span style="background-color: #FF6133">
+    under development
+    </span>  

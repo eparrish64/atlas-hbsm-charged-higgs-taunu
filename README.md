@@ -10,12 +10,10 @@ Running the analysis
 --------------------
     ./run-analysis --help
 
-    <span style="background-color: #FF6133">
-    fakes and signals parts are under construction yet
-    </span>      
+    **fakes and signal parts are under construction yet! **
+    
 Plotting hists
 --------------
     ./draw-plots --help
-    <span style="background-color: #FF6133">
-    under development
-    </span>  
+    **under development!**
+    

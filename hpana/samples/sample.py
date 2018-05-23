@@ -1,12 +1,10 @@
 # -*- coding: utf-8 -*-
 
 # std lib imports
-import os
-import sys
-import pickle
+import os, sys, pickle, string 
 from operator import add, itemgetter
 from collections import namedtuple
-
+import random 
 import datetime
 
 # ROOT imorts 
@@ -20,7 +18,7 @@ from ..db.decorators import cached_property
 from ..config import Configuration
 from ..lumi import LUMI, get_lumi_uncert
 from ..systematics import get_systematics, iter_systematics, systematic_name
-
+from ..cluster.parallel import FuncWorker, run_pool, map_pool
 
 ##---------------------------------------------------------------------------------------
 ## consts
@@ -33,7 +31,13 @@ class Dataset(namedtuple('Dataset', ('ds','files', 'events'))):
     def name(self):
         return self.ds.name
     
-    
+class Histset(namedtuple("Histset",
+                         ("sample", "variable", "category", "systematic", "hist") ) ):
+    pass
+
+
+
+
 ##---------------------------------------------------------------------------------------
 ## 
 class Sample(object):
@@ -178,6 +182,7 @@ class Sample(object):
         total_events_weighted = 0
         # - - - - - - - - loop over sample's datasets 
         for ds in self.datasets:
+            log.info(ds.events)
             # - - - - - - - - dataset chain 
             ds_chain = ROOT.TChain(systematic)
             for _file in ds.files:
@@ -220,9 +225,36 @@ class Sample(object):
             
         return total_events_weighted
 
+    @staticmethod
+    def hists_from_file(ifile, fields, selection, tree_name="NOMINAL"):
+        """
+        """
+        tfile = ROOT.TFile(ifile, "READ")
+        tree = tfile.Get(tree_name)
+
+        field_hists  = {}
+        # - - draw histograms
+        for var in fields:
+            histname = var.name + "_" + ''.join(random.choice(
+                string.ascii_uppercase + string.digits) for _ in range(13))
+            if var.name not in field_hists:
+                field_hists[var.name] = {}
+
+            log.debug("{0} >> {1}{2}".format(var.tformula, histname, var.binning))
+            log.debug(selection)
+            tree.Draw("{0} >> {1}{2}".format(
+                var.tformula, histname, var.binning), selection)
+            
+            htmp = ROOT.gPad.GetPrimitive(histname)
+            field_hists[var.name] = htmp.DrawCopy()
+            htmp.Delete()
+            tree.Reset()
+        #tfile.Close()
+        return field_hists
+    
     def hists(self, category,
+              fields=[],
               systematic="NOMINAL",
-              field_names=[],
               extra_cuts=None,
               weighted=True,
               trigger=None,
@@ -235,9 +267,9 @@ class Sample(object):
         ----------
         category: 
             Category object; specific category oof analysis.
-        field_names:
-            list of variable to be histograms for them
-        cuts: 
+        fields:
+            Variable;  list of variables to get histograms for them
+        extra_cuts: 
             TCut objetc; to apply cuts for plotting.
         systematic: 
             str; systematic tree name.
@@ -246,55 +278,38 @@ class Sample(object):
         
         Returns
         -------
-        field_hist: a dictionary of the field histograms.
+        hist_set: fields histograms.
         """
-        
-        hists  = {}
-        if field_names:
-            fields = filter(lambda fl: fl.name in field_names, self.config.variables)
-        else:
-            log.info(
-                "creating hists for all the variables %r\n"%[var.name for var in self.config.variables])
-            fields = self.config.variables
-            
-        # - - - - - - - - loop over sample's datasets 
-        for ds in self.datasets:
-            # - - - - - - - - dataset chain 
-            ds_chain = ROOT.TChain(systematic)
-            for _file in ds.files:
-                ds_chain.Add(_file)
 
-            # - - - - - - - - total events
-            total_events = 0
-            for _file in ds.files:
-                try:
-                    # - - - - read total number of events for dataset from database (just once)
-                    total_events = ds.events
-                    break
-                except KeyError:
-                    # - - - - count them on the fly
-                    rfile = ROOT.TFile(_file, "READ")
-                    h_metadata = rfile.Get("%s"%self.config.events_cutflow_hist)
-                    total_events += h_metadata.GetBinContent(self.config.events_cutflow_bin)
-                    rfile.Close()
-                    h_metadata.Delete()
-                
+        log.info(
+            "processing histograms for %s tree from %s ; category: %s"%(systematic, self.name, category.name))
+        
+        if not fields:
+            fields = self.config.variables
+            self.debug("creating hists for all the variables {}".format(fields))
+
+        # - - - - - - - - create a default canvas for the TTree.Draw
+        canvas = ROOT.TCanvas()
+        
+        # - - - - - - - - loop over sample's datasets
+        hists = {}
+        for ds in self.datasets:
+            log.debug("dataset {};  total # of events:{} ; lumi: {} ".format(ds.name, ds.events, ds.lumi_weight))
             # - - - - - - - - filters
             selection = self.cuts(
                 category=category,
                 trigger=trigger,
                 tauid=tauid,
                 systematic=systematic)
-
             if extra_cuts:
                 selection += extra_cuts
             if tauid:
                 selection +=tauid
-                
+
             # - - - - - - - - event weight
             if weighted:
                 lumi_weight = self.config.data_lumi * reduce(
-                    lambda x,y:x*y, ds.xsec_kfact_effic) / total_events
+                    lambda x,y:x*y, ds.xsec_kfact_effic) / ds.events
                 weights = self.weights + [str(lumi_weight)]
                 event_weight = "*".join(weights)
                 selection *= ROOT.TCut(event_weight)
@@ -302,56 +317,66 @@ class Sample(object):
             log.debug("requesting number of events from %s using cuts: %s"
                       % (ds.name, selection))
 
-            # - - - - - - - - loop over variables    
+            # - - - - - - - - 
+            ds_chain = ROOT.TChain(systematic)
+            for ifile in ds.files:
+                ds_chain.Add(ifile)
+                
             for var in fields:
-                log.debug(var)
+                if not var.name in hists:
+                    hists[var.name] = []
+                    
                 histname = '{0}_channel_{1}_category_{2}_{3}'.format(
                     ds.name, self.config.channel, category.name, var.name)
                 if suffix is not None:
                     histname += suffix
 
+                # - - - - randomize hist name to avoid possible memory leak
+                histname += ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(13))
+                
                 # - - draw histogram
-                ds_chain.Draw("{0} >> {1}{2}".format(
-                    var.tformula(self.config.year), histname, var.binning), selection)
-                
-                log.info("TTree.Drawing:: {0} >> {1}{2}; selection: {3}".format(
-                    var.tformula(self.config.year), histname, var.binning, selection))
-                
+                ds_chain.Draw("{0} >> {1}{2}".format(var.tformula, histname, var.binning), selection)
                 htmp = ROOT.gPad.GetPrimitive(histname)
-                log.debug("%s: Integral: %.4f"%(histname, htmp.Integral()))
-                hists[histname]= htmp.Clone()
-                ds_chain.Reset()
+                log.debug("TTree.Drawing:: {0} >> {1}{2}; selection: {3}; # integral: {4}".format(
+                    var.tformula, histname, var.binning, selection, htmp.Integral(0, htmp.GetNbinsX()+1) ) )
+                hists[var.name].append(htmp.Clone())
+                
+            # - - - - reset the chain and go to the next dataset 
+            ds_chain.Reset()
 
-        # - - - - - - - - add the sample's datasets hists
-        field_hists = {}
-        for field in fields:
-            fname = "%s_%s_%s_%s"%(self.name, self.config.channel, category.name, field.name)
-            field_hists[fname] = []
-            for hname, hist in hists.iteritems():
-                if field.name in hname:
-                    #WIP: decorate hists here - - - - set the x axis label
-                    hist.SetXTitle(field.title)
-                    
-                    field_hists[fname].append(hist)
-                    
-        for fname, hist_list in field_hists.iteritems():
+        hist_set = []
+        for var in fields:
+            hist_list = hists[var.name]
+            fname = "%s_%s_%s"%(self.name, category.name, var.name)
             hsum = reduce(lambda x, y: x + y, hist_list)
             hsum.SetName(fname)
             hsum.SetTitle(fname)
+            hsum.SetXTitle(var.title)
             
-            field_hists[fname] = hsum
-
+            hist_set.append(Histset(
+                sample=self.name,
+                variable=var.name,
+                category=category,
+                hist=hsum,
+                systematic=systematic ) )
+            
         # - - - - - - - - if you wish to write the hists to disk
         if write:
             if not ofile:
                 ofile = self.config.hists_file
             tf = ROOT.TFile(ofile, "UPDATE")
-            tf.cd()
-            for f, hf in field_hists.iteritems():
-                hf.Write()
+            rdir = "%s/%s"%(self.config.channel, systematic)
+            if not tf.GetDirectory(rdir):
+                tf.mkdir(rdir)
+            tf.cd(rdir)
+            for hs in hist_set:
+                hist = hs.hist
+                hist.Write(hist.GetName(), ROOT.TObject.kOverwrite)
             tf.Close()
             
-        return field_hists
+        log.info(
+            "processed %s tree from %s sample; category: %s"%(systematic, self.name, category.name))
+        return hist_set 
     
     
 
@@ -664,3 +689,4 @@ class CompositeSample(object):
                         field_hist_syst = field_hist_sample[field].systematics
                         hist.systematics[sys].Add( field_hist_syst[sys] )
         return
+

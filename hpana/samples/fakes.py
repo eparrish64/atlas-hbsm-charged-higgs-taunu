@@ -1,44 +1,55 @@
 # local imports
-from .sample import SystematicsSample, Background
+from .sample import Sample, Background
 from . import log
 
 
-class Fakes(SystematicsSample, Background):
+class Fakes(Sample, Background):
+    
+    @staticmethod
+    def sample_compatibility(data, mc):
+        if not isinstance(mc, (list, tuple)):
+            raise TypeError("mc must be a list or tuple of MC samples")
+        if not mc:
+            raise ValueError("mc must contain at least one MC sample")
 
-    def __init__(self, base_sample, sr, cr, **kwargs):
-        """
-        """
-        super(SystematicsSample, self).__init__(year=base_sample.year, **kwargs)
+    def __init__(self, data, mc,
+                 scale=1.,
+                 scale_error=0.,
+                 data_scale=1.,
+                 mc_scales=None,
+                 constrain_norm=False,
+                 shape_systematic=True,
+                 cuts=None,
+                 name='Fakes',
+                 label='Fakes',
+                 **kwargs):
         
-        self.sample = base_sample
-        self.sr = sr
-        self.cr = cr
-        log.info('Fakes instantiation')
+        # - - - - - - - - quick sanity check
+        Fakes.sample_compatibility(data, mc)
 
-
-    def draw_array(self, field_hist, category, region,regressor=None, cuts=None, **kwargs):
+        # - - - - - - - - instantiate base 
+        super(Fakes, self).__init__(
+            year=data.year,
+            scale=scale,
+            name=name,
+            label=label,
+            **kwargs)
         
-        sr_region = region & self.sr
-        field_hist_sr = dict([
-                (expr, hist.Clone())
-                for expr, hist in field_hist.items()])
-        self.sample.draw_array(
-            field_hist_sr,
-            category,
-            region,
-            regressor=None,
-            cuts=self.sr & cuts, **kwargs)
+        self.data = data
+        self.mc = mc
+        self.scale = 1.
+        self.data_scale = data_scale
+        if mc_scales is not None:
+            if len(mc_scales) != len(mc):
+                raise ValueError("length of MC scales must match number of MC")
+            self.mc_scales = mc_scales
+        else:
+            # default scales to 1.
+            self.mc_scales = [1. for m in self.mc]
+    
+    def cuts(self):
+        pass
 
-        field_hist_cr = dict([
-                (expr, hist.Clone())
-                for expr, hist in field_hist.items()])
-        self.sample.draw_array(
-            field_hist_cr,
-            category,
-            region,
-            regressor=None,
-            cuts=self.cr & cuts, **kwargs)
-        
-        for field in field_hist.keys():
-            hist = field_hist_sr[field] - field_hist_cr[field]
-            field_hist[field] = hist
+    def hist(self):
+        pass
+    

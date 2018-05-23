@@ -20,22 +20,23 @@ from ..lumi import LUMI, get_lumi_uncert
 from ..systematics import get_systematics, iter_systematics, systematic_name
 from ..cluster.parallel import FuncWorker, run_pool, map_pool
 
-##---------------------------------------------------------------------------------------
-## consts
-
 
 ##---------------------------------------------------------------------------------------
 ## 
 class Dataset(namedtuple('Dataset', ('ds','files', 'events'))):
+    """ plain namedtuple to hold Dataset inof
+    """
     @property
     def name(self):
         return self.ds.name
     
+##---------------------------------------------------------------------------------------
+## 
 class Histset(namedtuple("Histset",
                          ("sample", "variable", "category", "systematic", "hist") ) ):
+    """simple namedtuple to hold a histogram info
+    """
     pass
-
-
 
 
 ##---------------------------------------------------------------------------------------

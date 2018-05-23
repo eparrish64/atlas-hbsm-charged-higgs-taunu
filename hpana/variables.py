@@ -48,29 +48,34 @@ class Variable:
         self.bins = bins
         self.tform = tformula
         
+        # - - - - - - - - the year is also set within config.Configuraiton for the Analysis 
+        self.year = kwargs.pop("year", "2017")
+
         # - - - - variable might have different binning for plotting and WS
         self.workspace_binning = kwargs.pop("workspace_binning", None)
         
         # - - - - blinding a varibale based of some selection
         if blind_cut:
             self.blind_cut = blind_cut
-
-    
-    def tformula(self, year):
-        """build a flexible ROOT.TFormula string
+            
+    @property    
+    def tformula(self):
+        """ build a flexible ROOT.TFormula string
         """
-        
-        tformula = self.name
         if self.tform:
             if isinstance(self.tform, dict):
-                if year in self.tform:
-                    tformula = self.tform[year]
+                if self.year in self.tform:
+                    tformula = self.tform[self.year]
                 else:
                     tformula = self.tform["default"]
             else:
                 tformula = self.tform
+        else:
+            tformula = self.name 
+            
         if self.scale:
             tformula = "({0}) * ({1})".format(self.scale, tformula)
+            
         return tformula
     
     @property 
@@ -111,8 +116,10 @@ class Variable:
         pass
 
     def __repr__(self):
-        return "VARIABLE:: name=%r, tformula=%r, binning=%r, scale=%r"%(
-            self.name, self.tformula, self.binning, self.scale)
+        if not self.scale:
+            self.scale = 1.
+        return "VARIABLE:: name=%r, tformula=%r, binning=%r, scale=%r, year=%r"%(
+            self.name, self.tformula, self.binning, self.scale, self.year)
 
 ##------------------------------------------------------------------------------------------
 ## Building the analysis variables; KEEP THEM AS CLEAN AS POSSIBLE :)

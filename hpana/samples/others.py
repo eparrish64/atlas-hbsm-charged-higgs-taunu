@@ -5,7 +5,10 @@ __all__=[
     'Sh_Zll',
     'Sh_Wtaunu',
     'Sh_Wlnu',
-    'Others'
+    'Others',
+    "Mg_Ztautau",
+    "Sh_Ztautau",
+    "Pythia_Ztautau"
 ]
 import ROOT
 
@@ -53,7 +56,6 @@ class Diboson(MC, Background):
 
     def __init__(self, *args, **kwargs):
         self.truth_matched = kwargs.pop('truth_matched', True)
-        self.channel=kwargs.pop('channel', 'lephad')
         super(Diboson, self).__init__(*args, **kwargs)
 
     def cuts(self, *args, **kwargs):
@@ -87,4 +89,20 @@ class Sh_Wlnu(MC, Background):
     pass
 
 class Sh_Zll(MC, Background):
+    pass
+
+
+# Sherpa2.2
+class Sh_Ztautau(MC, Background):
+    pass
+
+# MadGraph
+class Mg_Ztautau(MC, Background):
+    pass
+
+
+class MC_Ztautau_DY(MC_Ztautau):
+    pass
+
+class Pythia_Ztautau(MC_Ztautau):
     pass

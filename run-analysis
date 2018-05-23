@@ -1,29 +1,35 @@
 #! /usr/bin/env python
 # PYTHON_ARGCOMPLETE_OK
 
-# stdlib 
+# stdlib
+import os, sys
 from argparse import ArgumentParser
 import argcomplete
-
-# local 
-from hpana.samples import Sh_Ztautau
-from hpana.config import Configuration
-
-from hpana.analysis import Analysis
 
 ##--------------------------------------------------------------------------------------------------
 ## setup cmd line args
 parser = ArgumentParser("Analysis")
+parser.add_argument("--log", "-l", choices=["VERBOSE", "DEBUG", "INFO", "WARNING", "ERROR"], default="INFO")
 parser.add_argument("--year", "-y", type=str, choices=("2017", "2018", "2016"), default="2017")
 parser.add_argument("--channel", "-c", choices=("taujet", "taulep"), default="taujet")
 parser.add_argument("--systs", "-s", action="store_true")
 argcomplete.autocomplete(parser)
 args = parser.parse_args()
 
+# local: import ROOT after setting up cmd args 
+from hpana.config import Configuration
+from hpana.analysis import Analysis
+from hpana import log
+
+# - - - - - - - -  set log level
+log.setLevel(args.log)
+
+
 # - - - - - - - - build analysis main configuration object
 config = Configuration(args.channel, year=args.year)
 
+
+# - - - - - - - - instantiate the analysis
 analysis = Analysis(config)
 
-for bkg in analysis.backgrounds:
-    print bkg.name, bkg.events()
+analysis.run(fields=config.variables)

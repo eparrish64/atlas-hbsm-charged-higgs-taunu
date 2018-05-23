@@ -1,5 +1,9 @@
 # stdlib imports
-import random
+import multiprocessing
+from multiprocessing.managers import SyncManager
+    
+
+import random, time 
 from collections import namedtuple
 
 # local imports
@@ -7,20 +11,21 @@ from . import log
 from . import samples
 #from .samples import Higgs
 
+from .cluster.parallel import FuncWorker, run_pool, map_pool
+
 from .config import Configuration
+import ROOT
 
 ##---------------------------------------------------------------------------------
 ## consts
 
 ##---------------------------------------------------------------------------------
 ## 
-class Analysis(object):
+class Analysis():
 
     """ main analysis class.
     Attributes
     ----------
-    systematics : bool(default=True)
-              whether to do the systematics calculations or not.
     use_embedding : bool(default=True)
                 if True will use the tau-embedded ztautau for z-background,
     trigger : bool(default=True) 
@@ -59,37 +64,6 @@ class Analysis(object):
     norm_field: str
              variable used to normalize qcd, ztt
     """
-    
-    @staticmethod
-    def get_analysis(args, **kwargs):
-        """
-        default constructor.
-        """
-        if 'year' in kwargs:
-            year = kwargs.pop('year')
-        else:
-            year = args.year
-        for name, value in kwargs.items():
-            if hasattr(args, name):
-                setattr(args, name, value)
-            else:
-                raise ValueError("invalid Analysis kwarg {0}".format(name))
-        analysis = Analysis(
-            year=year,
-            channel=args.channel,
-            systematics=args.systematics,
-            use_embedding=args.embedding,
-            target_region=args.target_region,
-            fakes_region=args.fakes_region,
-            decouple_qcd_shape=args.decouple_qcd_shape,
-            constrain_norms=args.constrain_norms,
-            qcd_shape_systematic=args.qcd_shape_systematic,
-            random_mu=args.random_mu,
-            mu=args.mu,
-            ggf_weight=args.ggf_weight,
-            suffix=args.suffix)
-        return analysis
-
 
     def __init__(self, config,
                  qcd_workspace_norm=None,
@@ -103,7 +77,7 @@ class Analysis(object):
                  random_mu=False,
                  mu=1.):
         # - - - - - - - - main configurer 
-        self.conf = config 
+        self.config = config 
         
         # - - - - - - - - some basic flags
         self.use_embedding = use_embedding
@@ -117,48 +91,57 @@ class Analysis(object):
 
         # - - - - - - - - analysis MC samples 
         if use_embedding:
+            raise RuntimeError("Embedding is not ready yet!")
             log.info("Using embedded Ztautau")
-            self.ztautau = samples.Embedded_Ztautau(self.conf,
+            self.wtaunu = samples.Embedded_Wtaunu(
+                self.config,
                 workspace_norm=ztt_workspace_norm,
                 constrain_norm=constrain_norms,
                 color='#00A3FF')
         else:
-            log.info("Using Sherpa2 .2 Ztautau")
-            self.ztautau = samples.Sh_Ztautau(self.conf, 
-                name='ZTauTau',
-                label='Z#rightarrow#tau#tau',
-                workspace_norm=ztt_workspace_norm,
-                constrain_norm=constrain_norms,
-                color='#157991')
+            self.wtaunu = samples.Sh_Wtaunu(
+                self.config,
+                name='Wtaunu',
+                label='W#rightarrow#tau#nu',
+                color='#B00B71')
+        self.ztautau = samples.Sh_Ztautau(
+            self.config, 
+            name='ZTauTau',
+            label='Z#rightarrow#tau#tau',
+            workspace_norm=ztt_workspace_norm,
+            constrain_norm=constrain_norms,
+            color='#157991')
 
-        self.others = samples.Others(self.conf, 
+        self.others = samples.Others(
+            self.config, 
             name='Others',
             label='Others',
             color='#8A0F0F')
-        self.diboson = samples.Diboson(self.conf,
+        self.diboson = samples.Diboson(
+            self.config,
             name='DiBoson',
             label='DiBoson',
             color='#7D560C')
-        # self.top = samples.Top(self.conf,
-        #     name='Top',
-        #     label='Top',
-        #     color='#B0AF0B')
-        self.zll = samples.Sh_Zll(self.conf,
+        
+        self.top = samples.Top(self.config,
+            name='Top',
+            label='Top',
+            color='#B0AF0B')
+        
+        self.zll = samples.Sh_Zll(
+            self.config,
             name='Zll',
             label='Z#rightarrow ll',
             color='#061c44')
-        self.wtaunu = samples.Sh_Wtaunu(self.conf,
-            name='Wtaunu',
-            label='W#rightarrow#tau#nu',
-            color='#B00B71')
         
-        self.wlnu = samples.Sh_Wlnu(self.conf,
+        self.wlnu = samples.Sh_Wlnu(
+            self.config,
             name='Wlnu',
             label='W#rightarrow l#nu',
             color='#B00B71')
         
         #WIP - - - - - - - - Fakes drived from FF method
-        # self.qcd = samples.Fakes(self.conf,
+        # self.qcd = samples.Fakes(self.config,
         #     name='Fakes',
         #     label='fakes',
         #     data=self.data,
@@ -173,18 +156,18 @@ class Analysis(object):
         # - - - - - - - - BKG components 
         self.backgrounds = [
             #self.qcd,
-            self.others,
-            self.zll,
+            self.top,
             self.wtaunu,
+            self.zll,
             self.wlnu,
-            #self.top,
-            self.diboson,
             self.ztautau,
+            self.diboson,
+            self.others,
             ]
 
         # - - - - - - - - DATA 
-        self.data = samples.Data(self.conf,
-            name='Data',
+        self.data = samples.Data(self.config,
+            name='Data1516',
             label='Data',
             markersize=1.2,
             linewidth=1)
@@ -233,39 +216,34 @@ class Analysis(object):
         -------
         self : updated object
         """
-        norm_cache.qcd_ztautau_norm(
-            ztautau=self.ztautau,
-            qcd=self.qcd,
-            category=category,
-            param=self.config.norm_field,
-            target_region=self.target_region)
-        return self
+        
+        return
 
-    def iter_categories(self, *definitions, **kwargs):
+    def iter_categories(self, category_names=None):
         """ A generator To iterate over categories, print the categories name and cuts on fly.
         Parameters
         ----------
-        definitions: list
-                  list of categories names.
+        category_names: list
+                  list of categorie names.
         Yiels:
         -------
         category : Category object
         """
         
-        categories = self.conf.categories
-        names = kwargs.pop('names', None)
-        for definition in definitions:
-            for category in categories[definition]:
-                if names is not None and category.name not in names:
+        categories = self.config.categories
+
+        for cat in categories:
+            if category_names:
+                if cat.name not in category_names:
                     continue
-                log.info("")
-                log.info("=" * 40)
-                log.info("%s category" % category.name)
-                log.info("=" * 40)
-                log.info("Cuts: %s" % self.ztautau.cuts(category, self.target_region))
-                log.info("Weights: %s" % (', '.join(map(str, self.ztautau.weights('NOMINAL')))))
-                self.normalize(category)
-                yield category
+            log.debug("Selections & Weights ")
+            log.debug("=" * 80)
+            log.debug(cat)
+            log.debug("Overl event weight: %r"%self.config.event_total_weight)
+            log.debug("=" * 80)
+                
+            #self.normalize(category)
+            yield cat
 
     def get_suffix(self):
         """ To prepare a string suffix for the final results/plots for each specific analysis.
@@ -284,86 +262,43 @@ class Analysis(object):
         return  output_suffix
 
     
-    def fit_norms(self, field, template, category, region=None,
+    def fit_norms(self, field, template, category,
                   max_iter=10, thresh=1e-7):
+        """Derive the normalizations of ttbar and Wjets from a fit of some variable
         """
-        Derive the normalizations of Ztt and QCD from a fit of some variable
+        raise RuntimeError("not implemented yet")
+    
+
+    @staticmethod
+    def process(sample, category, systematic, fields=[], write_hists=True, **kwargs):
+        return sample.hists(category,
+                            fields=fields,
+                            systematic=systematic,
+                            write=write_hists)
+    
+    def run(self, categories=[], fields=[], systematics=[], write_hists=True):
+        """run the analysis and produce the histograms.
         """
-        if region is None:
-            region = self.target_region
-        # initialize QCD and Ztautau normalizations to 50/50 of data yield
-        data_yield = self.data.events(category, region)[1].value
-        ztt_yield  = self.ztautau.events(category, region)[1].value
-        qcd_yield  = self.qcd.events(category, region)[1].value
-        log.info(
-            'Normalize z_tt and qcd BKG to data'
-            '\n data yield: {0}'
-            '\n z_tt yield: {1}'
-            '\n qcd yield: {2}'.format(
-                data_yield,ztt_yield,qcd_yield)
-            )
+        if not categories:
+            categories = self.config.categories
+            log.info("processing all categories: {}".format(categories))
 
-        qcd_scale = data_yield / (2 * qcd_yield)
-        ztt_scale = data_yield / (2 * ztt_yield)
-        qcd_scale_error = 0.
-        ztt_scale_error = 0.
-        qcd_scale_diff = 100.
-        ztt_scale_diff = 100.
-        it = 0
-        while (ztt_scale_diff > thresh or qcd_scale_diff > thresh) and it < max_iter:
-            it += 1
-            # keep fitting until normalizations converge
-            self.qcd.scale = qcd_scale
-            self.ztautau.scale = ztt_scale
+        if not fields:
+            fields = self.config.varibales
+            log.info("processing all variables: {}".format(fields))
+            
+        workers = []
+        for bkg in [self.data] + self.backgrounds:
+            for systematic in ["NOMINAL"]:
+                for cat in self.config.categories:
+                    workers.append(FuncWorker(Analysis.process, bkg, cat, systematic,
+                                              fields=fields,
+                                              write_hists=write_hists,
+                                              tauid=ROOT.TCut("tau_0_jet_bdt_medium==1") ) )
+                    
+        log.info("submitting %i jobs . . ."%len(workers))
+        start =  float(time.time())
+        run_pool(workers, n_jobs=-1)
+        done = float(time.time())
+        log.info("all jobs are done in {:0.2f} mins".format((done - start)/60.) )
 
-            channels = self.make_var_channels(
-                template, field, [category],
-                region, include_signal=False,
-                normalize=False)
-        
-            # create a workspace
-            measurement = histfactory.make_measurement(
-                'normalization_{0}'.format(field), channels,POI=None,
-                const_params=CONST_PARAMS)
-            workspace = histfactory.make_workspace(measurement, silence=False)
-
-            # fit workspace
-            minim = workspace.fit()
-            fit_result = minim.save()
-
-            # get fitted norms and errors
-            qcd = fit_result.floatParsFinal().find(
-                'ATLAS_norm_HH_{0:d}_QCD'.format(self.config.year))
-            ztt = fit_result.floatParsFinal().find(
-                'ATLAS_norm_HH_{0:d}_Ztt'.format(self.config.year))
-            qcd_scale_new = qcd.getVal()
-            qcd_scale_error = qcd.getError()
-            ztt_scale_new = ztt.getVal()
-            ztt_scale_error = ztt.getError()
-
-            qcd_scale_diff = abs(qcd_scale_new - 1.)
-            ztt_scale_diff = abs(ztt_scale_new - 1.)
-
-            qcd_scale_error *= qcd_scale / qcd_scale_new
-            qcd_scale *= qcd_scale_new
-            ztt_scale_error *= ztt_scale / ztt_scale_new
-            ztt_scale *= ztt_scale_new
-
-        self.qcd.scale = qcd_scale
-        self.ztautau.scale = ztt_scale
-        self.qcd.scale_error = qcd_scale_error
-        self.ztautau.scale_error = ztt_scale_error
-
-        return qcd_scale, qcd_scale_error, ztt_scale, ztt_scale_error
-
-    def run(self):
-        """
-        run the analysis and produce the histograms.
-        
-        ## loop over analysis categories
-        ## loop over analysis variables 
-        ## apply scale factors
-        ## apply truth matching
-        ## 
-        
-        """

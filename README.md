@@ -9,9 +9,9 @@ After the skims are finished and downloaded, update the paths in
 Running the analysis
 --------------------
     ./run-analysis --help   
-    ``__fakes and signals parts are under construction yet__``
+    ``fakes and signals parts are under construction yet``
 
 Plotting hists
 --------------
     ./draw-plots --help
-    ``__under development__``
+    ``under development``

@@ -101,10 +101,9 @@ class Sample(object):
 
     def cuts(self,
              category=None,
-             region=None,
              trigger=None,
              systematic='NOMINAL',
-             tauid=True,
+             tauid=None,
              **kwargs):
         """ to apply some cuts on the sample.
         
@@ -122,26 +121,17 @@ class Sample(object):
         """
 
         cuts = ROOT.TCut(self._cuts)
-        if category is not None:
+        if category:
             cuts += category.cuts
-        if region is not None:
-            cuts += region.cuts
-        if trigger is not None:
+        if trigger:
             cuts += trigger.cuts
 
         # - - - - - - - - apply tau ID on MC only
         if tauid:
-            if self.__class__.__name__ != "Fakes" and self.__class__.__name__ != "Data":
-                cuts += self.config.tauid
+            if self.__class__.__name__ != "Fakes":
+                log.info(tauid)
+                cuts += tauid
             
-        # if isinstance(self, SystematicsSample):
-        #     systerm, variation = SystematicsSample.get_sys_term_variation(
-        #         systematic)
-        #     for term, variations in self.cut_systematics().items():
-        #         if term == systerm:
-        #             cuts &= variations[variation]
-        #         else:
-        #             cuts &= variations['NOMINAL']
         return cuts
 
     def events(self,
@@ -150,6 +140,7 @@ class Sample(object):
                region=None,
                trigger=None,
                extra_cuts=None,
+               extra_weight=None,
                tauid=False,
                weighted=True,
                scale=1.):
@@ -179,11 +170,18 @@ class Sample(object):
         Returns
         -------
         """
+        # - - - - - - - - filters 
+        base_selection =  self.cuts(
+            category=category,
+            region=region, trigger=trigger,
+            tauid=tauid, systematic=systematic)
+        if extra_cuts:
+            base_selection &= extra_cuts
 
         total_events_weighted = 0
         # - - - - - - - - loop over sample's datasets 
         for ds in self.datasets:
-            log.info(ds.events)
+            log.debug(ds.events)
             # - - - - - - - - dataset chain 
             ds_chain = ROOT.TChain(systematic)
             for _file in ds.files:
@@ -204,20 +202,21 @@ class Sample(object):
                     rfile.Close()
                     h_metadata.Delete()
                     
-            selection =  self.cuts(category=category,
-                                   region=region, trigger=trigger,
-                                   tauid=tauid, systematic=systematic)
-            if extra_cuts:
-                selection &= extra_cuts
             if weighted:
                 lumi_weight = self.config.data_lumi * reduce(
                     lambda x,y:x*y, ds.xsec_kfact_effic) / total_events
                 
                 weight_branches = self.weights + [str(lumi_weight)]
-                selection *= ROOT.TCut('*'.join(weight_branches))
+                selection = base_selection * ROOT.TCut('*'.join(weight_branches))
+                if extra_weight:
+                    selection *= extra_weight
+                    
                 log.debug("requesting number of events from %s using cuts: %s"
                           % (ds.name, selection))
+            else:
+                selection = base_selection
                 
+            log.info(selection)     
             ds_chain.Draw("1 >> htmp(1, -100, 100)", selection) 
             htmp = ROOT.gPad.GetPrimitive("htmp")
             total_events_weighted += htmp.Integral()
@@ -257,7 +256,8 @@ class Sample(object):
               fields=[],
               systematic="NOMINAL",
               extra_cuts=None,
-              weighted=True,
+              extra_weight=None,
+              weighted=False,
               trigger=None,
               tauid=None,
               suffix=None,
@@ -282,8 +282,8 @@ class Sample(object):
         hist_set: fields histograms.
         """
 
-        log.info(
-            "processing histograms for %s tree from %s ; category: %s"%(systematic, self.name, category.name))
+        log.info("processing histograms for %s tree from %s ; category: %s"%(
+            systematic, self.name, category.name))
         
         if not fields:
             fields = self.config.variables
@@ -292,20 +292,20 @@ class Sample(object):
         # - - - - - - - - create a default canvas for the TTree.Draw
         canvas = ROOT.TCanvas()
         
+        # - - - - - - - - filters
+        base_selection = self.cuts(
+            category=category,
+            trigger=trigger,
+            tauid=tauid,
+            systematic=systematic)
+        if extra_cuts:
+            base_selection += extra_cuts
+            
         # - - - - - - - - loop over sample's datasets
         hists = {}
         for ds in self.datasets:
-            log.debug("dataset {};  total # of events:{} ; lumi: {} ".format(ds.name, ds.events, ds.lumi_weight))
-            # - - - - - - - - filters
-            selection = self.cuts(
-                category=category,
-                trigger=trigger,
-                tauid=tauid,
-                systematic=systematic)
-            if extra_cuts:
-                selection += extra_cuts
-            if tauid:
-                selection +=tauid
+            log.debug("dataset {};  total # of events:{} ; lumi: {} ".format(
+                ds.name, ds.events, ds.lumi_weight))
 
             # - - - - - - - - event weight
             if weighted:
@@ -313,7 +313,11 @@ class Sample(object):
                     lambda x,y:x*y, ds.xsec_kfact_effic) / ds.events
                 weights = self.weights + [str(lumi_weight)]
                 event_weight = "*".join(weights)
-                selection *= ROOT.TCut(event_weight)
+                selection = base_selection * ROOT.TCut(event_weight)
+                if extra_weight:
+                    selection *= extra_weight
+            else:
+                selection = base_selection
                 
             log.debug("requesting number of events from %s using cuts: %s"
                       % (ds.name, selection))
@@ -333,13 +337,16 @@ class Sample(object):
                     histname += suffix
 
                 # - - - - randomize hist name to avoid possible memory leak
-                histname += ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(13))
+                histname += ''.join(
+                    random.choice(string.ascii_uppercase + string.digits) for _ in range(13))
                 
                 # - - draw histogram
                 ds_chain.Draw("{0} >> {1}{2}".format(var.tformula, histname, var.binning), selection)
                 htmp = ROOT.gPad.GetPrimitive(histname)
-                log.debug("TTree.Drawing:: {0} >> {1}{2}; selection: {3}; # integral: {4}".format(
-                    var.tformula, histname, var.binning, selection, htmp.Integral(0, htmp.GetNbinsX()+1) ) )
+                log.debug(
+                    "TTree.Drawing:: {0} >> {1}{2}; selection: {3}; # integral: {4}".format(
+                        var.tformula, histname, var.binning, selection,
+                        htmp.Integral(0, htmp.GetNbinsX()+1) ) )
                 hists[var.name].append(htmp.Clone())
                 
             # - - - - reset the chain and go to the next dataset 
@@ -375,8 +382,9 @@ class Sample(object):
                 hist.Write(hist.GetName(), ROOT.TObject.kOverwrite)
             tf.Close()
             
-        log.info(
-            "processed %s tree from %s sample; category: %s"%(systematic, self.name, category.name))
+        log.info("processed %s tree from %s sample; category: %s"%(
+            systematic, self.name, category.name))
+        
         return hist_set 
     
     
@@ -460,13 +468,12 @@ class SystematicsSample(Sample):
             self.datasets.append(ds)
 
     @cached_property
-    def weights(self):
+    def weights(self, category=None):
         """ weight vars
         """
         
+        # - - - - - - - - rest of weights 
         weight_fields = []
-        
-        # - - - - - - - - FF weights only apply to Fakes sample; added in fake.Fakes class
         for wtype, wlist in self.config.weights.items():
             if wtype=="FF":
                 continue

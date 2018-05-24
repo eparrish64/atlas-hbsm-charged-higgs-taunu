@@ -3,7 +3,7 @@ import multiprocessing
 from multiprocessing.managers import SyncManager
     
 
-import random, time 
+import random, time, os 
 from collections import namedtuple
 
 # local imports
@@ -64,7 +64,21 @@ class Analysis():
     norm_field: str
              variable used to normalize qcd, ztt
     """
-
+    __HERE = os.path.dirname(os.path.abspath(__file__))
+    CXX_MACROS = [
+    "cxxmacros/FakeFactors/QCD/GetFF02_QCD.C",
+    "cxxmacros/FakeFactors/QCD/GetFF01_QCD.C",
+    "cxxmacros/FakeFactors/QCD/GetFF03_QCD.C",
+    "cxxmacros/FakeFactors/WCR/GetFF02_WCR.C",
+    "cxxmacros/FakeFactors/WCR/GetFF01_WCR.C",
+    "cxxmacros/FakeFactors/WCR/GetFF03_WCR.C",
+    "cxxmacros/FakeFactors/GetFFCombined.C",
+    "cxxmacros/FakeFactors/GetFFCombined_up.C",
+    "cxxmacros/FakeFactors/GetFFCombined_dn.C",
+    "cxxmacros/FakeFactors/GetElFakeSF.C",
+    ]
+    CXX_MACROS = [os.path.join(__HERE, cm) for cm in CXX_MACROS]
+    
     def __init__(self, config,
                  qcd_workspace_norm=None,
                  ztt_workspace_norm=None,
@@ -78,6 +92,11 @@ class Analysis():
                  mu=1.):
         # - - - - - - - - main configurer 
         self.config = config 
+
+        # - - - - - - - - loading and compiling cxx macros
+        log.info("loading cxx macros ...")
+        for cm in Analysis.CXX_MACROS:
+            ROOT.gROOT.ProcessLine(".L %s"%cm)
         
         # - - - - - - - - some basic flags
         self.use_embedding = use_embedding
@@ -140,22 +159,8 @@ class Analysis():
             label='W#rightarrow l#nu',
             color='#B00B71')
         
-        #WIP - - - - - - - - Fakes drived from FF method
-        # self.qcd = samples.Fakes(self.config,
-        #     name='Fakes',
-        #     label='fakes',
-        #     data=self.data,
-        #     mc=[self.ztautau, self.zll, self.wj, self.others], #order Ztt then Others
-        #     decouple_shape=decouple_qcd_shape,
-        #     coherent_shape=coherent_qcd_shape,
-        #     workspace_norm=qcd_workspace_norm,
-        #     constrain_norm=constrain_norms,
-        #     shape_systematic=qcd_shape_systematic,
-        #     color='#f8970c')
-
-        # - - - - - - - - BKG components 
-        self.backgrounds = [
-            #self.qcd,
+        # - - - - - - - - MC BKG components 
+        self.mc = [
             self.top,
             self.wtaunu,
             self.zll,
@@ -164,13 +169,23 @@ class Analysis():
             self.diboson,
             self.others,
             ]
-
+        
         # - - - - - - - - DATA 
         self.data = samples.Data(self.config,
             name='Data1516',
             label='Data',
             markersize=1.2,
             linewidth=1)
+        
+        #WIP - - - - - - - - Fakes drived from FF method
+        self.fakes = samples.Fakes(
+            self.config, self.data, self.mc,
+            name='Fakes',
+            label='fakes',
+            color='#f8970c')
+
+        self.backgrounds = self.mc + [self.fakes]
+        
 
         #WIP - - - - - - - - signals 
         #self.signals = self.get_signals(masses=self.config.signal_masses)
@@ -286,18 +301,16 @@ class Analysis():
         if not fields:
             fields = self.config.varibales
             log.info("processing all variables: {}".format(fields))
-            
+        
         workers = []
-        for bkg in [self.data] + self.backgrounds:
+        for sample in [self.data] + self.backgrounds:
             for systematic in ["NOMINAL"]:
                 for cat in self.config.categories:
-                    workers.append(FuncWorker(Analysis.process, bkg, cat, systematic,
-                                              fields=fields,
-                                              write_hists=write_hists,
-                                              tauid=ROOT.TCut("tau_0_jet_bdt_medium==1") ) )
+                    workers.append(FuncWorker(Analysis.process, sample, cat, systematic,
+                                              fields=fields,write_hists=write_hists) )
                     
         log.info("submitting %i jobs . . ."%len(workers))
-        start =  float(time.time())
+        start = float(time.time())
         run_pool(workers, n_jobs=-1)
         done = float(time.time())
         log.info("all jobs are done in {:0.2f} mins".format((done - start)/60.) )

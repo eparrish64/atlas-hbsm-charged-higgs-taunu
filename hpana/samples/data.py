@@ -53,21 +53,14 @@ class DataInfo():
 class Data(Sample):
     """
     """
+    BLIND = True
     
-    def __init__(self, config,
-                 name='Data',
-                 label='Data',
-                 blind=True,
-                 **kwargs):
-        super(Data, self).__init__(
-            config,
-            scale=1.,
-            name=name,
-            label=label,
-            **kwargs)
+    def __init__(self, config, name='Data', label='Data', blind=True, **kwargs):
+        # - - - - intantiate the base class
+        super(Data, self).__init__(config, name=name, label=label, **kwargs)
         self.config = config
-        
-        # - - - - - - - - Database 
+
+        # - - - - Database 
         self.db = self.config.database
         self.ds = self.db[name]
         
@@ -81,6 +74,7 @@ class Data(Sample):
                region=None,
                trigger=None,
                extra_cuts=None,
+               extra_weight=None,
                tauid=True,
                scale=1.):
         """ see self.events. 
@@ -109,9 +103,11 @@ class Data(Sample):
 
         total_events = 0
         selection =  self.cuts(
-            category=category, region=region, trigger=trigger, tauid=tauid)
+            category=category, trigger=trigger, tauid=tauid)
         if extra_cuts:
             selection += extra_cuts
+        if extra_weight:
+            selection *= extra_weight
             
         ds_chain = ROOT.TChain("NOMINAL")
         for _file in self.ds.files:
@@ -171,6 +167,7 @@ class Data(Sample):
               fields=[],
               systematic="NOMINAL",
               extra_cuts=None,
+              extra_weight=None,
               weighted=True,
               trigger=None,
               tauid=None,
@@ -213,6 +210,8 @@ class Data(Sample):
                 systematic=systematic)
             if extra_cuts:
                 selection += extra_cuts
+            if extra_weight:
+                selection *= extra_weight
             if tauid:
                 selection +=tauid
 

@@ -66,18 +66,20 @@ class Analysis():
     """
     __HERE = os.path.dirname(os.path.abspath(__file__))
     CXX_MACROS = [
-    "cxxmacros/FakeFactors/QCD/GetFF02_QCD.C",
-    "cxxmacros/FakeFactors/QCD/GetFF01_QCD.C",
-    "cxxmacros/FakeFactors/QCD/GetFF03_QCD.C",
-    "cxxmacros/FakeFactors/WCR/GetFF02_WCR.C",
-    "cxxmacros/FakeFactors/WCR/GetFF01_WCR.C",
-    "cxxmacros/FakeFactors/WCR/GetFF03_WCR.C",
-    "cxxmacros/FakeFactors/GetFFCombined.C",
-    "cxxmacros/FakeFactors/GetFFCombined_up.C",
-    "cxxmacros/FakeFactors/GetFFCombined_dn.C",
-    "cxxmacros/FakeFactors/GetElFakeSF.C",
+    "FakeFactors/QCD/GetFF02_QCD.C",
+    "FakeFactors/QCD/GetFF01_QCD.C",
+    "FakeFactors/QCD/GetFF03_QCD.C",
+    "FakeFactors/WCR/GetFF02_WCR.C",
+    "FakeFactors/WCR/GetFF01_WCR.C",
+    "FakeFactors/WCR/GetFF03_WCR.C",
+    "FakeFactors/GetFFCombined.C",
+    "FakeFactors/GetFFCombined_up.C",
+    "FakeFactors/GetFFCombined_dn.C",
+    "FakeFactors/GetElFakeSF.C",
+        
+    "TriggerEfficiency/ApplyEff.C",
     ]
-    CXX_MACROS = [os.path.join(__HERE, cm) for cm in CXX_MACROS]
+    CXX_MACROS = [os.path.join(__HERE, "cxxmacros", cm) for cm in CXX_MACROS]
     
     def __init__(self, config,
                  qcd_workspace_norm=None,
@@ -171,10 +173,12 @@ class Analysis():
             ]
         
         # - - - - - - - - DATA 
-        self.data = samples.Data(self.config,
+        self.data = samples.Data(
+            self.config,
             name='Data1516',
             label='Data',
             markersize=1.2,
+            blind=False,
             linewidth=1)
         
         #WIP - - - - - - - - Fakes drived from FF method
@@ -184,9 +188,8 @@ class Analysis():
             label='fakes',
             color='#f8970c')
 
-        self.backgrounds = self.mc + [self.fakes]
+        self.backgrounds = [self.fakes] + self.mc 
         
-
         #WIP - - - - - - - - signals 
         #self.signals = self.get_signals(masses=self.config.signal_masses)
         
@@ -285,33 +288,69 @@ class Analysis():
     
 
     @staticmethod
-    def process(sample, category, systematic, fields=[], write_hists=True, **kwargs):
+    def process(sample, category, systematic, fields=[], **kwargs):
         return sample.hists(category,
                             fields=fields,
                             systematic=systematic,
-                            write=write_hists)
+                            **kwargs)
     
-    def run(self, categories=[], fields=[], systematics=[], write_hists=True):
+    def run(self, categories=[], fields=[], systematics=[],
+            write_hists = True, ofile=None, overwrite=True, **kwargs):
         """run the analysis and produce the histograms.
         """
         if not categories:
             categories = self.config.categories
-            log.info("processing all categories: {}".format(categories))
-
         if not fields:
-            fields = self.config.varibales
-            log.info("processing all variables: {}".format(fields))
+            fields = self.config.variables
+        if not systematics:
+            systematics = ["NOMINAL"]
+        if not ofile:
+            ofile = self.config.hists_file
+            
+        log.info(" running the analysis with ...")
+        log.info(" systematics: {}\n".format(systematics))
+        log.info(" selections categories: {}\n".format(categories))
+        log.info(" common MC weights: {}\n".format(self.wtaunu.weights ) )
+        log.info(" variables: {}\n".format(fields) )
         
         workers = []
         for sample in [self.data] + self.backgrounds:
-            for systematic in ["NOMINAL"]:
-                for cat in self.config.categories:
+            for systematic in systematics:
+                for cat in categories:
                     workers.append(FuncWorker(Analysis.process, sample, cat, systematic,
-                                              fields=fields,write_hists=write_hists) )
+                                              fields=fields, **kwargs))
                     
-        log.info("submitting %i jobs . . ."%len(workers))
+        log.info(" submitting %i jobs . . ."%len(workers))
         start = float(time.time())
         run_pool(workers, n_jobs=-1)
-        done = float(time.time())
-        log.info("all jobs are done in {:0.2f} mins".format((done - start)/60.) )
+        hist_sets = [w.output for w in workers]
+        hists = [item for sublist in hist_sets for item in sublist]
 
+        if write_hists:
+            log.info(" writing hist to disk . . . ")
+            self.write_hists(hists, ofile, overwrite=overwrite)
+                
+        done = float(time.time())
+        log.info(" all jobs are done in {:0.2f} mins".format((done - start)/60.) )
+
+
+    def write_hists(self, hist_set, ofile, overwrite=True):
+        """
+        """
+        tf = ROOT.TFile(ofile, "UPDATE")
+        for hs in hist_set:
+            hist = hs.hist
+            systematic = hs.systematic
+            sysdir = systematic
+            if not tf.GetDirectory(sysdir):
+                tf.mkdir(sysdir)
+            tf.cd(sysdir)
+            
+            if overwrite:
+                log.debug(" overwriting the existing hist")
+                hist.Write(hist.GetName(), ROOT.TObject.kOverwrite)
+            else:
+                hist.Write(hist.GetName())
+        tf.Close()
+            
+        return 

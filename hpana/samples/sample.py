@@ -123,15 +123,16 @@ class Sample(object):
         cuts = ROOT.TCut(self._cuts)
         if category:
             cuts += category.cuts
-        if trigger:
-            cuts += trigger.cuts
+        if not trigger:
+            cuts += self.config.trigger
+        else:
+            cuts += trigger
 
-        # - - - - - - - - apply tau ID on MC only
+        # - - - - - - - - tauID (for fakes check fakes.Fakes)
         if tauid:
-            if self.__class__.__name__ != "Fakes":
-                log.info(tauid)
-                cuts += tauid
-            
+            cuts += tauid
+        else:
+            cuts += self.config.tauid
         return cuts
 
     def events(self,
@@ -203,9 +204,13 @@ class Sample(object):
                     h_metadata.Delete()
                     
             if weighted:
-                lumi_weight = self.config.data_lumi * reduce(
-                    lambda x,y:x*y, ds.xsec_kfact_effic) / total_events
-                
+                if total_events !=0:
+                    lumi_weight = self.config.data_lumi * reduce(
+                        lambda x,y:x*y, ds.xsec_kfact_effic) / total_events
+                else:
+                    log.warning(" 0 lumi weight for %s"%ds.name)
+                    lumi_weight = 0
+                    
                 weight_branches = self.weights + [str(lumi_weight)]
                 selection = base_selection * ROOT.TCut('*'.join(weight_branches))
                 if extra_weight:
@@ -257,12 +262,10 @@ class Sample(object):
               systematic="NOMINAL",
               extra_cuts=None,
               extra_weight=None,
-              weighted=False,
+              weighted=True,
               trigger=None,
               tauid=None,
-              suffix=None,
-              write=False,
-              ofile=None):
+              suffix=None):
         """
         Parameters
         ----------
@@ -281,7 +284,6 @@ class Sample(object):
         -------
         hist_set: fields histograms.
         """
-
         log.info("processing histograms for %s tree from %s ; category: %s"%(
             systematic, self.name, category.name))
         
@@ -309,8 +311,13 @@ class Sample(object):
 
             # - - - - - - - - event weight
             if weighted:
-                lumi_weight = self.config.data_lumi * reduce(
-                    lambda x,y:x*y, ds.xsec_kfact_effic) / ds.events
+                if ds.events !=0:
+                    lumi_weight = self.config.data_lumi * reduce(
+                        lambda x,y:x*y, ds.xsec_kfact_effic) / ds.events
+                else:
+                    log.warning(" 0 lumi weight for %s"%ds.name)
+                    lumi_weight = 0
+                    
                 weights = self.weights + [str(lumi_weight)]
                 event_weight = "*".join(weights)
                 selection = base_selection * ROOT.TCut(event_weight)
@@ -322,7 +329,7 @@ class Sample(object):
             log.debug("requesting number of events from %s using cuts: %s"
                       % (ds.name, selection))
 
-            # - - - - - - - - 
+            # - - - - - - - -
             ds_chain = ROOT.TChain(systematic)
             for ifile in ds.files:
                 ds_chain.Add(ifile)
@@ -368,26 +375,29 @@ class Sample(object):
                 hist=hsum,
                 systematic=systematic ) )
             
-        # - - - - - - - - if you wish to write the hists to disk
-        if write:
-            if not ofile:
-                ofile = self.config.hists_file
-            tf = ROOT.TFile(ofile, "UPDATE")
-            rdir = "%s/%s"%(self.config.channel, systematic)
-            if not tf.GetDirectory(rdir):
-                tf.mkdir(rdir)
-            tf.cd(rdir)
-            for hs in hist_set:
-                hist = hs.hist
-                hist.Write(hist.GetName(), ROOT.TObject.kOverwrite)
-            tf.Close()
-            
         log.info("processed %s tree from %s sample; category: %s"%(
             systematic, self.name, category.name))
         
-        return hist_set 
+        return hist_set
     
-    
+    def write_hists(self, hist_set, ofile, systematic="NOMINAL", overwrite=True):
+        """
+        """
+        tf = ROOT.TFile(ofile, "UPDATE")
+        rdir = "%s/%s"%(self.config.channel, systematic)
+        if not tf.GetDirectory(rdir):
+            tf.mkdir(rdir)
+        tf.cd(rdir)
+        for hs in hist_set:
+            hist = hs.hist
+            if overwrite:
+                log.debug("overwriting the existing hist")
+                hist.Write(hist.GetName(), ROOT.TObject.kOverwrite)
+            else:
+                hist.Write(hist.GetName())
+        tf.Close()
+            
+        return 
 
     
 ##---------------------------------------------------------------------------------------
@@ -472,14 +482,14 @@ class SystematicsSample(Sample):
         """ weight vars
         """
         
-        # - - - - - - - - rest of weights 
+        # - - - - - - - - MC common weights 
         weight_fields = []
         for wtype, wlist in self.config.weights.items():
             if wtype=="FF":
                 continue
             for w in wlist:
                 weight_fields.append(w)
-            
+        
         return [w.name for w in weight_fields]
 
             
@@ -502,75 +512,6 @@ class SystematicsSample(Sample):
     def systematics(self):
         pass
         
-    def draw(self, field_hist,
-             scale=1.,
-             category=None,
-             region=None,
-             cuts=None,
-             weighted=True,
-             field_scale=None,
-             weight_hist=None,
-             field_weight_hist=None,
-             systematics=False,
-             systematics_components=None,
-             bootstrap_data=False):
-        """
-        Parameters
-        ----------
-        field_hist: field histogram a dictionary {field:hist}.
-        category: Category object; specific category oof analysis.
-        region: Region object; for dealing with signal or control region.
-        cuts: TCut objetc; to apply cuts for plotting.
-        systematics: bool; wethere to do systematics or not.
-        systematics_components: specific systematics to be applied.
-        field_scale: scaled variable(normalized hists).
-        weighted_hist: weighted hist.
-        weighted: bool(default True); 
-        bootstrap_data: bool; wethere to random sample data with replacement or not 
-
-        Returns
-        -------
-        field_hist: a dictionary of the filled field histogram.
-
-        """
-
-        do_systematics = self.systematics and systematics
-
-        all_sys_hists = {}
-        for field, hist in field_hist.items():
-            if not hasattr(hist, 'systematics'):
-                hist.systematics = {}
-            all_sys_hists[field] = hist.systematics
-
-        for systematic in iter_systematics(False,
-                year=self.config.year,
-                components=systematics_components):
-
-            sys_field_hist = {}
-            for field, hist in field_hist.items():
-                if systematic in all_sys_hists[field]:
-                    sys_hist = all_sys_hists[field][systematic]
-                else:
-                    sys_hist = hist.Clone(
-                        name=hist.name + '_' + systematic_name(systematic))
-                    sys_hist.Reset()
-                    all_sys_hists[field][systematic] = sys_hist
-                sys_field_hist[field] = sys_hist
-
-            self.draw_array_helper(sys_field_hist, category, region,
-                                   cuts=cuts,
-                                   weighted=weighted,
-                                   field_scale=field_scale,
-                                   weight_hist=weight_hist,
-                                   field_weight_hist=field_weight_hist,
-                                   scores=scores[systematic] if scores else None,
-                                   min_score=min_score,
-                                   max_score=max_score,
-                                   regressor=regressor,
-                                   systematic=systematic,
-                                   scale=scale)
-
-        return rec, weights
 
 
 ##---------------------------------------------------------------------------------------
@@ -638,63 +579,4 @@ class CompositeSample(object):
         """
             
         return sum([s.events(*args, **kwargs) for s in self.samples_list])
-
-    def draw_array(self, field_hist_tot, category, region,
-                   systematics=False, **kwargs):
-        """
-        Construct histograms of the sum of all the samples.
-        Parameters
-        ----------
-        field_hist_tot: dictionnary of Histograms that constrain the structure we want to retrieve
-        category: the analysis category
-        region: the analysis region (for example 'OS')
-        systematics: boolean flag
-        
-        Returns
-        -------
-
-        """
-        field_hists_list = []
-        # -------- Retrieve the histograms dictionnary from each sample and store it into a list
-        for s in self.samples_list:
-            # field_hists_temp = s.get_hist_array(
-            # field_hist_tot, category, region, systematics=systematics,**kwargs)
-            field_hists_temp = {}
-            for field,hist in field_hist_tot.items():
-                field_hists_temp[field] = hist.Clone()
-                field_hists_temp[field].Reset()
-            s.draw_array(field_hists_temp, category, region, systematics=systematics,**kwargs)
-            field_hists_list.append( field_hists_temp )
-
-        ## reset the output histograms
-        for field, hist in field_hists_list[0].items():
-            hist_tot = hist.Clone()
-            hist_tot.Reset()
-            field_hist_tot[field] = hist_tot
-
-        ## add the nominal histograms
-        for field_hist in field_hists_list:
-            for field, hist in field_hist.items():
-                field_hist_tot[field].Add( hist )
-
-        ## Systematic Uncertainties block
-        if systematics:
-            #--- loop over the dictionnary of the summed histograms
-            for field,hist in field_hist_tot.items():
-                # --- Add a dictionary to the nominal summed histogram
-                if not hasattr( hist,'systematics'):
-                    hist.systematics = {}
-                # --- loop over the systematic uncercainties
-                for sys in iter_systematics(self.samples_list[0].year):
-                    if sys is 'NOMINAL':
-                        continue
-                    log.info ( "Fill the %s syst for the field %s" % (sys,field) )
-                    # -- Create an histogram for each systematic uncertainty
-                    hist.systematics[sys] =  hist.Clone()
-                    hist.systematics[sys].Reset()
-                    # -- loop over the samples and sum-up the syst-applied histograms
-                    for field_hist_sample in field_hists_list:
-                        field_hist_syst = field_hist_sample[field].systematics
-                        hist.systematics[sys].Add( field_hist_syst[sys] )
-        return
 

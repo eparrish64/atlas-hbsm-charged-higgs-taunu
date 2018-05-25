@@ -42,7 +42,7 @@ class Configuration():
 
     @property
     def trigger(self):
-        return TRIGGERS[self.channel][self.year]
+        return TRIGGERS[self.channel]["combined"]
 
     @property
     def weights(self):

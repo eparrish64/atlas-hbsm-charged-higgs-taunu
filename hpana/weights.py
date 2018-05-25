@@ -1,9 +1,9 @@
 __all__ = ["WEIGHTS"]
 
+from .trigger import TRIGGER_EFFICIENCIES 
 
 class Weight:
     """
-    
     """
     TYPES = {
         "BASE": (
@@ -36,18 +36,13 @@ class Weight:
             "taulep": ("1"),
         },
 
-        # - - - - trigger 
+        #WIP:make it to work per year - - - - trigger 
         "TRIGGER": {
-            "taujet": ("1"),
-            "taulep": ("1"),
-        },
-
-        # - - - - fake factors 
-        "FF": {
-            "taujet": ("1"),
+            "taujet": (TRIGGER_EFFICIENCIES["taujet"]["combined"],),
             "taulep": ("1"),
         },
     }
+    
     CHANNELS = ["taujet", "taulep"]
     YEARS = ["2015", "2016", "2017", "2018"]
 

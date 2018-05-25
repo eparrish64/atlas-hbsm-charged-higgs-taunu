@@ -1,24 +1,34 @@
 import logging
 import os
 
-import ROOT
+# - - - - - - - - setup logging
+logging.basicConfig()
 
-log = logging.getLogger('hpana')
+logging.addLevelName(
+    logging.WARNING, "\033[1;31m%s\033[1;0m" % logging.getLevelName(logging.WARNING))
+logging.addLevelName(
+    logging.ERROR, "\033[1;41m%s\033[1;0m" % logging.getLevelName(logging.ERROR))
+logging.addLevelName(
+    logging.INFO, "\033[1;94m%s\033[1;0m" % logging.getLevelName(logging.INFO))
+
+log = logging.getLogger(__name__)
 if not os.environ.get("DEBUG", False):
     log.setLevel(logging.INFO)
 if hasattr(logging, 'captureWarnings'):
     logging.captureWarnings(True)
 
-# Speed things up a bit
+# - - - - - - - - Speed things up a bit
+import ROOT
 ROOT.SetSignalPolicy(ROOT.kSignalFast)
 ROOT.gROOT.SetBatch(True)
 log.info("ROOT is in batch mode")
 
+# - - - - - - - - consts 
 NTUPLES_PATH = {
     "taujet": {"2017":""}
 }
 
-NTUPLES_VERSION = "18v01"
+NTUPLES_VERSION = "1516v10" #"18v01"
 CACHE_DIR = ""
 
 YEAR_ENERGY = {

@@ -28,8 +28,8 @@ log.setLevel(args.log)
 # - - - - - - - - build analysis main configuration object
 config = Configuration(args.channel, year=args.year)
 
-
 # - - - - - - - - instantiate the analysis
 analysis = Analysis(config)
 
-analysis.run(fields=config.variables)
+analysis.run(fields=config.variables[:1], write_hists=True)
+

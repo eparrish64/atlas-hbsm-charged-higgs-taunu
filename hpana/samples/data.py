@@ -172,8 +172,7 @@ class Data(Sample):
               trigger=None,
               tauid=None,
               suffix=None,
-              write=False,
-              ofile=None):
+              parallel=False):
 
         log.info("processing histograms for %s tree from %s ; category: %s"%(
             systematic, self.name, category.name))
@@ -198,10 +197,7 @@ class Data(Sample):
                     category=category.name,
                     hist=hist,
                     systematic=systematic) )
-        
         else:
-            hist_set = []
-            
             # - - - - filters
             selection = self.cuts(
                 category=category,
@@ -214,45 +210,67 @@ class Data(Sample):
                 selection *= extra_weight
             if tauid:
                 selection +=tauid
+                
+            if parallel:
+                hist_set = []
+                workers = [FuncWorker(Data.hists_from_dir, idir, fields, selection ,
+                                      file_pattern=self.ds.file_pattern) for idir in self.ds.dirs]
 
-            workers = [FuncWorker(Data.hists_from_dir, idir, fields, selection ,
-                                  file_pattern=self.ds.file_pattern) for idir in self.ds.dirs]
+                run_pool(workers, n_jobs=-1)
 
-            run_pool(workers, n_jobs=-1)
+                # - - - - merge all hists from workers  
+                hists = [w.output for w in workers]
 
-            # - - - - merge all hists from workers  
-            hists = [w.output for w in workers]
 
-            for var in fields:
-                hlist = [hd[var.name] for hd in hists]    
-                hsum = reduce(lambda x, y: x + y, hlist)
-                fname = "%s_%s_%s"%(self.name, category.name, var.name)
-                hsum.SetName(fname)
-                hsum.SetTitle(fname)
-                hsum.SetXTitle(var.title)
+                for var in fields:
+                    hlist = [hd[var.name] for hd in hists]    
+                    hsum = reduce(lambda x, y: x + y, hlist)
+                    fname = "%s_%s_%s"%(self.name, category.name, var.name)
+                    hsum.SetName(fname)
+                    hsum.SetTitle(fname)
+                    hsum.SetXTitle(var.title)
 
-                hist_set.append(Histset(
-                    sample=self.name,
-                    variable=var.name,
-                    category=category.name,
-                    hist=hsum,
-                    systematic=systematic) )
-            
-        # - - - - - - - - if you wish to write the hists to disk
-        if write:
-            if not ofile:
-                ofile = self.config.hists_file
-            tf = ROOT.TFile(ofile, "UPDATE")
-            rdir = "%s/%s"%(self.config.channel, systematic)
-            if not tf.GetDirectory(rdir):
-                tf.mkdir(rdir)
-            tf.cd(rdir)
-            for hs in hist_set:
-                hist = hs.hist
-                hist.Write(hist.GetName(), ROOT.TObject.kOverwrite)
-            tf.Close()
+                    hist_set.append(Histset(
+                        sample=self.name,
+                        variable=var.name,
+                        category=category.name,
+                        hist=hsum,
+                        systematic=systematic) )
+
+            else:
+                data_chain =  ROOT.TChain("NOMINAL")
+                for ifile in self.ds.files:
+                    data_chain.Add(ifile)
+
+                hist_set = []
+                # - - draw histograms
+                for var in fields:
+                    histname = var.name + "_" + ''.join(random.choice(
+                        string.ascii_uppercase + string.digits) for _ in range(13))
+
+                    log.debug("{0} >> {1}{2}".format(var.tformula, histname, var.binning))
+                    log.debug(selection)
+                    data_chain.Draw("{0} >> {1}{2}".format(
+                        var.tformula, histname, var.binning), selection)
+                    htmp = ROOT.gPad.GetPrimitive(histname)
+                    hist = htmp.Clone()
+
+                    hname = "%s_%s_%s"%(self.name, category.name, var.name)
+                    hist.SetName(hname)
+                    hist.SetTitle(hname)
+                    hist.SetXTitle(var.title)
+                    hist_set.append(Histset(
+                        sample=self.name,
+                        variable=var.name,
+                        category=category.name,
+                        hist=hist,
+                        systematic=systematic) )
+
+                # - - - - reset the chain and go to the next dataset 
+                data_chain.Reset()
             
         log.info("processed %s tree from %s sample; category: %s"%(
             systematic, self.name, category.name))
         canvas.Close()
+        
         return hist_set 

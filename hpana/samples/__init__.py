@@ -1,5 +1,5 @@
 from .. import log
-from .fakes import Fakes
+from .fakes import QCD, LepFake
 from .data import Data, DataInfo
 from .others import *
 

@@ -64,22 +64,19 @@ SELECTIONS["BASE"] = {
         (CLEAN_EVT
          + Tau_PT40
          + LEP_VETO
-         + TAU_TRACKS
-         + TCut("tau_0_n_tracks==1")),
+         + TAU_TRACKS),
         
         "2016":
         (CLEAN_EVT
          + Tau_PT40
          + LEP_VETO
-         + TAU_TRACKS
-         + TCut("tau_0_n_tracks==1")),
+         + TAU_TRACKS),
         
         "2017":
         (CLEAN_EVT
          + Tau_PT40
          + LEP_VETO
-         + TAU_TRACKS
-         + TCut("tau_0_n_tracks==1")),
+         + TAU_TRACKS),
     },
     "taulep":{
         "2015": TCut(""),

@@ -78,6 +78,7 @@ class Analysis():
     "FakeFactors/GetElFakeSF.C",
         
     "TriggerEfficiency/ApplyEff.C",
+    "GetTopPtWeight.C",
     ]
     CXX_MACROS = [os.path.join(__HERE, "cxxmacros", cm) for cm in CXX_MACROS]
     
@@ -144,7 +145,8 @@ class Analysis():
             label='DiBoson',
             color='#7D560C')
         
-        self.top = samples.Top(self.config,
+        self.top = samples.Top(
+            self.config,
             name='Top',
             label='Top',
             color='#B0AF0B')
@@ -181,14 +183,21 @@ class Analysis():
             blind=False,
             linewidth=1)
         
-        #WIP - - - - - - - - Fakes drived from FF method
-        self.fakes = samples.Fakes(
+        # - - - - - - - - jets faking a tau
+        self.qcd = samples.QCD(
             self.config, self.data, self.mc,
-            name='Fakes',
-            label='fakes',
+            name='QCD',
+            label='jet-->#tau',
             color='#f8970c')
 
-        self.backgrounds = [self.fakes] + self.mc 
+        # - - - - - - - - leptons faking a tau
+        self.lepfakes = samples.LepFake(
+            self.config, self.mc,
+            name='LepFakes',
+            label='lep-->#tau',
+            color='#00A3FF')
+        
+        self.backgrounds = [self.qcd, self.lepfakes] + self.mc 
         
         #WIP - - - - - - - - signals 
         #self.signals = self.get_signals(masses=self.config.signal_masses)
@@ -314,7 +323,7 @@ class Analysis():
         log.info(" variables: {}\n".format(fields) )
         
         workers = []
-        for sample in [self.data] + self.backgrounds:
+        for sample in self.backgrounds:
             for systematic in systematics:
                 for cat in categories:
                     workers.append(FuncWorker(Analysis.process, sample, cat, systematic,

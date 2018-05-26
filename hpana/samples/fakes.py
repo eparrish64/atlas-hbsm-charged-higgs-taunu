@@ -4,7 +4,12 @@ import ROOT
 from .sample import Sample, Histset
 from .. import log
 
-class Fakes(Sample):
+##---------------------------------------------------------------------------------------
+## jets faking a tau background 
+class QCD(Sample):
+    ANTI_TAU = ROOT.TCut(
+        "tau_0_jet_bdt_score_sig > 0.02 && tau_0_jet_bdt_loose==0")
+    
     #WIP: - - - - - - - -  Fake-Factor weights are different for different selection categories
     FF_TYPES = {
         "taujet": {
@@ -30,7 +35,7 @@ class Fakes(Sample):
         "2016": ("tau_0_pt/1000.", "tau_0_n_tracks"),}
     
     rQCD = "GetFFCombined({0}, {1}, {2}, {3}, {4})"
-    ANTI_TAU = ROOT.TCut("tau_0_jet_bdt_score_sig > 0.02 && tau_0_jet_bdt_loose==0")
+    
     
     @staticmethod
     def sample_compatibility(data, mc):
@@ -40,53 +45,53 @@ class Fakes(Sample):
         if not mc:
             raise ValueError("mc must contain at least one MC sample")
     
-    def __init__(self, config, data, mc, name="Fakes", label="fakes", **kwargs):
+    def __init__(self, config, data, mc, name="QCD", label="fakes", **kwargs):
         
         # - - - - quick sanity check
-        Fakes.sample_compatibility(data, mc)
+        QCD.sample_compatibility(data, mc)
 
         # - - - - instantiate base 
-        super(Fakes, self).__init__(config, name=name, label=label, **kwargs)
+        super(QCD, self).__init__(config, name=name, label=label, **kwargs)
         
         self.config = config
         self.data = data
         self.mc = mc
-        self.tauid = Fakes.ANTI_TAU
+        self.tauid = QCD.ANTI_TAU
         
     def cuts(self, **kwargs):
         """ fakes tauID MEDIUM corresponds to 
-        Fakes.ANTI_TAU * FF(tau_0_pt, tau_0_n_tracks) 
+        QCD.ANTI_TAU * FF(tau_0_pt, tau_0_n_tracks) 
         """
         tauid = kwargs.pop("tauid", self.tauid)
-        selection = super(Fakes, self).cuts(tauid=tauid, **kwargs)
+        selection = super(QCD, self).cuts(tauid=tauid, **kwargs)
         log.debug(selection)
         return selection
     
     def weights(self, **kwargs):
-        """ FF weights for Fakes need special treatment.
+        """ FF weights for QCD need special treatment.
         """
         if not "category" in kwargs:
             raise RuntimeError(
                 "in order to extract FF weights for fakes a category is needed!")
 
         category = kwargs["category"]
-        if self.config.year in Fakes.TEMPLATE_VARS:
-            v0, v1 = Fakes.TEMPLATE_VARS[self.config.year]
+        if self.config.year in QCD.TEMPLATE_VARS:
+            v0, v1 = QCD.TEMPLATE_VARS[self.config.year]
         else:
-            v0, v1 = Fakes.TEMPLATE_VARS["default"]
+            v0, v1 = QCD.TEMPLATE_VARS["default"]
 
-        ff_wcr = Fakes.FF_WCR.format(v0, v1)
-        ff_qcd = Fakes.FF_QCD.format(v0, v1)
-        ff_weight_index = Fakes.FF_TYPES[self.config.channel][category.name.upper()]
+        ff_wcr = QCD.FF_WCR.format(v0, v1)
+        ff_qcd = QCD.FF_QCD.format(v0, v1)
+        ff_weight_index = QCD.FF_TYPES[self.config.channel][category.name.upper()]
             
-        ff_weight = Fakes.rQCD.format(v0, v1, ff_qcd, ff_wcr, ff_weight_index)
+        ff_weight = QCD.rQCD.format(v0, v1, ff_qcd, ff_wcr, ff_weight_index)
         
         return [ff_weight]
     
     def events(self, **kwargs):
         """ 
         """
-        tauid = kwargs.pop("tauid", Fakes.ANTI_TAU)
+        tauid = kwargs.pop("tauid", QCD.ANTI_TAU)
         weighted = kwargs.pop("weighted", True)
         extra_weight = kwargs.pop("extra_weight", ROOT.TCut("1"))
         for w in self.weights(**kwargs):
@@ -115,8 +120,8 @@ class Fakes(Sample):
               suffix=None):
         """
         """
-        log.info("processing histograms for %s tree from %s ; category: %s"%(
-                        systematic, self.name, category.name))
+        log.info("processing %s tree from %s ; category: %s"%(
+            systematic, self.name, category.name))
         # - - - - - - - - it's a data-deriven approach --> no systematics tree for fakes
         if systematic != "NOMINAL":
             return []
@@ -124,28 +129,26 @@ class Fakes(Sample):
         extra_weight = ROOT.TCut("1")
         for w in self.weights(category=category):
             extra_weight *= w
-
-        # - - - - - - - - mc 
+            
+        # - - - - - - - - mc with truth tau, but failing tau ID 
         mc_hists = []
         for m in self.mc:
             mc_hists += m.hists(
                 category,
                 fields=fields,
-                tauid=Fakes.ANTI_TAU,
+                tauid=QCD.ANTI_TAU,
                 extra_cuts=extra_cuts,
                 extra_weight=extra_weight,
                 weighted=weighted,
                 trigger=trigger)
                 
-        # - - - - - - - - data: shouldn't blind data for Fakes
+        # - - - - - - - - data: shouldn't blind data for QCD calculations
         self.data.blind = False
         data_hists = self.data.hists(
             category,
             fields=fields,
-            tauid=Fakes.ANTI_TAU,
-            extra_cuts=extra_cuts,
+            tauid=QCD.ANTI_TAU,
             extra_weight=extra_weight,
-            weighted=False,
             trigger=trigger)
         
         # - - - - - - - - subtract sum of mc from data
@@ -171,17 +174,82 @@ class Fakes(Sample):
                 category=category.name,
                 hist=h_fakes,
                 systematic=systematic) )
-            
-            log.debug(var.name)
-            log.debug("DATA: {}; MC:{} ;Fakes: {}".format(
-                h_data.Integral(0, h_data.GetNbinsX()),
-                h_mc_sum.Integral(0, h_mc_sum.GetNbinsX()),
-                h_fakes.Integral(0, h_fakes.GetNbinsX()), ) )
-            
-        log.info(
-            "proccessed histograms %s tree from %s ; category=%s"%(systematic, self.name, category.name))
+        log.info("proccessed %s tree from %s ; category=%s"%(
+            systematic, self.name, category.name))
         
         return fakes_hist_set
 
     
     
+##---------------------------------------------------------------------------------------
+## leptons faking a tau 
+class LepFake(Sample):
+    TAU_IS_LEP = ROOT.TCut(
+        "abs(tau_0_truth_universal_pdgId)==11||abs(tau_0_truth_universal_pdgId)==13")
+        
+    def __init__(self, config, mc, name="LepFake", label="l->#tau", **kwargs):
+        # - - - - instantiate base 
+        super(LepFake, self).__init__(config, name=name, label=label, **kwargs)
+        
+        self.config = config
+        self.mc = mc
+        self.name = name
+        self.label = label
+        
+    def hists(self, category,
+              fields=[],
+              systematic="NOMINAL",
+              extra_cuts=None,
+              extra_weight=None,
+              weighted=True,
+              trigger=None,
+              tauid=None,
+              suffix=None):
+        """
+        """
+        log.info("processing %s tree from %s ; category: %s"%(
+            systematic, self.name, category.name))
+    
+        # - - - - a lepton which passes tau ID  
+        if not extra_cuts:
+            extra_cuts = LepFake.TAU_IS_LEP
+        else:
+            extra_cuts += LepFake.TAU_IS_LEP
+            
+        # - - - - - - - - mc 
+        mc_hists = []
+        for m in self.mc:
+            # - - - - turn off truth matching 
+            m.truth_match_tau = False
+            mc_hists += m.hists(
+                category,
+                fields=fields,
+                extra_cuts=extra_cuts,
+                weighted=weighted,
+                trigger=trigger)
+        
+        # - - - - - - - - 
+        lepfake_hist_set = []
+        for var in fields:
+            h_mc = filter(lambda h: h.variable==var.name, mc_hists)
+            h_mc = [h.hist for h in h_mc]
+            h_mc_sum = reduce(lambda h1, h2: h1+h2, h_mc)
+
+            # - - - - get the fakes hist and set it's name
+            fname = '{0}_{1}_{2}'.format(self.name, category.name, var.name)
+            h_mc_sum.SetName(fname)
+            h_mc_sum.SetTitle(fname)
+            h_mc_sum.SetXTitle(var.title)
+            
+            lepfake_hist_set.append(Histset(
+                sample=self.name,
+                variable=var.name,
+                category=category.name,
+                hist=h_mc_sum,
+                systematic=systematic) )
+            
+        log.info("proccessed %s tree from %s ; category=%s"%(
+            systematic, self.name, category.name))
+
+        return lepfake_hist_set
+        

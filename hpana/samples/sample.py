@@ -16,10 +16,8 @@ from . import log
 from ..db import samples as samples_db, datasets
 from ..db.decorators import cached_property
 from ..config import Configuration
-from ..lumi import LUMI, get_lumi_uncert
 from ..systematics import get_systematics, iter_systematics, systematic_name
-from ..cluster.parallel import FuncWorker, run_pool, map_pool
-
+from ..categories import TRUTH_MATCH
 
 ##---------------------------------------------------------------------------------------
 ## 
@@ -284,7 +282,7 @@ class Sample(object):
         -------
         hist_set: fields histograms.
         """
-        log.info("processing histograms for %s tree from %s ; category: %s"%(
+        log.info("processing %s tree from %s ; category: %s"%(
             systematic, self.name, category.name))
         
         if not fields:
@@ -302,13 +300,15 @@ class Sample(object):
             systematic=systematic)
         if extra_cuts:
             base_selection += extra_cuts
-            
+
         # - - - - - - - - loop over sample's datasets
         hists = {}
         for ds in self.datasets:
-            log.debug("dataset {};  total # of events:{} ; lumi: {} ".format(
-                ds.name, ds.events, ds.lumi_weight))
-
+            log.debug("--"*70)
+            log.debug("dataset {};  #events:{} ; lumi: {} ".format(
+                ds.name, ds.events, self.config.data_lumi*ds.lumi_weight))
+            log.debug("selection: {0}".format(base_selection))
+                    
             # - - - - - - - - event weight
             if weighted:
                 if ds.events !=0:
@@ -323,11 +323,11 @@ class Sample(object):
                 selection = base_selection * ROOT.TCut(event_weight)
                 if extra_weight:
                     selection *= extra_weight
+
+                log.debug("weight: {0}*{1}".format(event_weight, extra_weight))
             else:
                 selection = base_selection
                 
-            log.debug("requesting number of events from %s using cuts: %s"
-                      % (ds.name, selection))
 
             # - - - - - - - -
             ds_chain = ROOT.TChain(systematic)
@@ -348,12 +348,11 @@ class Sample(object):
                     random.choice(string.ascii_uppercase + string.digits) for _ in range(13))
                 
                 # - - draw histogram
+                #log.debug("TTree.Drawing:: {0} >> {1}{2}, {3}".format(
+                #    var.tformula, histname, var.binning, selection))
+                
                 ds_chain.Draw("{0} >> {1}{2}".format(var.tformula, histname, var.binning), selection)
                 htmp = ROOT.gPad.GetPrimitive(histname)
-                log.debug(
-                    "TTree.Drawing:: {0} >> {1}{2}; selection: {3}; # integral: {4}".format(
-                        var.tformula, histname, var.binning, selection,
-                        htmp.Integral(0, htmp.GetNbinsX()+1) ) )
                 hists[var.name].append(htmp.Clone())
                 
             # - - - - reset the chain and go to the next dataset 
@@ -485,11 +484,8 @@ class SystematicsSample(Sample):
         # - - - - - - - - MC common weights 
         weight_fields = []
         for wtype, wlist in self.config.weights.items():
-            if wtype=="FF":
-                continue
             for w in wlist:
                 weight_fields.append(w)
-        
         return [w.name for w in weight_fields]
 
             
@@ -523,6 +519,7 @@ class MC(SystematicsSample):
 
     def __init__(self, *args, **kwargs):
         self.pileup_weight = kwargs.pop('pileup_weight', False)
+        self.truth_match_tau = kwargs.pop("truth_match_tau", True)
         super(MC, self).__init__(*args, **kwargs)
 
     def cuts(self, *args, **kwargs):
@@ -530,12 +527,14 @@ class MC(SystematicsSample):
         Parameters
         ----------
 
-
         Returns
         -------
         cut: Cut, updated Cut type.
         """
         cut = super(MC, self).cuts(*args, **kwargs)
+        if self.truth_match_tau:
+            cut += TRUTH_MATCH
+            
         return cut
     
 

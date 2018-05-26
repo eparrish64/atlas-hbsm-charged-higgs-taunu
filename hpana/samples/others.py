@@ -8,14 +8,14 @@ __all__=[
     'Others',
     "Mg_Ztautau",
     "Sh_Ztautau",
-    "Pythia_Ztautau"
 ]
+
 import ROOT
 
 # local imports
-from .sample import MC, Background
+from .sample import MC, Background, cached_property
 from . import log
-from ..categories import TRUTH_MATCH
+from ..categories import TAU_IS_TRUE
 
 ##----------------------------------------------------------------------------------------
 ##
@@ -29,7 +29,7 @@ class EWK(MC, Background):
         
     def cuts(self, *args, **kwargs):
         cut = super(EWK, self).cuts(*args, **kwargs)
-        cut += TRUTH_MATCH
+        cut += TAU_IS_TRUE
         return cut
 
 
@@ -40,48 +40,29 @@ class Top(MC, Background):
     NORM_BY_THEORY = True
 
     def __init__(self, *args, **kwargs):
-        self.matched = kwargs.pop('truth_matched', False)
         super(Top, self).__init__(*args, **kwargs)
 
-    def cuts(self, *args, **kwargs):
-        cut = super(Top, self).cuts(*args, **kwargs)
-        cut += TRUTH_MATCH
-        return cut
-
+    @cached_property
+    def weights(self, **kwargs):
+        """WIP: specific weights for Top like top pt weights
+        """
+        weights = super(Top, self).weights
+        weights += ["GetTopPtWeight(truth_top0_pt)"]
+        
+        return weights
+    
+        
 ##----------------------------------------------------------------------------------------
-##
+## sample dedicated classes 
+
 class Diboson(MC, Background):
-    NO_KYLEFIX = True
-    NORM_BY_THEORY = True
+    # mixin
+    pass
 
-    def __init__(self, *args, **kwargs):
-        self.truth_matched = kwargs.pop('truth_matched', True)
-        super(Diboson, self).__init__(*args, **kwargs)
-
-    def cuts(self, *args, **kwargs):
-        cut = super(Diboson, self).cuts(*args, **kwargs)
-        cut += TRUTH_MATCH
-        return cut
-
-##----------------------------------------------------------------------------------------
-##
 class Others(MC, Background):
-    NO_KYLEFIX = True
-    NORM_BY_THEORY = True
+    # mixin
+    pass
 
-    def __init__(self, *args, **kwargs):
-        self.truth_matched = kwargs.pop('truth_matched', True)
-        super(Others, self).__init__(*args, **kwargs)
-
-    def cuts(self, *args, **kwargs):
-        cut = super(Others, self).cuts(*args, **kwargs)
-        cut += TRUTH_MATCH
-        return cut
-
-
-##----------------------------------------------------------------------------------------
-##
-# INDIVIDUAL SAMPLES
 class Sh_Wtaunu(MC, Background):
     pass
 
@@ -101,8 +82,3 @@ class Mg_Ztautau(MC, Background):
     pass
 
 
-class MC_Ztautau_DY(MC_Ztautau):
-    pass
-
-class Pythia_Ztautau(MC_Ztautau):
-    pass

@@ -8,197 +8,38 @@
 """
 
 ## stdl-lib
-from argparse import ArgumentParser
 import sys, os
 from collections import OrderedDict
-
-## ROOT
-import ROOT
-ROOT.gROOT.SetBatch(True)
-ROOT.gROOT.Macro("$ROOTCOREDIR/scripts/load_packages.C")
+from argparse import ArgumentParser
 
 ## local
-from PlottingCode.variables import VARIABLES 
-from PlottingCode.common_backgrounds import *
-from PlottingCode.sample_configuration import * 
-from PlottingCode.PlottingUtils import *
-from PlottingCode.PlottingHelpers import *
-from PlottingCode.sample import (
-    wsh, zsh, wtaush, ztaush, diboson,
-    qcd, top, ttbar, single_top,lep,
-    #wmg, zmg, wtaumg, ztaumg, 
-    )
-from PlottingCode.sample import data as DATA
-                                 
-##------------------------------------
-#> list of backgrounds
-BACKGROUNDS = [
-    qcd,
-    top,
-    #wsh,
-    #zsh,
-    wtaush,
-    ztaush,
-    diboson,
-    lep
-    ]
- 
-#> list of singlas
-SIGNALS = None
+from hpana.config import Configuration
+from hpana.analysis import Analysis
+from hpana.plotting  import draw
 
-VARS_TO_PLOT = [
-    'tau_0_pt',
-    'tau_0_eta',
-    'tau_0_n_tracks',
-    #'tau_0_met_dphi',
-    'tau_0_met_mt',
-    'met_et',
-    'n_bjets',
-    'n_jets',
-    'jet_0_pt',
-    'jet_0_eta',
-    # 'jet_1_pt',
-    # 'jet_1_eta',
-    ]
+# - - - - - - - - setup cmd args
+parser =  ArgumentParser()
+parser.add_argument('hfile', help='histograms root file')
+parser.add_argument('--pdir', '-pd', help='plots path', default="./plots")
+parser.add_argument('--var', '-v', help="variables to draw")
+parser.add_argument('--category', '-c', help="category selections")
+args = parser.parse_args()
 
-##------------------------------------
-def prepare_models(hists_tfile, variable, samples,
-                   region='SR', #<! Signal Region
-                   truth_match=True, 
-                   systematics=None):
-    """ create a dictionary of hists for different samples
-    and different systs.
+# - - - - - - - - setup ROOT
+import ROOT
 
-    Parameters
-    ----------
-    hists_tfile:ROOT.TFile, containing all hists.
-    model: lsit,a list of samples objects, backgrounds, signal or data
+# - - - - - - - - instantiate the analysis
+config = Configuration("taujet", "2016")
+analysis = Analysis(config)
+backgrounds = analysis.backgrounds
+data = analysis.data
 
-    Returns
-    -------
-    models:dict,
-    create a dictionary of hists for different samples
-    and different systs.
-    """
-
-    if not isinstance(samples,(list, tuple)):
-        samples = [samples]
-    
-    ## available samples hists in root file
-    hist_samples = set()
-    nom_dir = hists_tfile.GetDirectory('NOMINAL')
-    for key in nom_dir.GetListOfKeys():
-        sample_name = (key.GetName().split('_'))[0]
-        hist_samples.add(sample_name)
-
-    models = []
-    for sample in samples:
-        sname = sample.name
-        if sname not in hist_samples:
-            log.error(
-                ' %s hists are not available in %s'%(sname, hists_tfile.GetName()))
-            sys.exit(0)
-
-        mdict = OrderedDict()
-        mdict[sname] = {'HISTS':{'NOMINAL':{}}, 'INFO':{}}
-        hist_name = '%s_%s_%s'%(sname, variable, region)
-        if truth_match:
-            hist_name +='_TrueTau'
-        try:
-            h_nom = hists_tfile.Get('NOMINAL/%s'%hist_name).Clone()
-        except:
-            log.warning('failed to retreive NOMINAL/%s hist'%hist_name)
-        mdict[sname]['HISTS']['NOMINAL'] = h_nom 
-        mdict[sname]['INFO'] = sample
-
-        ## NO SYST for data
-        if sname == 'data' or systematics is None:
-            models.append(mdict)
-            continue
-
-        ## iterate systs
-        for term, var in systematics.items():
-            if term not in mdict[sname]['HISTS']:
-                mdict[sname]['HISTS'][term] = [] # (HIGH , LOW)
-
-            h_up = hists_tfile.Get('%s/%s'%(var[0], hist_name))
-            if h_up is None:
-                log.warning('NULL %s/%s'%(var[0], hist_name))
-                continue
-            mdict[sname]['HISTS'][term].append(h_up)
-
-            if len(var) > 1:
-                h_down = hists_tfile.Get('%s/%s'%(var[1], hist_name))
-                if h_down is None:
-                    log.warning('NULL %s/%s'%(var[1], hist_name))
-                    continue
-                mdict[sname]['HISTS'][term].append(h_down)
-
-            pass #<! syst loop
-        models.append(mdict)
-
-        pass #<! model loop
-    return models
-        
-##------------------------------------
-def make_plots(
-    hists_file, variables,
-    data=DATA,
-    backgrounds=BACKGROUNDS,
-    signals=SIGNALS,
-    regions=None, 
-    systematics=SYSTEMATICS_TAUJET,
-    output_dir=None):
-
-    """
-    produce plots
-    """
-    hists_tfile = ROOT.TFile.Open(hists_file)
-
-    for var in variables:
-        for region in regions:
-            # get list of bkg hist and obj
-            bkgs_hists = prepare_models(
-                hists_tfile, var, backgrounds,
-                region=region,systematics=systematics)
-
-            # get data hist, info
-            data_hists = prepare_models(
-                hists_tfile, var, data,
-                region=region)
-            data_hists = data_hists[0]
-
-            draw(var, 
-                 data=data_hists,
-                 backgrounds=bkgs_hists, 
-                 #signals=signals,
-                 #output_name=var,
-                 show_pvalue=True,
-                 show_ratio=True,
-                 overflow=True,
-                 blind=False,
-                 region=region,
-                 systematics=systematics,
-                 output_dir=output_dir)
-    hists_tfile.Close()
-
-##------------------------------------    
-if __name__=='__main__':
-    
-    # arg parser
-    parser =  ArgumentParser()
-    parser.add_argument('hfile', default='Histos.root',help='Hisots file')
-    parser.add_argument('--pdir', '-pd', default=os.getcwd(), help='plots path')
-    parser.add_argument('--var', '-v', default =None, help='var to plot')
-    parser.add_argument('--region', '-r', help='region to make plot')
-    args = parser.parse_args()
-
-    hists_file = args.hfile
-    variables  = VARS_TO_PLOT
-    regions    = ['TTBarCR', 'WjetsCR', 'SR']
-    if args.var is not None:
-        variables = [args.var]
-    if args.region is not None:
-        regions = [args.region]
-    #variables=['tau_0_pt', 'met_et']
-    make_plots(hists_file, variables, regions=regions, output_dir=args.pdir)
+# - - - - - - - - do the plots
+for var in config.variables:
+    for cat in config.categories:
+        draw(args.hfile, var, cat,
+             backgrounds=backgrounds,
+             data=None,
+             show_ratio=False,
+             show_pvalue=True)
+            

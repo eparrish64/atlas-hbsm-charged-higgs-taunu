@@ -1,47 +1,35 @@
 
-import os
+import os, math
 from contextlib import contextmanager
 import threading
 
 import ROOT
 from ROOT import TCanvas, TPad, TH1F, TLine
 ATLAS_LABEL = 'ATLAS Internal'
-import math
-import logging 
-# colorful log handler
-logging.basicConfig()
-logging.addLevelName(logging.WARNING, "\033[1;31m%s\033[1;0m" % logging.getLevelName(logging.WARNING))
-logging.addLevelName(logging.ERROR, "\033[1;41m%s\033[1;0m" % logging.getLevelName(logging.ERROR))
-logging.addLevelName(logging.INFO, "\033[1;94m%s\033[1;0m" % logging.getLevelName(logging.INFO))
-log = logging.getLogger(os.path.basename(__file__))
-log.setLevel(logging.INFO)
 
-
-
-
-
-
-"""
-Base classes for plots
-"""
 __all__= [
     'SimplePlot',
     'RatioPlot',
-    'save_canvas',
-    'label_plot',
-    'uncertainty_band',
-    ]
-
+    "uncertainty_band",
+    "label_plot",
+    "save_canvas",
+    "fold_overflow",
+    "create_canvas",
+    "ratio_hist",
+    "ATLAS_LABEL",
+]
 
 """
-Note about locks: we dont need this in cases where ROOT has a
-thread-specific variable, so gDirectory and gPad are safe.  Not so for
-gStyle, IsBatch and TH1.AddDirectory, so we use a lock in these
-cases. To prevent out-of-order lock grabbing, just use one reentrant
-lock for all of them.
+* Note about locks: we dont need this in cases where ROOT has a
+* thread-specific variable, so gDirectory and gPad are safe.  Not so for
+* gStyle, IsBatch and TH1.AddDirectory, so we use a lock in these
+* cases. To prevent out-of-order lock grabbing, just use one reentrant
+* lock for all of them.
 """
 LOCK = threading.RLock()
 
+##----------------------------------------------------------------------------
+##
 @contextmanager
 def preserve_current_canvas():
     """
@@ -62,6 +50,8 @@ def preserve_current_canvas():
                 pass
 
 
+##----------------------------------------------------------------------------
+##
 @contextmanager
 def preserve_batch_state():
     """
@@ -75,6 +65,8 @@ def preserve_batch_state():
             ROOT.gROOT.SetBatch(old)
 
 
+##----------------------------------------------------------------------------
+##
 @contextmanager
 def invisible_canvas():
     """
@@ -97,9 +89,14 @@ def invisible_canvas():
 
 
 
+##----------------------------------------------------------------------------
+##
 class SimplePlot(ROOT.TCanvas):
-    def __init__(self, width=None, height=None,
-                 xtitle=None, ytitle=None,
+    def __init__(self,
+                 width=None,
+                 height=None,
+                 xtitle=None,
+                 ytitle=None,
                  tick_length=15,
                  logy=False):
 
@@ -158,7 +155,6 @@ class SimplePlot(ROOT.TCanvas):
         return self
 
     def __exit__(self, type, value, traceback):
-        # similar to preserve_current_canvas in rootpy/context.py
         if self._prev_pad:
             self._prev_pad.cd()
         elif ROOT.gPad.func():
@@ -172,6 +168,8 @@ class SimplePlot(ROOT.TCanvas):
 
 
 
+##----------------------------------------------------------------------------
+##
 class RatioPlot(TCanvas):
 
     def __init__(self, width=None, height=None,
@@ -317,8 +315,41 @@ class RatioPlot(TCanvas):
 
 
 
+
+
+##----------------------------------------------------------------------------
+##
+def save_canvas(canvas, directory, name, formats=None):
+    # save plots to disk 
+    filepath = os.path.join(directory, name)
+    path = os.path.dirname(filepath)
+    if not os.path.exists(path):
+        os.mkdir(path, 0755)
+
+    if formats is not None:
+        if isinstance(formats, basestring):
+            formats = formats.split()
+        for fmt in formats:
+            if fmt[0] != '.':
+                fmt = '.' + fmt
+            canvas.SaveAs(filepath + fmt)
+    else:
+        canvas.SaveAs(filepath)
+
+##----------------------------------------------------------------------------
+##
+def fold_overflow(hist):
+    nbins = hist.GetNbinsX()
+    first_bin = hist.GetBinContent(0) + hist.GetBinContent(1)  
+    hist.SetBinContent(1, first_bin)
+    last_bin = hist.GetBinContent(nbins-1) + hist.GetBinContent(nbins)
+    hist.SetBinContent(nbins-1, last_bin)
+    return 
+
+##----------------------------------------------------------------------------
+##
 def label_plot(pad, 
-               region_label=None,
+               category=None,
                data_info=None, 
                atlas_label=None,
                textsize=22):
@@ -326,11 +357,11 @@ def label_plot(pad,
     """
 
     # draw the category label
-    if region_label:
+    if category:
         rlabel = ROOT.TLatex(
             pad.GetLeftMargin() + 0.45,
             1 - pad.GetTopMargin() - 0.075,
-            '#bf{%s}'%region_label)
+            '#bf{%s}'%category)
         rlabel.SetNDC()
         rlabel.SetTextFont(43)
         rlabel.SetTextSize(textsize-2)
@@ -362,11 +393,13 @@ def label_plot(pad,
         #alabel.Draw()
 
     ## FIX ME: pad Draw doesn't update the pad, needed to return labels!
-    #pad.Update()
-    #pad.Modified()
-    return rlabel, dlabel, alabel
+    pad.Update()
+    pad.Modified()
+    return [rlabel, dlabel, alabel]
 
-def uncertainty_band(models, systematics):
+##----------------------------------------------------------------------------
+##
+def uncertainty_band(models, systematics, overflow=True):
     
     """
     add separate variations in quadrature,
@@ -374,14 +407,15 @@ def uncertainty_band(models, systematics):
     
     Parameters
     ----------
-    hists_file: str, path to  merged hists; Hists.root file.
+    models = list (dict), holding backgrounds info and hists
     systematics:list, list of analysis systematics.
-    
     
     Returns
     -------
-    None
+    total_backgrounds, high_band, low_band: ROO.TH1F, 
+    corrsponding to total nom, low band and high band error
     """
+
     if not isinstance(models, (list, tuple)):
         models = [models]
 
@@ -391,88 +425,99 @@ def uncertainty_band(models, systematics):
         mname = model.keys()[0]
         m_obj = model[mname]['INFO']
         nom_hists.append(model[m_obj.name]['HISTS']['NOMINAL'])
+
+    if overflow:
+        [fold_overflow(h) for h in nom_hists]
+
     total_nom = reduce(lambda h1, h2: h1+h2,nom_hists) 
     
     var_high = []
     var_low = []
-    for syst, variations in systematics.items():
-        if len(variations) == 2:
-            high, low = variations
-        elif len(variations) == 1:
-            high = variations[0]
-            low = 'NOMINAL'
-        else:
-            raise ValueError(
-                "only one or two variations "
-                "per term are allowed: {0}".format(syst))
 
-        if high == 'NOMINAL' and low == 'NOMINAL':
-            continue
-
-        total_high = total_nom.Clone()
-        total_high.Reset()
-        total_low = total_high.Clone()
-        total_max = total_high.Clone()
-        total_min = total_high.Clone()
-        for model in models:
-            mname = model.keys()[0]
-            m_obj = model[mname]['INFO']
-            nom_hist = model[m_obj.name]['HISTS']['NOMINAL']
-            syst_hists = model[m_obj.name]['HISTS'][syst] #<! (UP, DOWN)
-            if high == 'NOMINAL':
-                total_high += nom_hist
-            else:
-                ## retrieve the high syst componet hist
-                total_high += syst_hists[0]
-
-            if low == 'NOMINAL':
-                total_low += nom_hist
-            else:
-                ## retrieve the low syst componet hist
-                total_low += syst_hists[1]
-
-        if total_low.Integral() <= 0:
-            log.warning("{0} is non-positive".format(syst))
-        if total_high.Integral() <= 0:
-            log.warning("{0} is non-positive".format(syst))
-
-    
-            ## find min, max bin by bin
-        for i in range(0, total_high.GetNbinsX()):
-            total_max.SetBinContent(i, max(total_high.GetBinContent(i), 
-                                           total_low.GetBinContent(i), 
-                                           total_nom.GetBinContent(i)))
-            
-            total_min.SetBinContent(i, min(total_high.GetBinContent(i), 
-                                           total_low.GetBinContent(i), 
-                                           total_nom.GetBinContent(i)))
-
-        if total_min.Integral() <= 0:
-            log.warning("{0}_DOWN: lower bound is non-positive".format(syst))
-        if total_max.Integral() <= 0:
-            log.warning("{0}_UP: upper bound is non-positive".format(syst))
-
-        var_high.append(total_max)
-        var_low.append(total_min)
-
-        log.debug("{0} {1}".format(str(syst), str(variations)))
-        log.debug("{0} {1} {2}".format(
-            total_max.Integral(),
-            total_nom.Integral(),
-            total_min.Integral()))
-    
-        pass #< syst loop
-
-    
     # include stat errors too
     total_model_stat_high = total_nom.Clone()
     total_model_stat_low = total_nom.Clone()
     for i in range(0, total_nom.GetNbinsX()):
-        total_model_stat_high.SetBinContent(i, total_model_stat_high.GetBinContent(i) + total_nom.GetBinErrorUp(i))
-        total_model_stat_low.SetBinContent(i, total_model_stat_low.GetBinContent(i) + total_nom.GetBinErrorLow(i))
+        total_model_stat_high.SetBinContent(
+            i, total_model_stat_high.GetBinContent(i) + total_nom.GetBinErrorUp(i))
+        total_model_stat_low.SetBinContent(
+            i, total_model_stat_low.GetBinContent(i) + total_nom.GetBinErrorLow(i))
 
     var_high.append(total_model_stat_high)
     var_low.append(total_model_stat_low)
+
+    if systematics is not None:
+        for syst, variations in systematics.items():
+            if len(variations) == 2:
+                high, low = variations
+            elif len(variations) == 1:
+                high = variations[0]
+                low = 'NOMINAL'
+            else:
+                raise ValueError(
+                    "only one or two variations "
+                    "per term are allowed: {0}".format(syst))
+
+            if high == 'NOMINAL' and low == 'NOMINAL':
+                continue
+
+            total_high = total_nom.Clone()
+            total_high.Reset()
+            total_low = total_high.Clone()
+            total_max = total_high.Clone()
+            total_min = total_high.Clone()
+            for model in models:
+                mname = model.keys()[0]
+                m_obj = model[mname]['INFO']
+                nom_hist = model[m_obj.name]['HISTS']['NOMINAL']
+                syst_hists = model[m_obj.name]['HISTS'][syst] #<! (UP, DOWN)
+            
+                if overflow:
+                    [fold_overflow(sh) for sh in syst_hists]
+                if high == 'NOMINAL':
+                    total_high += nom_hist
+                else:
+                    ## retrieve the high syst componet hist
+                    total_high += syst_hists[0]
+
+                if low == 'NOMINAL':
+                    total_low += nom_hist
+                else:
+                    ## retrieve the low syst componet hist
+                    total_low += syst_hists[1]
+                
+            if total_low.Integral() <= 0:
+                log.warning("{0} is non-positive".format(syst))
+            if total_high.Integral() <= 0:
+                log.warning("{0} is non-positive".format(syst))
+    
+            ## find min, max bin by bin
+            for i in range(0, total_high.GetNbinsX()):
+                total_max.SetBinContent(i, max(total_high.GetBinContent(i), 
+                                               total_low.GetBinContent(i), 
+                                               total_nom.GetBinContent(i)))
+            
+                total_min.SetBinContent(i, min(total_high.GetBinContent(i), 
+                                               total_low.GetBinContent(i), 
+                                               total_nom.GetBinContent(i)))
+
+            if total_min.Integral() <= 0:
+                log.warning("{0}_DOWN: lower bound is non-positive".format(syst))
+            if total_max.Integral() <= 0:
+                log.warning("{0}_UP: upper bound is non-positive".format(syst))
+
+            var_high.append(total_max)
+            var_low.append(total_min)
+
+            log.debug("{0} {1}".format(str(syst), str(variations)))
+            log.debug("{0} {1} {2}".format(
+                    total_max.Integral(),
+                    total_nom.Integral(),
+                    total_min.Integral()))
+    
+            pass #<! syst loop
+
+        pass #<! if systematics 
 
     # sum variations in quadrature bin-by-bin
     high_band = total_nom.Clone()
@@ -485,24 +530,61 @@ def uncertainty_band(models, systematics):
             sum([(v.GetBinContent(i) - total_nom.GetBinContent(i))**2 for v in var_low]))
         high_band.SetBinContent(i, sum_high)
         low_band.SetBinContent(i, sum_low)
+
     return total_nom, high_band, low_band
+            
 
-
-
-def save_canvas(canvas, directory, name, formats=None):
-    # save images in directories corresponding to current git branch
-    filepath = os.path.join(directory, name)
-    path = os.path.dirname(filepath)
-    if not os.path.exists(path):
-        os.mkdir(path, 0755)
-
-    if formats is not None:
-        if isinstance(formats, basestring):
-            formats = formats.split()
-        for fmt in formats:
-            if fmt[0] != '.':
-                fmt = '.' + fmt
-            canvas.SaveAs(filepath + fmt)
+##----------------------------------------------------------------------------
+##
+def create_canvas(show_ratio=True):
+    c = TCanvas("c", "canvas", 800, 800)
+    if show_ratio:
+        # - - - - Upper histogram plot is pad1
+        pad1 = TPad("pad1", "pad1", 0, 0.3, 1, 1.0)
+        pad1.SetBottomMargin(0.15)  #<! joins upper and lower plot
+        pad1.Draw()
+    
+        # - - - - Lower ratio plot is pad2
+        c.cd()  #<! returns to main canvas before defining pad2
+        pad2 = TPad("pad2", "pad2", 0, 0.1, 1, 0.35)
+        pad2.SetTopMargin(0.1)  # joins upper and lower plot
+        pad2.SetBottomMargin(0.25)
+        pad2.SetGridy()
+        pad2.Draw()
     else:
-        canvas.SaveAs(filepath)
-                               
+        pad1 = TPad("pad1", "pad1", 0, 0.1, 1, 1.0)
+        pad1.SetBottomMargin(0.2)  #<! joins upper and lower plot
+        pad1.Draw()
+
+        pad2 = None
+    return c, pad1, pad2
+
+##----------------------------------------------------------------------------
+##
+def ratio_hist(h1, h2):
+    
+    ratio_hist = h1.Clone()
+    ratio_hist.Divide(h2)
+    
+    # - - - - remove bins where data is zero
+    for i in range(0, h1.GetNbinsX()):
+        if h1.GetBinContent(i) <= 0:
+            ratio_hist.SetBinContent(i, 1)
+            
+    ratio_hist.GetXaxis().SetLabelFont(43)
+    ratio_hist.GetXaxis().SetLabelSize(16)
+    ratio_hist.GetXaxis().SetLabelOffset(0.02)
+    ratio_hist.GetXaxis().SetTitleFont(43)
+    ratio_hist.GetXaxis().SetTitleSize(16)
+    ratio_hist.GetXaxis().SetTitleOffset(5)
+    ratio_hist.GetXaxis().SetTickLength(0.2)
+    
+    ratio_hist.GetYaxis().SetLabelFont(43)
+    ratio_hist.GetYaxis().SetLabelSize(16)
+    ratio_hist.GetYaxis().SetLabelOffset(0.01)
+    ratio_hist.GetYaxis().SetTitleFont(43)
+    ratio_hist.GetYaxis().SetTitleSize(16)
+    ratio_hist.GetYaxis().SetTitleOffset(1.8)
+    ratio_hist.GetYaxis().SetRangeUser(0.75, 1.25)
+    
+    return ratio_hist 

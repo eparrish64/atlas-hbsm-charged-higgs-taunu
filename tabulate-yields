@@ -1,0 +1,102 @@
+#!/usr/bin/env python
+
+"""
+* This script is meant to produce event counts either from the histograms file or 
+to calcualte them on the fly.
+"""
+
+## stdl-lib
+import sys, os
+from collections import namedtuple
+from argparse import ArgumentParser
+
+## PyIP
+from tabulate import tabulate
+
+## local
+from hpana.config import Configuration
+from hpana.analysis import Analysis
+from hpana import log
+
+# - - - - - - - - setup cmd args
+parser =  ArgumentParser()
+parser.add_argument('--channel',"-c", default="taujet", choices=("taujet", "taulep"))
+parser.add_argument('--year', "-y", default="2016")
+parser.add_argument('--hfile', "-hf", help='histograms root file')
+parser.add_argument('--category', "-cat", help="category selections")
+args = parser.parse_args()
+
+# - - - - - - - - setup ROOT
+import ROOT
+
+
+
+##---------------------------------------------------------------------------
+## simple class for organizing yields
+class Yield(namedtuple("Yields", "sample category systematic events")):
+    pass
+
+# - - - - - - - - instantiate the analysis (set compile_cxx to True if you want to calcualte yields on the fly)
+config = Configuration("taujet", "2016")
+analysis = Analysis(config, compile_cxx=True) 
+backgrounds = analysis.backgrounds
+data = analysis.data
+signals = analysis.signals
+
+samples = backgrounds + signals + [data] 
+
+# - - - - - - - - categories & systematics
+categories = config.categories[:1] 
+if args.category:
+    categories = filter(lambda c: c.name==args.category, categories)
+
+systematics = ["NOMINAL"]
+
+# - - - - - - - - to hold Yield types 
+yields = []
+
+# - - - - - - - - read from the histograms 
+if args.hfile:
+    hfile = ROOT.TFile(args.hfile, "READ")
+    var = config.variables[0] 
+    for sample in samples:
+        for systematic in systematics:
+            for cat in categories:
+                hist = hfile.Get(
+                    os.path.join(systematic, config.hist_name_template.format(sample.name, cat.name, var.name) ) )
+                events = hist.Integral(0, hist.GetNbinsX()+2)
+                yields.append(
+                    Yield(sample=sample.name, category=cat.name, systematic=systematic, events=events))
+
+# - - - - - - - - count on the fly
+else:
+    log.info("calculating yields on the fly ...")
+    for sample in backgrounds[2:]:
+        for systematic in systematics:
+            for cat in categories:
+                events = sample.events(cat, systematic=systematic, weighted=True)
+                yields.append(
+                    Yield(sample=sample.name, category=cat.name, systematic=systematic, events=events))
+
+# - - - - - - - - sum of bkg
+for systematic in systematics:    
+    for cat in categories:
+        yields_cat = filter(lambda y: y.category==cat.name, yields)
+        bkg_yields = filter(
+            lambda y: y.sample in [b.name for b in backgrounds], yields_cat)
+        events_sum = sum([y.events for y in bkg_yields])
+        yields.append(
+            Yield(sample="bkgSum", category=cat.name, systematic=systematic, events=events_sum))
+
+# - - - - - - - - tabulate the yields      
+log.info("------------------------------ YIELDS ------------------------------")
+for cat in categories:
+    print "\n\n------------------------------ CATEGORY: %s ------------------------------"%cat.name
+    yields_cat = filter(lambda y: y.category==cat.name, yields)
+    headers = [y.sample for y in yields_cat]
+    rows_cat = []
+    for syst in systematics:
+        yields_cat_syst = filter(lambda y: y.systematic==syst, yields_cat)
+        row = [syst] + [y.events for y in yields_cat_syst]
+        rows_cat.append(row)
+    print tabulate(rows_cat, headers=headers)

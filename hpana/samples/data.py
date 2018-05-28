@@ -53,7 +53,6 @@ class DataInfo():
 class Data(Sample):
     """
     """
-    BLIND = True
     
     def __init__(self, config, name='Data', label='Data', blind=True, **kwargs):
         # - - - - intantiate the base class
@@ -68,58 +67,6 @@ class Data(Sample):
         self.info = DataInfo(self.config.data_lumi / 1e3, self.config.energy)
         self.blind = blind
         
-
-    def events(self,
-               category=None,
-               region=None,
-               trigger=None,
-               extra_cuts=None,
-               extra_weight=None,
-               tauid=True,
-               scale=1.):
-        """ see self.events. 
-        This method returns the number of events selected.  The selection is
-        specified by the different arguments.  By default, the output is a
-        one-bin histogram with number of event as content.
-
-        Parameters
-        ----------
-        category :
-            A given analysis category. See categories/__init__.py for the list
-        region :
-            A given analyis regions based on the sign and isolation of the
-            taus. The signal region is 'OS'
-        cuts :
-            In addition to the category (where cuts are specified), extra
-            cuts can be added See categories/common.py for a list of possible
-            cuts
-        scale :
-            if specified, multiply the number of events by the given
-            scale.
-
-        Returns
-        -------
-        """
-
-        total_events = 0
-        selection =  self.cuts(
-            category=category, trigger=trigger, tauid=tauid)
-        if extra_cuts:
-            selection += extra_cuts
-        if extra_weight:
-            selection *= extra_weight
-            
-        ds_chain = ROOT.TChain("NOMINAL")
-        for _file in self.ds.files:
-            ds_chain.Add(_file)
-            
-        ds_chain.Draw("1 >> htmp(1, -100, 100)", selection) 
-        htmp = ROOT.gPad.GetPrimitive("htmp")
-        total_events += htmp.Integral()
-        htmp.Delete()
-        ds_chain.Reset()
-        
-        return total_events
      
     
     def cuts(self, *args, **kwargs):
@@ -127,14 +74,13 @@ class Data(Sample):
         Parameters
         ----------
 
-
         Returns
         -------
         cut: Cut, updated Cut type.
         """
         cut = super(Data, self).cuts(*args, **kwargs)
         return cut
-
+            
     @staticmethod
     def hists_from_dir(idir, fields, selection,
                        file_pattern="*",tree_name="NOMINAL"):
@@ -168,7 +114,7 @@ class Data(Sample):
               systematic="NOMINAL",
               extra_cuts=None,
               extra_weight=None,
-              weighted=True,
+              weighted=False, #<! not needed; added just to benefit from Sample methods like events
               trigger=None,
               tauid=None,
               suffix=None,
@@ -188,7 +134,7 @@ class Data(Sample):
         if self.blind and category.name=="SR":
             hist_set = []
             for var in fields:
-                fname = "%s_%s_%s"%(self.name, category.name, var.name)
+                fname = "%s_category_%s_%s"%(self.name, category.name, var.name)
                 hist = ROOT.TH1F(fname, fname, *var.binning)
                 hist.SetXTitle(var.title)
                 hist_set.append(Histset(
@@ -206,10 +152,10 @@ class Data(Sample):
                 systematic=systematic)
             if extra_cuts:
                 selection += extra_cuts
-            if extra_weight:
-                selection *= extra_weight
             if tauid:
                 selection +=tauid
+            if extra_weight:
+                selection *= extra_weight
                 
             if parallel:
                 hist_set = []
@@ -225,7 +171,7 @@ class Data(Sample):
                 for var in fields:
                     hlist = [hd[var.name] for hd in hists]    
                     hsum = reduce(lambda x, y: x + y, hlist)
-                    fname = "%s_%s_%s"%(self.name, category.name, var.name)
+                    fname = self.hist_name_template.format(self.name, category.name, var.name)
                     hsum.SetName(fname)
                     hsum.SetTitle(fname)
                     hsum.SetXTitle(var.title)
@@ -255,7 +201,7 @@ class Data(Sample):
                     htmp = ROOT.gPad.GetPrimitive(histname)
                     hist = htmp.Clone()
 
-                    hname = "%s_%s_%s"%(self.name, category.name, var.name)
+                    hname = self.hist_name_template.format(self.name, category.name, var.name)
                     hist.SetName(hname)
                     hist.SetTitle(hname)
                     hist.SetXTitle(var.title)

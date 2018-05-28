@@ -14,18 +14,18 @@ class QCD(Sample):
     FF_TYPES = {
         "taujet": {
             "PRESELECTION":1,
-            "WJETS_CR":2,
-            "TTBAR_CR":3,
-            "SR":3,
-            "QCD_CR":111,},
+            "BVETO":2,
+            "TTBAR":3,
+            "SR_TAUJET":3,
+            "QCD":111,},
         "taulep":{
-            "WZ_CR":2,
-            "TTBar_CR":3,
-            "SR_TAUEMU":7,
+            "BVETO":6,
+            "TTBar":3,
+            "ZEE":4,
+            "SR_TAUMU":7,
             "SR_TAUEL":7,
             "SR_TAULEP":7,
-            "ZEE_CR":4,
-            "BVETO_TAULEP":6,}
+        }
     }
 
     FF_WCR = "GetFF02_WCR({0}, {1})"
@@ -39,7 +39,6 @@ class QCD(Sample):
     
     @staticmethod
     def sample_compatibility(data, mc):
-        log.info("mc: {}".format([m.name for m in mc]))
         if not isinstance(mc, (list, tuple)):
             raise TypeError("mc must be a list or tuple of MC samples")
         if not mc:
@@ -88,26 +87,6 @@ class QCD(Sample):
         
         return [ff_weight]
     
-    def events(self, **kwargs):
-        """ 
-        """
-        tauid = kwargs.pop("tauid", QCD.ANTI_TAU)
-        weighted = kwargs.pop("weighted", True)
-        extra_weight = kwargs.pop("extra_weight", ROOT.TCut("1"))
-        for w in self.weights(**kwargs):
-            extra_weight *= w
-        
-        mc_events = 0
-        data_events = self.data.events(tauid=tauid, extra_weight=extra_weight, **kwargs)
-        for m in self.mc[3:5]:
-            m_events = m.events(tauid=tauid, extra_weight=extra_weight, **kwargs)
-            log.debug("mc: {0}; events: {1:0.2f}".format(m.name, m_events))
-            mc_events += m_events
-        
-        log.debug("DATA: {0:0.2f};  MC: {1:0.2f}".format(data_events, mc_events))
-        
-        return data_events - mc_events
-        
         
     def hists(self, category,
               fields=[],
@@ -163,7 +142,7 @@ class QCD(Sample):
 
             # - - - - get the fakes hist and set it's name
             h_fakes = h_data - h_mc_sum
-            fname = '{0}_{1}_{2}'.format(self.name, category.name, var.name)
+            fname = self.hist_name_template.format(self.name, category.name, var.name)
             h_fakes.SetName(fname)
             h_fakes.SetTitle(fname)
             h_fakes.SetXTitle(var.title)
@@ -236,7 +215,7 @@ class LepFake(Sample):
             h_mc_sum = reduce(lambda h1, h2: h1+h2, h_mc)
 
             # - - - - get the fakes hist and set it's name
-            fname = '{0}_{1}_{2}'.format(self.name, category.name, var.name)
+            fname = self.hist_name_template.format(self.name, category.name, var.name)
             h_mc_sum.SetName(fname)
             h_mc_sum.SetTitle(fname)
             h_mc_sum.SetXTitle(var.title)

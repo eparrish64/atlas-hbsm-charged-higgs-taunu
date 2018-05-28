@@ -15,7 +15,6 @@ from . import log
 
 from ..db import samples as samples_db, datasets
 from ..db.decorators import cached_property
-from ..config import Configuration
 from ..systematics import get_systematics, iter_systematics, systematic_name
 from ..categories import TRUTH_MATCH
 
@@ -59,10 +58,6 @@ class Sample(object):
 
     def __init__(self, config,
                  weight_fields=[],
-                 scale=1.,
-                 cuts=None,
-                 trigger=True,
-                 channel='taujet',
                  name='Sample',
                  label='Sample',
                  **kwargs):
@@ -70,15 +65,13 @@ class Sample(object):
         self.config = config
 
         # - - - - - - - - minimal flags
-        self.scale = scale
         self.name = name
         self.label = label
-        if cuts is None:
-            self._cuts = ROOT.TCut("")
-        else:
-            self._cuts = cuts
+        self.hist_name_template = kwargs.pop(
+            "hist_name_template", self.config.hist_name_template)
+        
+        self.color = kwargs.get("color", 1)
         self.hist_decor = kwargs
-
     
     def decorate(self, name=None, label=None, **hist_decor):
         """update Sample object to decorate hists.
@@ -118,7 +111,7 @@ class Sample(object):
         cuts: ROOT.TCut object
         """
 
-        cuts = ROOT.TCut(self._cuts)
+        cuts = ROOT.TCut("")
         if category:
             cuts += category.cuts
         if not trigger:
@@ -126,108 +119,42 @@ class Sample(object):
         else:
             cuts += trigger
 
-        # - - - - - - - - tauID (for fakes check fakes.Fakes)
+        # - - - - - - - - tauID (for fakes check fakes.py)
         if tauid:
             cuts += tauid
         else:
             cuts += self.config.tauid
         return cuts
 
-    def events(self,
+    def events(self, category,
                systematic="NOMINAL",
-               category=None,
-               region=None,
-               trigger=None,
                extra_cuts=None,
                extra_weight=None,
-               tauid=False,
                weighted=True,
-               scale=1.):
-        """ This method returns the number of events selected.  The selection is
-        specified by the different arguments.  
-
-        Parameters
-        ----------
-        category :
-            A given analysis category. See categories/__init__.py for the list
-        region :
-            A given analyis regions based on the sign and isolation of the
-            taus. The signal region is 'OS'
-        cuts :
-            In addition to the category (where cuts are specified), extra
-            cuts can be added See categories/common.py for a list of possible
-            cuts
-        systematic :
-            By default look at the nominal tree but could also do it
-            on specified syst.
-        weighted :
-            if True, return the weighted number of events
-        scale :
-            if specified, multiply the number of events by the given
-            scale.
-       
-        Returns
-        -------
+               trigger=None,
+               tauid=None):
+        """ get event counts using hists method
         """
-        # - - - - - - - - filters 
-        base_selection =  self.cuts(
-            category=category,
-            region=region, trigger=trigger,
-            tauid=tauid, systematic=systematic)
-        if extra_cuts:
-            base_selection &= extra_cuts
+        
+        field = self.config.variables[0]
+        hist_set =  self.hists(category,
+                      fields=[field],
+                      systematic=systematic,
+                      extra_cuts=extra_cuts,
+                      extra_weight=extra_weight,
+                      weighted=weighted,
+                      trigger=trigger,
+                      tauid=tauid)
 
-        total_events_weighted = 0
-        # - - - - - - - - loop over sample's datasets 
-        for ds in self.datasets:
-            log.debug(ds.events)
-            # - - - - - - - - dataset chain 
-            ds_chain = ROOT.TChain(systematic)
-            for _file in ds.files:
-                ds_chain.Add(_file)
-
-            # - - - - - - - - total events
-            total_events = 0
-            for _file in ds.files:
-                try:
-                    # - - - - read total number of events for dataset from database (just once)
-                    total_events = ds.events
-                    break
-                except KeyError:
-                    # - - - - count them on the fly
-                    rfile = ROOT.TFile(_file, "READ")
-                    h_metadata = rfile.Get("%s"%self.config.events_cutflow_hist)
-                    total_events += h_metadata.GetBinContent(self.config.events_cutflow_bin)
-                    rfile.Close()
-                    h_metadata.Delete()
-                    
-            if weighted:
-                if total_events !=0:
-                    lumi_weight = self.config.data_lumi * reduce(
-                        lambda x,y:x*y, ds.xsec_kfact_effic) / total_events
-                else:
-                    log.warning(" 0 lumi weight for %s"%ds.name)
-                    lumi_weight = 0
-                    
-                weight_branches = self.weights + [str(lumi_weight)]
-                selection = base_selection * ROOT.TCut('*'.join(weight_branches))
-                if extra_weight:
-                    selection *= extra_weight
-                    
-                log.debug("requesting number of events from %s using cuts: %s"
-                          % (ds.name, selection))
-            else:
-                selection = base_selection
-                
-            log.info(selection)     
-            ds_chain.Draw("1 >> htmp(1, -100, 100)", selection) 
-            htmp = ROOT.gPad.GetPrimitive("htmp")
-            total_events_weighted += htmp.Integral()
-            htmp.Delete()
-            ds_chain.Reset()
-            
-        return total_events_weighted
-
+        hist = hist_set[0].hist
+        # - - - - add the events from overflow bin too 
+        nbins = hist.GetNbinsX() + 2
+        nevents = hist.Integral(0, nbins)
+        log.info("# of events from %s tree of %s sample in category %s: %0.4f"%(
+            systematic, self.name, category.name, nevents))
+        
+        return nevents
+    
     @staticmethod
     def hists_from_file(ifile, fields, selection, tree_name="NOMINAL"):
         """
@@ -343,14 +270,11 @@ class Sample(object):
                 if suffix is not None:
                     histname += suffix
 
-                # - - - - randomize hist name to avoid possible memory leak
+                # - - - - randomize hist name
                 histname += ''.join(
                     random.choice(string.ascii_uppercase + string.digits) for _ in range(13))
                 
                 # - - draw histogram
-                #log.debug("TTree.Drawing:: {0} >> {1}{2}, {3}".format(
-                #    var.tformula, histname, var.binning, selection))
-                
                 ds_chain.Draw("{0} >> {1}{2}".format(var.tformula, histname, var.binning), selection)
                 htmp = ROOT.gPad.GetPrimitive(histname)
                 hists[var.name].append(htmp.Clone())
@@ -361,7 +285,7 @@ class Sample(object):
         hist_set = []
         for var in fields:
             hist_list = hists[var.name]
-            fname = "%s_%s_%s"%(self.name, category.name, var.name)
+            fname = self.hist_name_template.format(self.name, category.name, var.name)
             hsum = reduce(lambda x, y: x + y, hist_list)
             hsum.SetName(fname)
             hsum.SetTitle(fname)

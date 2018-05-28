@@ -119,3 +119,7 @@ class Configuration():
     @property
     def hists_file(self):
         return "hists/HISTS_%s_%s.root"%(self.channel, datetime.datetime.today().strftime("%Y_%m_%d"))
+
+    @property
+    def hist_name_template(self):
+        return "{0}_category_{1}_{2}" #<! sample name, category name, variable name

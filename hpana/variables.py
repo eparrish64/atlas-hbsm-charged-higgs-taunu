@@ -1,4 +1,7 @@
 import math
+
+from . import MC_CAMPAIGN
+
 __all__ = [ "VARIABLES"]
 
 ##------------------------------------------------------------------------------------------
@@ -48,8 +51,8 @@ class Variable:
         self.bins = bins
         self.tform = tformula
         
-        # - - - - - - - - the year is also set within config.Configuraiton for the Analysis 
-        self.year = kwargs.pop("year", "2017")
+        # - - - - - - - - see __init__.py
+        self.mc_camp = kwargs.pop("mc_camp", MC_CAMPAIGN)
 
         # - - - - variable might have different binning for plotting and WS
         self.workspace_binning = kwargs.pop("workspace_binning", None)
@@ -64,8 +67,8 @@ class Variable:
         """
         if self.tform:
             if isinstance(self.tform, dict):
-                if self.year in self.tform:
-                    tformula = self.tform[self.year]
+                if self.mc_camp in self.tform:
+                    tformula = self.tform[self.mc_camp]
                 else:
                     tformula = self.tform["default"]
             else:
@@ -89,12 +92,12 @@ class Variable:
         self._label = value
 
     @property 
-    def binning(self, year, category):
+    def binning(self, mc_camp, category):
         if isinstance(self._binning, dict):
-            if isinstance(self._binning[year], dict):
-                return self._binning[year][category]
-            elif isinstance(self._binning[year], tuple):
-                return self._binning[year]
+            if isinstance(self._binning[mc_camp], dict):
+                return self._binning[mc_camp][category]
+            elif isinstance(self._binning[mc_camp], tuple):
+                return self._binning[mc_camp]
         else:    
             return self._binning
     @binning.setter
@@ -118,8 +121,8 @@ class Variable:
     def __repr__(self):
         if not self.scale:
             self.scale = 1.
-        return "VARIABLE:: name=%r, tformula=%r, binning=%r, scale=%r, year=%r"%(
-            self.name, self.tformula, self.binning, self.scale, self.year)
+        return "VARIABLE:: name=%r, tformula=%r, binning=%r, scale=%r, mc_camp=%r"%(
+            self.name, self.tformula, self.binning, self.scale, self.mc_camp)
 
 ##------------------------------------------------------------------------------------------
 ## Building the analysis variables; KEEP THEM AS CLEAN AS POSSIBLE :)
@@ -129,7 +132,7 @@ tau_0_pt = Variable(
     "tau_0_pt", 
     title='#font[52]{p}_{T}(#tau_{1}) GeV',
     tformula={
-        "default": "tau_0_p4->Pt()",
+        "mc16": "tau_0_p4->Pt()",
         "2016": "tau_0_pt"},
     binning=(20, 0, 400),
     unit='GeV',
@@ -139,7 +142,7 @@ tau_0_eta = Variable(
     "tau_0_eta" , 
     title='#eta(#tau)',
     tformula={
-        "default": "tau_0_p4->Eta()",
+        "mc16": "tau_0_p4->Eta()",
         "2016": "tau_0_eta"},
     binning=(60, -3., 3.))
 
@@ -147,7 +150,7 @@ tau_0_n_charged_tracks = Variable(
     "tau_0_n_charged_tracks",
     title='#font[152]{#tau}_{1} #font[52]{Tracks}',
     tformula={
-        "default": "tau_0_n_charged_tracks",
+        "mc16": "tau_0_n_charged_tracks",
         "2016": "tau_0_n_tracks"},
     binning=(5, -.5, 4.5))
 
@@ -167,9 +170,9 @@ met_et = Variable(
     "met_et", 
     title='#font[52]{E}^{miss}_{T} GeV',
     tformula={
-        "default":"met_p4->Et()",
+        "mc16":"met_p4->Et()",
         "2016": "met_et"},
-    binning=(1000, 0, 1000),
+    binning=(20, 0, 400),
     scale=0.001,
     unit='GeV')
 
@@ -177,7 +180,7 @@ met_etx = Variable(
     "met_etx",
     title='#font[52]{E}^{miss}_{T_{x}}GeV',
     tformula={
-        "default":"met_p4->Px()",
+        "mc16":"met_p4->Px()",
         "2016": "met_etx"},
     binning=(20, -75, 75),
     scale=0.001,
@@ -187,7 +190,7 @@ met_ety = Variable(
     "met_ety",
     title='#font[52]{E}^{miss}_{T_{y}}GeV',
     tformula={
-        "default":"met_p4->Py()",
+        "mc16":"met_p4->Py()",
         "2016": "met_ety"},
     binning=(20, -75, 75),
     scale=0.001,
@@ -197,7 +200,7 @@ met_phi = Variable(
     "met_phi", 
     title='#font[52]{E}^{miss}_{T} #phi',
     tformula={
-        "default":"met_p4->Phi()",
+        "mc16":"met_p4->Phi()",
         "2016": "met_phi"},
     binning=(5, -math.pi, math.pi))
 
@@ -239,8 +242,8 @@ jet_0_pt =  Variable(
     "jet_0_pt",
     title='#font[52]{p}_{T}(j_{1}) GeV',
     tformula={
-        "default": "jet_0_p4->Pt()",
-        "2016": "jet_0_pt",},
+        "mc16": "jet_0_p4->Pt()",
+        "mc15": "jet_0_pt",},
     binning=(20, 0, 500),
     scale=0.001,
     unit='GeV')
@@ -249,8 +252,8 @@ bjet_0_pt =  Variable(
     "bjet_0_pt",
     title='#font[52]{p}_{T}lead b-jet GeV',
     tformula={
-        "default": "bjet_0_p4->Pt()",
-        "2016": "bjet_0_pt",},
+        "mc16": "bjet_0_p4->Pt()",
+        "mc15": "bjet_0_pt",},
     binning=(20, 0, 500),
     scale=0.001,
     unit='GeV')
@@ -260,8 +263,8 @@ jet_1_pt = Variable(
     "jet_1_pt",
     title='#font[52]{p}_{T}(sub-leading jet) GeV',
     tformula={
-        "default": "jet_1_p4->Pt()",
-        "2016": "jet_1_pt",},
+        "mc16": "jet_1_p4->Pt()",
+        "mc15": "jet_1_pt",},
     binning=(20, 0, 500),
     scale=0.001,
     unit='GeV')
@@ -270,8 +273,8 @@ jet_0_eta = Variable(
     "jet_0_eta",
     title='#font[152]{#eta}(j_{1})',
     tformula={
-        "default":"jet_0_p4->Eta()",
-        "2016":"jet_0_eta",},
+        "mc16":"jet_0_p4->Eta()",
+        "mc15":"jet_0_eta",},
     binning=(60, -4, 4))
 
 # - - - - - - - -  BDT input features 
@@ -279,16 +282,16 @@ MVA_bjet_0_met_dphi = Variable(
     "MVA_bjet_0_met_dphi", 
     title='#font[52]{#Delta#phi}(b-jet ,E^{miss}_{T})',
     tformula={
-        "default": "bjet_0_p4->DeltaPhi(met_0_p4)",
-        "2016": "acos(cos(met_phi-bjet_0_phi))",},
+        "mc16": "bjet_0_p4->DeltaPhi(met_0_p4)",
+        "mc15": "acos(cos(met_phi-bjet_0_phi))",},
     binning=(12, -1., 4))
 
 MVA_bjet_0_tau_0_dr = Variable(
     "MVA_bjet_0_tau_0_dr", 
     title='#font[52]{#Delta}R(#tau, b-jet)',
     tformula={
-        "default": "bjet_0_p4->DeltaR(tau_0_p4)",
-        "2016": "sqrt(acos(cos(tau_0_phi-bjet_0_phi))**2 + (tau_0_eta-bjet_0_eta)**2)",},
+        "mc16": "bjet_0_p4->DeltaR(tau_0_p4)",
+        "mc15": "sqrt(acos(cos(tau_0_phi-bjet_0_phi))**2 + (tau_0_eta-bjet_0_eta)**2)",},
     binning=(20, 0, 6.4))
 
 

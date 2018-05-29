@@ -5,6 +5,7 @@ import ROOT
 from ROOT import TCut
 
 from db.decorators import cached_property
+from . import log, MC_CAMPAIGN
 
 """
 This module provides all selections needed for the analysis.
@@ -14,40 +15,117 @@ This module provides all selections needed for the analysis.
 ## TAUJET BASIC CUTS
 
 # - - - - - - - - event 
-CLEAN_EVT = ROOT.TCut("(event_clean==1) && (n_vx>=1) && (bsm_tj_dirty_jet==0)")
+CLEAN_EVT = {
+    "mc15": TCut("(event_clean==1) && (n_vx>=1) && (bsm_tj_dirty_jet==0)"),
+    "mc16": TCut("(n_vx>=1)")
+}
 
-# - - - - - - - - MET 
-MET100 = TCut("met_et>100000")
-MET150 = TCut("met_et>150000")
-MT100   = TCut("tau_0_met_mt > 100000")
-MT50   = TCut("tau_0_met_mt > 50000")
+# - - - - - - - - MET & MT
+MET100 = {
+    "mc15": TCut("met_et>100000"),
+    "mc16": TCut("met_p4->Et() > 100000"),
+}
+    
+MET150 = {
+    "mc15": TCut("met_et > 150000"),
+    "mc16": TCut("met_p4->Et() > 150000"),
+}
+
+MET_MAX150 = {
+    "mc15": TCut("met_et < 150000"),
+    "mc16": TCut("met_p4->Et() < 150000"),
+}
+
+MT100 = {
+    "mc15": TCut("tau_0_met_mt > 100000"),
+    "mc16": TCut("tau_0_met_mt > 100000")
+}
+MT50 = {
+    "mc15": TCut("tau_0_met_mt > 50000"),
+    "mc16": TCut("tau_0_met_mt > 50000")
+}
 
 # - - - - - - - - tau
-Tau_Q = TCut("abs(tau_0_q)==1")
-TAU_TRACKS = TCut("tau_0_n_tracks==1 || tau_0_n_tracks==3")
-Tau_DECAY_MODE = TCut("tau_0_decay_mode==0")
-TauID_LOOSE = TCut("tau_0_jet_bdt_loose==1")
-TauID_MED = TCut("tau_0_jet_bdt_medium==1")
-TauID_TIGHT = TCut("tau_0_jet_bdt_tight==1")
-Tau_PT40 = TCut("tau_0_pt>40000")
-
+Tau_Q = {
+    "mc15": TCut("abs(tau_0_q)==1"),
+    "mc16": TCut("abs(tau_0_q)==1"),
+}
+Tau_DECAY_MODE = {
+    "mc15": TCut("tau_0_decay_mode==0"),
+    "mc16": TCut("tau_0_decay_mode==0"),
+}
+TauID_LOOSE = {
+    "mc15": TCut("tau_0_jet_bdt_loose==1"),
+    "mc16": TCut("tau_0_jet_bdt_loose==1"),
+}
+TauID_MED = {
+    "mc15":TCut("tau_0_jet_bdt_medium==1"),
+    "mc16":TCut("tau_0_jet_bdt_medium==1"),
+}
+TauID_TIGHT = {
+    "mc15": TCut("tau_0_jet_bdt_tight==1"),
+    "mc16": TCut("tau_0_jet_bdt_tight==1"),
+}
+TAU_TRACKS = {
+    "mc15": TCut("tau_0_n_tracks==1 || tau_0_n_tracks==3"),
+    "mc16": TCut("tau_0_n_charged_tracks==1 || tau_0_n_charged_tracks==3"),
+}
+Tau_PT40 = {
+    "mc15": TCut("tau_0_pt > 40000"),
+    "mc16": TCut("tau_0_p4->Pt() > 40000") ,
+}
+TAU_IS_LEP = {
+    "mc15": TCut("abs(tau_0_truth_universal_pdgId)==11 || abs(tau_0_truth_universal_pdgId)==13"),
+    "mc16": TCut("abs(true_tau_0_pdgId)==11 || abs(true_tau_0_pdgId)==13"),
+}
+TAU_IS_TRUE = {
+    "mc15": TCut("abs(tau_0_truth_universal_pdgId)==15"),
+    "mc16": TCut("abs(true_tau_0_pdgId)==15"),
+}
+TAU_IS_FAKE = {
+    "mc15": TCut("!"+(TAU_IS_TRUE["mc15"].GetTitle()+"||"+TAU_IS_LEP["mc15"].GetTitle() ) ),
+    "mc16": TCut("!"+(TAU_IS_TRUE["mc16"].GetTitle()+"||"+TAU_IS_LEP["mc16"].GetTitle() ) ),
+}
+ANTI_TAU = {
+    "mc15": TCut("tau_0_jet_bdt_score_sig > 0.02 && tau_0_jet_bdt_loose==0"),
+    "mc16": TCut("tau_0_jet_bdt_score_trans > 0.02 && tau_0_jet_bdt_loose==0"),
+}
 # - - - - - - - - lep
-LEP_VETO = TCut("(n_electrons+n_muons)==0")
-ONE_LEP = TCut("(n_electrons+n_muons)==1")
+LEP_VETO = {
+    "mc15": TCut("(n_electrons + n_muons)==0"),
+    "mc16": TCut("(n_electrons + n_muons)==0"),
+}
+ONE_LEP = {
+    "mc15": TCut("(n_electrons + n_muons)==1"),
+    "mc16": TCut("(n_electrons + n_muons)==1"),
+}
 
-# - - - - - - - - tau ID
-TAU_IS_LEP = TCut("abs(tau_0_truth_universal_pdgId)==11||abs(tau_0_truth_universal_pdgId)==13")
-TAU_IS_TRUE = TCut("abs(tau_0_truth_universal_pdgId)==15") 
-TAU_IS_FAKE = TCut("!"+(TAU_IS_TRUE.GetTitle()+"||"+TAU_IS_LEP.GetTitle()))
-TRUTH_MATCH = TCut("abs(tau_0_truth_universal_pdgId)==15")
 
 # - - - - - - - - jets
-NUM_BJETS1 = TCut("n_bjets>0")
-NUM_BJETS2 = TCut("n_bjets>1")
-BVETO = TCut("n_bjets==0")
-NUM_JETS3 = TCut("n_jets>2")
-JET_PT25 = TCut("jet_0_pt > 25000")
-BJET_PT25 = TCut("bjet_0_pt > 25000")
+NUM_BJETS1 = {
+    "mc15": TCut("n_bjets > 0"),
+    "mc16": TCut("n_bjets > 0"),
+}
+NUM_BJETS2 = {
+    "mc15": TCut("n_bjets > 1"),
+    "mc16": TCut("n_bjets > 1"),
+}
+NUM_JETS3  = {
+    "mc15": TCut("n_jets > 2"),
+    "mc16": TCut("n_jets > 2"),
+}
+BVETO = {
+    "mc15": TCut("n_bjets==0"),
+    "mc16": TCut("n_bjets==0"),
+}
+JET_PT25 = {
+    "mc15": TCut("jet_0_pt > 25000"),
+    "mc16": TCut("jet_0_p4->Pt() > 25000"),
+}
+BJET_PT25 = {
+    "mc15": TCut("bjet_0_pt > 25000"),
+    "mc16": TCut("bjet_0_p4->Pt() > 25000"),
+}
 
 #WIP! - - - - BDT scores for partial blinding 
 
@@ -55,224 +133,128 @@ BJET_PT25 = TCut("bjet_0_pt > 25000")
 ##------------------------------------------------------------------------------------
 ## selection categories: KEEP THEM AS CLEAN AS POSSIBLE :) 
 
-SELECTIONS = dict()
-
+SELECTIONS = {"taujet":{}, "taulep": {} }
+    
+# - - - - - - - - - TAUJET channel
 # - - - -  base selections
-SELECTIONS["BASE"] = {
-    "taujet":{
-        "2015":
-        (CLEAN_EVT
-         + Tau_PT40
-         + LEP_VETO
-         + TAU_TRACKS),
-        
-        "2016":
-        (CLEAN_EVT
-         + Tau_PT40
-         + LEP_VETO
-         + TAU_TRACKS),
-        
-        "2017":
-        (CLEAN_EVT
-         + Tau_PT40
-         + LEP_VETO
-         + TAU_TRACKS),
-    },
-    "taulep":{
-        "2015": TCut(""),
-        "2016": TCut(""),
-        "2017": TCut(""),
-    }
-} #<! BASE
+SELECTIONS["taujet"]["BASE"] = (
+    CLEAN_EVT,
+    Tau_PT40,
+    LEP_VETO,
+    TAU_TRACKS)
 
 # - - - - Preselection
-SELECTIONS["PRESELECTION"] = {
-    "taujet": {
-        "2015":(MET100
-                + NUM_JETS3
-                + BJET_PT25
-                + TCut("tau_0_met_mt > 50000")),
-        "2016":(MET100
-                + NUM_JETS3
-                + BJET_PT25
-                + TCut("tau_0_met_mt > 50000")),
-        "2017": TCut(""),
-    },
-    "taulep": {
-        "2015": TCut(""),
-        "2016": TCut(""),
-        "2017": TCut(""),
-    },
-    
-}
+SELECTIONS["taujet"]["PRESELECTION"] = (
+    MET100, 
+    NUM_JETS3,
+    BJET_PT25,
+    MT50)
 
 # - - - - TTBar_CR
-SELECTIONS["TTBAR_CR"] = {
-    "taujet": {
-        "2015":(Tau_PT40
-                + LEP_VETO
-                + NUM_JETS3
-                + NUM_BJETS2
-                + JET_PT25
-                + BJET_PT25
-                + MET150
-                + TCut("!(%s)"%MT100)),
-        "2016":(Tau_PT40
-                + LEP_VETO
-                + NUM_JETS3
-                + NUM_BJETS2
-                + JET_PT25
-                + BJET_PT25
-                + MET150
-                + TCut("!(%s)"%MT100)),
-        "2017": TCut(""),
-    },
-    "taulep": {
-        "2015": TCut(""),
-        "2016": TCut(""),
-        "2017": TCut(""),
-    },
+SELECTIONS["taujet"]["TTBAR"] = (
+    MET100,
+    NUM_JETS3,
+    BJET_PT25,
+    MT50)
     
-}
-
-# - - - - QCD CR 
-SELECTIONS["QCD_CR"] = {
-    "taujet": {
-        "2015":(NUM_JETS3
-                + JET_PT25
-                + BVETO
-                + TCut("met_et < 150000")
-                + TCut("tau_0_met_mt > 50000")),
-        "2016":(NUM_JETS3
-                + JET_PT25
-                + BVETO
-                + TCut("met_et < 150000")
-                + TCut("tau_0_met_mt > 50000")),
-        "2017": TCut(""),
-    },
-    "taulep": {
-        "2015": TCut(""),
-        "2016": TCut(""),
-        "2017": TCut(""),
-    },
-    
-}
+# - - - - QCD CR
+SELECTIONS["taujet"]["QCD"] = (
+    NUM_JETS3,
+    JET_PT25,
+    BVETO,
+    MET_MAX150,
+    MT50)
 
 # - - - - WJets CR
-SELECTIONS["WJETS_CR"] = {
-    "taujet": {
-        "2015":(NUM_JETS3
-                + JET_PT25
-                + BVETO
-                + MET150
-                + MT100),
-        "2016":(NUM_JETS3
-                + JET_PT25
-                + BVETO
-                + MET150
-                + MT100),
-        "2017": TCut(""),
-    },
-    "taulep": {
-        "2015": TCut(""),
-        "2016": TCut(""),
-        "2017": TCut(""),
-    },
+SELECTIONS["taujet"]["BVETO"] = (
+    NUM_JETS3,
+    JET_PT25,
+     BVETO,
+     MET150,
+     MT100)
     
-}
-
 # - - - -  Signal 
-SELECTIONS["SR"] = {
-    "taujet": {
-        "2015":(NUM_JETS3
-                + JET_PT25
-                + MET150 
-                + NUM_BJETS1
-                + BJET_PT25
-                + TCut("tau_0_met_mt > 50000")),
-        "2016":(NUM_JETS3
-                + JET_PT25
-                + MET150 
-                + NUM_BJETS1
-                + BJET_PT25
-                + TCut("tau_0_met_mt > 50000")),
-        "2017": TCut(""),
-    },
-    "taulep": {
-        "2015": TCut(""),
-        "2016": TCut(""),
-        "2017": TCut(""),
-    },
-}
+SELECTIONS["taujet"]["SR_TAUJET"] = (
+    NUM_JETS3,
+    JET_PT25,
+    MET150, 
+    NUM_BJETS1,
+    BJET_PT25)
+
+# - - - - - - - - TAULEP
+SELECTIONS["taulep"]["BASE"] = ()
+SELECTIONS["taujet"]["PRESELECTION"]
+SELECTIONS["taujet"]["TTBAR"]
 
 ##------------------------------------------------------------------------------------
 ## 
-class Category(object):
+class Category:
     """base class for selection categories.
-
+    
     Attributes
     ----------
     
     Examples
     --------
-    >>> presel = Category("Preselection", label="presel", channel="taujet", year="2017")
-    >>> categories = Category.factory()
+    #>>> presel = Category("Preselection", label="presel", channel="taujet", year="2017")
+    #>>> categories = Category.factory()
     """
-    NAMES = {
-        "Preselection": "Presel",
-        "TTBar_CR": "ttbar CR",
-        "QCD_CR": "qcd CR",
-        "WJets_CR": "wjets CR",
-        "SR": "signal region",
+    TYPES = {
+        "taujet":{
+            "PRESELECTION": "presel",
+            "TTBAR": "ttbar CR",
+            "QCD": "qcd CR",
+            "BVETO": "b-veto CR",
+            "SR_TAUJET": "signal region",},
+        
+        "taulep":{},
     }
-    CHANNELS = ["taujet", "taulep"]
-    YEARS = ["2015", "2016", "2017"]
     
     @classmethod
     def factory(cls):
         """ factory method for categories
         """
-        categories = {}
-        for channel in cls.CHANNELS:
-            if channel not in categories:
-                categories[channel] = {}
-            for year in cls.YEARS:
-                if year not in categories[channel]:
-                    categories[channel][year] = []
-                for name, label in cls.NAMES.iteritems():
-                    cat = cls(name, label=label, channel=channel, year=year)
-                    categories[channel][year].append(cat)
-                    
+        categories = {"taujet":[], "taulep": []}
+        for channel, types in cls.TYPES.iteritems():
+            for name, label in types.iteritems(): 
+                cat = cls(name, label=label, channel=channel, mc_camp=MC_CAMPAIGN)
+                categories[channel].append(cat)
+                            
         return categories
     
-    def __init__(self, name, label="", channel="taujet", year="2017"):
-        assert name in self.NAMES.keys(), "%s Category is not supported; see categories.Category"%name
-        self.name = name
-        self.label = label
+    def __init__(self, name,
+                 label="",
+                 channel="taujet",
+                 mc_camp="mc16"):
+        
         self.channel = channel
-        self.year = year
-
+        assert name in Category.TYPES[self.channel].keys(),\
+            "%s Category is not supported; see categories.Category"%name
+        self.name = name
+        self.label = label;
+        self.mc_camp = mc_camp
+        
     @cached_property
     def cuts(self):
         """
         """
 
         # - - - - - - - -  read selections from SELECTION dictionary
-        base = SELECTIONS["BASE"][self.channel][self.year]
+        base = SELECTIONS[self.channel]["BASE"]
         try:
-            selection = base + SELECTIONS[self.name.upper()][self.channel][self.year]
-            return selection
+            cuts = base + SELECTIONS[self.channel][self.name.upper()]
         except KeyError:
-            log.warning(
-                "couldn't find selections for %s : %s: %s  !; continuing with the base selections ... "%(self.name, self.channel, self.year))
-            return base
-    
+            raise RuntimeError("couldn't find selections for %s : %s: %s  ! "%(
+                self.name, self.channel, self.mc_camp))
+        cuts = reduce(lambda c1, c2: c1+c2, [cdict[self.mc_camp] for cdict in cuts])
+
+        return cuts
     
     def __repr__(self):
-        return "CATEGORY:: name=%r, channel=%r, year=%r, cuts=%r\t\n"%(
-            self.name, self.channel, self.year, self.cuts.GetTitle())
+        return "CATEGORY:: name=%r, channel=%r, mc_camp=%r, cuts=%r\t\n"%(
+            self.name, self.channel, self.mc_camp, self.cuts.GetTitle())
     
     
 # - - - - - - - - build categories
 CATEGORIES = Category.factory()
-
+    

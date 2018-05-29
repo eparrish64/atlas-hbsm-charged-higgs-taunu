@@ -22,7 +22,7 @@ from . import log
 from .decorators import cached_property
 from .yaml_utils import Serializable
 from . import xsec
-from .. import EVENTS_CUTFLOW_HIST, EVENTS_CUTFLOW_BIN
+from .. import EVENTS_CUTFLOW_HIST, EVENTS_CUTFLOW_BIN, MC_CAMPAIGN 
 
 # ATLAS 
 USE_PYAMI = False
@@ -51,20 +51,30 @@ TYPES = {
     'MCEMBED': MCEMBED,
 }
 
-# some named ntuples 
-Namedset = namedtuple('Namedset','name tags meta properties')
-Dataset = namedtuple('Dataset',Namedset._fields + ('datatype',))
-Fileset = namedtuple('Fileset',Dataset._fields + ('files', 'treename'))
-ATLASFileset = namedtuple('ATLASFileset',Fileset._fields + ('year', 'grl',))
+DATA15_RUNS_RANGE = (276262, 284484) #<! with 00 prefix 
+DATA16_RUNS_RANGE = (297730, 311481)
+DATA17_RUNS_RANGE = (325713, 338349)
 
-MC_NTUP_PATTERN = re.compile(
+#MC15_NTUP_PATTERN = re.compile("^(?P<id>(\d+))")
+MC16_NTUP_PATTERN = re.compile(
     '^(?P<prefix>(group.phys-higgs|user))'
     '\.(?P<uname>\w+)'
     '\.(?P<jo>\w+)'
     '\.(?P<id>\d+)'
     '\.(?P<tag>\w+)'
-    '\.(?P<version>\w+)_(?P<suffix>\w+)$'
+    '\.(?P<suffix>\w+)$'
 )
+MC_NTUP_PATTERN = MC16_NTUP_PATTERN
+DATA_NTUP_PATTERN = re.compile(
+    '^(?P<prefix>(group.phys-higgs|user))'
+    '\.(?P<uname>\w+)'
+    '\.(?P<jo>\w+)'
+    '\.(?P<id>\d+)'
+    '\.(?P<tag>\w+)'
+    '\.(?P<suffix>\w+)$'
+)
+
+
 
 AOD_TAG_PATTERN = re.compile(
     '^e(?P<evnt>\d+)_'
@@ -136,6 +146,14 @@ if USE_PYAMI:
         create_auth_config()
     amiclient.read_config(AMI_CONFIG)
 
+
+
+# some named ntuples 
+Namedset = namedtuple('Namedset','name tags meta properties')
+Dataset = namedtuple('Dataset',Namedset._fields + ('datatype',))
+Fileset = namedtuple('Fileset',Dataset._fields + ('files', 'treename'))
+ATLASFileset = namedtuple('ATLASFileset',Fileset._fields + ('year', 'grl',))
+    
 ##--------------------------------------------------------------------------------
 ## 
 class Fileset(Fileset):
@@ -308,7 +326,7 @@ class Database(dict):
         self.modified = True
 
         # - - - - - - - - MC
-        log.debug(mc_path)
+        log.info('--------------------------------> MC')
         if mc_path is not None:
             if deep:
                 mc_dirs = get_all_dirs_under(mc_path, prefix=mc_prefix)
@@ -317,34 +335,37 @@ class Database(dict):
                     mc_dirs = glob.glob(os.path.join(mc_path, mc_prefix) + '*')
                 else:
                     mc_dirs = glob.glob(os.path.join(mc_path, '*'))
-            log.debug(mc_dirs)
             for dir in mc_dirs:
                 log.debug(dir)
                 dirname, basename = os.path.split(dir)
                 match  = re.match(MC_NTUP_PATTERN, basename)
                 if match:
-                    ## FIX ME: WITH LATER NTUPS VERSIONS WITH FULL NAME
+                    #FIXME: tmp hack  - - - - - - - -  get dataset name from dsid file/ if not available in here
                     # if match.group('type') != 'mc':
                     #     continue
-                    
-                    #skim = match.group('skim')
-                    #datatype = "mc"#match.group('type')
-                    #year = match.group('year')
-                    #energy = match.group('energy')
-
-                    dsid = match.group('id')
-                    
-                    # - - - - - - - -  get dataset name from dsid file/ if not available in here
                     try:
+                        dsid = match.group('id')
                         name = match.group('name')
-                    except:
-                        name = Dataset.get_name(dsid)
-                    stream = None #match.group('stream')
-                    tag = match.group('tag')
-                    version = match.group('version')
-                    suffix = match.group('suffix')
-                    tag_match = re.match(DAOD_TAG_PATTERN, tag)
+                        stream = None #match.group('stream')
+                        tag = match.group('tag')
+                        version = match.group('version')
+                        suffix = match.group('suffix')
+                        tag_match = re.match(DAOD_TAG_PATTERN, tag)
                     
+                        #skim = match.group('skim')
+                        #datatype = "mc"#match.group('type')
+                        #year = match.group('year')
+                        #energy = match.group('energy')
+
+                    except:
+                        dsid = match.group('id')
+                        name = Dataset.get_name(dsid)
+                        stream = None #match.group('stream')
+                        tag = None
+                        version = None
+                        suffix = None
+                        tag_match = None
+              
                     if tag_match:
                         reco_tag = int(tag_match.group('reco'))
                         if reco_tag in MC_CATEGORIES['mc15a']['reco']:
@@ -384,9 +405,8 @@ class Database(dict):
             log.warning('Not ready yet!')
 
         # - - - - - - - - DATA
-        log.info('--------------> DATA')
+        log.info('--------------------------------> DATA')
         if data_path is not None:
-
             if deep:
                 data_dirs = get_all_dirs_under(data_path, prefix=data_prefix)
             else:
@@ -398,15 +418,30 @@ class Database(dict):
             # classify dir by stream
             streams = {}
             for dir in data_dirs:
+                log.debug(dir)
                 dirname, basename = os.path.split(dir)
-                match = re.match(DS_PATTERN15, basename)
+                match = re.match(DATA_NTUP_PATTERN, basename)
                 if match:
-                    if match.group('type') != 'data':
-                        continue
-                    stream = match.group('name').split('_')[-1]
-                    run = int(match.group('id'))
-                    year = match.group('year')
-
+                    try:
+                        if match.group('type') != 'data':
+                            continue
+                        stream = match.group('name').split('_')[-1]
+                        year = match.group('year')
+                    except:
+                        run = match.group('id')
+                        run = int(run[2:]) #< drop 00 prefix
+                        if DATA15_RUNS_RANGE[0] <= run <= DATA15_RUNS_RANGE[-1]:
+                            stream = "15"
+                            year = "2015"
+                        elif DATA16_RUNS_RANGE[0] <= run <= DATA16_RUNS_RANGE[-1]:
+                            stream = "16"
+                            year = "2016"
+                        elif DATA17_RUNS_RANGE[0] <= run <= DATA17_RUNS_RANGE[-1]:
+                            stream = "17"
+                            year = "2017"
+                        else:
+                            log.error("unknown data run 00%i"%run)
+                    # - - - - - - - data dirs per stream
                     if not ("%s-Main"%year in streams):
                         streams["%s-Main"%year] = []
                     streams['%s-Main'%year].append(dir)
@@ -430,7 +465,6 @@ class Database(dict):
                     stream=stream,
                     file_pattern=data_pattern,
                     year=year)
-
 
     def __setitem__(self, name, ds):
         if self.verbose:
@@ -498,8 +532,18 @@ class Dataset(Serializable):
         self.year = year
         self.stream = stream
         
-    @property
-    def events(self, events_cutflow_hist=EVENTS_CUTFLOW_HIST, events_cutflow_bin=EVENTS_CUTFLOW_BIN):
+    @cached_property
+    def lumi_weight(self):
+        if self.events !=0:
+            return reduce(lambda x,y:x*y, self.xsec_kfact_effic) / self.events
+        else:
+            log.warning(" 0 lumi weight for %s"%self.name)
+            return 0.
+        
+    @cached_property
+    def events(self,
+               events_cutflow_hist=EVENTS_CUTFLOW_HIST[MC_CAMPAIGN],
+               events_cutflow_bin=EVENTS_CUTFLOW_BIN[MC_CAMPAIGN]):
         nevents = 0
         assert (events_cutflow_hist and events_cutflow_bin), "metadata hist info is not provided!"
         for f in self.files:
@@ -515,7 +559,7 @@ class Dataset(Serializable):
     def xsec_kfact_effic(self):
         global XSEC_CACHE_MODIFIED
         global XSEC_CACHE
-        year = self.year % 1E3
+        year = int(self.year) % 1E3
         if self.datatype == DATA:
             return 1., 1., 1.
         if year in XSEC_CACHE and self.id in XSEC_CACHE[year]:

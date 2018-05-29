@@ -8,6 +8,7 @@ import yaml
 ##-----------------------------------------------------------------------
 ## setup cmd args
 parser = ArgumentParser()
+parser.add_argument('--year', "-y",default="2018", choices=("2016", "2017", "2018"))
 parser.add_argument('--deep', action='store_true', default=False)
 parser.add_argument('--reset', action='store_true', default=False)
 parser.add_argument('--versioned', action='store_true', default=False)
@@ -20,13 +21,13 @@ parser.add_argument('--name', default='datasets')
 parser.add_argument('--config', default='hpana/db/datasets_config.yml')
 parser.add_argument('-v', '--verbose', action='store_true', default=False)
 parser.add_argument('--version', type=str)
+
 parser.add_argument('analysis', choices=("taujet", "taulep"))
 args = parser.parse_args()
 
 
 ## ROOT stuff after cmd setup 
 from hpana.db.datasets import Database
-
 
 # - - - - - - - - create a database 
 db = Database(name="%s_%s%s"%(args.name, args.analysis, args.version),
@@ -51,23 +52,25 @@ elif args.info:
         if len(db[name].files) == 0:
             print "EMPTY DATASET"
             sys.exit(1)
-                    
+
+
 # - - - - - - - - updated the datebase                     
 else:
     if args.reset:
         db.clear()
     with open(args.config) as config:
         config_dict = yaml.load(config)
-        for year, year_config in config_dict.items():
-            if args.analysis not in year_config:
-                log.warning("no config found for %s"%args.analysis)
-                continue
-            # - - - - pass the configs to the db
-            params = {}
-            params['data_grl'] = year_config['common'].get('grl', None)
-            params.update(year_config[args.analysis])
-            db.scan(year,
-                    deep=args.deep,
-                    versioned=args.versioned,
-                    **params)
+        print [type(c) for c in config_dict.keys()]
+        year_config = config_dict[args.year]
+        if args.analysis not in year_config:
+            raise RuntimeError("no config found for %s"%args.analysis)
+        
+    # - - - - pass the configs to the db
+    params = {}
+    params['data_grl'] = year_config['common'].get('grl', None)
+    params.update(year_config[args.analysis])
+    db.scan(args.year,
+            deep=args.deep,
+            versioned=args.versioned,
+            **params)
     db.write()

@@ -12,7 +12,6 @@ from . import samples
 #from .samples import Higgs
 
 from .cluster.parallel import FuncWorker, run_pool, map_pool
-
 from .config import Configuration
 import ROOT
 
@@ -21,42 +20,18 @@ import ROOT
 
 ##---------------------------------------------------------------------------------
 ## 
-class Analysis():
+class Analysis:
 
     """ main analysis class.
     Attributes
     ----------
     use_embedding : bool(default=True)
                 if True will use the tau-embedded ztautau for z-background,
-    trigger : bool(default=True) 
-          if True will use trigger.
-    target_region: str(default='OS_ISOL')
-                analysis signal region. see .region/* for more.  
-    fakes_region: str(default='nOS_ISOL') 
-               region for the fakes
-    
-    decouple_qcd_shape : bool(default=False)
-                     if True, do the qcd shape systematics separately,
-                     
-    coherent_qcd_shape: bool(default=False)
-                     if True, do the qcd shape systematics along side others.
-
-    qcd_workspace_norm: float 
-                     Val for qcd systmatics.
-
-    ztt_workspace_norm: float 
-                     Val,  for qcd systmatics.
-                     
-    constrain_norms: bool(default=False)
-                  asks whether to set Low, High for systmatics.
 
     random_mu: bool(default=False)
             whether to set signal strength randomly or not, 
     mu:float(default=1.) 
      signal strength
-
-    ggf_weight: bool(default=True)
-             if True, weights the systematics.
 
     suffix: str
          specific suffix for analysis to be added to the output files name.
@@ -83,23 +58,20 @@ class Analysis():
     CXX_MACROS = [os.path.join(__HERE, "cxxmacros", cm) for cm in CXX_MACROS]
     
     def __init__(self, config,
-                 qcd_workspace_norm=None,
-                 ztt_workspace_norm=None,
                  suffix=None,
                  use_embedding=False,
-                 decouple_qcd_shape=False,
-                 coherent_qcd_shape=True,
-                 constrain_norms=False,
-                 qcd_shape_systematic=True,
                  random_mu=False,
+                 compile_cxx=False,
                  mu=1.):
         # - - - - - - - - main configurer 
         self.config = config 
 
         # - - - - - - - - loading and compiling cxx macros
-        log.info("loading cxx macros ...")
-        for cm in Analysis.CXX_MACROS:
-            ROOT.gROOT.ProcessLine(".L %s"%cm)
+        self.compile_cxx = compile_cxx
+        if self.compile_cxx:
+            log.info("loading cxx macros ...")
+            for cm in Analysis.CXX_MACROS:
+                ROOT.gROOT.ProcessLine(".L %s"%cm)
         
         # - - - - - - - - some basic flags
         self.use_embedding = use_embedding
@@ -110,7 +82,7 @@ class Analysis():
         else:
             log.info("using a mu (signal strength) of {0:.1f}".format(mu))
             self.mu = mu
-
+        
         # - - - - - - - - analysis MC samples 
         if use_embedding:
             raise RuntimeError("Embedding is not ready yet!")
@@ -119,65 +91,63 @@ class Analysis():
                 self.config,
                 workspace_norm=ztt_workspace_norm,
                 constrain_norm=constrain_norms,
-                color='#00A3FF')
+                color=16)
         else:
             self.wtaunu = samples.Sh_Wtaunu(
                 self.config,
                 name='Wtaunu',
                 label='W#rightarrow#tau#nu',
-                color='#B00B71')
+                color=16)
+        self.wlnu = samples.Sh_Wlnu(
+            self.config,
+            name='Wlnu',
+            label='W#rightarrow l#nu',
+            color=14)
+        
         self.ztautau = samples.Sh_Ztautau(
             self.config, 
-            name='ZTauTau',
+            name='Ztautau',
             label='Z#rightarrow#tau#tau',
             workspace_norm=ztt_workspace_norm,
             constrain_norm=constrain_norms,
-            color='#157991')
+            color=ROOT.kYellow-1)
+        self.zll = samples.Sh_Zll(
+            self.config,
+            name='Zll',
+            label='Z#rightarrow ll',
+            color=ROOT.kYellow-3)
 
         self.others = samples.Others(
             self.config, 
             name='Others',
             label='Others',
-            color='#8A0F0F')
+            color=ROOT.kViolet-2)
         self.diboson = samples.Diboson(
             self.config,
             name='DiBoson',
             label='DiBoson',
-            color='#7D560C')
+            color=ROOT.kViolet)
         
         self.top = samples.Top(
             self.config,
             name='Top',
             label='Top',
-            color='#B0AF0B')
-        
-        self.zll = samples.Sh_Zll(
-            self.config,
-            name='Zll',
-            label='Z#rightarrow ll',
-            color='#061c44')
-        
-        self.wlnu = samples.Sh_Wlnu(
-            self.config,
-            name='Wlnu',
-            label='W#rightarrow l#nu',
-            color='#B00B71')
+            pt_weighted=False,
+            color=ROOT.kYellow)
         
         # - - - - - - - - MC BKG components 
         self.mc = [
             self.top,
             self.wtaunu,
-            self.zll,
-            self.wlnu,
             self.ztautau,
             self.diboson,
-            self.others,
+            # self.others, #<! super small
             ]
         
         # - - - - - - - - DATA 
         self.data = samples.Data(
             self.config,
-            name='Data1516',
+            name='Data',
             label='Data',
             markersize=1.2,
             blind=False,
@@ -187,20 +157,20 @@ class Analysis():
         self.qcd = samples.QCD(
             self.config, self.data, self.mc,
             name='QCD',
-            label='jet-->#tau',
-            color='#f8970c')
+            label='jet #rightarrow #tau',
+            color=ROOT.kAzure-9)
 
         # - - - - - - - - leptons faking a tau
         self.lepfakes = samples.LepFake(
             self.config, self.mc,
             name='LepFakes',
-            label='lep-->#tau',
-            color='#00A3FF')
+            label='lep #rightarrow #tau',
+            color=ROOT.kGreen+3)
         
         self.backgrounds = [self.qcd, self.lepfakes] + self.mc 
         
         #WIP - - - - - - - - signals 
-        #self.signals = self.get_signals(masses=self.config.signal_masses)
+        self.signals = []#self.get_signals(masses=self.config.signal_masses)
         
         
     def get_signals(self, masses=[], mode=None, scale=False):
@@ -294,7 +264,6 @@ class Analysis():
         """Derive the normalizations of ttbar and Wjets from a fit of some variable
         """
         raise RuntimeError("not implemented yet")
-    
 
     @staticmethod
     def process(sample, category, systematic, fields=[], **kwargs):
@@ -315,15 +284,17 @@ class Analysis():
             systematics = ["NOMINAL"]
         if not ofile:
             ofile = self.config.hists_file
-            
+
+        samples = [self.data] + self.backgrounds 
         log.info(" running the analysis with ...")
         log.info(" systematics: {}\n".format(systematics))
         log.info(" selections categories: {}\n".format(categories))
         log.info(" common MC weights: {}\n".format(self.wtaunu.weights ) )
         log.info(" variables: {}\n".format(fields) )
-        
+
+        #WIP: make it better
         workers = []
-        for sample in self.backgrounds:
+        for sample in samples[3:4]:
             for systematic in systematics:
                 for cat in categories:
                     workers.append(FuncWorker(Analysis.process, sample, cat, systematic,

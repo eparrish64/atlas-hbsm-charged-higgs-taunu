@@ -2,14 +2,12 @@
 import ROOT 
 
 from .sample import Sample, Histset
+from ..categories import ANTI_TAU, TAU_IS_LEP
 from .. import log
 
 ##---------------------------------------------------------------------------------------
 ## jets faking a tau background 
 class QCD(Sample):
-    ANTI_TAU = ROOT.TCut(
-        "tau_0_jet_bdt_score_sig > 0.02 && tau_0_jet_bdt_loose==0")
-    
     #WIP: - - - - - - - -  Fake-Factor weights are different for different selection categories
     FF_TYPES = {
         "taujet": {
@@ -55,7 +53,7 @@ class QCD(Sample):
         self.config = config
         self.data = data
         self.mc = mc
-        self.tauid = QCD.ANTI_TAU
+        self.tauid = ANTI_TAU[self.config.mc_camp]
         
     def cuts(self, **kwargs):
         """ fakes tauID MEDIUM corresponds to 
@@ -115,7 +113,7 @@ class QCD(Sample):
             mc_hists += m.hists(
                 category,
                 fields=fields,
-                tauid=QCD.ANTI_TAU,
+                tauid=self.tauid,
                 extra_cuts=extra_cuts,
                 extra_weight=extra_weight,
                 weighted=weighted,
@@ -126,7 +124,7 @@ class QCD(Sample):
         data_hists = self.data.hists(
             category,
             fields=fields,
-            tauid=QCD.ANTI_TAU,
+            tauid=self.tauid,
             extra_weight=extra_weight,
             trigger=trigger)
         
@@ -163,8 +161,6 @@ class QCD(Sample):
 ##---------------------------------------------------------------------------------------
 ## leptons faking a tau 
 class LepFake(Sample):
-    TAU_IS_LEP = ROOT.TCut(
-        "abs(tau_0_truth_universal_pdgId)==11||abs(tau_0_truth_universal_pdgId)==13")
         
     def __init__(self, config, mc, name="LepFake", label="l->#tau", **kwargs):
         # - - - - instantiate base 
@@ -174,6 +170,7 @@ class LepFake(Sample):
         self.mc = mc
         self.name = name
         self.label = label
+        self.leptau = TAU_IS_LEP[self.config.mc_camp]
         
     def hists(self, category,
               fields=[],
@@ -191,9 +188,9 @@ class LepFake(Sample):
     
         # - - - - a lepton which passes tau ID  
         if not extra_cuts:
-            extra_cuts = LepFake.TAU_IS_LEP
+            extra_cuts = self.leptau
         else:
-            extra_cuts += LepFake.TAU_IS_LEP
+            extra_cuts += self.leptau
             
         # - - - - - - - - mc 
         mc_hists = []

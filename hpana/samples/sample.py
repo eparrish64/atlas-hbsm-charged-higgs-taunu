@@ -16,7 +16,7 @@ from . import log
 from ..db import samples as samples_db, datasets
 from ..db.decorators import cached_property
 from ..systematics import get_systematics, iter_systematics, systematic_name
-from ..categories import TRUTH_MATCH
+from ..categories import TAU_IS_TRUE
 
 ##---------------------------------------------------------------------------------------
 ## 
@@ -232,9 +232,9 @@ class Sample(object):
         hists = {}
         for ds in self.datasets:
             log.debug("--"*70)
-            log.debug("dataset {};  #events:{} ; lumi: {} ".format(
+            log.debug(" dataset {};  #events:{} ; lumi: {} ".format(
                 ds.name, ds.events, self.config.data_lumi*ds.lumi_weight))
-            log.debug("selection: {0}".format(base_selection))
+            log.debug(" selection: {0}".format(base_selection))
                     
             # - - - - - - - - event weight
             if weighted:
@@ -250,8 +250,9 @@ class Sample(object):
                 selection = base_selection * ROOT.TCut(event_weight)
                 if extra_weight:
                     selection *= extra_weight
-
-                log.debug("weight: {0}*{1}".format(event_weight, extra_weight))
+                    log.debug(" weight: {0}*{1}".format(event_weight, extra_weight))
+                else:
+                    log.debug(" weight: {0}".format(event_weight))
             else:
                 selection = base_selection
                 
@@ -385,20 +386,21 @@ class SystematicsSample(Sample):
         
         # - - - - - - - loop over samples and get datasets for each
         for i, name in enumerate(self.samples):
+            log.debug("--"*60)
             log.debug(name)
             try:
                 ds = self.db[name]
+                xsec, kfact, effic = ds.xsec_kfact_effic
+                log.debug(
+                    "dataset: {0}  cross section: {1} [pb] \n"
+                    "k-factor: {2} \n"
+                    "filtering efficiency: {3}\n"
+                    "events {4}".format(
+                        ds.name, xsec, kfact, effic, ds.events))
+                self.datasets.append(ds)
             except KeyError:
                 log.warning("%s is missing in %s database"%(name, self.db.name))
-            xsec, kfact, effic = ds.xsec_kfact_effic
-            log.debug(
-                "dataset: {0}  cross section: {1} [pb] "
-                "k-factor: {2} "
-                "filtering efficiency: {3}"
-                "events {4}".format(
-                    ds.name, xsec, kfact, effic, ds.events))
-            #dataset = Dataset(ds=ds, events=self.events)
-            self.datasets.append(ds)
+                
 
     @cached_property
     def weights(self, category=None):
@@ -406,11 +408,7 @@ class SystematicsSample(Sample):
         """
         
         # - - - - - - - - MC common weights 
-        weight_fields = []
-        for wtype, wlist in self.config.weights.items():
-            for w in wlist:
-                weight_fields.append(w)
-        return [w.name for w in weight_fields]
+        return self.config.weight_fields
 
             
     @classmethod
@@ -457,7 +455,7 @@ class MC(SystematicsSample):
         """
         cut = super(MC, self).cuts(*args, **kwargs)
         if self.truth_match_tau:
-            cut += TRUTH_MATCH
+            cut += self.config.true_tau
             
         return cut
     

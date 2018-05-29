@@ -53,21 +53,27 @@ class DataInfo():
 class Data(Sample):
     """
     """
-    
-    def __init__(self, config, name='Data', label='Data', blind=True, **kwargs):
+    STREAMS = ("2015", "2016",)# "2017", "2018")
+    def __init__(self, config,
+                 name='Data',
+                 label='Data',
+                 blind=True,
+                 **kwargs):
         # - - - - intantiate the base class
         super(Data, self).__init__(config, name=name, label=label, **kwargs)
-        self.config = config
 
+        self.config = config
+        
         # - - - - Database 
         self.db = self.config.database
-        self.ds = self.db[name]
-        
-        dataname = 'data%i_Main'%(int(int(self.config.year)) % 1E3)
+
+        # - - - - get datasets for the streams
+        self.datasets = []
+        for stream in Data.STREAMS:
+            dname = "data%s-Main"%stream
+            self.datasets.append(self.db[dname])
         self.info = DataInfo(self.config.data_lumi / 1e3, self.config.energy)
         self.blind = blind
-        
-     
     
     def cuts(self, *args, **kwargs):
         """Additional run number specific cuts.
@@ -159,14 +165,16 @@ class Data(Sample):
                 
             if parallel:
                 hist_set = []
-                workers = [FuncWorker(Data.hists_from_dir, idir, fields, selection ,
-                                      file_pattern=self.ds.file_pattern) for idir in self.ds.dirs]
+                workers = []
+                for ds in self.datasets:
+                    for idir in ds.dirs:
+                        workers.append(FuncWorker(Data.hists_from_dir, idir, fields, selection,
+                                                  file_pattern=ds.file_pattern) )
 
                 run_pool(workers, n_jobs=-1)
 
                 # - - - - merge all hists from workers  
                 hists = [w.output for w in workers]
-
 
                 for var in fields:
                     hlist = [hd[var.name] for hd in hists]    
@@ -184,17 +192,18 @@ class Data(Sample):
                         systematic=systematic) )
 
             else:
+                log.info("--"*60)
                 data_chain =  ROOT.TChain("NOMINAL")
-                for ifile in self.ds.files:
-                    data_chain.Add(ifile)
-
+                for ds in self.datasets:
+                    for ifile in ds.files:
+                        log.debug(ifile)
+                        data_chain.Add(ifile)
+                log.info("DATA events (no selections): %i"%data_chain.GetEntries())
                 hist_set = []
                 # - - draw histograms
                 for var in fields:
                     histname = var.name + "_" + ''.join(random.choice(
                         string.ascii_uppercase + string.digits) for _ in range(13))
-
-                    log.debug("{0} >> {1}{2}".format(var.tformula, histname, var.binning))
                     log.debug(selection)
                     data_chain.Draw("{0} >> {1}{2}".format(
                         var.tformula, histname, var.binning), selection)

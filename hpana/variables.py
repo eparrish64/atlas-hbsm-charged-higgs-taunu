@@ -285,7 +285,7 @@ MVA_bjet_0_met_dphi = Variable(
     "MVA_bjet_0_met_dphi", 
     title='#font[52]{#Delta#phi}(b-jet ,E^{miss}_{T})',
     tformula={
-        "mc16": "bjet_0_p4->DeltaPhi(met_0_p4)",
+        "mc16":"acos(cos(met_p4->Phi() - bjet_0_p4->Phi()))",
         "mc15": "acos(cos(met_phi-bjet_0_phi))",},
     binning=(12, -1., 4))
 
@@ -293,7 +293,7 @@ MVA_bjet_0_tau_0_dr = Variable(
     "MVA_bjet_0_tau_0_dr", 
     title='#font[52]{#Delta}R(#tau, b-jet)',
     tformula={
-        "mc16": "bjet_0_p4->DeltaR(tau_0_p4)",
+        "mc16": "sqrt(acos(cos(tau_0_p4->Phi() - bjet_0_p4->Phi()))**2 + (tau_0_p4->Phi() - bjet_0_p4->Eta())**2)",
         "mc15": "sqrt(acos(cos(tau_0_phi-bjet_0_phi))**2 + (tau_0_eta-bjet_0_eta)**2)",},
     binning=(20, 0, 6.4))
 

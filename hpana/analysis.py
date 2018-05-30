@@ -89,8 +89,8 @@ class Analysis:
             log.info("Using embedded Ztautau")
             self.wtaunu = samples.Embedded_Wtaunu(
                 self.config,
-                workspace_norm=ztt_workspace_norm,
-                constrain_norm=constrain_norms,
+                name='Wtaunu',
+                label='W#rightarrow#tau#nu',
                 color=16)
         else:
             self.wtaunu = samples.Sh_Wtaunu(
@@ -108,8 +108,6 @@ class Analysis:
             self.config, 
             name='Ztautau',
             label='Z#rightarrow#tau#tau',
-            workspace_norm=ztt_workspace_norm,
-            constrain_norm=constrain_norms,
             color=ROOT.kYellow-1)
         self.zll = samples.Sh_Zll(
             self.config,
@@ -294,7 +292,7 @@ class Analysis:
 
         #WIP: make it better
         workers = []
-        for sample in samples[3:4]:
+        for sample in samples:
             for systematic in systematics:
                 for cat in categories:
                     workers.append(FuncWorker(Analysis.process, sample, cat, systematic,

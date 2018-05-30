@@ -26,10 +26,13 @@ log.setLevel(args.log)
 
 
 # - - - - - - - - build analysis main configuration object
-config = Configuration(args.channel, year=args.year)
+# - - - - - - - - make sure the ntuples_version is same as the version of Databse you want to use
+config = Configuration(args.channel,
+                       mc_campaign="mc16",
+                       ntuples_version="18v01")
 
 # - - - - - - - - instantiate the analysis
-analysis = Analysis(config)
+analysis = Analysis(config, compile_cxx=True)
 
-analysis.run(fields=config.variables[:1], write_hists=True)
+analysis.run(write_hists=True)
 

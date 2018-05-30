@@ -133,7 +133,7 @@ tau_0_pt = Variable(
     title='#font[52]{p}_{T}(#tau_{1}) GeV',
     tformula={
         "mc16": "tau_0_p4->Pt()",
-        "2016": "tau_0_pt"},
+        "mc15": "tau_0_pt"},
     binning=(20, 0, 400),
     unit='GeV',
     scale=0.001)
@@ -143,7 +143,7 @@ tau_0_eta = Variable(
     title='#eta(#tau)',
     tformula={
         "mc16": "tau_0_p4->Eta()",
-        "2016": "tau_0_eta"},
+        "mc15": "tau_0_eta"},
     binning=(60, -3., 3.))
 
 tau_0_n_charged_tracks = Variable(
@@ -151,7 +151,7 @@ tau_0_n_charged_tracks = Variable(
     title='#font[152]{#tau}_{1} #font[52]{Tracks}',
     tformula={
         "mc16": "tau_0_n_charged_tracks",
-        "2016": "tau_0_n_tracks"},
+        "mc15": "tau_0_n_tracks"},
     binning=(5, -.5, 4.5))
 
 tau_0_q = Variable(
@@ -162,7 +162,10 @@ tau_0_q = Variable(
 upsilon = Variable(
     "upsilon", 
     title='#font[52]{#Upsilon}',
-    tformula='(tau_0_n_tracks==1)*(2.0*tau_0_allTrk_pt/tau_0_pt-1) + -111*(tau_0_n_tracks!=1)',
+    tformula = {
+        "mc15": '(tau_0_n_tracks==1)*(2.0*tau_0_allTrk_pt/tau_0_pt-1) + -111*(tau_0_n_tracks!=1)',
+        "mc16": '(tau_0_n_charged_tracks==1)*(2.0*tau_0_allTrk_pt/tau_0_p4->Pt()-1) + -111*(tau_0_n_charged_tracks!=1)',
+    },
     binning=(31, -1.05, 2.05))
 
 # - - - - - - - - MET
@@ -171,7 +174,7 @@ met_et = Variable(
     title='#font[52]{E}^{miss}_{T} GeV',
     tformula={
         "mc16":"met_p4->Et()",
-        "2016": "met_et"},
+        "mc15": "met_et"},
     binning=(20, 0, 400),
     scale=0.001,
     unit='GeV')
@@ -181,7 +184,7 @@ met_etx = Variable(
     title='#font[52]{E}^{miss}_{T_{x}}GeV',
     tformula={
         "mc16":"met_p4->Px()",
-        "2016": "met_etx"},
+        "mc15": "met_etx"},
     binning=(20, -75, 75),
     scale=0.001,
     unit='GeV')   
@@ -191,7 +194,7 @@ met_ety = Variable(
     title='#font[52]{E}^{miss}_{T_{y}}GeV',
     tformula={
         "mc16":"met_p4->Py()",
-        "2016": "met_ety"},
+        "mc15": "met_ety"},
     binning=(20, -75, 75),
     scale=0.001,
     unit='GeV')
@@ -201,7 +204,7 @@ met_phi = Variable(
     title='#font[52]{E}^{miss}_{T} #phi',
     tformula={
         "mc16":"met_p4->Phi()",
-        "2016": "met_phi"},
+        "mc15": "met_phi"},
     binning=(5, -math.pi, math.pi))
 
 # - - - - - - - - tau + MET

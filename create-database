@@ -48,7 +48,6 @@ if args.validate or args.validate_pattern is not None:
 elif args.info:
     print "%i datasets in database" % len(db)
     for name in sorted(db.keys()):
-        print db[name]
         if len(db[name].files) == 0:
             print "EMPTY DATASET"
             sys.exit(1)

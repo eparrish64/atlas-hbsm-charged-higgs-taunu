@@ -8,7 +8,7 @@ import datetime
 
 # local
 from . import (MC_CAMPAIGN, NTUPLES_VERSION, CACHE_DIR, YEAR_ENERGY,
-               EVENTS_CUTFLOW_HIST, EVENTS_CUTFLOW_BIN, SIGNAL_MASSES, NORM_FIELD)
+               EVENTS_CUTFLOW_HIST, EVENTS_CUTFLOW_BIN, NORM_FIELD)
 from .systematics import *
 from .categories import *
 from .lumi import *
@@ -38,10 +38,11 @@ class Configuration:
         self.mc_camp = mc_campaign
 
         #FIX ME: tmp fix 
-        self.year = "2017"
-        if self.mc_camp =="mc15":
+
+        if self.mc_camp == "mc16":
+            self.year = "2018"
+        if self.mc_camp == "mc15":
             self.year = "2017"
-                
                     
     @property
     def variables(self):

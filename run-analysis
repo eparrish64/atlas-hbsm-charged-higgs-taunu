@@ -1,4 +1,5 @@
 #! /usr/bin/env python
+
 # PYTHON_ARGCOMPLETE_OK
 
 # stdlib
@@ -7,32 +8,89 @@ from argparse import ArgumentParser
 import argcomplete
 
 ##--------------------------------------------------------------------------------------------------
-## setup cmd line args
-parser = ArgumentParser("Analysis")
-parser.add_argument("--log", "-l", choices=["VERBOSE", "DEBUG", "INFO", "WARNING", "ERROR"], default="INFO")
-parser.add_argument("--year", "-y", type=str, choices=("2017", "2018", "2016"), default="2017")
-parser.add_argument("--channel", "-c", choices=("taujet", "taulep"), default="taujet")
-parser.add_argument("--systs", "-s", action="store_true")
-argcomplete.autocomplete(parser)
-args = parser.parse_args()
+## analysis parser
+ana_parser = ArgumentParser("Analysis")
+ana_parser.add_argument("--log", "-l",
+                    choices=["VERBOSE", "DEBUG", "INFO", "WARNING", "ERROR"], default="INFO")
 
-# local: import ROOT after setting up cmd args 
+ana_parser.add_argument("--year", "-y", type=str, choices=("2017", "2018", "2016"), default="2018",
+                    help="analysis year, should match the db/samples/<CHANNEL>/YEAR samples you want to use")
+
+ana_parser.add_argument("--channel", "-c", choices=("taujet", "taulep"), default="taujet",
+                    help="analysis channel")
+
+ana_parser.add_argument("--hists-file", "-hf", type=str,
+                    help="where to put the histograms")
+
+ana_parser.add_argument("--samples", nargs="+",
+                    help="list of samples to process")
+
+ana_parser.add_argument("--systs", "-s", action="store_true",
+                    help="process systematics")
+
+ana_parser.add_argument("--no-hists", "-nh", action="store_false",
+                    help="do not wite hists to file")
+
+ana_parser.add_argument("--no-cxx", "-nc", action="store_false",
+                    help="do  not compile cxx macros")
+
+ana_parser.add_argument("--mc-campaign", "-mcc", type=str, default="mc16",choices=("mc15", "mc16"),
+                    help="mc campaign; analysis samples, ntuples branches, etc. might be different among them")
+
+ana_parser.add_argument("--ntuples-version", "-nv", type=str, default="18v01",
+                    help="ntuples version; should match the database version you want to use")
+
+ana_parser.add_argument("--fields", nargs="+",
+                    help="list of the variables that you want to analyze")
+ana_parser.add_argument("--categories", nargs="+",
+                    help="list of the categories that you want to analyze")
+
+ana_parser.add_argument("--systematics", nargs="+",
+                    help="list of the systematics that you want to analyze")
+
+argcomplete.autocomplete(ana_parser)
+ANA_ARGS = ana_parser.parse_args()
+
+# import ROOT after setting up cmd args 
 from hpana.config import Configuration
 from hpana.analysis import Analysis
 from hpana import log
 
 # - - - - - - - -  set log level
-log.setLevel(args.log)
+log.setLevel(ANA_ARGS.log)
 
 
 # - - - - - - - - build analysis main configuration object
-# - - - - - - - - make sure the ntuples_version is same as the version of Databse you want to use
-config = Configuration(args.channel,
-                       mc_campaign="mc16",
-                       ntuples_version="18v01")
+config = Configuration(
+    ANA_ARGS.channel,
+    mc_campaign=ANA_ARGS.mc_campaign,
+    ntuples_version=ANA_ARGS.ntuples_version)
 
+# - - - - - - - - some checks on cmd args
+if ANA_ARGS.fields:
+    fields = filter(lambda v: v.name in ANA_ARGS.fields, config.variables)
+else:
+    fields = config.variables
+    
+if ANA_ARGS.categories:
+    categories = filter(lambda c: c.name in ANA_ARGS.categories, config.categories)
+else:
+    categories = config.categories
+    
+if ANA_ARGS.systematics:
+    #WIP: filter based on the list of systematics available
+    systematics = ANA_ARGS.systematics
+else:
+    systematics = ["NOMINAL"]
+    
 # - - - - - - - - instantiate the analysis
-analysis = Analysis(config, compile_cxx=True)
-
-analysis.run(write_hists=True)
-
+analysis = Analysis(config, compile_cxx=ANA_ARGS.no_cxx)
+# - - - - if you wish to look at specific samples
+if ANA_ARGS.samples:
+    analysis.samples = filter(lambda s: s.name in ANA_ARGS.samples, analysis.samples)
+    
+analysis.run(
+    fields=fields,
+    categories=categories,
+    ofile=ANA_ARGS.hists_file,
+    write_hists=ANA_ARGS.no_hists)

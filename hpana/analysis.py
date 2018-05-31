@@ -170,6 +170,7 @@ class Analysis:
         #WIP - - - - - - - - signals 
         self.signals = []#self.get_signals(masses=self.config.signal_masses)
         
+        self.samples = [self.data] + self.backgrounds + self.signals
         
     def get_signals(self, masses=[], mode=None, scale=False):
 
@@ -283,7 +284,6 @@ class Analysis:
         if not ofile:
             ofile = self.config.hists_file
 
-        samples = [self.data] + self.backgrounds 
         log.info(" running the analysis with ...")
         log.info(" systematics: {}\n".format(systematics))
         log.info(" selections categories: {}\n".format(categories))
@@ -292,7 +292,7 @@ class Analysis:
 
         #WIP: make it better
         workers = []
-        for sample in samples:
+        for sample in self.samples:
             for systematic in systematics:
                 for cat in categories:
                     workers.append(FuncWorker(Analysis.process, sample, cat, systematic,

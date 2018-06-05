@@ -10,6 +10,8 @@ from multiprocessing import Process
 parser = argparse.ArgumentParser()
 parser.add_argument('--files', nargs='+', 
                     help='ntuples to be decorated')
+parser.add_argument('--outdir', "-od", type=str, 
+                    help='if you wish to move the decorated files to a new direcctory, keeping the same structure as the input dir')
 parser.add_argument('action', choices=['rm', 'ab', 'at', 'skim'],
                     help='remove branches, add branches, add trees, or skim trees', )
 parser.add_argument("--suffix", type=str, default="skim",
@@ -267,56 +269,71 @@ class Job(Process):
     which will overload the run method of Procces.
     """
     
-    def __init__(self, workfunc, input, **workfunc_args):
+    def __init__(self, workfunc, ipath, **workfunc_args):
         super(Job, self).__init__()
         self.workfunc = workfunc
-        self.input = input
+        self.ipath = os.path.abspath(ipath)
         self.workfunc_args = workfunc_args
-        self.copy_input = False
-        if 'copy_input' in workfunc_args:
-            self.copy_input = workfunc_args['copy_input']
+        self.copy_input = workfunc_args.pop('copy_input', True)
+        self.outdir = workfunc_args.pop("outdir", None)
         
     def run(self):
-        input = self.input
-        workfunc  = self.workfunc 
-        workfunc_args = self.workfunc_args
+        """
+        overwrite the base class method.
+        """
         
         # copy to new file
         if self.copy_input:
-            output = "%s.%s"%(input, args.suffix)
-            if os.path.exists(output):
-                log.warning(" {} already exists (will skip copying if file is in good shape)" .format(output))
-                tf = ROOT.TFile.Open(output, 'READ')
+            opath = "%s.%s"%(self.ipath, args.suffix)
+            
+            # - - - - if out dir is provided copy files to it
+            if self.outdir:
+                reldir, oname = opath.split("/")[-2:]
+                
+                # - - only keep the structure of original ntuples
+                if reldir.startswith("user."):
+                    self.outdir = os.path.join(self.outdir, reldir)
+                    print self.outdir 
+                    if not os.path.isdir(self.outdir):
+                        os.mkdir(self.outdir)
+                opath = os.path.join(self.outdir, oname)
+            if os.path.exists(opath):
+                log.warning(" {} already exists (will skip copying if file is in good shape)" .format(opath))
+                tf = ROOT.TFile.Open(opath, 'READ')
                 if not tf:
-                    log.warning("{} exists but it ZOMBIE, replacing it".format(output))
-                    os.remove(output)
-                    shutil.copy(input, output)
+                    log.warning("{} exists but it ZOMBIE, replacing it".format(opath))
+                    os.remove(opath)
+                    shutil.copy(self.ipath, opath)
             else:
-                log.info("copying {0} to {1} ...".format(input, output))
-                shutil.copy(input, output)
+                log.info("copying {0} to {1} ...".format(self.ipath, opath))
+                shutil.copy(self.ipath, opath)
         else:
-            output = input
+            opath = self.ipath
         
-        # the actual work happens here
-        workfunc(output, **workfunc_args)
+        # - - - - the actual work happens here
+        self.workfunc(opath, **self.workfunc_args)
+        
         return 
 
 #------------------------------------------------------------------------------    
 if __name__=='__main__':
     
-    # - - - - whats's the input for workfunc
+    # - - - - whats's the ipath for workfunc
     if not args.files:
-        raise IOError('input file pls?')
+        raise IOError('ipath file pls?')
     dfiles = args.files
 
     # - - - - setup the workers args 
 
     workfunc_args = dict()
     
-    workfunc_args['copy_input']  = True
+    workfunc_args['copy_ipath']  = True
     if args.update_in_place:
-        workfunc_args['copy_input']  = False
-    
+        workfunc_args['copy_ipath']  = False
+
+    if args.outdir:
+        workfunc_args["outdir"] = args.outdir
+        
     if args.action=='rm':
         workfunc = remove_branches
         workfunc_args['branches'] = RM_BRANCHES

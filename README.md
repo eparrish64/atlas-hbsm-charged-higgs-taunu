@@ -6,7 +6,7 @@ _[UNDER DEVELOPEMENT]_
 Setup
 ------
 
-requirements: Python > 2.7, root > 6 , pyyaml, tabulate,  
+requirements: Python > 2.7, root > 6 , pyyaml, tabulate, dill  
 - setupATLAS
 - lsetup root 
 
@@ -33,4 +33,4 @@ the following
 After you have the histograms ready you can produce various plots
 
 - to see all the options exectute ``./draw-plots --help``
-- example: ``./draw-plots <PATH TO THE HISTOGRAMS FILE>``
+- example: ``./draw-plots --hists-file <PATH TO THE HISTOGRAMS FILE>``

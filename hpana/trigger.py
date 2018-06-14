@@ -17,7 +17,7 @@ TRIGGERS = dict()
 
 # - - - - taujet 
 TRIGGERS["taujet"] = {
-    "2015": ROOT.TCut("1"),#("(run_number<=284484 && HLT_xe70_tc_lcw==1)"), 
+    "2015": ROOT.TCut("(run_number<=284484 && HLT_xe70_tc_lcw==1)"), 
     "2016": ROOT.TCut(
         "(run_number>284484 && HLT_xe90_mht_L1XE50==1 && run_number<=302872)"\
         "||(run_number>302872 && HLT_xe110_mht_L1XE50==1)"),
@@ -42,7 +42,7 @@ TRIGGER_EFFICIENCIES["taujet"] = {
     "2017": TAUJET_EFF_TEMPLATE.format("met_p4->Et()"),
     "2018": TAUJET_EFF_TEMPLATE.format("met_p4->Et()") 
 }
-TRIGGER_EFFICIENCIES["taujet"]["combined"]= TAUJET_EFF_TEMPLATE.format("met_p4->Et()/1000.")
+TRIGGER_EFFICIENCIES["taujet"]["combined"]= TAUJET_EFF_TEMPLATE.format("met_et/1000.")
 
 ##---------------------------------------------------------------------------------
 ## WIP: 

@@ -431,13 +431,13 @@ class Database(dict):
                         run = match.group('id')
                         run = int(run[2:]) #< drop 00 prefix
                         if DATA15_RUNS_RANGE[0] <= run <= DATA15_RUNS_RANGE[-1]:
-                            stream = "15"
+                            stream = "2015"
                             year = "2015"
                         elif DATA16_RUNS_RANGE[0] <= run <= DATA16_RUNS_RANGE[-1]:
-                            stream = "16"
+                            stream = "2016"
                             year = "2016"
                         elif DATA17_RUNS_RANGE[0] <= run <= DATA17_RUNS_RANGE[-1]:
-                            stream = "17"
+                            stream = "2017"
                             year = "2017"
                         else:
                             log.error("unknown data run 00%i"%run)
@@ -446,29 +446,29 @@ class Database(dict):
                         streams["%s-Main"%year] = []
                     streams['%s-Main'%year].append(dir)
 
-                elif self.verbose:
-                    log.warning(
-                        "not a valid data dataset name: %s" % basename)
-
-            for stream, dirs in streams.items():
-                name = 'data%s' % (stream)
-
-                # add datasets to the database
-                self[name] = Dataset(
-                    name=name,
-                    datatype=DATA,
-                    treename=data_treename,
-                    ds=name,
-                    id=-1,
-                    grl=None,#data_grl,
-                    dirs=dirs,
-                    stream=stream,
-                    file_pattern=data_pattern,
-                    year=year)
+                    # elif self.verbose:
+                    #     log.warning(
+                    #         "not a valid data dataset name: %s" % basename)
+                    
+                    #for stream, dirs in streams.items():
+                    name = 'DATA%s_%s' % (stream, match.group('id'))
+                    
+                    # add datasets to the database
+                    self[name] = Dataset(
+                        name=name,
+                        datatype=DATA,
+                        treename=data_treename,
+                        ds=name,
+                        id=-1,
+                        grl=None,#data_grl,
+                        dirs=[dir],
+                        stream=stream,
+                        file_pattern=data_pattern,
+                        year=year)
 
     def __setitem__(self, name, ds):
-        if self.verbose:
-            print >> self.stream, str(ds)
+        # if self.verbose:
+        #     print >> self.stream, str(ds)
         super(Database, self).__setitem__(name, ds)
 
     def search(self, pattern):
@@ -593,6 +593,10 @@ class Dataset(Serializable):
             XSEC_CACHE[year][self.name] = (xs, 1., effic)
             XSEC_CACHE_MODIFIED = True
             return xs, 1., effic
+        
+        if self.name is None:
+            log.warning("there's a NONE dataset in the database!")
+            return 1., 1., 1.
         raise Exception("cross section of dataset %s is not known!" % self.ds)
     
     @cached_property

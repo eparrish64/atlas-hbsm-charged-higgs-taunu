@@ -20,7 +20,7 @@ import ROOT
 
 ##---------------------------------------------------------------------------------
 ## 
-class Analysis:
+class Analysis(object):
 
     """ main analysis class.
     Attributes
@@ -67,12 +67,9 @@ class Analysis:
         self.config = config 
 
         # - - - - - - - - loading and compiling cxx macros
-        self.compile_cxx = compile_cxx
-        if self.compile_cxx:
-            log.info("loading cxx macros ...")
-            for cm in Analysis.CXX_MACROS:
-                ROOT.gROOT.ProcessLine(".L %s"%cm)
-        
+        if compile_cxx:
+            self.compile_cxx()
+            
         # - - - - - - - - some basic flags
         self.use_embedding = use_embedding
         self.suffix = suffix
@@ -130,16 +127,18 @@ class Analysis:
             self.config,
             name='Top',
             label='Top',
-            pt_weighted=False,
+            pt_weighted=True,
             color=ROOT.kYellow)
         
         # - - - - - - - - MC BKG components 
         self.mc = [
             self.top,
             self.wtaunu,
+            self.wlnu,
             self.ztautau,
+            self.zll, 
             self.diboson,
-            # self.others, #<! super small
+            self.others, #<! super small
             ]
         
         # - - - - - - - - DATA 
@@ -165,12 +164,18 @@ class Analysis:
             label='lep #rightarrow #tau',
             color=ROOT.kGreen+3)
         
-        self.backgrounds = [self.qcd, self.lepfakes] + self.mc 
+        self.backgrounds = [self.lepfakes, self.qcd] + self.mc 
         
         #WIP - - - - - - - - signals 
-        self.signals = []#self.get_signals(masses=self.config.signal_masses)
+        self.signals = [] #self.get_signals(masses=self.config.signal_masses)
         
-        self.samples = [self.data] + self.backgrounds + self.signals
+        self.samples = self.backgrounds + self.signals + [self.data]  
+
+    def compile_cxx(self):
+        log.info("loading cxx macros ...")
+        for cm in Analysis.CXX_MACROS:
+            ROOT.gROOT.ProcessLine(".L %s"%cm)
+
         
     def get_signals(self, masses=[], mode=None, scale=False):
 
@@ -264,71 +269,21 @@ class Analysis:
         """
         raise RuntimeError("not implemented yet")
 
-    @staticmethod
-    def process(sample, category, systematic, fields=[], **kwargs):
-        return sample.hists(category,
-                            fields=fields,
-                            systematic=systematic,
-                            **kwargs)
-    
-    def run(self, categories=[], fields=[], systematics=[],
-            write_hists = True, ofile=None, overwrite=True, **kwargs):
-        """run the analysis and produce the histograms.
+    @property
+    def workers(self):
         """
-        if not categories:
-            categories = self.config.categories
-        if not fields:
-            fields = self.config.variables
-        if not systematics:
-            systematics = ["NOMINAL"]
-        if not ofile:
-            ofile = self.config.hists_file
-
-        log.info(" running the analysis with ...")
-        log.info(" systematics: {}\n".format(systematics))
-        log.info(" selections categories: {}\n".format(categories))
-        log.info(" common MC weights: {}\n".format(self.wtaunu.weights ) )
-        log.info(" variables: {}\n".format(fields) )
-
-        #WIP: make it better
-        workers = []
+        """
+        _workers  = []
         for sample in self.samples:
-            for systematic in systematics:
-                for cat in categories:
-                    workers.append(FuncWorker(Analysis.process, sample, cat, systematic,
-                                              fields=fields, **kwargs))
-                    
-        log.info(" submitting %i jobs . . ."%len(workers))
-        start = float(time.time())
-        run_pool(workers, n_jobs=-1)
-        hist_sets = [w.output for w in workers]
-        hists = [item for sublist in hist_sets for item in sublist]
-
-        if write_hists:
-            log.info(" writing hist to disk . . . ")
-            self.write_hists(hists, ofile, overwrite=overwrite)
+            _workers += sample.workers(
+                fields=self.config.variables,
+                categories=self.config.categories,)
                 
-        done = float(time.time())
-        log.info(" all jobs are done in {:0.2f} mins".format((done - start)/60.) )
-
-
-    def write_hists(self, hist_set, ofile, overwrite=True):
-        """
-        """
-        tf = ROOT.TFile(ofile, "UPDATE")
-        for hs in hist_set:
-            hist = hs.hist
-            systematic = hs.systematic
-            sysdir = systematic
-            if not tf.GetDirectory(sysdir):
-                tf.mkdir(sysdir)
-            tf.cd(sysdir)
-            
-            if overwrite:
-                log.debug(" overwriting the existing hist")
-                hist.Write(hist.GetName(), ROOT.TObject.kOverwrite)
-            else:
-                hist.Write(hist.GetName())
-        tf.Close()
+        return _workers
+    
+    
+    def merge_hists(self, **kwargs):
+        for sample in self.samples:
+            sample.merge_hists(**kwargs)
             
         return 

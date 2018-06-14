@@ -38,7 +38,6 @@ class Configuration:
         self.mc_camp = mc_campaign
 
         #FIX ME: tmp fix 
-
         if self.mc_camp == "mc16":
             self.year = "2018"
         if self.mc_camp == "mc15":
@@ -46,8 +45,11 @@ class Configuration:
                     
     @property
     def variables(self):
-        return VARIABLES[self.channel]
-
+        variables = VARIABLES[self.channel]
+        for var in variables:
+            var.mc_camp = self.mc_camp
+        return variables
+    
     @property
     def trigger(self):
         """trigger should be unique per data taking year (stream)
@@ -63,13 +65,14 @@ class Configuration:
         """weights dictionary with keys as weight type 
         and items as a list of weight string
         """
-        return WEIGHTS[self.channel]
+        return self.weight_fields
     
     @property
     def weight_fields(self):
         """weight fields list
         """
-        return [w.name for w in WEIGHTS[self.channel]]
+        wfs = Weight.factory(channel=self.channel, mc_camp=self.mc_camp)
+        return [w.name for w in wfs]
     
     @property
     def event_total_weight(self):
@@ -79,7 +82,7 @@ class Configuration:
     
     @property
     def categories(self):
-        return CATEGORIES[self.channel]
+        return Category.factory(channel=self.channel, mc_camp=self.mc_camp)
 
     @property
     def systematics(self):
@@ -139,7 +142,7 @@ class Configuration:
     
     @property
     def hists_file(self):
-        return "hists/HISTS_%s_%s.root"%(self.channel, datetime.datetime.today().strftime("%Y_%m_%d"))
+        return "HISTS_%s_%s.root"%(self.channel, datetime.datetime.today().strftime("%Y_%m_%d"))
 
     @property
     def hist_name_template(self):

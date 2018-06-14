@@ -1,64 +1,32 @@
 #! /usr/bin/env python
 
-# PYTHON_ARGCOMPLETE_OK
+## stdlib
+import os, sys, time, pickle, dill
 
-# stdlib
-import os, sys
-from argparse import ArgumentParser
-import argcomplete
-
-##--------------------------------------------------------------------------------------------------
-## analysis parser
-ana_parser = ArgumentParser("Analysis")
-ana_parser.add_argument("--log", "-l",
-                    choices=["VERBOSE", "DEBUG", "INFO", "WARNING", "ERROR"], default="INFO")
-
-ana_parser.add_argument("--year", "-y", type=str, choices=("2017", "2018", "2016"), default="2018",
-                    help="analysis year, should match the db/samples/<CHANNEL>/YEAR samples you want to use")
-
-ana_parser.add_argument("--channel", "-c", choices=("taujet", "taulep"), default="taujet",
-                    help="analysis channel")
-
-ana_parser.add_argument("--hists-file", "-hf", type=str,
-                    help="where to put the histograms")
-
-ana_parser.add_argument("--samples", nargs="+",
-                    help="list of samples to process")
-
-ana_parser.add_argument("--systs", "-s", action="store_true",
-                    help="process systematics")
-
-ana_parser.add_argument("--no-hists", "-nh", action="store_false",
-                    help="do not wite hists to file")
-
-ana_parser.add_argument("--no-cxx", "-nc", action="store_false",
-                    help="do  not compile cxx macros")
-
-ana_parser.add_argument("--mc-campaign", "-mcc", type=str, default="mc16",choices=("mc15", "mc16"),
-                    help="mc campaign; analysis samples, ntuples branches, etc. might be different among them")
-
-ana_parser.add_argument("--ntuples-version", "-nv", type=str, default="18v01",
-                    help="ntuples version; should match the database version you want to use")
-
-ana_parser.add_argument("--fields", nargs="+",
-                    help="list of the variables that you want to analyze")
-ana_parser.add_argument("--categories", nargs="+",
-                    help="list of the categories that you want to analyze")
-
-ana_parser.add_argument("--systematics", nargs="+",
-                    help="list of the systematics that you want to analyze")
-
-argcomplete.autocomplete(ana_parser)
+# - - - - - - - -  parse ana args (needed before ROOT)
+from hpana.cmd import get_ana_parser 
+ana_parser = get_ana_parser()
 ANA_ARGS = ana_parser.parse_args()
 
-# import ROOT after setting up cmd args 
+## local
 from hpana.config import Configuration
 from hpana.analysis import Analysis
+from hpana.samples.sample  import Sample
+from hpana.cluster.parallel import FuncWorker, run_pool, Job
 from hpana import log
+
+# - - - - time it
+start_time = time.time()
+
 
 # - - - - - - - -  set log level
 log.setLevel(ANA_ARGS.log)
 
+# - - - - - - - - Speed things up a bit
+import ROOT
+ROOT.SetSignalPolicy(ROOT.kSignalFast)
+ROOT.gROOT.SetBatch(True)
+log.info("ROOT is in batch mode")
 
 # - - - - - - - - build analysis main configuration object
 config = Configuration(
@@ -84,13 +52,88 @@ else:
     systematics = ["NOMINAL"]
     
 # - - - - - - - - instantiate the analysis
-analysis = Analysis(config, compile_cxx=ANA_ARGS.no_cxx)
+analysis = Analysis(config, compile_cxx=not ANA_ARGS.no_cxx)
+
 # - - - - if you wish to look at specific samples
 if ANA_ARGS.samples:
     analysis.samples = filter(lambda s: s.name in ANA_ARGS.samples, analysis.samples)
+
+# - - - - - - - - - - run on multicores
+if ANA_ARGS.parallel:
+    jobs = []
+    for worker in analysis.workers:
+        jobs.append(Job(Sample.dataset_hists,
+                        worker,
+                        write_hists=True,
+                        outdir=ANA_ARGS.outdir) )
+
+        if ANA_ARGS.dry_run:
+                print "--"*100
+                print worker 
+    if not ANA_ARGS.dry_run:   
+        log.info(
+            "************** submitting %i jobs  ************"%len(jobs))
+        log.info(
+            "***********************************************")
+        run_pool(jobs, n_jobs=ANA_ARGS.ncpu)
+
+# - - - - - - - - - - run on cluster
+if ANA_ARGS.cluster:
+    # # - - - - - - - - pickle the analysis: KEEP IT IN THE MAIN DIR, 
+    # # IF YOU DONT WANT TO SHIP THE WHOLE CODE TO THE NODES.
+    if ANA_ARGS.pickle_analysis:
+        with open (ANA_ARGS.pickle_analysis, "wb") as pfile:
+            dill.dump(analysis, pfile)
+    if ANA_ARGS.pickled_analysis:
+        with open (ANA_ARGS.pickled_analysis, "rb") as pfile:
+            pickled_analysis = dill.load(pfile)
+                    
+    # - - - - clusters' resource manager and scheduler
+    if ANA_ARGS.rs_manager=="TORQUE":
+        # - - write jobs
+        from hpana.cluster.job_template import PBS_JOB_TEMPLATE
+
+        # - - setup the submit dir
+        os.system("mkdir -p {0}/jobs {0}/failed {0}/done {0}/submitted {0}/hists".format(ANA_ARGS.outdir))
+        log.info(
+            "************** submitting %i jobs to the cluster ************"%len(pickled_analysis.workers))
+        log.info(
+            "**************************************************************")
+
+        # - -  create the job scripts and run them.
+        for aw in pickled_analysis.workers:
+            jfile_name = "%s/jobs/%s.pbs"%(ANA_ARGS.outdir, aw.name)
+
+            # - - write the job submission script with right permissions
+            jfile = os.open(jfile_name, os.O_CREAT|os.O_WRONLY, 0755)
+            os.write(jfile, 
+                     PBS_JOB_TEMPLATE.format(logsdir=ANA_ARGS.logsdir,
+                                             outdir=ANA_ARGS.outdir,
+                                             local_scratch=ANA_ARGS.local_scratch,
+                                             pickled_analysis=ANA_ARGS.pickled_analysis,
+                                             script_path="process-dataset",
+                                             jobname=aw.name,) )
+
+            os.close(jfile)
+
+            # - - - - submit the job now
+            log.info("submitting  %s ..."%aw.name)
+            if not ANA_ARGS.dry_run:
+                os.system("qsub {0}".format(jfile_name))
+
+
+# - - - - - - - - @NOTE: if you submitted jobs to the cluster wait till they're all done!
+if ANA_ARGS.merge_hists:
+    if ANA_ARGS.cluster:
+        raise RuntimeError("jobs are submitted to the cluster wait for them to get done")
+    log.info(
+        "************** merging histograms  ************")
+    log.info(
+        "***********************************************")
+    analysis.merge_hists(histsdir=ANA_ARGS.outdir, overwrite=True)
+
     
-analysis.run(
-    fields=fields,
-    categories=categories,
-    ofile=ANA_ARGS.hists_file,
-    write_hists=ANA_ARGS.no_hists)
+end_time = time.time()
+elapsed_time = (end_time - start_time)/60.
+log.info("\n****************** elapsed time: %0.1f mins ******************"%elapsed_time)
+    

@@ -1,4 +1,4 @@
-__all__ = ["WEIGHTS"]
+__all__ = ["WEIGHTS", "Weight"]
 
 from .trigger import TRIGGER_EFFICIENCIES 
 from . import MC_CAMPAIGN
@@ -59,22 +59,21 @@ class Weight:
     YEARS = ["2015", "2016", "2017", "2018"]
 
     @classmethod
-    def factory(cls):
+    def factory(cls, channel="taujet", mc_camp=MC_CAMPAIGN):
         """ 
         """
-        weights = {"taujet": [], "taulep":[]}
-        for channel, types in cls.TYPES.iteritems():
-            for wtype, wo in types.iteritems():
-                if isinstance(wo, (tuple, list)):
-                    for w in wo:
-                        weight = cls(w, wtype=wtype, channel=channel, mc_camp=MC_CAMPAIGN)
-                        weights[channel].append(weight)
-                elif isinstance(wo, dict):
-                    for w in wo[MC_CAMPAIGN]:
-                        weight = cls(w, wtype=wtype, channel=channel, mc_camp=MC_CAMPAIGN)
-                        weights[channel].append(weight)
-                else:
-                    raise TypeError("{} must be either a tuple, list or dict type".format(w))
+        weights = []
+        for wtype, wo in cls.TYPES[channel].iteritems():
+            if isinstance(wo, (tuple, list)):
+                for w in wo:
+                    weight = cls(w, wtype=wtype, channel=channel, mc_camp=mc_camp)
+                    weights.append(weight)
+            elif isinstance(wo, dict):
+                for w in wo[MC_CAMPAIGN]:
+                    weight = cls(w, wtype=wtype, channel=channel, mc_camp=mc_camp)
+                    weights.append(weight)
+            else:
+                raise TypeError("{} must be either a tuple, list or dict type".format(w))
         return weights
     
     def __init__(self, name, wtype="", channel="taujet", mc_camp=MC_CAMPAIGN):

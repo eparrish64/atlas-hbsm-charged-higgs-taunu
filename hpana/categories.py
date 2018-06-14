@@ -177,7 +177,8 @@ SELECTIONS["taujet"]["BVETO"] = (
 SELECTIONS["taujet"]["SR_TAUJET"] = (
     NUM_JETS3,
     JET_PT25,
-    MET150, 
+    MET150,
+    MT50,
     NUM_BJETS1,
     BJET_PT25)
 
@@ -211,14 +212,14 @@ class Category:
     }
     
     @classmethod
-    def factory(cls):
+    def factory(cls, mc_camp=MC_CAMPAIGN, channel="taujet"):
         """ factory method for categories
         """
-        categories = {"taujet":[], "taulep": []}
+        categories = [] #{"taujet":[], "taulep": []}
         for channel, types in cls.TYPES.iteritems():
             for name, label in types.iteritems(): 
-                cat = cls(name, label=label, channel=channel, mc_camp=MC_CAMPAIGN)
-                categories[channel].append(cat)
+                cat = cls(name, label=label, channel=channel, mc_camp=mc_camp)
+                categories.append(cat)
                             
         return categories
     

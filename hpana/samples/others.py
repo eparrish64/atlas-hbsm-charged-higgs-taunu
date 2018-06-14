@@ -42,15 +42,15 @@ class Top(MC, Background):
     def __init__(self, *args, **kwargs):
         super(Top, self).__init__(*args, **kwargs)
         self.kwargs = kwargs
-        
-    @cached_property
+    
     def weights(self, **kwargs):
         """WIP: specific weights for Top like top pt weights
         """
-        weights = super(Top, self).weights
+        weights = super(Top, self).weights()
         if "pt_weighted" in self.kwargs:
             if self.kwargs["pt_weighted"]:
-                weights += ["GetTopPtWeight(truth_top0_pt)"]
+                for wcat in weights:
+                    weights[wcat] += ["GetTopPtWeight(truth_top0_pt)"]
         
         return weights
         

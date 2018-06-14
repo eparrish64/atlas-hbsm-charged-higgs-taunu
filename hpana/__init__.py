@@ -1,5 +1,6 @@
-import logging
+import logging, warnings
 import os
+
 
 # - - - - - - - - setup logging
 logging.basicConfig()
@@ -18,16 +19,21 @@ if not os.environ.get("DEBUG", False):
     log.setLevel(logging.INFO)
 if hasattr(logging, 'captureWarnings'):
     logging.captureWarnings(True)
-
     
+
 # - - - - - - - - Speed things up a bit
-import ROOT
-ROOT.SetSignalPolicy(ROOT.kSignalFast)
-ROOT.gROOT.SetBatch(True)
-log.info("ROOT is in batch mode")
+# import ROOT
+# ROOT.SetSignalPolicy(ROOT.kSignalFast)
+# ROOT.gROOT.SetBatch(True)
+# log.info("ROOT is in batch mode")
+    
+warnings.filterwarnings(action='ignore', category=RuntimeWarning,
+                        message='creating converter.*' )
+warnings.filterwarnings(action="ignore", category=RuntimeWarning,
+                        message="no dictionary for.* ")
 
 # - - - - - - - - consts 
-NTUPLES_VERSION = "1516v10" #"18v01"
+NTUPLES_VERSION = "18v01"
 
 # - - - - cache directory 
 CACHE_DIR = ".CACHE"

@@ -58,6 +58,7 @@ class Data(Sample):
                  name='Data',
                  label='Data',
                  blind=True,
+                 blind_regions=[],
                  **kwargs):
         # - - - - intantiate the base class
         super(Data, self).__init__(config, name=name, label=label, **kwargs)
@@ -68,13 +69,17 @@ class Data(Sample):
         self.db = self.config.database
 
         # - - - - get datasets for the streams
-        self.datasets = []
-        for stream in Data.STREAMS:
-            dname = "data%s-Main"%stream
-            self.datasets.append(self.db[dname])
+        self.datasets = [self.db["Data1516"]]
+        # for stream in Data.STREAMS:
+        #     dsprefix = "DATA%s_"%stream
+        #     dsprefix = "Data%"%stream
+        #     for dk in self.db.keys():
+        #         if dk.startswith(dsprefix):
+        #             self.datasets.append(self.db[dk])
         self.info = DataInfo(self.config.data_lumi / 1e3, self.config.energy)
         self.blind = blind
-    
+        self.blind_regions = blind_regions
+        
     def cuts(self, *args, **kwargs):
         """Additional run number specific cuts.
         Parameters
@@ -86,146 +91,33 @@ class Data(Sample):
         """
         cut = super(Data, self).cuts(*args, **kwargs)
         return cut
-            
-    @staticmethod
-    def hists_from_dir(idir, fields, selection,
-                       file_pattern="*",tree_name="NOMINAL"):
-        files = glob.glob(os.path.join(idir, file_pattern))
-        ds_chain = ROOT.TChain(tree_name)
-        for f in files:
-            ds_chain.Add(f)
-
-        hists = {}
-        # - - draw histograms
-        for var in fields:
-            if var.name in hists:
-                hists[var.name] = None
-            histname = var.name + "_" + ''.join(random.choice(
-                string.ascii_uppercase + string.digits) for _ in range(13))
-            
-            log.debug("{0} >> {1}{2}".format(var.tformula, histname, var.binning))
-            log.debug(selection)
-            ds_chain.Draw("{0} >> {1}{2}".format(
-                var.tformula, histname, var.binning), selection)
-            htmp = ROOT.gPad.GetPrimitive(histname)
-            hists[var.name] = htmp.Clone()
-            
-        # - - - - reset the chain and go to the next dataset 
-        ds_chain.Reset()
-
-        return hists
     
-    def hists(self, category,
-              fields=[],
-              systematic="NOMINAL",
-              extra_cuts=None,
-              extra_weight=None,
-              weighted=False, #<! not needed; added just to benefit from Sample methods like events
-              trigger=None,
-              tauid=None,
-              suffix=None,
-              parallel=False):
-
-        log.info("processing histograms for %s tree from %s ; category: %s"%(
-            systematic, self.name, category.name))
-
-        if not fields:
-            fields = self.config.variables
-            self.debug("creating hists for all the variables {}".format(fields))
-
-        # - - - - create a default canvas for the TTree.Draw
-        canvas = ROOT.TCanvas()
-            
-        #- - - - - - - - if blinded and SR return empty hists
-        if self.blind and category.name=="SR":
-            hist_set = []
-            for var in fields:
-                fname = "%s_category_%s_%s"%(self.name, category.name, var.name)
-                hist = ROOT.TH1F(fname, fname, *var.binning)
-                hist.SetXTitle(var.title)
-                hist_set.append(Histset(
-                    sample=self.name,
-                    variable=var.name,
-                    category=category.name,
-                    hist=hist,
-                    systematic=systematic) )
-        else:
-            # - - - - filters
-            selection = self.cuts(
-                category=category,
-                trigger=trigger,
-                tauid=tauid,
-                systematic=systematic)
-            if extra_cuts:
-                selection += extra_cuts
-            if tauid:
-                selection +=tauid
-            if extra_weight:
-                selection *= extra_weight
-                
-            if parallel:
-                hist_set = []
-                workers = []
-                for ds in self.datasets:
-                    for idir in ds.dirs:
-                        workers.append(FuncWorker(Data.hists_from_dir, idir, fields, selection,
-                                                  file_pattern=ds.file_pattern) )
-
-                run_pool(workers, n_jobs=-1)
-
-                # - - - - merge all hists from workers  
-                hists = [w.output for w in workers]
-
-                for var in fields:
-                    hlist = [hd[var.name] for hd in hists]    
-                    hsum = reduce(lambda x, y: x + y, hlist)
-                    fname = self.hist_name_template.format(self.name, category.name, var.name)
-                    hsum.SetName(fname)
-                    hsum.SetTitle(fname)
-                    hsum.SetXTitle(var.title)
-
-                    hist_set.append(Histset(
-                        sample=self.name,
-                        variable=var.name,
-                        category=category.name,
-                        hist=hsum,
-                        systematic=systematic) )
-
-            else:
-                log.info("--"*60)
-                data_chain =  ROOT.TChain("NOMINAL")
-                for ds in self.datasets:
-                    for ifile in ds.files:
-                        log.debug(ifile)
-                        data_chain.Add(ifile)
-                log.info("DATA events (no selections): %i"%data_chain.GetEntries())
-                hist_set = []
-                # - - draw histograms
-                for var in fields:
-                    histname = var.name + "_" + ''.join(random.choice(
-                        string.ascii_uppercase + string.digits) for _ in range(13))
-                    log.debug(selection)
-                    data_chain.Draw("{0} >> {1}{2}".format(
-                        var.tformula, histname, var.binning), selection)
-                    htmp = ROOT.gPad.GetPrimitive(histname)
-                    hist = htmp.Clone()
-
-                    hname = self.hist_name_template.format(self.name, category.name, var.name)
-                    hist.SetName(hname)
-                    hist.SetTitle(hname)
-                    hist.SetXTitle(var.title)
-                    hist_set.append(Histset(
-                        sample=self.name,
-                        variable=var.name,
-                        category=category.name,
-                        hist=hist,
-                        systematic=systematic) )
-
-                # - - - - reset the chain and go to the next dataset 
-                data_chain.Reset()
-            
-        log.info("processed %s tree from %s sample; category: %s"%(
-            systematic, self.name, category.name))
-        canvas.Close()
+    def workers(self, **kwargs):
+        """
+        """
+        # - - - - no weight on DATA and no hist for blind regions
+        systematics = kwargs.pop("systematics", ["NOMINAL"])
+        weighted = kwargs.pop("weighted", False)
         
-        return hist_set 
+        categories = kwargs.pop("categories", [])
+        categories = filter(lambda c: c.name not in self.blind_regions, categories)
+            
+        _workers = super(Data, self).workers(
+            categories=categories,
+            systematics=["NOMINAL"],
+            weighted=weighted,
+            **kwargs)
+        
+        return _workers
+    
+    
+    def hists(self, **kwargs):
+        
+        systematics = kwargs.pop("systematics", ["NOMINAL"])
+        weighted = kwargs.pop("weighted", False)
+        
+        if self.blind:
+            categories = filter(lambda cat: not cat.name in self.blind_regions,  [c.name for c in categories])
+        
+        super(Data, self).hists(systematics=systematics, weighted=weighted, **kwargs)
+        

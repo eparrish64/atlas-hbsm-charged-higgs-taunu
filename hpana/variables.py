@@ -111,9 +111,6 @@ class Variable:
     @property
     def bins(self):
         return self._bins
-    @bins.setter
-    def bins(self, value):
-        self._bins = value
 
     def blind(self,low, high):
         pass
@@ -216,7 +213,7 @@ tau_0_met_dphi = Variable(
 tau_0_met_mt = Variable(
     "tau_0_met_mt",
     title='m_{T}(#tau, E^{miss}_{T})GeV',
-    binning=(50, 0, 50), 
+    binning=(50, 0, 500), 
     workspace_binning=(1000, 0, 1000),
     scale=0.001,
     unit='GeV')

@@ -64,15 +64,38 @@ MC16_NTUP_PATTERN = re.compile(
     '\.(?P<tag>\w+)'
     '\.(?P<suffix>\w+)$'
 )
-MC_NTUP_PATTERN = MC16_NTUP_PATTERN
-DATA_NTUP_PATTERN = re.compile(
+
+## deprecated ! used for 18v01 production 
+# MC_NTUP_PATTERN= re.compile(
+#     '^(?P<prefix>(group.phys-higgs|user))'
+#     '\.(?P<uname>\w+)'
+#     '\.(mc16_13TeV)'
+#     '\.(?P<id>\d+)'
+#     '\.(?P<name>\w+)'
+#     '\.(?P<derivation>\w+)'
+#     '\.(?P<tag>\w+)'
+#     '\.(?P<version>\w+)'
+#     '\_hist$')
+
+# DATA_NTUP_PATTERN = re.compile(
+#     '^(?P<prefix>(group.phys-higgs|user))'
+#     '\.(?P<uname>\w+)'
+#     '\.(?P<jo>\w+)'
+#     '\.(?P<id>\d+)'
+#     '\.(?P<tag>\w+)'
+#     '\.(?P<suffix>\w+)$'
+# )
+
+NTUP_PATTERN_2018 = re.compile(
     '^(?P<prefix>(group.phys-higgs|user))'
     '\.(?P<uname>\w+)'
-    '\.(?P<jo>\w+)'
+    '\.((mc16|data(15|16|17|18))_13TeV)'
     '\.(?P<id>\d+)'
+    '\.(?P<name>\w+)'
+    '\.(?P<derivation>\w+)'
     '\.(?P<tag>\w+)'
-    '\.(?P<suffix>\w+)$'
-)
+    '\.(?P<version>\w+)'
+    '\_hist$')
 
 
 
@@ -338,7 +361,7 @@ class Database(dict):
             for dir in mc_dirs:
                 log.debug(dir)
                 dirname, basename = os.path.split(dir)
-                match  = re.match(MC_NTUP_PATTERN, basename)
+                match  = re.match(NTUP_PATTERN_2018, basename)
                 if match:
                     #FIXME: tmp hack  - - - - - - - -  get dataset name from dsid file/ if not available in here
                     # if match.group('type') != 'mc':
@@ -349,21 +372,14 @@ class Database(dict):
                         stream = None #match.group('stream')
                         tag = match.group('tag')
                         version = match.group('version')
-                        suffix = match.group('suffix')
-                        tag_match = re.match(DAOD_TAG_PATTERN, tag)
-                    
-                        #skim = match.group('skim')
-                        #datatype = "mc"#match.group('type')
-                        #year = match.group('year')
-                        #energy = match.group('energy')
-
+                        tag_match = None
+                        
                     except:
                         dsid = match.group('id')
                         name = Dataset.get_name(dsid)
                         stream = None #match.group('stream')
                         tag = None
                         version = None
-                        suffix = None
                         tag_match = None
               
                     if tag_match:
@@ -376,7 +392,7 @@ class Database(dict):
                             cat = 'mc15'
                     else:
                         cat = 'mc16'
-                    log.debug((dsid,name, tag, cat, version, suffix))
+                    log.debug((dsid,name, tag, cat, version))
 
                     # - - - - - - - - update the DB with this dataset
                     dataset = self.get(name, None)
@@ -420,7 +436,7 @@ class Database(dict):
             for dir in data_dirs:
                 log.debug(dir)
                 dirname, basename = os.path.split(dir)
-                match = re.match(DATA_NTUP_PATTERN, basename)
+                match = re.match(NTUP_PATTERN_2018, basename)
                 if match:
                     try:
                         if match.group('type') != 'data':

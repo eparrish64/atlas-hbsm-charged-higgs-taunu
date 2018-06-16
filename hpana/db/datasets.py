@@ -65,38 +65,17 @@ MC16_NTUP_PATTERN = re.compile(
     '\.(?P<suffix>\w+)$'
 )
 
-## deprecated ! used for 18v01 production 
-# MC_NTUP_PATTERN= re.compile(
-#     '^(?P<prefix>(group.phys-higgs|user))'
-#     '\.(?P<uname>\w+)'
-#     '\.(mc16_13TeV)'
-#     '\.(?P<id>\d+)'
-#     '\.(?P<name>\w+)'
-#     '\.(?P<derivation>\w+)'
-#     '\.(?P<tag>\w+)'
-#     '\.(?P<version>\w+)'
-#     '\_hist$')
-
-# DATA_NTUP_PATTERN = re.compile(
-#     '^(?P<prefix>(group.phys-higgs|user))'
-#     '\.(?P<uname>\w+)'
-#     '\.(?P<jo>\w+)'
-#     '\.(?P<id>\d+)'
-#     '\.(?P<tag>\w+)'
-#     '\.(?P<suffix>\w+)$'
-# )
-
 NTUP_PATTERN_2018 = re.compile(
     '^(?P<prefix>(group.phys-higgs|user))'
     '\.(?P<uname>\w+)'
-    '\.((mc16|data(15|16|17|18))_13TeV)'
+    '\.(?P<type>mc|data)'
+    '(?P<stream>15|16|17|18)_13TeV'
     '\.(?P<id>\d+)'
     '\.(?P<name>\w+)'
     '\.(?P<derivation>\w+)'
     '\.(?P<tag>\w+)'
     '\.(?P<version>\w+)'
     '\_hist$')
-
 
 
 AOD_TAG_PATTERN = re.compile(
@@ -168,8 +147,6 @@ if USE_PYAMI:
     if not os.path.exists(AMI_CONFIG):
         create_auth_config()
     amiclient.read_config(AMI_CONFIG)
-
-
 
 # some named ntuples 
 Namedset = namedtuple('Namedset','name tags meta properties')
@@ -363,25 +340,24 @@ class Database(dict):
                 dirname, basename = os.path.split(dir)
                 match  = re.match(NTUP_PATTERN_2018, basename)
                 if match:
-                    #FIXME: tmp hack  - - - - - - - -  get dataset name from dsid file/ if not available in here
-                    # if match.group('type') != 'mc':
-                    #     continue
                     try:
+                        if match.group('type') != 'mc':
+                            continue
                         dsid = match.group('id')
                         name = match.group('name')
-                        stream = None #match.group('stream')
+                        stream = "mc%s"%match.group('stream')
                         tag = match.group('tag')
                         version = match.group('version')
                         tag_match = None
                         
-                    except:
+                    except: #<! go with the minimal info
                         dsid = match.group('id')
                         name = Dataset.get_name(dsid)
-                        stream = None #match.group('stream')
+                        stream = None
                         tag = None
                         version = None
                         tag_match = None
-              
+
                     if tag_match:
                         reco_tag = int(tag_match.group('reco'))
                         if reco_tag in MC_CATEGORIES['mc15a']['reco']:
@@ -392,7 +368,7 @@ class Database(dict):
                             cat = 'mc15'
                     else:
                         cat = 'mc16'
-                    log.debug((dsid,name, tag, cat, version))
+                    log.debug((dsid,name, tag, version))
 
                     # - - - - - - - - update the DB with this dataset
                     dataset = self.get(name, None)
@@ -406,7 +382,6 @@ class Database(dict):
                             treename=mc_treename,
                             ds=name,
                             id=int(match.group('id')),
-                            category=cat,
                             version=version,
                             tag_pattern=None,
                             tag=tag,
@@ -438,35 +413,19 @@ class Database(dict):
                 dirname, basename = os.path.split(dir)
                 match = re.match(NTUP_PATTERN_2018, basename)
                 if match:
-                    try:
-                        if match.group('type') != 'data':
-                            continue
-                        stream = match.group('name').split('_')[-1]
-                        year = match.group('year')
-                    except:
-                        run = match.group('id')
-                        run = int(run[2:]) #< drop 00 prefix
-                        if DATA15_RUNS_RANGE[0] <= run <= DATA15_RUNS_RANGE[-1]:
-                            stream = "2015"
-                            year = "2015"
-                        elif DATA16_RUNS_RANGE[0] <= run <= DATA16_RUNS_RANGE[-1]:
-                            stream = "2016"
-                            year = "2016"
-                        elif DATA17_RUNS_RANGE[0] <= run <= DATA17_RUNS_RANGE[-1]:
-                            stream = "2017"
-                            year = "2017"
-                        else:
-                            log.error("unknown data run 00%i"%run)
+                    if match.group('type') != 'data':
+                        continue
+                    stream = "20%s"%match.group('stream')
+                    run = match.group('id')
+                    name = match.group('name')
+                    tag = match.group('tag')
+                    version = match.group('version')
+                    tag_match = None
                     # - - - - - - - data dirs per stream
                     if not ("%s-Main"%year in streams):
                         streams["%s-Main"%year] = []
                     streams['%s-Main'%year].append(dir)
 
-                    # elif self.verbose:
-                    #     log.warning(
-                    #         "not a valid data dataset name: %s" % basename)
-                    
-                    #for stream, dirs in streams.items():
                     name = 'DATA%s_%s' % (stream, match.group('id'))
                     
                     # add datasets to the database
@@ -475,16 +434,16 @@ class Database(dict):
                         datatype=DATA,
                         treename=data_treename,
                         ds=name,
-                        id=-1,
+                        id=run,
                         grl=None,#data_grl,
                         dirs=[dir],
                         stream=stream,
+                        tag=tag,
+                        version=version,
                         file_pattern=data_pattern,
                         year=year)
 
     def __setitem__(self, name, ds):
-        # if self.verbose:
-        #     print >> self.stream, str(ds)
         super(Database, self).__setitem__(name, ds)
 
     def search(self, pattern):

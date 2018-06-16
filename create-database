@@ -59,7 +59,6 @@ else:
         db.clear()
     with open(args.config) as config:
         config_dict = yaml.load(config)
-        print [type(c) for c in config_dict.keys()]
         year_config = config_dict[args.year]
         if args.analysis not in year_config:
             raise RuntimeError("no config found for %s"%args.analysis)

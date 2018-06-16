@@ -5202,6 +5202,16 @@
 ########################################################################################################################
 ## SingleTop
 
+410658   PhPy8EG_A14_tchan_BW50_lept_top                  43.739  1.0094  1.0 1.0
+410659   PhPy8EG_A14_tchan_BW50_lept_antitop              25.778  1.0193  1.0 1.0
+
+410646  PowhegPythia8EvtGen_A14_Wt_DR_inclusive_top               34.009  1.054   1.0 1.0
+410647  PowhegPythia8EvtGen_A14_Wt_DR_inclusive_antitop               33.989  1.054   1.0 1.0
+
+410644  PowhegPythia8EvtGen_A14_singletop_schan_lept_top            2.0517  1.0046  1.0     1.0
+410645  PowhegPythia8EvtGen_A14_singletop_schan_lept_antitop        1.2615  1.0215  1.0     1.0
+
+
 407018	 PowhegPythiaEvtGen_P2012CT10_Wt_inclusive_top_HT500	 34.009	 0.088461215	 1.054	 1.0
 407019	 PowhegPythiaEvtGen_P2012CT10_Wt_inclusive_top_MET200	 34.013	 0.011282481	 1.054	 1.0
 407020	 PowhegPythiaEvtGen_P2012CT10_Wt_inclusive_tbar_HT500	 33.989	 0.088415243	 1.054	 1.0

@@ -1,6 +1,7 @@
 __all__=[
     'EWK',
-    'Top',
+    'TTbar',
+    'Single_Top',
     'Diboson',
     'Sh_Zll',
     'Sh_Wtaunu',
@@ -35,25 +36,32 @@ class EWK(MC, Background):
 
 ##----------------------------------------------------------------------------------------
 ##
-class Top(MC, Background):
+class Single_Top(MC, Background):
     NO_KYLEFIX = True
     NORM_BY_THEORY = True
 
     def __init__(self, *args, **kwargs):
-        super(Top, self).__init__(*args, **kwargs)
+        super(Single_Top, self).__init__(*args, **kwargs)
         self.kwargs = kwargs
     
     def weights(self, **kwargs):
         """WIP: specific weights for Top like top pt weights
         """
-        weights = super(Top, self).weights()
+        weights = super(Single_Top, self).weights()
         if "pt_weighted" in self.kwargs:
             if self.kwargs["pt_weighted"]:
                 for wcat in weights:
                     weights[wcat] += ["GetTopPtWeight(truth_top0_pt)"]
         
         return weights
-        
+
+##----------------------------------------------------------------------------------------
+##
+class TTbar(Single_Top):
+    # mixin 
+    pass
+
+
 ##----------------------------------------------------------------------------------------
 ## sample dedicated classes 
 

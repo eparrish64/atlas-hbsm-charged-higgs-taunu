@@ -37,12 +37,9 @@ TRIGGER_EFFICIENCIES = dict()
 
 # - - - - taujet (MAKE SURE YOU GET THE UNITS RIGHT; GeV or MeV)
 TRIGGER_EFFICIENCIES["taujet"] = {
-    "2015": TAUJET_EFF_TEMPLATE.format("met_et"), 
-    "2016": TAUJET_EFF_TEMPLATE.format("met_et"),
-    "2017": TAUJET_EFF_TEMPLATE.format("met_p4->Et()"),
-    "2018": TAUJET_EFF_TEMPLATE.format("met_p4->Et()") 
+    "mc15": TAUJET_EFF_TEMPLATE.format("met_et/1000."), 
+    "mc16": TAUJET_EFF_TEMPLATE.format("met_p4->Et()/1000."),
 }
-TRIGGER_EFFICIENCIES["taujet"]["combined"]= TAUJET_EFF_TEMPLATE.format("met_et/1000.")
 
 ##---------------------------------------------------------------------------------
 ## WIP: 

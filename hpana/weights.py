@@ -19,20 +19,22 @@ class Weight:
     W_JET = {
         "mc15": ("jet_sf_NOMINAL_central_jets_global_ineffSF_JVT",
                  "jet_sf_NOMINAL_central_jets_global_effSF_JVT"),
-        "mc16": ("1",),
+        "mc16": ("jet_sf_NOMINAL_central_jets_global_effSF_JVT",
+                 "jet_sf_NOMINAL_central_jets_global_ineffSF_JVT"),
     }
 
     W_BJET = {
         "mc15": ("jet_sf_NOMINAL_global_effSF_MVX",
                  "jet_sf_NOMINAL_global_ineffSF_MVX"),
-        "mc16": ("1",),
+        "mc16": ("jet_sf_NOMINAL_global_effSF_MV2c10",
+                 "jet_sf_NOMINAL_global_ineffSF_MV2c10"),
     }
     # - - - - - - - - might be different between the channels
     W_MU = ("1",)
     W_EL = ("1",)
     
     #WIP:make it to work per year - - - - trigger
-    W_TRIGGER_TAUJET = (TRIGGER_EFFICIENCIES["taujet"]["combined"],)
+    W_TRIGGER_TAUJET = (TRIGGER_EFFICIENCIES["taujet"][MC_CAMPAIGN],)
     W_TRIGGER_TAULEP = ("1",)
     
     TYPES = {

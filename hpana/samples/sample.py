@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 
 # std lib imports
-import os, sys, pickle, string, glob, copy 
+import os, sys, pickle, string, glob, copy, re 
 from operator import add, itemgetter
 from collections import namedtuple
 import random 
 import datetime
+import multiprocessing
 
-from multiprocessing import Pool 
 # ROOT imorts 
 import ROOT
 
@@ -133,6 +133,7 @@ class Sample(object):
              trigger=None,
              tauid=None,
              extra_cuts=None,
+             truth_match_tau=None,
              **kwargs):
         """ to apply some cuts on the sample.
         
@@ -157,16 +158,22 @@ class Sample(object):
         else:
             cuts += trigger
         
-        # - - - - - - - - tauID (for fakes check fakes.py)
+        # - - - - tauID (for fakes check fakes.py)
         if tauid:
             cuts += tauid
         else:
             cuts += self.config.tauid
 
+        # - - - - truth matching (defualt it true tau)
+        if truth_match_tau:
+            cuts += truth_match_tau
+        elif isinstance(self, MC):
+            cuts += self.config.true_tau
+
+        # - - - - place holder for any sample specific custs
         if extra_cuts:
             cuts += extra_cuts
-
-        
+            
         return cuts
 
 
@@ -182,6 +189,10 @@ class Sample(object):
             weights[category.name] = self.config.weight_fields
 
         return weights
+    
+    @property
+    def systematics(self):
+        return ["NOMINAL"]
     
     def events(self, category,
                systematic="NOMINAL",
@@ -211,6 +222,7 @@ class Sample(object):
                 extra_weight=None,
                 weighted=True,
                 tauid=None,
+                truth_match_tau=None,
                 **kwargs):
         """ list of workers to to submit jobs.
         """
@@ -218,7 +230,7 @@ class Sample(object):
         categories_cp = copy.deepcopy(categories)
         for category in categories_cp:
             # - - - - filters
-            category.cuts += self.cuts(tauid=tauid, extra_cuts=extra_cuts)
+            category.cuts += self.cuts(tauid=tauid, extra_cuts=extra_cuts, truth_match_tau=truth_match_tau)
             
         # - - - - one worker per dataset per systematic
         workers = []
@@ -240,7 +252,7 @@ class Sample(object):
                     if extra_weight:
                         weights[category.name] += [extra_weight]
                 else:
-                    weights[category.name] = ["1"]
+                    weights[category.name] = ["1."]
                     if extra_weight:
                         weights[category.name] += [extra_weight]
             
@@ -279,7 +291,7 @@ class Sample(object):
         if not dataset.files:
             log.warning("%s dataset is empty!!"%dataset.name)
             return []
-
+        
         canvas = ROOT.TCanvas()
         hist_set = []
         # - - - - containers for hists
@@ -291,25 +303,34 @@ class Sample(object):
                     variable=var.name,
                     category=category.name,
                     hist=ROOT.TH1F(
-                        "category_%s_%s"%(category.name, var.name), var.name, *var.binning),
+                        "category_%s_var_%s"%(category.name, var.name), var.name, *var.binning),
                     systematic=systematic) 
                 # - - make sure the newly created hist has no dummy value
                 hset.hist.Reset()
                 hist_set.append(hset)
         
         # - - loop over dataset's files
+        nevents = 0
         for fn in dataset.files:
             fname = fn.split("/")[-1]
             tfile = ROOT.TFile(fn)
+            # - - check if the file is healthy
+            try:
+                entries = tfile.Get(systematic).GetEntries()
+                nevents += entries
+                if entries==0:
+                    log.warning("%s tree in %s is empty, skipping!"%(systematic, fn))
+                    continue
+            except:
+                log.warning("%s has no %s tree!"%(fn, systematic))
+                continue
             for category in categories:
                 # - - hists for the current category
                 cat_hists = filter(lambda hs: hs.category==category.name, hist_set)
-                try:
-                    tree = tfile.Get(systematic)
-                except:
-                    log.warning("%s has no %s tree!"%(fn, systematic))
-                    continue
-                
+
+                # get the tree 
+                tree = tfile.Get(systematic)
+
                 # - - get the list of the events that pass the selections
                 selection = category.cuts.GetTitle()
                 eventweight = "*".join(weights[category.name])
@@ -322,12 +343,12 @@ class Sample(object):
                     histname = "category_%s_%s_%s"%(category.name, var.name, fname)
                     log.debug("{0} >> {1}{2}".format(var.tformula, histname, var.binning))
                     log.debug("({0}) * ({1})".format(selection, eventweight))
-                              
+                    
                     tree.Draw("{0} >> {1}{2}".format(var.tformula, histname, var.binning), eventweight)
                     htmp = ROOT.gPad.GetPrimitive(histname)
                     hset = filter(lambda hs: hs.variable==var.name, cat_hists)[0]
                     hset.hist += htmp
-                              
+                    htmp.Delete()
                 tree.Delete()
             tfile.Close()
             
@@ -353,7 +374,7 @@ class Sample(object):
             hfile.Close()
 
         canvas.Close()
-        log.info("processed %s dataset"%dataset.name)
+        log.info("processed %s tree from %s dataset with %i events"%(systematic, dataset.name, nevents))
         return hist_set
         
 
@@ -385,9 +406,6 @@ class Sample(object):
         # - - - - - - - - create a default canvas for the TTree.Draw
         canvas = ROOT.TCanvas()
 
-        # - - - - - - - - parallel processing the sampel
-        # - - - - useful when you want to just look at one specific sample
-
         # - - - - prepare the workers
         workers = self.workers(
             categories=categories,
@@ -399,13 +417,8 @@ class Sample(object):
         jobs = []
         hist_sets = []
         for worker in workers:
-            jobs.append(Job(Sample.dataset_hists,
-                            worker.dataset,
-                            worker.fields,
-                            worker.categories,
-                            systematic=worker.systematic,
-                            outname=worker.name,
-                            **kwargs) )
+            jobs.append(FuncWorker(Sample.dataset_hists, worker,
+                                   **kwargs) )
             
         #FIXME:Queue hangs up with FuncWorker! - - - - process samples' datasets in parallel
         parallel = kwargs.pop("parallel", False)    
@@ -413,13 +426,13 @@ class Sample(object):
             log.info(
                 "************** processing %s sample hists in parallel, njobs=%i ************"%(self.name, len(jobs) ) )
             run_pool(jobs, n_jobs=-1)
+            
         # - - - - - - - - process datasets one after another
         else:
             log.info("************ processing %s sample hists sequentially ************"%self.name)
             for job in jobs:
                 job.start()
-        
-        return
+                job.join()
     
     def write_hists(self, hist_set, hists_file, systematics=["NOMINAL"], overwrite=True):
         """
@@ -442,32 +455,69 @@ class Sample(object):
         return 
     
     def merge_hists(self, histsdir=None, hists_file=None, overwrite=False, ncpu=1):
+        """ collect histograms for this sample and add them up properly.
         """
-        """
+        log.info("merging %s hists"%self.name)
 
         assert histsdir, "hists dir is not provided!"
         if not hists_file:
             hists_file = self.config.hists_file
             
         # - - - - retrieve the samples hists
-        hfiles = glob.glob("%s/%s*"%(histsdir, self.name))
+        hfiles = glob.glob("%s/%s.*"%(histsdir, self.name))
 
         if not hfiles:
             log.warning("no hists found for the %s in %s dir"%(self.name, histsdir))
             return
-        
-        merged_hists_file = os.path.join(histsdir, hists_file)
-        hfiles = " ".join(hfiles)
 
-        log.info("merging %s hists"%self.name)
-        if os.path.exists(merged_hists_file):
-            log.warning("%s already exist pass on the overwrite flag to overwrite it"%merged_hists_file)
-            if overwrite:
-                os.system("hadd -a -f -j {0} {1} {2}".format(ncpu, merged_hists_file, hfiles))
-        else:
-            os.system("hadd -a -j {0} {1} {2}".format(ncpu, merged_hists_file, hfiles))
+        # - - - - extract the hists 
+        fields = set()
+        categories = set()
+        hist_set = []
+        for hf in hfiles:
+            htf = ROOT.TFile(hf, "READ")
+            for systematic in self.systematics:
+                systdir = htf.Get(systematic)
+                for hname in [k.GetName() for k in systdir.GetListOfKeys()]:
+                    # - - regex match the hist name
+                    match = re.match(self.config.hist_name_regex, hname)
+                    if match:
+                        sample = match.group("sample")
+                        category = match.group("category")
+                        variable = match.group("variable")
+                        
+                        fields.add(variable)
+                        categories.add(category)
+                        hist = htf.Get("%s/%s"%(systematic, hname))
+                        hist.SetDirectory(0) #<! detach from htf
+                        hset = Histset(sample=sample, category=category, variable=variable,
+                                       systematic=systematic, hist=hist)
+                        hist_set.append(hset)
+            htf.Close()
             
-        return 
+        # - - - - add them up
+        merged_hists_file = ROOT.TFile(os.path.join(histsdir, hists_file), "UPDATE")
+        merged_hist_set = []
+        for systematic in self.systematics:
+            for var in fields:
+                for cat in categories:
+                    hists = filter(
+                        lambda hs: (hs.systematic==systematic and hs.variable==var and hs.category==cat), hist_set)
+                    hsum = reduce(lambda h1, h2: h1 + h2, [hs.hist for hs in hists])
+                    outname = self.config.hist_name_template.format(self.name, cat, var)
+                    hsum.SetTitle(outname)
+
+                    # - - write it now
+                    rdir = "%s"%(systematic)
+                    if not merged_hists_file.GetDirectory(rdir):
+                        merged_hists_file.mkdir(rdir)
+                    merged_hists_file.cd(rdir)
+                    hsum.Write(outname, ROOT.TObject.kOverwrite)
+                    merged_hist_set.append(hsum)
+
+        merged_hists_file.Close()
+        
+        return merged_hist_set
     
     
 ##---------------------------------------------------------------------------------------
@@ -564,8 +614,6 @@ class SystematicsSample(Sample):
             systerm, variation = systematic[0].rsplit('_', 1)
         return systerm, variation
 
-    def systematics(self):
-        return ["NOMINAL"]
         
 
 
@@ -575,28 +623,7 @@ class MC(SystematicsSample):
 
     """ a dedicated Monte Carlo sample class.
     """
-
-    def __init__(self, *args, **kwargs):
-        self.pileup_weight = kwargs.pop('pileup_weight', False)
-        self.truth_match_tau = kwargs.pop("truth_match_tau", True)
-        super(MC, self).__init__(*args, **kwargs)
-
-    def cuts(self, *args, **kwargs):
-        """Additional run number specific cuts.
-        Parameters
-        ----------
-
-        Returns
-        -------
-        cut: Cut, updated Cut type.
-        """
-        cut = super(MC, self).cuts(*args, **kwargs)
-        if self.truth_match_tau:
-            cut += self.config.true_tau
-            
-        return cut
-    
-
+    pass
 
 ##---------------------------------------------------------------------------------------
 ## 

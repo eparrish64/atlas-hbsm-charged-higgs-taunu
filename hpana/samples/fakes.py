@@ -1,5 +1,5 @@
 # local imports
-import os, glob, copy
+import os, glob, copy, re
 import ROOT 
 
 from .sample import Sample, Histset, HistWorker
@@ -158,7 +158,7 @@ class QCD(Sample):
         qcd_workers = mc_workers + data_workers
         return qcd_workers
 
-            
+    @property
     def systematics(self):
         return ["NOMINAL"]
         
@@ -226,53 +226,102 @@ class QCD(Sample):
     def merge_hists(self, histsdir=None, hists_file=None, overwrite=False, ncpu=1):
         """ needs a dedicated method since we have to subtract sum of MC from DATA.
         """
+        log.info("merging %s hists"%self.name)
 
         assert histsdir, "hists dir is not provided!"
+
+        # - - - - merged hists file
+        if not hists_file:
+            hists_file = self.config.hists_file
             
         # - - - - retrieve the samples hists
-        data_hfiles = glob.glob("%s/%s.%s*"%(histsdir, self.name, self.data.name) ) 
+        data_hfiles = glob.glob("%s/%s.DATA*"%(histsdir, self.name) ) 
         mc_hfiles = list(set(glob.glob("%s/%s.*"%(histsdir, self.name) ) ) - set(data_hfiles) )
 
         if (not (data_hfiles and mc_hfiles)):
             log.warning(" incomplete hists for %s in %s dir"%(self.name, histsdir))
             return
-        
-        # - - - - merged hists_file
-        if not hists_file:
-            hists_file = self.config.hists_file
-        merged_hists_tfile = ROOT.TFile(os.path.join(histsdir, hists_file), "UPDATE")
-                               
-        log.info("merging %s hists"%self.name)
-        # - - - - merge data and merge MC separately
-        qcd_DATA_hist_file = os.path.join(histsdir, "%s_%s.root"%(self.name, self.data.name.upper()) )
-        qcd_MC_hist_file = os.path.join(histsdir, "%s_MC.root"%self.name)
-        
-        os.system("hadd -f -j {0} {1} {2}".format(ncpu, qcd_DATA_hist_file, " ".join(data_hfiles) ) )
-        os.system("hadd -f -j {0} {1} {2}".format(1, qcd_MC_hist_file, " ".join(mc_hfiles) ) )
 
-        # - - - - now lets subtract MC from DATA
-        qcd_DATA_hist_tfile = ROOT.TFile(qcd_DATA_hist_file, "READ")
-        qcd_MC_hist_tfile = ROOT.TFile(qcd_MC_hist_file, "READ")
+        # - - - - extract the hists 
+        fields = set()
+        categories = set()
+        mc_hist_set = []
+        # - - - - get QCD MC component hists (to be subtracted)
+        for hf in mc_hfiles:
+            htf = ROOT.TFile(hf, "READ")
+            for systematic in self.systematics:
+                systdir = htf.Get(systematic)
+                for hname in [k.GetName() for k in systdir.GetListOfKeys()]:
+                    # - - regex match the hist name
+                    match = re.match(self.config.hist_name_regex, hname)
+                    if match:
+                        sample = match.group("sample")
+                        category = match.group("category")
+                        variable = match.group("variable")
+                        
+                        fields.add(variable)
+                        categories.add(category)
 
-        # - - - -
-        log.info("QCD: subtracting MC from DATA")
-        for rdir in [k.GetName() for k in qcd_DATA_hist_tfile.GetListOfKeys()]:
-            if not merged_hists_tfile.GetDirectory(rdir):
-                merged_hists_tfile.mkdir(rdir)
-            # - - get the list of hists    
-            tdir = qcd_DATA_hist_tfile.GetDirectory(rdir)
-            hists = [k.GetName() for k in tdir.GetListOfKeys()]
-            for hkey in hists:
-                h_data = qcd_DATA_hist_tfile.Get("{0}/{1}".format(rdir, hkey ) )
-                h_mc = qcd_MC_hist_tfile.Get("{0}/{1}".format(rdir, hkey ) )
-                h_qcd = h_data - h_mc
-                hname = "%s_%s"%(self.name, h_data.GetName())
-                h_qcd.SetTitle(hname)
-                
-                merged_hists_tfile.cd(rdir)
-                h_qcd.Write(hname, ROOT.TObject.kOverwrite)
+                        hist = htf.Get("%s/%s"%(systematic, hname))
+                        hist.SetDirectory(0) #<! detach
+                        hset = Histset(sample=sample, category=category, variable=variable,
+                                       systematic=systematic, hist=hist)
+                        mc_hist_set.append(hset)
+            htf.Close()
             
-        return 
+        # - - - - get QCD data component hists
+        data_hist_set = []
+        for hf in data_hfiles:
+            htf = ROOT.TFile(hf, "READ")
+            for systematic in self.systematics:
+                systdir = htf.Get(systematic)
+                for hname in [k.GetName() for k in systdir.GetListOfKeys()]:
+                    # - - regex match the hist name
+                    match = re.match(self.config.hist_name_regex, hname)
+                    if match:
+                        sample = match.group("sample")
+                        category = match.group("category")
+                        variable = match.group("variable")
+
+                        assert (variable in fields and category in categories), "sth missing!"
+                        
+                        hist = htf.Get("%s/%s"%(systematic, hname))
+                        hist.SetDirectory(0) #<! detach from the htf
+                        hset = Histset(sample=sample, category=category, variable=variable,
+                                       systematic=systematic, hist=hist)
+                        data_hist_set.append(hset)
+            htf.Close()
+
+        # - - - - add them up
+        merged_hists_file = ROOT.TFile(os.path.join(histsdir, hists_file), "UPDATE")
+        merged_hist_set = []
+        for systematic in self.systematics:
+            for var in fields:
+                for cat in categories:
+                    data_hists = filter(
+                        lambda hs: (hs.systematic==systematic and hs.variable==var and hs.category==cat), data_hist_set)
+                    data_hsum = reduce(lambda h1, h2: h1 + h2, [hs.hist for hs in data_hists])
+                    
+                    mc_hists = filter(
+                        lambda hs: (hs.systematic==systematic and hs.variable==var and hs.category==cat), mc_hist_set)
+                    mc_hsum = reduce(lambda h1, h2: h1 + h2, [hs.hist for hs in mc_hists])
+
+                    qcd_hsum = data_hsum - mc_hsum
+                    outname = self.config.hist_name_template.format(self.name, cat, var)
+                    qcd_hsum.SetTitle(outname)
+
+                    # - - write it now
+                    rdir = "%s"%(systematic)
+                    if not merged_hists_file.GetDirectory(rdir):
+                        merged_hists_file.mkdir(rdir)
+                    merged_hists_file.cd(rdir)
+                    qcd_hsum.Write(outname, ROOT.TObject.kOverwrite)
+                    merged_hist_set.append(qcd_hsum)
+
+        merged_hists_file.Close()
+        
+        return merged_hist_set
+
     
     
 ##---------------------------------------------------------------------------------------
@@ -289,6 +338,23 @@ class LepFake(Sample):
         self.label = label
         self.leptau = TAU_IS_LEP[self.config.mc_camp]
 
+    def cuts(self, *args, **kwargs):
+        """Additional run number specific cuts.
+        Parameters
+        ----------
+        
+        Returns
+        -------
+        cut: Cut, updated Cut type.
+        """
+        # - - - - drop the truth matching on lep fakes first
+        kwargs.pop("truth_match_tau", None)
+        cut = super(MC, self).cuts(*args, **kwargs)
+
+        # - - - - lep-match the tau
+        cut += self.leptau
+        return cut
+    
     def workers(self, categories=[],
                 fields=[],
                 systematics=["NOMINAL"],
@@ -296,20 +362,18 @@ class LepFake(Sample):
                 **kwargs):
         """
         """
-
-        # - - - - a lepton which passes tau ID
-        extra_cuts = kwargs.pop("extra_cuts", self.leptau)
+        # - - - - prepare categories; deep copy since we don't want change categories
+        categories_cp = copy.deepcopy(categories)
             
         # - - - - MC workers
         lepfake_workers = []
         for mc in self.mc:
             # - - - - turn off truth matching 
-            mc.truth_match_tau = False
             lepfake_workers += mc.workers(
-                categories=categories,
+                categories=categories_cp,
                 fields=fields,
                 systematics=systematics,
-                extra_cuts=extra_cuts,
+                truth_match_tau=self.leptau,
                 weighted=weighted,
                 **kwargs)
 

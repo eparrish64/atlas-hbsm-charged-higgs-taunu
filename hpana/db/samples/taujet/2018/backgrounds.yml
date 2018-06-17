@@ -159,34 +159,40 @@ pythia_ztautau:
    root: '#font[52]{Z}#rightarrow#tau#tau'
    samples:
 
-top:
-    name: Top
-    latex: Top
-    root: Top
+ttbar:
+    name: TTbar
+    latex: TTbar
+    root: "t#bar{t}"
     samples:
       # ttbar
       - PhPy8EG_A14_ttbar_hdamp258p75_nonallhad
       - PhPy8EG_A14_ttbar_hdamp258p75_allhad
 
-      # single top
-      - PhPy8EG_A14_tchan_lept_antitop
-      - PhPy8EG_A14_tchan_lept_top
+      # rare ttbar 
+      - MadGraphPythia8EvtGen_A14NNPDF23_4topSM
+      - MadGraphPythia8EvtGen_A14NNPDF23_ttbarWW
+      - MadGraphPythia8EvtGen_A14NNPDF23LO_ttgamma_noallhad
+
+    systematics:
+      - PowhegHerwig7EvtGen_H7UE_tt_hdamp258p75_704_SingleLep
+      - PowhegHerwig7EvtGen_H7UE_tt_hdamp258p75_704_dil
+      - PowhegHerwig7EvtGen_H7UE_tt_hdamp258p75_allhad
+      - PhPy8EG_A14_ttbar_hdamp517p5_SingleLep
+      - PhPy8EG_A14_ttbar_hdamp517p5_allhad
+
+single_top:
+    name: SingleTop
+    latex: single top
+    root: single top
+    samples:
+      - PhPy8EG_A14_tchan_BW50_lept_antitop
+      - PhPy8EG_A14_tchan_BW50_lept_top
       
       - PowhegPythia8EvtGen_A14_Wt_DR_inclusive_antitop
       - PowhegPythia8EvtGen_A14_Wt_DR_inclusive_top
       - PowhegPythia8EvtGen_A14_singletop_schan_lept_antitop
       - PowhegPythia8EvtGen_A14_singletop_schan_lept_top
-
-      # - PhPy8EG_A14_ttbar_hdamp517p5_SingleLep
-      # - PhPy8EG_A14_ttbar_hdamp517p5_allhad
-
-      # - PowhegHerwig7EvtGen_H7UE_tt_hdamp258p75_704_SingleLep
-      # - PowhegHerwig7EvtGen_H7UE_tt_hdamp258p75_704_dil
-      # - PowhegHerwig7EvtGen_H7UE_tt_hdamp258p75_allhad
-      # - MadGraphPythia8EvtGen_A14NNPDF23LO_ttgamma_noallhad
-      # - MadGraphPythia8EvtGen_A14NNPDF23_4topSM
-      # - MadGraphPythia8EvtGen_A14NNPDF23_ttbarWW
-
+      
 diboson:
     name: Diboson
     latex: Diboson
@@ -203,7 +209,6 @@ diboson:
       - PowhegPy8EG_CT10nloME_AZNLOCTEQ6L1_ZZqqll_mqq20mll20
       - PowhegPy8EG_CT10nloME_AZNLOCTEQ6L1_ZZvvll_mll4
       - PowhegPy8EG_CT10nloME_AZNLOCTEQ6L1_ZZvvqq_mqq20
-
 
 others:
     name: Others

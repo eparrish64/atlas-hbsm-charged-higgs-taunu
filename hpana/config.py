@@ -4,7 +4,7 @@ contains a simple class for analysis channel specific settings,
 like selections , variables, weights, etc.
 """
 # stdlib
-import datetime
+import datetime, re
 
 # local
 from . import (MC_CAMPAIGN, NTUPLES_VERSION, CACHE_DIR, YEAR_ENERGY,
@@ -124,8 +124,13 @@ class Configuration:
     
     @property
     def tauid(self):
-        return TauID_MED[self.mc_camp]
+        return TAUID_MEDIUM[self.mc_camp]
 
+    @property
+    def antitau(self):
+        return ANTI_TAU[self.mc_camp]
+
+    
     @property
     def true_tau(self):
         return TAU_IS_TRUE[self.mc_camp]
@@ -146,4 +151,9 @@ class Configuration:
 
     @property
     def hist_name_template(self):
-        return "{0}_category_{1}_{2}" #<! sample name, category name, variable name
+        return "{0}_category_{1}_var_{2}" #<! sample name, category name, variable name
+
+    @property
+    def hist_name_regex(self):
+        return re.compile("^(?P<sample>\w+)_category_(?P<category>\w+)_var_(?P<variable>\w+)$")
+        

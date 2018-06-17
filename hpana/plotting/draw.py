@@ -7,6 +7,8 @@ import ROOT
 from .plot import *
 from .. import log
 
+## consts 
+HIST_NAME_TEMPLATE = "{0}_category_{1}_var_{2}" #<! sample, category, variable
 
 ##----------------------------------------------------------------------------
 ##
@@ -89,8 +91,8 @@ def draw(hists_file, var, category,
         backgrounds_hists   = []
         bkg_stack = ROOT.THStack("bkgs", "bkgs")
         for bkg in reversed(backgrounds):
-            bkg_hist = hfile.Get("{0}/{1}_category_{2}_{3}".format(
-                tree_name, bkg.name, category.name, var.name))
+            bkg_hist = hfile.Get("{0}/{1}".format(tree_name,
+                                                  HIST_NAME_TEMPLATE.format(bkg.name, category.name, var.name)))
             # - - - -  fold the overflow bin 
             if overflow:
                 fold_overflow(bkg_hist)
@@ -133,8 +135,8 @@ def draw(hists_file, var, category,
             signals = [signals]
         signals_hists   = []
         for sig in signals:
-            sig_hist = hfile.Get("{0}/{1}_category_{2}_{3}".format(
-                tree_name, bkg.name, category.name, var.name))
+            sig_hist = hfile.Get("{0}/{1}".format(tree_name,
+                                                  HIST_NAME_TEMPLATE.format(sig.name, category.name, var.name)))
 
             # - - - - scale signals if needed 
             if signal_scale!=1.:
@@ -169,8 +171,8 @@ def draw(hists_file, var, category,
                 
     # - - - - - - - - data
     if data:
-        data_hist = hfile.Get("{0}/{1}_category_{2}_{3}".format(
-            tree_name, data.name, category.name, var.name))
+        data_hist = hfile.Get("{0}/{1}".format(tree_name,
+                                               HIST_NAME_TEMPLATE.format(data.name, category.name, var.name)))
         data_hist.SetXTitle(var.title)
         data_hist.SetYTitle("# events")
         if overflow:
@@ -268,7 +270,7 @@ def draw(hists_file, var, category,
         if not show_ratio:
             if isinstance(h, ROOT.THStack):
                 h.GetHistogram().GetXaxis().SetTitle(var.title)
-            
+
     # - - - - - - - - draw errors
     for erf in main_errors:
         erf.Draw('SAME E2')

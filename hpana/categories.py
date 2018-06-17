@@ -46,23 +46,23 @@ MT50 = {
 }
 
 # - - - - - - - - tau
-Tau_Q = {
+TAU_Q = {
     "mc15": TCut("abs(tau_0_q)==1"),
     "mc16": TCut("abs(tau_0_q)==1"),
 }
-Tau_DECAY_MODE = {
+TAU_DECAY_MODE = {
     "mc15": TCut("tau_0_decay_mode==0"),
     "mc16": TCut("tau_0_decay_mode==0"),
 }
-TauID_LOOSE = {
+TAUID_LOOSE = {
     "mc15": TCut("tau_0_jet_bdt_loose==1"),
     "mc16": TCut("tau_0_jet_bdt_loose==1"),
 }
-TauID_MED = {
+TAUID_MEDIUM = {
     "mc15":TCut("tau_0_jet_bdt_medium==1"),
     "mc16":TCut("tau_0_jet_bdt_medium==1"),
 }
-TauID_TIGHT = {
+TAUID_TIGHT = {
     "mc15": TCut("tau_0_jet_bdt_tight==1"),
     "mc16": TCut("tau_0_jet_bdt_tight==1"),
 }
@@ -70,7 +70,7 @@ TAU_TRACKS = {
     "mc15": TCut("tau_0_n_tracks==1 || tau_0_n_tracks==3"),
     "mc16": TCut("tau_0_n_charged_tracks==1 || tau_0_n_charged_tracks==3"),
 }
-Tau_PT40 = {
+TAU_PT40 = {
     "mc15": TCut("tau_0_pt > 40000"),
     "mc16": TCut("tau_0_p4->Pt() > 40000") ,
 }
@@ -139,7 +139,7 @@ SELECTIONS = {"taujet":{}, "taulep": {} }
 # - - - -  base selections
 SELECTIONS["taujet"]["BASE"] = (
     CLEAN_EVT,
-    Tau_PT40,
+    TAU_PT40,
     LEP_VETO,
     TAU_TRACKS)
 
@@ -235,7 +235,7 @@ class Category:
         self.label = label;
         self.mc_camp = mc_camp
         
-    @cached_property
+    @property
     def cuts(self):
         """
         """

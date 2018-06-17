@@ -9,8 +9,11 @@ from collections import namedtuple
 # local imports
 from . import log
 from . import samples
-#from .samples import Higgs
+from .samples.sample import Sample
+from .dataset_hists import dataset_hists
 
+#from .samples import Higgs
+from .categories import TAUID_MEDIUM, ANTI_TAU
 from .cluster.parallel import FuncWorker, run_pool, map_pool
 from .config import Configuration
 import ROOT
@@ -123,21 +126,29 @@ class Analysis(object):
             label='DiBoson',
             color=ROOT.kViolet)
         
-        self.top = samples.Top(
+        self.ttbar = samples.TTbar(
             self.config,
-            name='Top',
-            label='Top',
-            pt_weighted=True,
+            name='TTbar',
+            label='t#bar{t}',
+            pt_weighted=False,
             color=ROOT.kYellow)
+
+        self.single_top = samples.Single_Top(
+            self.config,
+            name='SingleTop',
+            label='single top',
+            pt_weighted=False,
+            color=ROOT.kOrange)
         
         # - - - - - - - - MC BKG components 
         self.mc = [
-            self.top,
+            self.ttbar,
+            self.single_top,
             self.wtaunu,
-            self.wlnu,
             self.ztautau,
-            self.zll, 
             self.diboson,
+            self.zll, 
+            self.wlnu,
             self.others, #<! super small
             ]
         
@@ -159,17 +170,24 @@ class Analysis(object):
 
         # - - - - - - - - leptons faking a tau
         self.lepfakes = samples.LepFake(
-            self.config, self.mc,
+            self.config, self.mc[:], #<! defensive copy 
             name='LepFakes',
             label='lep #rightarrow #tau',
             color=ROOT.kGreen+3)
         
-        self.backgrounds = [self.lepfakes, self.qcd] + self.mc 
+        self.backgrounds = [
+            self.lepfakes,
+            self.qcd,
+            self.ttbar,
+            self.single_top,
+            self.wtaunu,
+            self.ztautau,
+            self.diboson,] 
         
         #WIP - - - - - - - - signals 
         self.signals = [] #self.get_signals(masses=self.config.signal_masses)
         
-        self.samples = self.backgrounds + self.signals + [self.data]  
+        self.samples = [self.qcd, self.lepfakes] + self.mc + self.signals + [self.data]  
 
     def compile_cxx(self):
         log.info("loading cxx macros ...")
@@ -269,21 +287,112 @@ class Analysis(object):
         """
         raise RuntimeError("not implemented yet")
 
-    @property
-    def workers(self):
+    def workers(self, samples=[], categories=[], fields=[], systematics=[]):
         """
         """
+        
+        if not samples:
+            samples = self.samples
+            
+        if not fields:
+            fields = self.config.variables
+            
+        if not categories:
+            categories = self.config.categories
+            
+        if not systematics:
+            systematics = ["NOMINAL"]
+            
         _workers  = []
-        for sample in self.samples:
+        for sample in samples:
             _workers += sample.workers(
-                fields=self.config.variables,
-                categories=self.config.categories,)
+                fields=fields,
+                categories=categories,
+                systematics=systematics)
                 
         return _workers
     
     
-    def merge_hists(self, **kwargs):
-        for sample in self.samples:
+    def merge_hists(self, samples=[], **kwargs):
+        if samples:
+            samples = filter(lambda s: s.name in samples, self.samples)
+        else:
+            samples = self.samples
+            
+        for sample in samples:
             sample.merge_hists(**kwargs)
             
         return 
+
+    def cache_ffs(self,
+                  template_var=None,
+                  template_var_bins = [
+                      30, 35, 40, 45, 50, 60, 75,
+                      90, 105, 120, 140, 160, 200, 300, 3500],
+                  target_regions=[],
+                  control_regions=[],
+                  tauid=None,
+                  antitau=None):
+        """ calculate and cache the fake factors.
+        Parameters
+        - - - - - 
+        template_var: 
+            Variable type; see .variables.py
+        template_var_bins:
+            list type; bins for template fit
+        target_regions:
+            [Categories] type; see .categories.py.
+        control_regions:
+            [Categories] type; contorl regions for the FF extraction.
+        tauid:
+            {ROOT.TCut()} type; tauID selection cut
+        antitau:
+            {ROOT.TCut()} type; anti tau selection cut
+        """
+        
+        if not target_regions:
+            target_regions = self.config.categories
+
+        if not control_regions:
+            control_regions = filter(lambda cat: cat.name in ["QCD", "BVETO"], self.config.categories)
+            
+        if not template_var:
+            template_var = self.config.variables[0]
+        else:
+            assert template_var.name in [v.name for v in self.config.variables], "%r is not defined!"%template_var
+
+        if not tauid:
+            tauid = self.config.tauid
+            
+        if not antitau:
+            antitau = self.config.antitau
+
+        pool = multiprocessing.Pool()
+        # - - DATA workers
+        data_tau_workers = self.data.workers(fields=[template_var],
+                                             categories=control_regions,
+                                             tauid=tauid)
+        data_antitau_workers = self.data.workers(fields=[template_var],
+                                                 categories=control_regions,
+                                                 tauid=antitau)
+        # - - MC workers
+        mc_workers = []
+        for mc in self.mc:
+            mc_workers += mc.workers(fields=[template_var],categories=control_regions, tauid=tauid)
+            
+        # - - - - taus (passing tau ID) in data
+        data_tau_results = [pool.apply_async(dataset_hists, args=(dw,)) for dw in data_tau_workers[:100]]
+        data_tau_hists = []
+        for hs in data_tau_results:
+            data_tau_hists += hs.get()
+        data_tau_hsum = reduce(lambda h1, h2: h1 + h2, [dh.hist for dh in data_tau_hists])
+
+        # - - - - antitau in data
+        data_antitau_results = [pool.apply_async(dataset_hists, args=(dw,)) for dw in data_antitau_workers[:100]]
+        data_antitau_hists = []
+        for hs in data_antitau_results:
+            data_antitau_hists += hs.get()
+        data_antitau_hsum = reduce(lambda h1, h2: h1 + h2, [dh.hist for dh in data_antitau_hists])
+
+        #WIP:
+        raise RuntimeError("not fully implemented yet!")

@@ -56,27 +56,37 @@ analysis = Analysis(config, compile_cxx=not ANA_ARGS.no_cxx)
 
 # - - - - if you wish to look at specific samples
 if ANA_ARGS.samples:
-    analysis.samples = filter(lambda s: s.name in ANA_ARGS.samples, analysis.samples)
+    samples = filter(lambda s: s.name in ANA_ARGS.samples, analysis.samples)
+else:
+    samples = analysis.samples
 
+# - - - - if you wish to cache the fake factors
+# if True:#ANA_ARGS.cache_ff:
+#    analysis.cache_ffs()
+   
+    
 # - - - - - - - - - - run on multicores
 if ANA_ARGS.parallel:
     jobs = []
-    for worker in analysis.workers:
-        jobs.append(Job(Sample.dataset_hists,
-                        worker,
-                        write_hists=True,
-                        outdir=ANA_ARGS.outdir) )
+    for worker in analysis.workers(
+            samples=samples,
+            fields=fields,
+            categories=categories,
+            systematics=systematics):
+        
+        jobs.append(Job(Sample.dataset_hists, worker,
+                        write_hists=True,outdir=ANA_ARGS.outdir) )
 
         if ANA_ARGS.dry_run:
                 print "--"*100
-                print worker 
+                print worker
     if not ANA_ARGS.dry_run:   
         log.info(
             "************** submitting %i jobs  ************"%len(jobs))
         log.info(
             "***********************************************")
         run_pool(jobs, n_jobs=ANA_ARGS.ncpu)
-
+        
 # - - - - - - - - - - run on cluster
 if ANA_ARGS.cluster:
     # # - - - - - - - - pickle the analysis: KEEP IT IN THE MAIN DIR, 
@@ -130,7 +140,11 @@ if ANA_ARGS.merge_hists:
         "************** merging histograms  ************")
     log.info(
         "***********************************************")
-    analysis.merge_hists(histsdir=ANA_ARGS.outdir, overwrite=True)
+    analysis.merge_hists(
+        histsdir=ANA_ARGS.outdir,
+        overwrite=True,
+        samples=ANA_ARGS.samples,
+        ncpu=ANA_ARGS.ncpu)
 
     
 end_time = time.time()

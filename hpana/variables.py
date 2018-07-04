@@ -2,11 +2,11 @@ import math
 
 from . import MC_CAMPAIGN
 
-__all__ = [ "VARIABLES"]
+__all__ = [ "VARIABLES", "BDT_FEATURES", "rQCD_VARS"]
 
 ##------------------------------------------------------------------------------------------
 ## 
-class Variable:
+class Variable(object):
     """ base class for analysis variables.
 
     Attributes
@@ -47,9 +47,9 @@ class Variable:
         self.title = title
         self.unit = unit
         self.scale = scale
+        self.tform = tformula
         self.binning = binning
         self.bins = bins
-        self.tform = tformula
         
         # - - - - - - - - see __init__.py
         self.mc_camp = kwargs.pop("mc_camp", MC_CAMPAIGN)
@@ -91,27 +91,28 @@ class Variable:
     def label(self, value):
         self._label = value
 
-    @property 
-    def binning(self, mc_camp, category):
-        if isinstance(self._binning, dict):
-            if isinstance(self._binning[mc_camp], dict):
-                return self._binning[mc_camp][category]
-            elif isinstance(self._binning[mc_camp], tuple):
-                return self._binning[mc_camp]
-        else:    
-            return self._binning
+    @property
+    def binning(self):
+        return self.__binning
+        
     @binning.setter
     def binning(self, value):
-        assert isinstance(value, tuple) or isinstance(value, dict)
-        if isinstance(value, tuple):
-            assert len(value)==3
-            
-        self._binning = value
-
+        if isinstance(value, dict):
+            self.__binning = value.values()[0]
+        elif isinstance(value, (tuple, list)):
+            self.__binning = tuple(value)
+        else:
+            raise TypeError("%r is not supported"%value)
+        
     @property
     def bins(self):
-        return self._bins
+        return self.__bins
 
+    @bins.setter
+    def bins(self, value):
+        if isinstance(value, (list, tuple)):
+            self.__bins = value
+            
     def blind(self,low, high):
         pass
 
@@ -156,14 +157,25 @@ tau_0_q = Variable(
     title='#font[152]{#tau}_{1} #font[52]{Charge}',
     binning=(5, -2.5, 2.5))
   
-upsilon = Variable(
-    "upsilon", 
+tau_0_upsilon = Variable(
+    "tau_0_upsilon", 
     title='#font[52]{#Upsilon}',
     tformula = {
         "mc15": '(tau_0_n_tracks==1)*(2.0*tau_0_allTrk_pt/tau_0_pt-1) + -111*(tau_0_n_tracks!=1)',
         "mc16": '(tau_0_n_charged_tracks==1)*(2.0*tau_0_allTrk_pt/tau_0_p4->Pt()-1) + -111*(tau_0_n_charged_tracks!=1)',
     },
     binning=(31, -1.05, 2.05))
+
+tau_0_jet_bdt_score = Variable(
+    "tau_0_jet_bdt_score",
+    title='#font[152]{#tau}_{1} #font[52]{#tau Jet BDT score}',
+    binning=(100, -1., 1.))
+
+tau_0_jet_width = Variable(
+    "tau_0_jet_width",
+    title='#font[152]{#tau}_{1} #font[52]{#tau Jet width}',
+    binning=(40, 0., .4))
+
 
 # - - - - - - - - MET
 met_et = Variable(
@@ -278,16 +290,16 @@ jet_0_eta = Variable(
     binning=(60, -4, 4))
 
 # - - - - - - - -  BDT input features 
-MVA_bjet_0_met_dphi = Variable(
-    "MVA_bjet_0_met_dphi", 
+bjet_0_met_dphi = Variable(
+    "bjet_0_met_dphi", 
     title='#font[52]{#Delta#phi}(b-jet ,E^{miss}_{T})',
     tformula={
         "mc16":"acos(cos(met_p4->Phi() - bjet_0_p4->Phi()))",
         "mc15": "acos(cos(met_phi-bjet_0_phi))",},
     binning=(12, -1., 4))
 
-MVA_bjet_0_tau_0_dr = Variable(
-    "MVA_bjet_0_tau_0_dr", 
+bjet_0_tau_0_dr = Variable(
+    "bjet_0_tau_0_dr", 
     title='#font[52]{#Delta}R(#tau, b-jet)',
     tformula={
         "mc16": "sqrt(acos(cos(tau_0_p4->Phi() - bjet_0_p4->Phi()))**2 + (tau_0_p4->Phi() - bjet_0_p4->Eta())**2)",
@@ -303,7 +315,7 @@ VARIABLES_TAUJET = [
     tau_0_eta, 
     tau_0_n_charged_tracks,
     tau_0_q, 
-    upsilon,
+    tau_0_upsilon,
     
     met_et, 
     tau_0_met_mt,
@@ -316,8 +328,8 @@ VARIABLES_TAUJET = [
     bjet_0_pt,
     jet_1_pt,
     
-    MVA_bjet_0_met_dphi,
-    MVA_bjet_0_tau_0_dr,
+    bjet_0_met_dphi,
+    bjet_0_tau_0_dr,
 ]
 
 
@@ -326,3 +338,106 @@ VARIABLES = {}
 VARIABLES["taujet"] = VARIABLES_TAUJET
 
 VARIABLES["taulep"] = VARIABLES_TAUJET
+
+
+
+# - - - - - - - - BDT input features
+BDT_FEATURES = {
+    "taujet": [
+        tau_0_met_dphi,
+        tau_0_pt,
+        met_et,
+        bjet_0_pt,
+        bjet_0_met_dphi,
+        bjet_0_tau_0_dr,
+        tau_0_upsilon,
+    ],
+    "taulep": [],
+}
+
+
+
+
+# - - - - - - - -  BDT scores
+
+# - - - - treat properly regions where Y is not modeled well
+Y = "(tau_0_n_charged_tracks==1)*(2.0*tau_0_allTrk_pt/tau_0_p4->Pt()-1) + -111*(tau_0_n_charged_tracks!=1)"
+Y_CORRECTED = "(tau_0_n_charged_tracks==1)*CorrectUpsilon_1D_WCR((2.0*tau_0_allTrk_pt/tau_0_p4->Pt()-1), tau_0_n_charged_tracks)"
+BDT_SELECTION_1P = "(tau_0_n_charged_tracks + ({0}>0.95)*({0}<1.05)*(tau_0_jet_bdt_loose == 1)"\
+                   "+ ({1}>0.95)*({1}<1.05)*(tau_0_jet_bdt_loose != 1))".format(Y, Y_CORRECTED)
+
+FastBDT_sig_90to120_1p3p = Variable(
+    "FastBDT_sig_90to120_1p3p",    
+    title='BDT score, 90 to 120 [GeV]',
+    tformula={
+        "mc16": "({0}==1)*FastBDT_sig_7V_met150_Opt_90to120_1p"\
+        "+ ({0}!=1)*FastBDT_sig_6V_met150_Opt_90to120_3p".format(BDT_SELECTION_1P),
+    },
+    binning=(10, 0, 1), 
+    blind_cut="(tau_0_n_charged_tracks == 1)*FastBDT_sig_7V_met150_Opt_90to120_1p"\
+    "+ (tau_0_n_charged_tracks == 3)*FastBDT_sig_6V_met150_Opt_90to120_3p < 0.50",
+)
+
+FastBDT_sig_130to160_1p3p = Variable(
+    "FastBDT_sig_130to160_1p3p",
+    title="BDT score, 130 to 160 [GeV]",
+    tformula={
+        "mc16": "({0}==1)*FastBDT_sig_7V_met150_Opt_130to160_1p"\
+        "+ ({0}!=1)*FastBDT_sig_6V_met150_Opt_130to160_3p".format(BDT_SELECTION_1P)
+    },
+    binning=(10, 0, 1),
+    blind_cut="(tau_0_n_charged_tracks == 1)*FastBDT_sig_7V_met150_Opt_130to160_1p"\
+    "+ (tau_0_n_charged_tracks == 3)*FastBDT_sig_6V_met150_Opt_130to160_3p < 0.50",
+)
+
+FastBDT_sig_160to180_1p3p = Variable(
+    "FastBDT_sig_160to180_1p3p",
+    title="BDT score, 160 to 180 [GeV]",
+    tformula={
+        "mc16":"({0}==1)*FastBDT_sig_7V_met150_Opt_160to180_1p"\
+        "+ ({0}!=1)*FastBDT_sig_6V_met150_Opt_160to180_3p".format(BDT_SELECTION_1P)
+    },
+    binning=(10, 0, 1),
+    blind_cut="(tau_0_n_charged_tracks == 1)*FastBDT_sig_7V_met150_Opt_160to180_1p"\
+    "+ (tau_0_n_charged_tracks == 3)*FastBDT_sig_6V_met150_Opt_160to180_3p < 0.50",
+)
+
+FastBDT_sig_200to400_1p3p = Variable(
+    "FastBDT_sig_200to400_1p3p",
+    title="BDT score, 200 to 400 [GeV]",
+    tformula={
+        "mc16": "({0}==1)*FastBDT_sig_7V_met150_Opt_200to400_1p"\
+        "+ ({0}!=1)*FastBDT_sig_6V_met150_Opt_200to400_3p".format(BDT_SELECTION_1P)
+    },
+    binning=(10, 0, 1),
+    blind_cut="(tau_0_n_charged_tracks == 1)*FastBDT_sig_7V_met150_Opt_200to400_1p"\
+    "+ (tau_0_n_charged_tracks == 3)*FastBDT_sig_6V_met150_Opt_200to400_3p < 0.50",
+)
+FastBDT_sig_500to2000_1p3p = Variable(
+    "FastBDT_sig_500to2000_1p3p", 
+    title='BDT score, 500 to 2000 [GeV]',
+    tformula={
+        "mc16": "FastBDT_sig_6V_2dFF_met150_Opt_500to2000_1p3p",
+    },
+    binning=(10, 0, 1),
+    blind_cut='FastBDT_sig_6V_2dFF_met150_Opt_500to2000_1p3p < 0.50',
+)
+
+
+BDT_SCORES = {
+    "taujet":[
+        FastBDT_sig_90to120_1p3p,
+        FastBDT_sig_130to160_1p3p,
+        FastBDT_sig_160to180_1p3p,
+        FastBDT_sig_200to400_1p3p,
+        FastBDT_sig_500to2000_1p3p
+    ],
+    "taulep":[],
+}
+
+# - - - - - - - - add BDT scores to the list of analysis variables 
+VARIABLES["taujet"] += BDT_SCORES["taujet"]
+
+
+# - - - - - - - - variables for rQCD calcualtion
+rQCD_VARS = [tau_0_jet_bdt_score, tau_0_jet_width]

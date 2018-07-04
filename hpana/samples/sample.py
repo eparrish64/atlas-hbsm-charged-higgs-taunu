@@ -8,30 +8,22 @@ import random
 import datetime
 import multiprocessing
 
-# ROOT imorts 
+## ROOT imorts 
 import ROOT
 
-# local imports
+## local imports
 from . import log
+from ..dataset_hists import dataset_hists
 
 from ..db import samples as samples_db, datasets
 from ..db.decorators import cached_property
 from ..systematics import get_systematics, iter_systematics, systematic_name
-from ..categories import TAU_IS_TRUE
-from ..cluster.parallel import FuncWorker, run_pool, map_pool, Job
+from ..categories import TAU_IS_TRUE, Category
 
-
-##---------------------------------------------------------------------------------------
-## 
-class Dataset(namedtuple('Dataset', ('ds','files', 'events'))):
-    """ plain namedtuple to hold Dataset info
-    """
-    @property
-    def name(self):
-        return self.ds.name
     
 ##---------------------------------------------------------------------------------------
-## 
+## - - container class for histograms 
+##---------------------------------------------------------------------------------------
 class Histset:
     """simple container class for histograms
     """
@@ -49,10 +41,16 @@ class Histset:
         self.systematic = systematic
         self.hist = hist
 
+    def __repr__(self):
+        return "(name=%r, sample=%r, systematic=%r, "\
+            "variable=%r, category=%r, hist=%r)\n"%(
+                self.name, self.sample, self.systematic,
+                self.variable, self.category, self.hist.Integral() if self.hist else "NAN")
     
     
 ##---------------------------------------------------------------------------------------
-## 
+## - - container class for histogram workers 
+##---------------------------------------------------------------------------------------
 class HistWorker:
     """
     lightweight container class for histogram workers
@@ -63,7 +61,8 @@ class HistWorker:
                  systematic="NOMINAL",
                  fields=[],
                  categories=[],
-                 weights=[]):
+                 weights=[],
+                 hist_templates=[]):
         self.name = name
         self.sample = sample
         self.dataset = dataset
@@ -71,6 +70,7 @@ class HistWorker:
         self.categories = categories
         self.systematic = systematic
         self.weights = weights
+        self.hist_templates = hist_templates
         
     def __repr__(self):
         return "name=%r, sample=%r, systematic=%r\n"\
@@ -80,7 +80,8 @@ class HistWorker:
         
         
 ##---------------------------------------------------------------------------------------
-## 
+## - - base analysis sample class
+##---------------------------------------------------------------------------------------
 class Sample(object):
     """
     base class for analysis samples.
@@ -215,14 +216,29 @@ class Sample(object):
         
         return nevents
 
+    def cutflow(self, cuts, **kwargs):
+        """
+
+        """
+        categories = []
+        cuts_list = []
+        for name, cut in cuts.iteritems():
+            cuts_list += [cut]
+            categories.append(Category(name, cuts_list=cuts_list, mc_camp=self.config.mc_camp))
+        field = kwargs.pop("field", self.config.variables[0])
+        hists = self.hists(categories=categories, fields=[field], systematic="NOMINAL", **kwargs)
+        return hists
+    
     def workers(self, categories=[],
                 fields=[],
                 systematics=["NOMINAL"],
+                trigger=None,
                 extra_cuts=None,
                 extra_weight=None,
                 weighted=True,
                 tauid=None,
                 truth_match_tau=None,
+                hist_templates=None,
                 **kwargs):
         """ list of workers to to submit jobs.
         """
@@ -230,10 +246,10 @@ class Sample(object):
         categories_cp = copy.deepcopy(categories)
         for category in categories_cp:
             # - - - - filters
-            category.cuts += self.cuts(tauid=tauid, extra_cuts=extra_cuts, truth_match_tau=truth_match_tau)
-            
+            category.cuts += self.cuts(
+                trigger=trigger, tauid=tauid, extra_cuts=extra_cuts, truth_match_tau=truth_match_tau)
         # - - - - one worker per dataset per systematic
-        workers = []
+        workers = set()
         for ds in self.datasets:
             # - - selections and weights 
             weights = self.weights(categories=categories)
@@ -259,124 +275,24 @@ class Sample(object):
             # - - - - one worker per systematic per dataset
             for systematic in systematics:
                 sname = self.name
+                wname = "%s.%s_%s.%s"%(
+                    sname, ds.name,
+                    ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(10))
+                    , systematic)
                 worker = HistWorker(
-                    name="%s.%s.%s"%(sname, ds.name, systematic),
+                    name=wname,
                     sample=self.name,
                     dataset=ds,
                     fields=fields,
                     categories=categories_cp,
                     weights=weights,
-                    systematic=systematic,)
+                    systematic=systematic,
+                    hist_templates=hist_templates)
                 
-                workers.append(worker)
+                workers.add(worker)
 
-        return workers
+        return list(workers)
 
-
-    @staticmethod
-    def dataset_hists(hist_worker,
-                      outdir="histsdir",
-                      **kwargs):
-        """ produces histograms for a dataset. 
-        This static method is mainly used for parallel processing.
-        """
-        dataset = hist_worker.dataset
-        fields = hist_worker.fields
-        categories = hist_worker.categories
-        weights = hist_worker.weights
-        systematic = hist_worker.systematic
-        outname = kwargs.pop("outname", hist_worker.name)
-        
-        log.debug("*********** processing %s dataset ***********"%dataset.name)
-        if not dataset.files:
-            log.warning("%s dataset is empty!!"%dataset.name)
-            return []
-        
-        canvas = ROOT.TCanvas()
-        hist_set = []
-        # - - - - containers for hists
-        hist_set = []
-        for var in fields:
-            for category in categories:
-                hset = Histset(
-                    sample=dataset.name,
-                    variable=var.name,
-                    category=category.name,
-                    hist=ROOT.TH1F(
-                        "category_%s_var_%s"%(category.name, var.name), var.name, *var.binning),
-                    systematic=systematic) 
-                # - - make sure the newly created hist has no dummy value
-                hset.hist.Reset()
-                hist_set.append(hset)
-        
-        # - - loop over dataset's files
-        nevents = 0
-        for fn in dataset.files:
-            fname = fn.split("/")[-1]
-            tfile = ROOT.TFile(fn)
-            # - - check if the file is healthy
-            try:
-                entries = tfile.Get(systematic).GetEntries()
-                nevents += entries
-                if entries==0:
-                    log.warning("%s tree in %s is empty, skipping!"%(systematic, fn))
-                    continue
-            except:
-                log.warning("%s has no %s tree!"%(fn, systematic))
-                continue
-            for category in categories:
-                # - - hists for the current category
-                cat_hists = filter(lambda hs: hs.category==category.name, hist_set)
-
-                # get the tree 
-                tree = tfile.Get(systematic)
-
-                # - - get the list of the events that pass the selections
-                selection = category.cuts.GetTitle()
-                eventweight = "*".join(weights[category.name])
-                tree.Draw(">>eventlist_%s"%category.name, selection)
-                eventlist = ROOT.gDirectory.Get("eventlist_%s"%category.name)
-                tree.SetEventList(eventlist)
-                
-                # - - draw all the vars
-                for var in fields:
-                    histname = "category_%s_%s_%s"%(category.name, var.name, fname)
-                    log.debug("{0} >> {1}{2}".format(var.tformula, histname, var.binning))
-                    log.debug("({0}) * ({1})".format(selection, eventweight))
-                    
-                    tree.Draw("{0} >> {1}{2}".format(var.tformula, histname, var.binning), eventweight)
-                    htmp = ROOT.gPad.GetPrimitive(histname)
-                    hset = filter(lambda hs: hs.variable==var.name, cat_hists)[0]
-                    hset.hist += htmp
-                    htmp.Delete()
-                tree.Delete()
-            tfile.Close()
-            
-        write_hists = kwargs.pop("write_hists", False)
-        prefix = kwargs.pop("prefix", outname.split(".")[0]) #<! FIX ME: should give the sample name a better solution 
-        if write_hists:
-            hname = "%s.root"%outname
-            if not os.path.isdir(outdir):
-                os.system("mkdir -p %s"%outdir)
-                
-            hpath = os.path.join(outdir, hname)
-            hfile = ROOT.TFile(hpath, "UPDATE")
-            
-            rdir = "%s"%(systematic)
-            if not hfile.GetDirectory(rdir):
-                hfile.mkdir(rdir)
-            hfile.cd(rdir)
-            
-            for hset in hist_set:
-                hist = hset.hist
-                hist.SetTitle(hist.GetName())
-                hist.Write("%s_%s"%(prefix, hist.GetName()), ROOT.TObject.kOverwrite)
-            hfile.Close()
-
-        canvas.Close()
-        log.info("processed %s tree from %s dataset with %i events"%(systematic, dataset.name, nevents))
-        return hist_set
-        
 
     def hists(self, categories=[],
               fields=[],
@@ -406,6 +322,7 @@ class Sample(object):
         # - - - - - - - - create a default canvas for the TTree.Draw
         canvas = ROOT.TCanvas()
 
+        hist_sets = []
         # - - - - prepare the workers
         workers = self.workers(
             categories=categories,
@@ -413,26 +330,26 @@ class Sample(object):
             systematics=systematics,
             **kwargs)
 
-        # - - - - assign the jobs to the workers
-        jobs = []
-        hist_sets = []
-        for worker in workers:
-            jobs.append(FuncWorker(Sample.dataset_hists, worker,
-                                   **kwargs) )
-            
-        #FIXME:Queue hangs up with FuncWorker! - - - - process samples' datasets in parallel
-        parallel = kwargs.pop("parallel", False)    
-        if parallel:
-            log.info(
-                "************** processing %s sample hists in parallel, njobs=%i ************"%(self.name, len(jobs) ) )
-            run_pool(jobs, n_jobs=-1)
-            
-        # - - - - - - - - process datasets one after another
-        else:
-            log.info("************ processing %s sample hists sequentially ************"%self.name)
-            for job in jobs:
-                job.start()
-                job.join()
+        log.info(
+            "************** processing %s sample hists in parallel, njobs=%i ************"%(self.name, len(workers) ) )
+        pool = multiprocessing.Pool(multiprocessing.cpu_count())
+        results = [pool.apply_async(dataset_hists, (wk,)) for wk in workers]
+        for res in results:
+            hist_sets += res.get()
+
+        # - - - - merge all the hists for this sample
+        merged_hist_set = []
+        for systematic in systematics:
+            for var in fields:
+                for cat in categories:
+                    hists = filter(
+                        lambda hs: (hs.systematic==systematic and hs.variable==var.name and hs.category==cat.name), hist_sets)
+                    hsum = reduce(lambda h1, h2: h1 + h2, [hs.hist for hs in hists])
+                    outname = self.config.hist_name_template.format(self.name, cat, var)
+                    hsum.SetTitle(outname)
+                    merged_hist_set.append(Histset(sample=self.name, category=cat.name, variable=var.name, hist=hsum) )
+        canvas.Close()
+        return merged_hist_set
     
     def write_hists(self, hist_set, hists_file, systematics=["NOMINAL"], overwrite=True):
         """
@@ -454,68 +371,87 @@ class Sample(object):
             
         return 
     
-    def merge_hists(self, histsdir=None, hists_file=None, overwrite=False, ncpu=1):
+    def merge_hists(self, hist_set=[], histsdir=None, hists_file=None, write=False):
         """ collect histograms for this sample and add them up properly.
+        read the hist from the disk or get them on the fly.
         """
         log.info("merging %s hists"%self.name)
 
-        assert histsdir, "hists dir is not provided!"
-        if not hists_file:
-            hists_file = self.config.hists_file
-            
-        # - - - - retrieve the samples hists
-        hfiles = glob.glob("%s/%s.*"%(histsdir, self.name))
+        if not hist_set:
+            log.info("reading dataset hists from %s"%self.histdir)
+            assert histsdir, "hists dir is not provided!"
+            # - - - - retrieve the samples hists
+            hfiles = glob.glob("%s/%s.*"%(histsdir, self.name))
 
-        if not hfiles:
-            log.warning("no hists found for the %s in %s dir"%(self.name, histsdir))
-            return
+            if not hfiles:
+                log.warning("no hists found for the %s in %s dir"%(self.name, histsdir))
+                return
 
-        # - - - - extract the hists 
-        fields = set()
-        categories = set()
-        hist_set = []
-        for hf in hfiles:
-            htf = ROOT.TFile(hf, "READ")
-            for systematic in self.systematics:
-                systdir = htf.Get(systematic)
-                for hname in [k.GetName() for k in systdir.GetListOfKeys()]:
-                    # - - regex match the hist name
-                    match = re.match(self.config.hist_name_regex, hname)
-                    if match:
-                        sample = match.group("sample")
-                        category = match.group("category")
-                        variable = match.group("variable")
-                        
-                        fields.add(variable)
-                        categories.add(category)
-                        hist = htf.Get("%s/%s"%(systematic, hname))
-                        hist.SetDirectory(0) #<! detach from htf
-                        hset = Histset(sample=sample, category=category, variable=variable,
-                                       systematic=systematic, hist=hist)
-                        hist_set.append(hset)
-            htf.Close()
+            # - - - - extract the hists 
+            fields = set()
+            categories = set()
+            hist_set = []
+            for hf in hfiles:
+                htf = ROOT.TFile(hf, "READ")
+                for systematic in self.systematics:
+                    systdir = htf.Get(systematic)
+                    for hname in [k.GetName() for k in systdir.GetListOfKeys()]:
+                        # - - regex match the hist name
+                        match = re.match(self.config.hist_name_regex, hname)
+                        if match:
+                            sample = match.group("sample")
+                            category = match.group("category")
+                            variable = match.group("variable")
+
+                            fields.add(variable)
+                            categories.add(category)
+                            hist = htf.Get("%s/%s"%(systematic, hname))
+                            hist.SetDirectory(0) #<! detach from htf
+                            hset = Histset(sample=sample, category=category, variable=variable,
+                                           systematic=systematic, hist=hist)
+                            hist_set.append(hset)
+                htf.Close()
+        else:
+            # - - - - get list of categories and fields available in hist_set
+            fields = list(set([hs.variable for hs in hist_set] ) )
+            categories = list(set([hs.category for hs in hist_set] ) )
             
+        if write:
+            # - - - - output file
+            if not hists_file:
+                hists_file = self.config.hists_file
+            merged_hists_file = ROOT.TFile(os.path.join(histsdir, hists_file), "UPDATE")
+        
+        # - - - - make sure hists are for this sample
+        hist_set = filter(lambda hs: hs.sample.startswith(self.name), hist_set)
         # - - - - add them up
-        merged_hists_file = ROOT.TFile(os.path.join(histsdir, hists_file), "UPDATE")
         merged_hist_set = []
         for systematic in self.systematics:
             for var in fields:
                 for cat in categories:
                     hists = filter(
                         lambda hs: (hs.systematic==systematic and hs.variable==var and hs.category==cat), hist_set)
-                    hsum = reduce(lambda h1, h2: h1 + h2, [hs.hist for hs in hists])
+                    hsum = hists[0].hist
+                    for hs in hists[1:]:
+                        hsum.Add(hs.hist)
+                    #hsum = reduce(lambda h1, h2: h1 + h2, [hs.hist for hs in hists])
                     outname = self.config.hist_name_template.format(self.name, cat, var)
                     hsum.SetTitle(outname)
+                    hsum.SetName(outname)
+                    merged_hist_set.append(
+                        Histset(sample=self.name, variable=var, category=cat, systematic=systematic, hist=hsum) )
 
-                    # - - write it now
-                    rdir = "%s"%(systematic)
-                    if not merged_hists_file.GetDirectory(rdir):
-                        merged_hists_file.mkdir(rdir)
-                    merged_hists_file.cd(rdir)
-                    hsum.Write(outname, ROOT.TObject.kOverwrite)
-                    merged_hist_set.append(hsum)
-
-        merged_hists_file.Close()
+                    if write:
+                        # - - write it now
+                        rdir = "%s"%(systematic)
+                        if not merged_hists_file.GetDirectory(rdir):
+                            merged_hists_file.mkdir(rdir)
+                        merged_hists_file.cd(rdir)
+                        hsum.Write(outname, ROOT.TObject.kOverwrite)
+                        
+        # - - - - close open streams
+        if write:
+            merged_hists_file.Close()
         
         return merged_hist_set
     

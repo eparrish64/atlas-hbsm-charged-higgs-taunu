@@ -156,4 +156,10 @@ class Configuration:
     @property
     def hist_name_regex(self):
         return re.compile("^(?P<sample>\w+)_category_(?P<category>\w+)_var_(?P<variable>\w+)$")
-        
+    
+    @property
+    def ff_cr_regions(self):
+        for _, cr in FF_CR_REGIONS.iteritems():
+            cr.mc_camp = self.mc_camp
+        return FF_CR_REGIONS[self.channel]
+

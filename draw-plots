@@ -77,7 +77,9 @@ for var in fields:
         draw(PLOTTING_ARGS.hists_file, var, cat,
              backgrounds=backgrounds,
              data=data,
-             signals=[],
-             show_ratio=not PLOTTING_ARGS.no_ratio,
-             show_pvalue=not PLOTTING_ARGS.no_pvalue)
+             signals=analysis.signals,
+             signal_scale=5,
+             output_dir=PLOTTING_ARGS.pdir,
+             show_ratio=True,
+             show_pvalue=False,)
             

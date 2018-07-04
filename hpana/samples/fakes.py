@@ -1,9 +1,9 @@
 # local imports
-import os, glob, copy, re
+import os, glob, copy, re, random 
 import ROOT 
 
 from .sample import Sample, Histset, HistWorker
-from ..categories import ANTI_TAU, TAU_IS_LEP
+from ..categories import ANTI_TAU, TAU_IS_LEP, Category
 from .. import log
 from ..cluster.parallel import FuncWorker, Job, run_pool, map_pool
 
@@ -77,16 +77,43 @@ class QCD(Sample):
         ff_wcr = QCD.FF_WCR.format(v0, v1)
         ff_qcd = QCD.FF_QCD.format(v0, v1)
         for category in categories:
-            ff_weight_index = QCD.FF_TYPES[self.config.channel][category.name.upper()]
+            if not category.name.upper() in QCD.FF_TYPES[self.config.channel]:
+                log.warning("no dedicated FFs for %s region; using the PRESEL one"%category.name)
+                ff_weight_index = 1
+            else:
+                ff_weight_index = QCD.FF_TYPES[self.config.channel][category.name.upper()]
             ff_weight = QCD.rQCD.format(v0, v1, ff_qcd, ff_wcr, ff_weight_index)
             ff_weights[category.name] = [ff_weight]
+
+            #!TMPFIX for cutflow 
+            if category.name in ["clean event", "trigger", "tau pt > 40 GeV"]:
+                ff_weights[category.name] = ["1."]
             
         return ff_weights
     
-
+    def cutflow(self, cuts, **kwargs):
+        """
+        """
+        categories = []
+        cuts_list = []
+        for name, cut in cuts.iteritems():
+            if name.upper()=="TAUID":
+                cut = ANTI_TAU #<! ANTI_TAU * FF 
+            cuts_list += [cut]
+            categories.append(Category(name, cuts_list=cuts_list, mc_camp=self.config.mc_camp))
+            
+        field = kwargs.pop("field", self.config.variables[0])
+        hists = self.hists(categories=categories,
+                           fields=[field],
+                           systematics=["NOMINAL"],
+                           **kwargs)
+        
+        return hists
+    
     def workers(self, categories=[],
                 fields=[],
                 systematics=["NOMINAL"],
+                trigger=None, 
                 extra_cuts=None,
                 extra_weights=None,
                 weighted=True,
@@ -100,7 +127,7 @@ class QCD(Sample):
         categories_cp = copy.deepcopy(categories)
         for category in categories_cp:
             # - - - - filters
-            category.cuts += self.cuts(extra_cuts=extra_cuts, tauid=tauid)
+            category.cuts += self.cuts(extra_cuts=extra_cuts, tauid=tauid, trigger=trigger)
 
         # - - - - prepare MC and FF weights
         mc_weights = self.weights(categories=categories)
@@ -188,7 +215,7 @@ class QCD(Sample):
         if not categories:
             raise RuntimeError("no category is selected to produce hists for it")
 
-        systematics = filter(lambda syst: syst in self.systematics(), systematics)
+        systematics = filter(lambda syst: syst in self.systematics, systematics)
 
         # - - - - prepare the workers
         workers = self.workers(
@@ -201,28 +228,51 @@ class QCD(Sample):
         jobs = []
         hist_sets = []
         for worker in workers:
-            jobs.append(Job(Sample.dataset_hists,
-                            worker.dataset,
-                            worker.fields,
-                            worker.categories,
-                            systematic=worker.systematic,
-                            outname=worker.name,
-                            **kwargs) )
-            
+            log.debug(worker)
+            jobs.append(FuncWorker(Sample.dataset_hists, worker,
+                                   **kwargs) )
         # - - - - process samples' datasets in parallel
         parallel = kwargs.pop("parallel", False)    
         if parallel:
             log.info(
                 "************** processing %s sample hists in parallel, njobs=%i ************"%(self.name, len(jobs) ) )
             run_pool(jobs, n_jobs=-1)
-            
-        # - - - - - - - - process datasets one after another
+            for j in jobs:
+                hist_sets += j.output
+                
+        # - - - - process datasets one after another
         else:
             log.info("************ processing %s sample hists sequentially ************"%self.name)
             for job in jobs:
                 job.run()
+                job.join()
+                hist_sets += job.output
                 
+        # - - - - extract data hists
+        data_hist_set = filter(lambda hs: hs.sample.startswith("DATA"), hist_sets)
+        mc_hist_set = filter(lambda hs: not hs.sample.startswith("DATA"), hist_sets)
 
+        # - - - - add DATA/MC dataset hists, then subtract sum of MC from DATA
+        merged_hist_set = []
+        for systematic in systematics:
+            for var in fields:
+                for cat in categories:
+                    data_hists = filter(
+                        lambda hs: (hs.systematic==systematic and hs.variable==var.name and hs.category==cat.name), data_hist_set)
+                    data_hsum = reduce(lambda h1, h2: h1 + h2, [hs.hist for hs in data_hists])
+                    
+                    mc_hists = filter(
+                        lambda hs: (hs.systematic==systematic and hs.variable==var.name and hs.category==cat.name), mc_hist_set)
+                    mc_hsum = reduce(lambda h1, h2: h1 + h2, [hs.hist for hs in mc_hists])
+
+                    # - - subtract MC from DATA
+                    qcd_hsum = data_hsum - mc_hsum
+                    outname = self.config.hist_name_template.format(self.name, cat, var)
+                    qcd_hsum.SetTitle(outname)
+                    merged_hist_set.append(Histset(sample=self.name, category=cat.name, variable=var.name, hist=qcd_hsum) )
+                    
+        return merged_hist_set
+                
     def merge_hists(self, histsdir=None, hists_file=None, overwrite=False, ncpu=1):
         """ needs a dedicated method since we have to subtract sum of MC from DATA.
         """
@@ -306,6 +356,7 @@ class QCD(Sample):
                         lambda hs: (hs.systematic==systematic and hs.variable==var and hs.category==cat), mc_hist_set)
                     mc_hsum = reduce(lambda h1, h2: h1 + h2, [hs.hist for hs in mc_hists])
 
+                    # - - subtract MC from DATA
                     qcd_hsum = data_hsum - mc_hsum
                     outname = self.config.hist_name_template.format(self.name, cat, var)
                     qcd_hsum.SetTitle(outname)
@@ -365,6 +416,8 @@ class LepFake(Sample):
         # - - - - prepare categories; deep copy since we don't want change categories
         categories_cp = copy.deepcopy(categories)
             
+        truth_match_tau = kwargs.pop("truth_match_tau", None)
+        
         # - - - - MC workers
         lepfake_workers = []
         for mc in self.mc:
@@ -373,8 +426,8 @@ class LepFake(Sample):
                 categories=categories_cp,
                 fields=fields,
                 systematics=systematics,
-                truth_match_tau=self.leptau,
                 weighted=weighted,
+                truth_match_tau=self.leptau,
                 **kwargs)
 
         # - - - - add LepFake prefix to the workers names
@@ -384,72 +437,80 @@ class LepFake(Sample):
 
         return lepfake_workers
     
-    def hists(self, category,
+
+    def hists(self,
               fields=[],
-              systematic="NOMINAL",
-              extra_cuts=None,
-              extra_weight=None,
-              weighted=True,
-              trigger=None,
-              tauid=None,
-              suffix=None,
-              hists_file=None,
-              parallel=False,
-              write_hists=True,
-              overwrite=True):
+              categories=[],
+              systematics=["NOMINAL"],
+              **kwargs):
         """
-        """
-        log.info("processing %s tree from %s ; category: %s"%(
-            systematic, self.name, category.name))
-    
-        # - - - - a lepton which passes tau ID  
-        if not extra_cuts:
-            extra_cuts = self.leptau
-        else:
-            extra_cuts += self.leptau
-            
-        # - - - - - - - - mc 
-        mc_hists = []
-        for m in self.mc:
-            # - - - - turn off truth matching 
-            m.truth_match_tau = False
-            mc_hists += m.hists(
-                categories=[category],
-                fields=fields,
-                extra_cuts=extra_cuts,
-                weighted=weighted,
-                trigger=trigger,
-                parallel=parallel,
-                write_hists=False)
+        Parameters
+        ----------
+        category: 
+            Category object; specific category oof analysis.
+        fields:
+            Variable;  list of variables to get histograms for them
+        systematics: 
+            Systematic; list of systematics 
         
-        # - - - - - - - - 
-        lepfake_hist_set = []
-        for var in fields:
-            h_mc = filter(lambda h: h.variable==var.name, mc_hists)
-            h_mc = [h.hist for h in h_mc]
-            h_mc_sum = reduce(lambda h1, h2: h1+h2, h_mc)
+        Returns
+        -------
+        hist_set: fields histograms.
+        """
+        
+        if not fields:
+            raise RuntimeError("no field is selected to produce hists for it")
 
-            # - - - - get the fakes hist and set it's name
-            fname = self.hist_name_template.format(self.name, category.name, var.name)
-            h_mc_sum.SetName(fname)
-            h_mc_sum.SetTitle(fname)
-            h_mc_sum.SetXTitle(var.title)
-            
-            lepfake_hist_set.append(Histset(
-                sample=self.name,
-                variable=var.name,
-                category=category.name,
-                hist=h_mc_sum,
-                systematic=systematic) )
-            
-        log.info("proccessed %s tree from %s ; category=%s"%(
-            systematic, self.name, category.name))
+        if not categories:
+            raise RuntimeError("no category is selected to produce hists for it")
 
-        if write_hists:
-            if not hists_file:
-                hists_file = self.config.hists_file
-            self.write_hists(
-                lepfake_hist_set, hists_file, systematic=systematic, overwrite=overwrite)
+        systematics = filter(lambda syst: syst in self.systematics, systematics)
 
-        return lepfake_hist_set
+        truth_match_tau = kwargs.pop("truth_match_tau", None)
+
+        
+        # - - - - prepare the workers
+        workers = self.workers(
+            categories=categories,
+            fields=fields,
+            systematics=systematics,
+            truth_match_tau=self.leptau,
+            **kwargs)
+        
+        # - - - - assign the jobs to the workers
+        jobs = []
+        hist_sets = []
+        for worker in workers:
+            log.debug(worker)
+            jobs.append(FuncWorker(Sample.dataset_hists, worker, **kwargs) )
+        # - - - - process samples' datasets in parallel
+        parallel = kwargs.pop("parallel", False)
+        if parallel:
+            log.info(
+                "************** processing %s sample hists in parallel, njobs=%i ************"%(self.name, len(jobs) ) )
+            run_pool(jobs, n_jobs=-1)
+            for j in jobs:
+                hist_sets += j.output
+                
+        # - - - - process datasets one after another
+        else:
+            log.info("************ processing %s sample hists sequentially ************"%self.name)
+            for job in jobs:
+                job.run()
+                job.join()
+                hist_sets += job.output
+                
+        # - - - - add MC dataset hists
+        merged_hist_set = []
+        for systematic in systematics:
+            for var in fields:
+                for cat in categories:
+                    mc_hists = filter(
+                        lambda hs: (hs.systematic==systematic and hs.variable==var.name and hs.category==cat.name), hist_sets)
+                    mc_hsum = reduce(lambda h1, h2: h1 + h2, [hs.hist for hs in mc_hists])
+                    outname = self.config.hist_name_template.format(self.name, cat.name, var.name)
+                    mc_hsum.SetTitle(outname)
+                    merged_hist_set.append(Histset(sample=self.name, category=cat.name, variable=var.name, hist=mc_hsum) )
+                    
+        return merged_hist_set
         

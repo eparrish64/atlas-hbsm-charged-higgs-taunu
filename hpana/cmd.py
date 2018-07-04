@@ -83,6 +83,9 @@ def get_ana_parser(base_parser=None):
     ana_parser.add_argument("--pickled-analysis", type=str, default="ANALYSIS.pkl",
                             help="main analysis object pickled to be shipped to the worker nodes")
 
+    ana_parser.add_argument("--cache-ff", action="store_true",
+                            help="cache fake factors")
+    
     ana_parser.add_argument("--parallel", action="store_true",
                             help="if you want to do parallel processing")
 
@@ -100,6 +103,7 @@ def get_ana_parser(base_parser=None):
     
     ana_parser.add_argument("--rs-manager", type=str,default="TORQUE", choices=["TORQUE", "SLURUM"],
                             help="the resource manager on your cluster")
+
     
     # - - - - - - - - - parse analysis args
     #argcomplete.autocomplete(ana_parser)
@@ -142,4 +146,57 @@ def get_yields_parser(base_parser=None):
     else:
         yields_parser = base_parser
 
+    yields_parser.add_argument("--cutflow", action="store_true",
+                              help="print cutflow table")
+    
+    yields_parser.add_argument("--yields-table", action="store_true",
+                              help="print yields table")
+    
+    yields_parser.add_argument("--samples", nargs="+",
+                            help="list of samples to process")
+    yields_parser.add_argument("--yfile", default="yields.txt",
+                            help="write yields to this file")
+    
     return yields_parser
+
+
+##--------------------------------------------------------------------------------------------------
+## fake factors parser
+def get_ffs_parser(base_parser=None):
+
+    if not base_parser:
+        ffs_parser = get_base_parser()
+    else:
+        ffs_parser = base_parser
+
+    ffs_parser.add_argument("--cache-cr-ffs", action="store_true",
+                              help="cache CR fake factors for the FF CRs")
+    
+    ffs_parser.add_argument("--cache-rqcd", action="store_true",
+                              help="cache combined FFs")
+    
+    ffs_parser.add_argument("--cache-ffs-hists", action="store_true",
+                              help="cache histograms used for evaluating FFs")
+    
+    ffs_parser.add_argument("--plot-shapes", action="store_true",
+                              help="plot template shapes")
+    
+    ffs_parser.add_argument("--eval-rqcd", action="store_true",
+                              help="evaluate rQCD")
+    
+    ffs_parser.add_argument("--samples", nargs="+",
+                            help="list of samples to process")
+    
+    ffs_parser.add_argument("--ffs-cr-cache", default="FF_CR.pkl",
+                            help="write CR FFs to this file")
+    
+    ffs_parser.add_argument("--rqcd-cache", default="FF_rQCD.pkl",
+                            help="write combined FFs to this file")
+    
+    ffs_parser.add_argument("--ffs-hists-cache", default="FF_HISTS.pkl",
+                              help="cache histograms used for evaluating FFs to this file")
+
+    ffs_parser.add_argument('--pdir', '-pd', default="./ffplots",
+                                 help='where to put the plots', )
+    
+    return ffs_parser

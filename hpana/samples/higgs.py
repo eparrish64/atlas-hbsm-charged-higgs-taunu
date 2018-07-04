@@ -3,110 +3,100 @@ import os
 import pickle
 from math import pi, sqrt
 
-
 # local imports
 from . import log
 from .sample import MC, Signal
-from .. import SIGNAL_MASSES
 
 class Higgs(MC, Signal):
-    MASSES = SIGNAL_MASSES
-    MODES  = {}
-    NORM_BY_THEORY = True
+    # - - - - - - - - - signal mass points 
+    MASSES_LOW = {
+        90: "344287",
+        100: "344288",
+        110: "344289",
+        120: "344290",
+        
+        130: "344291",
+        140: "344292",
+        150: "344293",
+        }
+    MASSES_INT = {
+        160: "344250",
+        165: "344251",
+        170: "344252",
+        175: "344253",
+        180: "344254",
+    }
+    
+    MASSES_HIGH = {
+        200: "341524",
+        225: "341525",
+        250: "341526",
+        275: "341527",
+        300: "341528",
+        350: "341529",
+        400: "341003",
 
-    def __init__(self, year,
-                 mode='gg', modes=None,
-                 mass=None, masses=None,
-                 channel=None,
-                 sample_pattern=None,
-                 ggf_weight=False,
-                 vbf_weight=False,
+        500: "341530",
+        600: "341531",
+        700: "341532",
+        800: "341533",
+        900: "341534",
+        1000: "341535",
+        1200: "341536",
+        1400: "341537",
+        1600: "341538",
+        1800: "341539",
+        2000: "341540",
+    }
+
+    MASSES = {}
+    MASSES.update(MASSES_LOW)
+    MASSES.update(MASSES_INT)
+    MASSES.update(MASSES_HIGH)
+
+    SAMPLE_PATTERN = {
+        "LOW": "MadGraphPythia8EvtGen_A14NNPDF23LO_Hplus_H{0}_taunu",
+        "INT": "MadGraphPythia8EvtGen_A14NNPDF23LO_HplusInt_H{0}_taunu",
+        "HIGH": "aMcAtNloPythia8EvtGen_A14NNPDF23LO_Hplus4FS_H{0}_taunu",
+    }
+    
+    NORM_BY_THEORY = True
+    
+    def __init__(self, config,
+                 mass=None,
+                 name=None,
                  suffix=None,
                  label=None,
-                 inclusive_decays=False,
+                 scale=1,
                  **kwargs):
-        self.channel=channel
-        self.inclusive_decays = inclusive_decays
-        if masses is None:
-            if mass is not None:
-                assert mass in Higgs.MASSES
-                masses = [mass]
-            else:
-                # default to 125
-                masses = [125]
-        else:
-            assert len(masses) > 0
-            for mass in masses:
-                assert mass in Higgs.MASSES
-            assert len(set(masses)) == len(masses)
-
-        if modes is None:
-            if mode is not None:
-                assert mode in Higgs.MODES
-                modes = [mode]
-            else:
-                # default to all modes
-                modes = Higgs.MODES
-        else:
-            assert len(modes) > 0
-            for mode in modes:
-                assert mode in Higgs.MODES
-            assert len(set(modes)) == len(modes)
-
-        name = 'Signal'
-
-        str_mode = ''
-        if len(modes) == 1:
-            str_mode = modes[0]
-            name += '_%s' % str_mode
-        elif len(modes) == 2 and set(modes) == set(['W', 'Z']):
-            str_mode = 'V'
-            name += '_%s' % str_mode
-
-        str_mass = ''
-        if len(masses) == 1:
-            str_mass = '%d' % masses[0]
-            name += '_%s' % str_mass
-
+        
+        assert mass in Higgs.MASSES
+        if not name:
+            name = "Hplus{}".format(mass)
         if label is None:
-            label = '%s#font[52]{H}(%s)#rightarrow#tau#tau' % (
-                str_mode, str_mass)
+            if scale!=1:
+                label = '{1}#times H^+{0}'.format(mass, scale)
+            else:
+                label = 'H^{{+}}{0}'.format(mass)
 
-
-        self.samples = []
-        self.masses = []
-        self.modes = []
-
-        assert len(modes) == 1
-        for mass in masses:
-            self.masses.append(mass)
-            self.modes.append(modes[0])
-            self.samples.append(sample_pattern.format(mass) + '.' + suffix)
-
-        if len(self.modes) == 1:
-            self.mode = self.modes[0]
+        self.config = config
+        self.name = name
+        self.label=label
+                
+        if mass <= max(Higgs.MASSES_LOW.keys()):
+            mode = "LOW"
+        elif mass <= max(Higgs.MASSES_INT.keys()):
+            mode = "INT"
+        elif mass <= max(Higgs.MASSES_HIGH.keys()):
+            mode = "HIGH"
         else:
-            self.mode = None
-        if len(self.masses) == 1:
-            self.mass = self.masses[0]
-        else:
-            self.mass = None
+            raise ValueError("unknown mass {} for the signal!".format(mass))
 
-        super(Higgs, self).__init__(
-            year=year, label=label, name=name, **kwargs)
+        # - - - - the samples for this signal
+        self.samples = [(Higgs.SAMPLE_PATTERN[mode].format(mass)) ]
+        log.info("signal: {}".format(self.samples[0]))
 
-    def weight_systematics(self):
-       systematics = super(Higgs, self).weight_systematics()
-       if self.ggf_weight:
-           systematics.update({
-               'QCDscale_ggH1in'})
-       return systematics
+        # - - - - instantiate the base
+        super(Higgs, self).__init__(config, label=label, name=name, **kwargs)
 
-   def weights(self):
-        fields = super(Higgs, self).weight_fields()
-        if self.ggf_weight:
-            fields.append(self.ggf_weight_field)
-        if self.vbf_weight:
-            fields.append(self.vbf_weight_field)
-        return fields
-
+    

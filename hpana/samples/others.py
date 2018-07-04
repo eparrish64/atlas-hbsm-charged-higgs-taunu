@@ -47,7 +47,7 @@ class Single_Top(MC, Background):
     def weights(self, **kwargs):
         """WIP: specific weights for Top like top pt weights
         """
-        weights = super(Single_Top, self).weights()
+        weights = super(Single_Top, self).weights(**kwargs)
         if "pt_weighted" in self.kwargs:
             if self.kwargs["pt_weighted"]:
                 for wcat in weights:

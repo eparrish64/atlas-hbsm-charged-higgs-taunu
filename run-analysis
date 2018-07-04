@@ -1,7 +1,11 @@
 #! /usr/bin/env python
 
 ## stdlib
-import os, sys, time, pickle, dill
+import os, sys, time, pickle
+
+## PyPI
+import dill
+from tabulate import tabulate
 
 # - - - - - - - -  parse ana args (needed before ROOT)
 from hpana.cmd import get_ana_parser 
@@ -10,9 +14,11 @@ ANA_ARGS = ana_parser.parse_args()
 
 ## local
 from hpana.config import Configuration
+from hpana.categories import TAUJET_CUTFLOW
 from hpana.analysis import Analysis
 from hpana.samples.sample  import Sample
 from hpana.cluster.parallel import FuncWorker, run_pool, Job
+from hpana.dataset_hists import dataset_hists
 from hpana import log
 
 # - - - - time it
@@ -60,11 +66,10 @@ if ANA_ARGS.samples:
 else:
     samples = analysis.samples
 
-# - - - - if you wish to cache the fake factors
-# if True:#ANA_ARGS.cache_ff:
-#    analysis.cache_ffs()
+# - - - - - - - - - if you wish to cache the fake factors
+if ANA_ARGS.cache_ff:
+   print analysis.cache_ffs()
    
-    
 # - - - - - - - - - - run on multicores
 if ANA_ARGS.parallel:
     jobs = []
@@ -74,13 +79,13 @@ if ANA_ARGS.parallel:
             categories=categories,
             systematics=systematics):
         
-        jobs.append(Job(Sample.dataset_hists, worker,
+        jobs.append(Job(dataset_hists, worker,
                         write_hists=True,outdir=ANA_ARGS.outdir) )
 
         if ANA_ARGS.dry_run:
                 print "--"*100
                 print worker
-    if not ANA_ARGS.dry_run:   
+    if not ANA_ARGS.dry_run:
         log.info(
             "************** submitting %i jobs  ************"%len(jobs))
         log.info(

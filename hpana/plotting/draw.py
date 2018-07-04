@@ -12,7 +12,9 @@ HIST_NAME_TEMPLATE = "{0}_category_{1}_var_{2}" #<! sample, category, variable
 
 ##----------------------------------------------------------------------------
 ##
-def draw(hists_file, var, category, 
+def draw(var, category,
+         hists_file=None,
+         hists_set=[],
          data=None,
          backgrounds=[],
          signals=[],
@@ -56,7 +58,9 @@ def draw(hists_file, var, category,
     -------
     fig: TCanvas, containing the plots.
     """
-        
+    if not hists_set or hists_file:
+        raise RuntimeError("either hists file or hists list is required")
+    
     if show_ratio and blind:
         show_ratio = False
     if not (data and backgrounds):
@@ -67,7 +71,8 @@ def draw(hists_file, var, category,
             "at least one of backgrounds, data or signal must be specified")
 
     # - - - - - - - - open hists file
-    hfile = ROOT.TFile(hists_file, "READ")
+    if hists_file:
+        hfile = ROOT.TFile(hists_file, "READ")
 
     # - - - - - - - - insantiate the legend 
     legend = ROOT.TLegend(0.6, 0.75, 0.9, 0.9)
@@ -75,7 +80,7 @@ def draw(hists_file, var, category,
     legend.SetBorderSize(1)
     legend.SetFillColor(0)
     legend.SetTextSize(0.025)
-
+    
     # - - - - - - - - list of all objects to be drawn
     extra_info = []
     main_hists = []
@@ -91,8 +96,13 @@ def draw(hists_file, var, category,
         backgrounds_hists   = []
         bkg_stack = ROOT.THStack("bkgs", "bkgs")
         for bkg in reversed(backgrounds):
-            bkg_hist = hfile.Get("{0}/{1}".format(tree_name,
-                                                  HIST_NAME_TEMPLATE.format(bkg.name, category.name, var.name)))
+            if hists_file:
+                bkg_hist = hfile.Get(
+                    "{0}/{1}".format(tree_name, HIST_NAME_TEMPLATE.format(bkg.name, category.name, var.name)))
+            else:
+                bkg_hist = filter(
+                    lambda hs: hs.sample==bkg.name and hs.category==category.name and hs.variable==var.name, hists_set)
+                bkg_hist = bkg_hist[0].hist
             # - - - -  fold the overflow bin 
             if overflow:
                 fold_overflow(bkg_hist)
@@ -135,21 +145,26 @@ def draw(hists_file, var, category,
             signals = [signals]
         signals_hists   = []
         for sig in signals:
-            sig_hist = hfile.Get("{0}/{1}".format(tree_name,
-                                                  HIST_NAME_TEMPLATE.format(sig.name, category.name, var.name)))
+            if hists_file:
+                sig_hist = hfile.Get(
+                    "{0}/{1}".format(tree_name,HIST_NAME_TEMPLATE.format(sig.name, category.name, var.name)))
+            else:
+                sig_hist = filter(
+                    lambda hs: hs.sample==sig.name and hs.category==category.name and hs.variable==var.name, hists_set)
+                sig_hist = sig_hist[0].hist
 
             # - - - - scale signals if needed 
             if signal_scale!=1.:
                 sig_hist *= signal_scale
-                sig.label = "%0.2f #times %s"%(signal_scale, sig.label)
+                init_label = sig.label
+                sig_label = "%i #times %s"%(signal_scale, init_label)
                 
             #- - - - fold the overflow bin to the last bin
             if overflow:
                 fold_overflow(sig_hist)
-                
-            sig_hist.SetFillColor(sig.color)
-            legend.AddEntry(sig_hist, sig.label, 'L')
-            signals_hists.append(h_nom)
+
+            legend.AddEntry(sig_hist, sig_label, 'L')
+            signals_hists.append(sig_hist)
         main_hists += signals_hists
 
         # - - - - if you want to have signal errors on your plots
@@ -171,8 +186,14 @@ def draw(hists_file, var, category,
                 
     # - - - - - - - - data
     if data:
-        data_hist = hfile.Get("{0}/{1}".format(tree_name,
-                                               HIST_NAME_TEMPLATE.format(data.name, category.name, var.name)))
+        if hists_file:
+            data_hist = hfile.Get(
+                "{0}/{1}".format(tree_name, HIST_NAME_TEMPLATE.format(data.name, category.name, var.name)))
+        else:
+            data_hist = filter(
+                lambda hs: hs.sample==data.name and hs.category==category.name and hs.variable==var.name, hists_set)
+            data_hist = data_hist[0].hist 
+                
         data_hist.SetXTitle(var.title)
         data_hist.SetYTitle("# events")
         if overflow:
@@ -261,16 +282,27 @@ def draw(hists_file, var, category,
         ymax = max([h.GetMaximum() for h in main_hists])
         ymin = min([h.GetMinimum() for h in main_hists])
 
+
+    # - -  add on the signals
+    if signals:
+        main_pad.cd()
+        for sig, sh in zip(signals, signals_hists):
+            sh.SetTitle("")
+            sh.Draw("HIST SAME")
+            sh.SetLineColor(sig.color)
+            sh.SetLineStyle(sig.hist_decor["line_style"])
+            
     # - - - - - - - - draw hists
     main_pad.cd()
     for h in main_hists:
+        h.SetTitle("")
         h.SetMinimum(ymin)
         h.SetMaximum(ymax + 0.3 *ymax)
-        h.Draw("HIST")
+        h.Draw("HIST SAME")
         if not show_ratio:
             if isinstance(h, ROOT.THStack):
                 h.GetHistogram().GetXaxis().SetTitle(var.title)
-
+                
     # - - - - - - - - draw errors
     for erf in main_errors:
         erf.Draw('SAME E2')
@@ -288,6 +320,7 @@ def draw(hists_file, var, category,
     # - - - - - - - - ratio plot
     if show_ratio:
         ratio_pad.cd()
+        rhist.SetTitle("")
         rhist.Draw('SAME')
         if uncertainty_band:
             ratio_error.Draw('SAME E2')
@@ -307,7 +340,9 @@ def draw(hists_file, var, category,
     save_canvas(fig, output_dir, output_name, formats=output_formats)
 
     #- - - - - - - - release the memory
-    hfile.Close()
+    if hists_file:
+        hfile.Close()
+
     fig.Update()
 
     fig.Close()

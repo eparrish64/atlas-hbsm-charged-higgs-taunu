@@ -369,7 +369,6 @@ class Database(dict):
                     else:
                         cat = 'mc16'
                     log.debug((dsid,name, tag, version))
-
                     # - - - - - - - - update the DB with this dataset
                     dataset = self.get(name, None)
                     if dataset is not None and version == dataset.version:
@@ -508,7 +507,7 @@ class Dataset(Serializable):
         self.stream = stream
         
     @cached_property
-    def lumi_weight(self):
+    def weight(self):
         if self.events !=0:
             return reduce(lambda x,y:x*y, self.xsec_kfact_effic) / self.events
         else:
@@ -530,7 +529,7 @@ class Dataset(Serializable):
             rf.Close()
         return nevents
     
-    @cached_property
+    @property
     def xsec_kfact_effic(self):
         global XSEC_CACHE_MODIFIED
         global XSEC_CACHE
@@ -574,7 +573,7 @@ class Dataset(Serializable):
             return 1., 1., 1.
         raise Exception("cross section of dataset %s is not known!" % self.ds)
     
-    @cached_property
+    @property
     def files(self):
         if not self.dirs:
             log.warning(
@@ -586,7 +585,7 @@ class Dataset(Serializable):
                 raise IOError("%s is not readable" % dir)
             for path, dirs, files in os.walk(dir):
                 _files += [os.path.join(path, f) for f in
-                           fnmatch.filter(files, self.file_pattern)]
+                           fnmatch.filter(files, "*.root*.nn")]
         return _files
     
     def __repr__(self):

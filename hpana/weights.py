@@ -34,7 +34,12 @@ class Weight:
     W_EL = ("1",)
     
     #WIP:make it to work per year - - - - trigger
-    W_TRIGGER_TAUJET = (TRIGGER_EFFICIENCIES["taujet"][MC_CAMPAIGN],)
+    
+    W_TRIGGER_TAUJET = {
+        "mc15": ("nominal_trig_eff({})".format("met_et/1000."), ),
+        "mc16": ("nominal_trig_eff({})".format("met_p4->Et()/1000."), ),
+    }
+    
     W_TRIGGER_TAULEP = ("1",)
     
     TYPES = {
@@ -71,7 +76,7 @@ class Weight:
                     weight = cls(w, wtype=wtype, channel=channel, mc_camp=mc_camp)
                     weights.append(weight)
             elif isinstance(wo, dict):
-                for w in wo[MC_CAMPAIGN]:
+                for w in wo[mc_camp]:
                     weight = cls(w, wtype=wtype, channel=channel, mc_camp=mc_camp)
                     weights.append(weight)
             else:

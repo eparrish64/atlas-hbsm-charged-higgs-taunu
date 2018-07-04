@@ -2,11 +2,11 @@
 
 """
 * This script is meant to produce event counts either from the histograms file or 
-to calcualte them on the fly.
+* to calcualte them on the fly.
 """
 
 ## stdl-lib
-import sys, os
+import sys, os, time 
 from collections import namedtuple
 from argparse import ArgumentParser
 
@@ -21,7 +21,11 @@ YIELDS_ARGS = yields_parser.parse_args()
 ## local
 from hpana.config import Configuration
 from hpana.analysis import Analysis
+from hpana.categories import CUTFLOW
 from hpana import log
+
+# - - - - time it
+start_time = time.time()
 
 # - - - - - - - - setup cmd args
 log.setLevel(YIELDS_ARGS.log)
@@ -33,78 +37,141 @@ ROOT.gROOT.SetBatch(True)
 
 
 ##---------------------------------------------------------------------------
-## simple class for organizing yields
+## simple container class for yields
+##---------------------------------------------------------------------------
 class Yield(namedtuple("Yields", "sample category systematic events")):
     pass
 
-# - - - - - - - - instantiate the analysis (set compile_cxx to True if you want to calcualte yields on the fly)
-# - - - - - - - - build analysis main configuration object
+
+##---------------------------------------------------------------------------
+## configure the analysis
+##---------------------------------------------------------------------------
 config = Configuration(
     YIELDS_ARGS.channel,
     mc_campaign=YIELDS_ARGS.mc_campaign,
     ntuples_version=YIELDS_ARGS.ntuples_version)
 
 # - - - - - - - - instantiate the analysis
-analysis = Analysis(config, compile_cxx=False)
-
-backgrounds = analysis.backgrounds
-data = analysis.data
-signals = analysis.signals
-
-samples = backgrounds + signals + [data] 
+analysis = Analysis(config, compile_cxx=True)
 
 # - - - - - - - - categories & systematics
 categories = config.categories 
 if YIELDS_ARGS.categories:
     categories = filter(lambda c: c.name in YIELDS_ARGS.categories, categories)
 
+samples = analysis.samples
+if YIELDS_ARGS.samples:
+    samples = filter(lambda s: s.name in YIELDS_ARGS.samples, samples)
 systematics = ["NOMINAL"]
 
-# - - - - - - - - to hold Yield types 
-yields = []
+##---------------------------------------------------------------------------
+## get the yields
+##---------------------------------------------------------------------------
+if YIELDS_ARGS.yields_table:
+    yields = []
 
-# - - - - - - - - read from the histograms 
-if YIELDS_ARGS.hists_file:
-    hfile = ROOT.TFile(YIELDS_ARGS.hists_file, "READ")
-    var = config.variables[0] 
-    for sample in samples:
-        for systematic in systematics:
-            for cat in categories:
-                hist = hfile.Get(
-                    os.path.join(systematic, config.hist_name_template.format(sample.name, cat.name, var.name) ) )
-                events = hist.Integral(0, hist.GetNbinsX()+2)
-                yields.append(
-                    Yield(sample=sample.name, category=cat.name, systematic=systematic, events=events))
+    # - - - - - - - - read from the histograms 
+    if YIELDS_ARGS.hists_file:
+        hfile = ROOT.TFile(YIELDS_ARGS.hists_file, "READ")
+        var = config.variables[0] 
+        for sample in samples:
+            for systematic in systematics:
+                for cat in categories:
+                    hist = hfile.Get(
+                        os.path.join(systematic, config.hist_name_template.format(sample.name, cat.name, var.name) ) )
+                    events = hist.Integral(0, hist.GetNbinsX()+2)
+                    yields.append(
+                        Yield(sample=sample.name, category=cat.name, systematic=systematic, events=events))
 
-# - - - - - - - - count on the fly
-else:
-    log.info("calculating yields on the fly ...")
-    for sample in backgrounds:
-        for systematic in systematics:
-            for cat in categories:
-                events = sample.events(cat, systematic=systematic, weighted=True)
-                yields.append(
-                    Yield(sample=sample.name, category=cat.name, systematic=systematic, events=events))
+    # - - - - - - - - count on the fly
+    else:
+        log.info("calculating yields on the fly ...")
+        for sample in backgrounds:
+            for systematic in systematics:
+                for cat in categories:
+                    events = sample.events(cat, systematic=systematic, weighted=True)
+                    yields.append(
+                        Yield(sample=sample.name, category=cat.name, systematic=systematic, events=events))
 
-# - - - - - - - - sum of bkg
-for systematic in systematics:    
+    # - - - - - - - - sum of bkg
+    for systematic in systematics:    
+        for cat in categories:
+            yields_cat = filter(lambda y: y.category==cat.name, yields)
+            bkg_yields = filter(
+                lambda y: y.sample in [b.name for b in backgrounds], yields_cat)
+            events_sum = sum([y.events for y in bkg_yields])
+            yields.append(
+                Yield(sample="bkgSum", category=cat.name, systematic=systematic, events=events_sum))
+
+    # - - - - - - - - tabulate the yields      
+    log.info("------------------------------ YIELDS ------------------------------")
     for cat in categories:
+        print "\n\n------------------------------ CATEGORY: %s ------------------------------"%cat.name
         yields_cat = filter(lambda y: y.category==cat.name, yields)
-        bkg_yields = filter(
-            lambda y: y.sample in [b.name for b in backgrounds], yields_cat)
-        events_sum = sum([y.events for y in bkg_yields])
-        yields.append(
-            Yield(sample="bkgSum", category=cat.name, systematic=systematic, events=events_sum))
+        headers = [y.sample for y in yields_cat]
+        rows_cat = []
+        for syst in systematics:
+            yields_cat_syst = filter(lambda y: y.systematic==syst, yields_cat)
+            row = [syst] + [y.events for y in yields_cat_syst]
+            rows_cat.append(row)
+        with open(YIELDS_ARGS.yfile, "a") as yfile:
+            yfile.write("--"*20)
+            yfile.write(" CATEGORY: %s "%cat.name)
+            yfile.write("--"*20)
+            yfile.write("\n")
+            yfile.write(tabulate(rows_cat, headers=headers))
+            yfile.write("\n\n")
+                        
+        print tabulate(rows_cat, headers=headers)#, tablefmt='latex')
 
-# - - - - - - - - tabulate the yields      
-log.info("------------------------------ YIELDS ------------------------------")
-for cat in categories:
-    print "\n\n------------------------------ CATEGORY: %s ------------------------------"%cat.name
-    yields_cat = filter(lambda y: y.category==cat.name, yields)
-    headers = [y.sample for y in yields_cat]
-    rows_cat = []
-    for syst in systematics:
-        yields_cat_syst = filter(lambda y: y.systematic==syst, yields_cat)
-        row = [syst] + [y.events for y in yields_cat_syst]
-        rows_cat.append(row)
-    print tabulate(rows_cat, headers=headers)
+##---------------------------------------------------------------------------
+## get cutflow table
+##---------------------------------------------------------------------------
+if YIELDS_ARGS.cutflow:
+    cutflow_selections = CUTFLOW[YIELDS_ARGS.channel]
+    table_rows = []
+    for sample in samples:
+        sample_hists = sample.cutflow(
+            cutflow_selections,
+            parallel=True,
+            weighted=True,
+            tauid=ROOT.TCut("1>0"),
+            trigger=ROOT.TCut("1>0"),)
+        events = [hs.hist.Integral(0, hs.hist.GetNbinsX()+2) for hs in sample_hists]
+
+        # - - - - the the fraction of events failing 
+        s_fractions = [0]*len(cutflow_selections)
+        for i in range(1, len(events)):
+            s_fractions[i] = (events[i-1] - events[i])/(events[i-1])
+
+        evt_fract = []
+        for evt, frac in zip(events, s_fractions):
+            if frac!=0:
+                evt_fract.append("{0:0.2f} ({1:0.0f}%)".format(evt, 100*frac))
+            else:
+                evt_fract.append("{0:0.2f}".format(evt))
+        row = [sample.name] + evt_fract 
+        table_rows.append(row)
+
+    # - - - - format the table
+    headers = ["sample"] + cutflow_selections.keys()
+    table = tabulate(table_rows, headers=headers)
+    table_latex = tabulate(table_rows, headers=headers, tablefmt='latex')
+    
+    print table
+    
+    # - - - - save the table
+    with open(YIELDS_ARGS.yfile, "a") as yfile:
+        yfile.write("\n\n##### CUTFLOW TABLE \n\n")
+        yfile.write(table)
+        yfile.write("\n\n")
+        
+        yfile.write("##### CUTFLOW TABLE (LaTeX) \n\n")
+        yfile.write(table_latex)
+        yfile.write("\n\n")
+        yfile.write("**"*80)
+        
+
+end_time = time.time()
+elapsed_time = (end_time - start_time)/60.
+log.info("\n****************** elapsed time: %0.1f mins ******************"%elapsed_time)

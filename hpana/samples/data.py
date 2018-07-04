@@ -69,12 +69,16 @@ class Data(Sample):
         self.db = self.config.database
 
         # - - - - get datasets for the streams
-        self.datasets = []
-        for stream in Data.STREAMS:
-            dsprefix = "DATA%s_"%stream
-            for dk in self.db.keys():
-                if dk.startswith(dsprefix):
-                    self.datasets.append(self.db[dk])
+        if "1516" in name:
+            self.datasets = [self.db["Data1516"]]
+
+        else:
+            self.datasets = []
+            for stream in Data.STREAMS:
+                dsprefix = "DATA%s_"%stream
+                for dk in self.db.keys():
+                    if dk.startswith(dsprefix):
+                        self.datasets.append(self.db[dk])
         self.info = DataInfo(self.config.data_lumi / 1e3, self.config.energy)
         self.blind = blind
         self.blind_regions = blind_regions
@@ -104,19 +108,8 @@ class Data(Sample):
         _workers = super(Data, self).workers(
             categories=categories,
             systematics=["NOMINAL"],
-            weighted=weighted,
+            weighted=False,
             **kwargs)
         
         return _workers
     
-    
-    def hists(self, **kwargs):
-        
-        systematics = kwargs.pop("systematics", ["NOMINAL"])
-        weighted = kwargs.pop("weighted", False)
-        
-        if self.blind:
-            categories = filter(lambda cat: not cat.name in self.blind_regions,  [c.name for c in categories])
-        
-        super(Data, self).hists(systematics=systematics, weighted=weighted, **kwargs)
-        

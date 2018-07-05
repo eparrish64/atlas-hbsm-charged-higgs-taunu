@@ -283,7 +283,7 @@ class QCD(Sample):
 
         if (not (data_hfiles and mc_hfiles)):
             log.warning(" incomplete hists for %s in %s dir"%(self.name, histsdir))
-            return
+            return []
 
         # - - - - extract the hists 
         fields = set()
@@ -334,7 +334,11 @@ class QCD(Sample):
                                        systematic=systematic, hist=hist)
                         data_hist_set.append(hset)
             htf.Close()
-
+        # - - - - bailing out if not hists    
+        if not (mc_hist_set and data_hist_set):
+            log.warning("no hist is found for %s; skipping the merge!"%self.name)
+            return []
+        
         # - - - - add them up
         merged_hists_file = ROOT.TFile(os.path.join(histsdir, hists_file), "UPDATE")
         merged_hist_set = []

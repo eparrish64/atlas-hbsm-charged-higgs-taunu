@@ -396,7 +396,7 @@ class Sample(object):
 
             if not hfiles:
                 log.warning("no hists found for the %s in %s dir"%(self.name, histsdir))
-                return
+                return []
 
             # - - - - extract the hists 
             fields = set()
@@ -434,6 +434,9 @@ class Sample(object):
         
         # - - - - make sure hists are for this sample
         hist_set = filter(lambda hs: hs.sample.startswith(self.name), hist_set)
+        if not hist_set:
+            log.warning("no hist is found for %s; skipping the merge!"%self.name)
+            return []
         
         # - - - - add them up
         merged_hist_set = []

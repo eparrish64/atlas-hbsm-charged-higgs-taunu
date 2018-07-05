@@ -585,7 +585,7 @@ class Dataset(Serializable):
                 raise IOError("%s is not readable" % dir)
             for path, dirs, files in os.walk(dir):
                 _files += [os.path.join(path, f) for f in
-                           fnmatch.filter(files, "*.root*.nn")]
+                           fnmatch.filter(files, self.file_pattern)]
         return _files
     
     def __repr__(self):

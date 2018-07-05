@@ -31,6 +31,8 @@ warnings.filterwarnings(action='ignore', category=RuntimeWarning,
                         message='creating converter.*' )
 warnings.filterwarnings(action="ignore", category=RuntimeWarning,
                         message="no dictionary for.* ")
+warnings.filterwarnings(action="ignore", category=RuntimeWarning,
+                        message="Sum of squares of weights structure.* ")
 
 # - - - - - - - - consts 
 NTUPLES_VERSION = "18v01"

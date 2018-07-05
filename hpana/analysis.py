@@ -1,9 +1,8 @@
 ## stdlib imports
+import random, time, os , copy, pickle
 import multiprocessing
-from multiprocessing.managers import SyncManager
 from  array import array    
-import random, time, os 
-from collections import namedtuple
+from collections import namedtuple, OrderedDict
 
 ## pypi
 import yaml
@@ -16,7 +15,7 @@ from .dataset_hists import dataset_hists
 
 from .samples import Higgs
 from .categories import TAUID_MEDIUM, ANTI_TAU
-from .cluster.parallel import FuncWorker, run_pool, map_pool
+from .cluster.parallel import close_pool
 from .config import Configuration
 import ROOT
 
@@ -189,7 +188,7 @@ class Analysis(object):
             self.ztautau,
             self.diboson,] 
         
-        #WIP - - - - - - - - signals 
+        # - - - - - - - - signals 
         self.signals = self.get_signals(masses=[90, 110, 400])
         
         self.samples = [self.qcd, self.lepfakes] + self.mc + self.signals + [self.data]  
@@ -322,10 +321,14 @@ class Analysis(object):
 
         pool = multiprocessing.Pool(multiprocessing.cpu_count())
         results = [pool.apply_async(dataset_hists, (wk,)) for wk in workers]
+
+        # - - close the pool
+        close_pool(pool)
+            
         hists = []
         for res in results:
-            hists += res.get()
-            
+            hists += res.get(36000) #<! without the timeout this blocking call ignores all signals.
+        
         # - - - - merge hists
         merged_hists = []
         for sample in samples:
@@ -348,11 +351,10 @@ class Analysis(object):
     def cache_ffs(self,
                   template_var=None,
                   template_var_bins=[],
-                  target_regions=[],
                   control_regions=[],
                   min_tau_jet_bdt_score_trans=0.01,
-                  tau_jet_bdt_score_trans_var="tau_jet_bdt_score_trans",
-                  n_charged_tracks=None, 
+                  tau_jet_bdt_score_trans_var="tau_0_jet_bdt_score_trans",
+                  n_charged_tracks=[1, 3], 
                   tauid=None, 
                   antitau=None,
                   cache_file=None):
@@ -363,8 +365,6 @@ class Analysis(object):
             Variable type; see .variables.py
         template_var_bins:
             list type; bins for template fit
-        target_regions:
-            [Categories] type; see .categories.py.
         control_regions:
             [Categories] type; contorl regions for the FF extraction.
         tauid:
@@ -373,16 +373,16 @@ class Analysis(object):
             {ROOT.TCut()} type; anti tau selection cut
         """
 
-        # - - - - FF s are different for 1p/3p taus
-        if not n_charged_tracks:
-            raise RuntimeError("you have to specify the number of charged tracks cut")
+        hist_templates = {
+            #<! PLS NOTE the tformula order is Z:Y:X and for the binning it's X, Y, Z !
+            "tau_0_pt":
+            ROOT.TH3F("tau_0_p4->Pt()/1000.:tau_0_n_charged_tracks:tau_0_p4->Eta()",
+                      "tau_0_eta", 20, -4., 4., 4, 0, 4, 100, 0, 3500),
+        }
             
         # - - - - tau jet bdt score signal transformed cut threshold
         tau_jet_bdt_score_trans_cut = ROOT.TCut("{0} > {1}".format(
             tau_jet_bdt_score_trans_var, min_tau_jet_bdt_score_trans))
-        
-        if not target_regions:
-            target_regions = self.config.categories
 
         if not control_regions:
             control_regions = self.config.ff_cr_regions
@@ -397,36 +397,39 @@ class Analysis(object):
             antitau = self.config.antitau
             
         if not template_var:
-            template_var = self.config.variables[0]
+            template_var = self.config.variables[0] #<! tau_0_pt 
         else:
-            assert template_var.name in [v.name for v in self.config.variables], "%r is not defined!"%template_var
+            assert template_var.name in [v.name for v in self.config.variables], "%s is not defined!"%template_var.name
         if not template_var_bins:
             # - - default for tau pt 
-            template_var_bins = [30, 35, 40, 45, 50, 60, 75, 90, 105, 120, 140, 160, 200, 300, 3500]
-        template_var.bins = template_var_bins
-
+            template_var_bins = [40, 50, 60, 80, 100, 3500]
+            
         # - - - - parallel processing
-        pool = multiprocessing.Pool()
         workers = []
+        pool = multiprocessing.Pool(processes=multiprocessing.cpu_count())
         
         # - - - - DATA workers
-        data_tau_workers = self.data.workers(fields=[template_var], categories=control_regions, tauid=tauid)
-        # - - make workers names unique 
+        data_tau_workers = self.data.workers(fields=[template_var], hist_templates=hist_templates,
+                                             categories=control_regions, tauid=tauid, extra_cuts=tau_jet_bdt_score_trans_cut)
+        # - - make worker names unique 
         for w in data_tau_workers:
             w.name += "_TAU"
         workers += data_tau_workers
             
-        data_antitau_workers = self.data.workers(fields=[template_var], categories=control_regions, tauid=antitau)
+        data_antitau_workers = self.data.workers(fields=[template_var], hist_templates=hist_templates,
+                                                 categories=control_regions, tauid=antitau, extra_cuts=tau_jet_bdt_score_trans_cut)
         for w in data_antitau_workers:
             w.name += "_ANTITAU"
         workers += data_antitau_workers
-                
+
         # - - - - MC workers
         mc_tau_workers = []
         mc_antitau_workers = []
         for mc in self.mc:
-            mc_tau_workers += mc.workers(fields=[template_var],categories=control_regions, tauid=tauid)
-            mc_antitau_workers += mc.workers(fields=[template_var],categories=control_regions, tauid=antitau)
+            mc_tau_workers += mc.workers(fields=[template_var],hist_templates=hist_templates,
+                                         categories=control_regions, tauid=tauid, extra_cuts=tau_jet_bdt_score_trans_cut)
+            mc_antitau_workers += mc.workers(fields=[template_var], hist_templates=hist_templates,
+                                             categories=control_regions, tauid=antitau, extra_cuts=tau_jet_bdt_score_trans_cut)
 
         # add mc tau/antitau  workers to the list of all workers
         for w in mc_tau_workers:
@@ -439,78 +442,118 @@ class Analysis(object):
 
         # - - - - workers do some work please :D
         rand_workers = [ workers[i] for i in sorted(random.sample(xrange(len(workers)), 20)) ]
-        results = [pool.apply_async(dataset_hists, args=(w,)) for w in rand_workers]
+        log.debug(rand_workers)
+        results = [pool.apply_async(dataset_hists, args=(w,)) for w in workers]
 
-        hist_sets = [r.get() for r in results]
-        hist_sets = [item for sublist in hist_sets for item in sublist]
-
-        # - - - -  organize the output
-        data_tau_hists = filter(lambda hs: hs.name.startswith(self.data.name) and hs.name.endswith("TAU"), hist_sets)
-        data_antitau_hists = filter(lambda hs: hs.name.startswith(self.data.name) and hs.name.endswith("ANTITAU"), hist_sets)
+        hist_sets = []
+        for res in results:
+            hist_sets += res.get(36000)
+        # - - - - close the pool
+        close_pool(pool)
         
-        mc_tau_hists = filter(lambda hs: not hs.name.startswith(self.data.name) and hs.name.endswith("TAU"), hist_sets)
-        mc_antitau_hists = filter(lambda hs: not hs.name.startswith(self.data.name) and hs.name.endswith("ANTITAU"), hist_sets)
+        # - - - -  organize the output
+        data_tau_hists = filter(lambda hs: hs.name.startswith(self.data.name) and hs.name.endswith("_TAU"), hist_sets)
+        data_antitau_hists = filter(lambda hs: hs.name.startswith(self.data.name) and hs.name.endswith("_ANTITAU"), hist_sets)
+        
+        mc_tau_hists = filter(lambda hs: not hs.name.startswith(self.data.name) and hs.name.endswith("_TAU"), hist_sets)
+        mc_antitau_hists = filter(lambda hs: not hs.name.startswith(self.data.name) and hs.name.endswith("_ANTITAU"), hist_sets)
 
         # - - - - add up the histograms for each CR region 
-        hists = {}
+        ffs_hists = {}
+        ffs_dict = {}
         for cr in control_regions:
             cr_name = cr.name
-            hists[cr_name] = {"TAU":{}, "ANTITAU":{}}
-                
+            ffs_hists[cr_name] = OrderedDict()
+            ffs_dict[cr_name] = OrderedDict()
+            
             # - - data tau
             data_tau_hists_cat = filter(lambda hs: hs.category==cr_name, data_tau_hists)
             assert data_tau_hists_cat, "no (TAU) %s hist for %s CR"%(self.data.name, cr_name)
-            data_tau_hsum = reduce(lambda h1, h2: h1 + h2, [dh.hist for dh in data_tau_hists])
+            data_tau_hsum = data_tau_hists[0].hist.Clone()
+            for hs in data_tau_hists:
+                data_tau_hsum.Add(hs.hist)
             
             # - - data antitau
             data_antitau_hists_cat = filter(lambda hs: hs.category==cr_name, data_antitau_hists)
             assert data_antitau_hists_cat, "no (ANTITAU) %s hist for %s CR"%(self.data.name, cr_name)
-            data_antitau_hsum = reduce(lambda h1, h2: h1 + h2, [dh.hist for dh in data_antitau_hists])
+            data_antitau_hsum = data_antitau_hists[0].hist.Clone()
+            for hs in data_antitau_hists:
+                data_antitau_hsum.Add(hs.hist)
             
             # - - mc tau
             mc_tau_hists_cat = filter(lambda hs: hs.category==cr_name, mc_tau_hists)
             assert mc_tau_hists_cat, "no (TAU) %s hist for %s CR"%("MC", cr_name)
-            mc_tau_hsum = reduce(lambda h1, h2: h1 + h2, [dh.hist for dh in mc_tau_hists])
-
+            mc_tau_hsum = mc_tau_hists[0].hist.Clone()
+            for hs in mc_tau_hists:
+                mc_tau_hsum.Add(hs.hist)
+                
             # - - mc antitau
             mc_antitau_hists_cat = filter(lambda hs: hs.category==cr_name, mc_antitau_hists)
             assert mc_antitau_hists_cat, "no (ANTITAU) %s hist for %s CR"%("MC", cr_name)
-            mc_antitau_hsum = reduce(lambda h1, h2: h1 + h2, [dh.hist for dh in mc_antitau_hists])
-            
+            mc_antitau_hsum = mc_antitau_hists[0].hist.Clone()
+            for hs in mc_antitau_hists:
+                mc_antitau_hsum.Add(hs.hist)
+                
             # - - subtract MC from DATA
-            hists[cr_name]["TAU"] = data_tau_hsum - mc_tau_hsum
-            hists[cr_name]["ANTITAU"] = data_antitau_hsum - mc_antitau_hsum
+            data_mc_tau_h = data_tau_hsum.Clone()
+            data_mc_tau_h.Add(mc_tau_hsum, -1)
 
-        # - - - - rebin the histograms 
-        rebinned_hists = {}
-        for cr, tp  in hists.iteritems():
-            rebinned_hists[cr] = {"TAU":{}, "ANTITAU":{}}
-            for t, h in tp.iteritems():
-                hr = h.Rebin(len(template_var_bins) -1, h.GetName(), array("d", template_var_bins))
-                rebinned_hists[cr][t] = hr 
+            data_mc_antitau_h = data_antitau_hsum.Clone()
+            data_mc_antitau_h.Add(mc_antitau_hsum, -1)
+            
+            # - - - - gather hists per tau pT and ntracks bin
+            for itk in n_charged_tracks:
+                ffs_hists[cr_name]["ntracks%i"%itk] = {"TAU": [], "ANTITAU": []}
+                ffs_dict[cr_name]["ntracks%i"%itk] = {}
+                for n in range(1, len(template_var_bins)):
+                    pkey = "pT%i"%template_var_bins[n]
+                
+                    htmp_tau = data_mc_tau_h.Clone()
+                    htmp_antitau = data_mc_antitau_h.Clone()
+                    suffix = "TRACKS{0}_PT{1}TO{2}".format(itk, template_var_bins[n-1], template_var_bins[n])
+                    hproj_tau = htmp_tau.ProjectionX(suffix, itk, itk+1, n-1, n, "e").Clone()
+                    hproj_antitau = htmp_antitau.ProjectionX(suffix, itk, itk+1, n-1, n, "e").Clone()
+                    
+                    # - - keep hists 
+                    ffs_hists[cr_name]["ntracks%i"%itk]["TAU"].append((template_var_bins[n], hproj_tau))
+                    ffs_hists[cr_name]["ntracks%i"%itk]["ANTITAU"].append((template_var_bins[n], hproj_antitau))
 
-        ffs_dict = {}
-        for cr in [c.name for c in control_regions]:
-            ffs_dict[cr] = {}
-            for i, cbin in enumerate(template_var_bins):
-                # - - get the ratio of tau to antitau for this bin
-                tau_bin = rebinned_hists[cr]["TAU"].GetBinContent(i)
-                antitau_bin = rebinned_hists[cr]["ANTITAU"].GetBinContent(i)
-                if antitau_bin==0:
-                    log.warning("% i bin for antitau is empty!"%cbin)
-                    tau_antitau_ratio = 1
-                else:
-                    tau_antitau_ratio = tau_bin/antitau_bin
-                ffs_dict[cr][cbin] = tau_antitau_ratio
+                    # - - get the ratio of tau to antitau for this bin
+                    tau_bin = hproj_tau.Integral()
+                    antitau_bin = hproj_antitau.Integral()
+                    if antitau_bin==0:
+                        log.warning("{} bin for antitau is empty, setting tau/antitau to 1!".format(pkey))
+                        tau_antitau_ratio = 1
+                    else:
+                        tau_antitau_ratio = tau_bin/antitau_bin
+                    ffs_dict[cr_name]["ntracks%i"%itk][pkey] = tau_antitau_ratio
 
+                    # - - reset tmp hists
+                    htmp_tau.Delete()
+                    htmp_antitau.Delete()
+                    
         if not cache_file:
             cache_file = os.path.join(Analysis.__HERE, "cache", "FF_CR.pkl")
             if not os.path.isdir("%s/cache"%(Analysis.__HERE)):
                 os.system("mkdir -p %s/cache"%Analysis.__HERE)
+                
+        # - - - - cache histograms 
+        with open (cache_file, "w") as pkl_cache:
+            log.info("caching the fake factors histograms")
+            pickle.dump(ffs_hists, pkl_cache)
+
             
-        with open (cache_file, "w") as cache:
+        # - - - - cache the FFs to a human readable format
+        if cache_file.endswith(".pkl"):
+            yml_file = cache_file.replace(".pkl", ".yml")
+        else:
+            yml_file = "%s.yml"%cache_file
+            
+        with open (yml_file, "w") as yml_cache:
             log.info("caching the fake factors")
-            pickle.dump(ffs_dict, cache)
-        
-        return ffs_dict 
+            yaml.dump(ffs_dict, yml_cache, default_flow_style=False)
+
+        log.info("FFs: {} ".format(ffs_dict))
+
+        return ffs_dict, ffs_hists 
     

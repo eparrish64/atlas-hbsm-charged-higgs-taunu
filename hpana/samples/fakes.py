@@ -1,14 +1,20 @@
-# local imports
+## stdlib
 import os, glob, copy, re, random 
+import multiprocessing, signal 
+
+## ROOT
 import ROOT 
 
+## local
 from .sample import Sample, Histset, HistWorker
+from ..dataset_hists import dataset_hists
 from ..categories import ANTI_TAU, TAU_IS_LEP, Category
+from ..cluster.parallel import close_pool
 from .. import log
-from ..cluster.parallel import FuncWorker, Job, run_pool, map_pool
 
 ##---------------------------------------------------------------------------------------
-## jets faking a tau background 
+## - - dedicated sample class for jets faking taus background 
+##---------------------------------------------------------------------------------------
 class QCD(Sample):
     #WIP: - - - - - - - -  Fake-Factor weights are different for different selection categories
     FF_TYPES = {
@@ -121,6 +127,10 @@ class QCD(Sample):
         
         """
         """
+        if not fields:
+            fields = self.config.variables
+        if not categories:
+            categories = self.config.categories
 
         tauid = kwargs.pop("tauid", self.tauid)
         # - - - - prepare categories; deep copy since we don't want change categories
@@ -218,39 +228,22 @@ class QCD(Sample):
         systematics = filter(lambda syst: syst in self.systematics, systematics)
 
         # - - - - prepare the workers
-        workers = self.workers(
-            categories=categories,
-            fields=fields,
-            systematics=systematics,
-            **kwargs)
-
-        # - - - - assign the jobs to the workers
-        jobs = []
+        workers = self.workers(categories=categories,fields=fields, systematics=systematics, **kwargs)
+        log.info(
+            "************ processing %s sample hists in parallel, njobs=%i ************"%(self.name, len(workers) ) )
+        
+        pool = multiprocessing.Pool(processes=multiprocessing.cpu_count())
+        results = [pool.apply_async(dataset_hists, (wk,)) for wk in workers]
         hist_sets = []
-        for worker in workers:
-            log.debug(worker)
-            jobs.append(FuncWorker(Sample.dataset_hists, worker,
-                                   **kwargs) )
-        # - - - - process samples' datasets in parallel
-        parallel = kwargs.pop("parallel", False)    
-        if parallel:
-            log.info(
-                "************** processing %s sample hists in parallel, njobs=%i ************"%(self.name, len(jobs) ) )
-            run_pool(jobs, n_jobs=-1)
-            for j in jobs:
-                hist_sets += j.output
-                
-        # - - - - process datasets one after another
-        else:
-            log.info("************ processing %s sample hists sequentially ************"%self.name)
-            for job in jobs:
-                job.run()
-                job.join()
-                hist_sets += job.output
-                
-        # - - - - extract data hists
-        data_hist_set = filter(lambda hs: hs.sample.startswith("DATA"), hist_sets)
-        mc_hist_set = filter(lambda hs: not hs.sample.startswith("DATA"), hist_sets)
+        for res in results:
+            hist_sets += res.get(3600) #<! without the timeout this blocking call ignores all signals.
+
+        # - - close the pool 
+        close_pool(pool)
+        
+        # - - - - extract DATA/MC hists
+        data_hist_set = filter(lambda hs: hs.sample.startswith("%s.DATA"%self.name), hist_sets)
+        mc_hist_set = filter(lambda hs: not hs.sample.startswith("%s.DATA"%self.name), hist_sets)
 
         # - - - - add DATA/MC dataset hists, then subtract sum of MC from DATA
         merged_hist_set = []
@@ -413,6 +406,11 @@ class LepFake(Sample):
                 **kwargs):
         """
         """
+        if not fields:
+            fields = self.config.variables
+        if not categories:
+            categories = self.config.categories
+            
         # - - - - prepare categories; deep copy since we don't want change categories
         categories_cp = copy.deepcopy(categories)
             
@@ -422,13 +420,8 @@ class LepFake(Sample):
         lepfake_workers = []
         for mc in self.mc:
             # - - - - turn off truth matching 
-            lepfake_workers += mc.workers(
-                categories=categories_cp,
-                fields=fields,
-                systematics=systematics,
-                weighted=weighted,
-                truth_match_tau=self.leptau,
-                **kwargs)
+            lepfake_workers += mc.workers(categories=categories_cp, fields=fields,systematics=systematics,
+                                          weighted=weighted,truth_match_tau=self.leptau,**kwargs)
 
         # - - - - add LepFake prefix to the workers names
         # - - - - so that are no mistaken with DATA/MC workers.
@@ -470,36 +463,21 @@ class LepFake(Sample):
 
         
         # - - - - prepare the workers
-        workers = self.workers(
-            categories=categories,
-            fields=fields,
-            systematics=systematics,
-            truth_match_tau=self.leptau,
-            **kwargs)
-        
-        # - - - - assign the jobs to the workers
-        jobs = []
+        workers = self.workers(categories=categories, fields=fields, systematics=systematics,
+                               truth_match_tau=self.leptau, **kwargs)
+
+        log.info(
+            "************** processing %s sample hists in parallel, njobs=%i ************"%(self.name, len(workers) ) )
+        pool = multiprocessing.Pool(multiprocessing.cpu_count())
+        results = [pool.apply_async(dataset_hists, (wk,)) for wk in workers]
+
         hist_sets = []
-        for worker in workers:
-            log.debug(worker)
-            jobs.append(FuncWorker(Sample.dataset_hists, worker, **kwargs) )
-        # - - - - process samples' datasets in parallel
-        parallel = kwargs.pop("parallel", False)
-        if parallel:
-            log.info(
-                "************** processing %s sample hists in parallel, njobs=%i ************"%(self.name, len(jobs) ) )
-            run_pool(jobs, n_jobs=-1)
-            for j in jobs:
-                hist_sets += j.output
-                
-        # - - - - process datasets one after another
-        else:
-            log.info("************ processing %s sample hists sequentially ************"%self.name)
-            for job in jobs:
-                job.run()
-                job.join()
-                hist_sets += job.output
-                
+        for res in results:
+            hist_sets += res.get(3600) #<! without the timeout this blocking call ignores all signals.
+
+        # - - close the pool 
+        close_pool(pool)
+        
         # - - - - add MC dataset hists
         merged_hist_set = []
         for systematic in systematics:

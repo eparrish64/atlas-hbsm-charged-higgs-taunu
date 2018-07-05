@@ -19,7 +19,7 @@ from ..db import samples as samples_db, datasets
 from ..db.decorators import cached_property
 from ..systematics import get_systematics, iter_systematics, systematic_name
 from ..categories import TAU_IS_TRUE, Category
-
+from ..cluster.parallel import close_pool
     
 ##---------------------------------------------------------------------------------------
 ## - - container class for histograms 
@@ -62,7 +62,7 @@ class HistWorker:
                  fields=[],
                  categories=[],
                  weights=[],
-                 hist_templates=[]):
+                 hist_templates={}):
         self.name = name
         self.sample = sample
         self.dataset = dataset
@@ -242,6 +242,11 @@ class Sample(object):
                 **kwargs):
         """ list of workers to to submit jobs.
         """
+        if not fields:
+            fields = self.config.variables
+        if not categories:
+            categories = self.config.categories
+            
         # - - - - defensive copy 
         categories_cp = copy.deepcopy(categories)
         for category in categories_cp:
@@ -335,7 +340,10 @@ class Sample(object):
         pool = multiprocessing.Pool(multiprocessing.cpu_count())
         results = [pool.apply_async(dataset_hists, (wk,)) for wk in workers]
         for res in results:
-            hist_sets += res.get()
+            hist_sets += res.get(3600) #<! without the timeout this blocking call ignores all signals.
+            
+        # - - close the pool 
+        close_pool(pool)
 
         # - - - - merge all the hists for this sample
         merged_hist_set = []
@@ -344,9 +352,12 @@ class Sample(object):
                 for cat in categories:
                     hists = filter(
                         lambda hs: (hs.systematic==systematic and hs.variable==var.name and hs.category==cat.name), hist_sets)
-                    hsum = reduce(lambda h1, h2: h1 + h2, [hs.hist for hs in hists])
+                    hsum = hists[0].hist
+                    for hs in hists[1:]:
+                        hsum.Add(hs.hist)
                     outname = self.config.hist_name_template.format(self.name, cat, var)
                     hsum.SetTitle(outname)
+                    hsum.SetName(outname)
                     merged_hist_set.append(Histset(sample=self.name, category=cat.name, variable=var.name, hist=hsum) )
         canvas.Close()
         return merged_hist_set

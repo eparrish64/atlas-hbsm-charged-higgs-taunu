@@ -136,10 +136,10 @@ def dataset_hists(hist_worker,
     hist_set = []
     hist_templates_tformuals = {} #<! since we have to update hists name, keep tformilas untouched
     for var in fields:
-        if hist_templates:
+        if var.name in hist_templates:
             hist_templates_tformuals[var.name] = hist_templates[var.name].GetName()
         for category in categories:
-            if hist_templates:
+            if var.name in hist_templates:
                 hist = hist_templates[var.name]
             else:
                 hist = ROOT.TH1F(
@@ -190,7 +190,7 @@ def dataset_hists(hist_worker,
             # - - draw all the vars
             for var in fields:
                 histname = "category_%s_%s_%s"%(category.name, var.name, fname)
-                if hist_templates:
+                if var.name in hist_templates:
                     ht = hist_templates[var.name]
                     var_formula = hist_templates_tformuals[var.name]
                     if isinstance(ht, ROOT.TH1F):

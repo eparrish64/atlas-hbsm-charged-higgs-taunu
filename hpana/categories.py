@@ -110,8 +110,8 @@ TAU_IS_FAKE = {
     "mc16": TCut("!"+(TAU_IS_TRUE["mc16"].GetTitle()+"||"+TAU_IS_LEP["mc16"].GetTitle() ) ),
 }
 ANTI_TAU = {
-    "mc15": TCut("tau_0_jet_bdt_score_sig > 0.02 && tau_0_jet_bdt_loose==0"),
-    "mc16": TCut("tau_0_jet_bdt_score_trans > 0.02 && tau_0_jet_bdt_loose==0"),
+    "mc15": TCut("tau_0_jet_bdt_score_sig > 0.01 && tau_0_jet_bdt_loose==0"),
+    "mc16": TCut("tau_0_jet_bdt_score_trans > 0.01 && tau_0_jet_bdt_loose==0"),
 }
 # - - - - - - - - lep
 LEP_VETO = {
@@ -306,9 +306,7 @@ class Category:
         """
         """
         if self.cuts_list:
-            print self.mc_camp, reduce(lambda c1, c2: c1+c2, [cdict[self.mc_camp] for cdict in self.cuts_list])
             return reduce(lambda c1, c2: c1+c2, [cdict[self.mc_camp] for cdict in self.cuts_list])
-        
         else:
             # - - - - - - - -  read selections from SELECTION dictionary
             assert self.name in Category.TYPES[self.channel].keys(),\
@@ -339,7 +337,7 @@ FF_CR_MULTIJET = Category(
     cuts_list=[
         CLEAN_EVT,
         TAU_PT30,
-        NUM_JETS4,
+        NUM_JETS3,
         LEP_VETO,
         BVETO,
         MET_MAX80,

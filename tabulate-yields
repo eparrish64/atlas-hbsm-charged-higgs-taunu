@@ -58,11 +58,14 @@ analysis = Analysis(config, compile_cxx=True)
 categories = config.categories 
 if YIELDS_ARGS.categories:
     categories = filter(lambda c: c.name in YIELDS_ARGS.categories, categories)
+systematics = ["NOMINAL"]
 
+# - - - - - - - - samples    
 samples = analysis.samples
+backgrounds = analysis.backgrounds
 if YIELDS_ARGS.samples:
     samples = filter(lambda s: s.name in YIELDS_ARGS.samples, samples)
-systematics = ["NOMINAL"]
+    backgrounds = filter(lambda b: b.name in YIELDS_ARGS.samples, backgrounds)
 
 ##---------------------------------------------------------------------------
 ## get the yields
@@ -86,7 +89,7 @@ if YIELDS_ARGS.yields_table:
     # - - - - - - - - count on the fly
     else:
         log.info("calculating yields on the fly ...")
-        for sample in backgrounds:
+        for sample in samples:
             for systematic in systematics:
                 for cat in categories:
                     events = sample.events(cat, systematic=systematic, weighted=True)
@@ -104,7 +107,7 @@ if YIELDS_ARGS.yields_table:
                 Yield(sample="bkgSum", category=cat.name, systematic=systematic, events=events_sum))
 
     # - - - - - - - - tabulate the yields      
-    log.info("------------------------------ YIELDS ------------------------------")
+    log.info("\n------------------------------ YIELDS ------------------------------")
     for cat in categories:
         print "\n\n------------------------------ CATEGORY: %s ------------------------------"%cat.name
         yields_cat = filter(lambda y: y.category==cat.name, yields)

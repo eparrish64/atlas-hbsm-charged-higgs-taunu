@@ -266,7 +266,7 @@ class QCD(Sample):
                     
         return merged_hist_set
                 
-    def merge_hists(self, histsdir=None, hists_file=None, overwrite=False, ncpu=1):
+    def merge_hists(self, histsdir=None, hists_file=None, overwrite=False, write=False, **kwargs):
         """ needs a dedicated method since we have to subtract sum of MC from DATA.
         """
         log.info("merging %s hists"%self.name)
@@ -354,15 +354,16 @@ class QCD(Sample):
                     outname = self.config.hist_name_template.format(self.name, cat, var)
                     qcd_hsum.SetTitle(outname)
 
-                    # - - write it now
-                    rdir = "%s"%(systematic)
-                    if not merged_hists_file.GetDirectory(rdir):
-                        merged_hists_file.mkdir(rdir)
-                    merged_hists_file.cd(rdir)
-                    qcd_hsum.Write(outname, ROOT.TObject.kOverwrite)
-                    merged_hist_set.append(qcd_hsum)
-
-        merged_hists_file.Close()
+                    if write:
+                        # - - write it now
+                        rdir = "%s"%(systematic)
+                        if not merged_hists_file.GetDirectory(rdir):
+                            merged_hists_file.mkdir(rdir)
+                        merged_hists_file.cd(rdir)
+                        qcd_hsum.Write(outname, ROOT.TObject.kOverwrite)
+                        merged_hist_set.append(qcd_hsum)
+        if write:
+            merged_hists_file.Close()
         
         return merged_hist_set
 

@@ -58,7 +58,7 @@ def draw(var, category,
     -------
     fig: TCanvas, containing the plots.
     """
-    if not hists_set or hists_file:
+    if not (hists_set or hists_file):
         raise RuntimeError("either hists file or hists list is required")
     
     if show_ratio and blind:
@@ -69,7 +69,7 @@ def draw(var, category,
     if not (backgrounds or data or signals):
         raise ValueError(
             "at least one of backgrounds, data or signal must be specified")
-
+    
     # - - - - - - - - open hists file
     if hists_file:
         hfile = ROOT.TFile(hists_file, "READ")

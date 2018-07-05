@@ -1,3 +1,6 @@
+## stdlib 
+import os
+
 ## local
 from . import log
 
@@ -136,10 +139,10 @@ def dataset_hists(hist_worker,
     hist_set = []
     hist_templates_tformuals = {} #<! since we have to update hists name, keep tformilas untouched
     for var in fields:
-        if var.name in hist_templates:
+        if hist_templates and var.name in hist_templates:
             hist_templates_tformuals[var.name] = hist_templates[var.name].GetName()
         for category in categories:
-            if var.name in hist_templates:
+            if hist_templates and var.name in hist_templates:
                 hist = hist_templates[var.name]
             else:
                 hist = ROOT.TH1F(
@@ -156,6 +159,7 @@ def dataset_hists(hist_worker,
             # - - make sure the newly created hist has no dummy value
             hset.hist.Reset()
             hist_set.append(hset)
+            
     # - - loop over dataset's files
     nevents = 0
     for fn in dataset.files:
@@ -190,7 +194,7 @@ def dataset_hists(hist_worker,
             # - - draw all the vars
             for var in fields:
                 histname = "category_%s_%s_%s"%(category.name, var.name, fname)
-                if var.name in hist_templates:
+                if hist_templates and var.name in hist_templates:
                     ht = hist_templates[var.name]
                     var_formula = hist_templates_tformuals[var.name]
                     if isinstance(ht, ROOT.TH1F):
@@ -233,7 +237,7 @@ def dataset_hists(hist_worker,
                 htmp.SetDirectory(0)
                 hset = filter(lambda hs: hs.variable==var.name, cat_hists)[0]
                 hset.hist.Add(htmp)
-                hset.hist.SetName(histname)
+                hset.hist.SetName("category_%s_var_%s"%(category.name, var.name))
                 htmp.Delete()
             tree.Delete()
         tfile.Close()

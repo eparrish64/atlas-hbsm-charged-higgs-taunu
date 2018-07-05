@@ -74,7 +74,8 @@ if PLOTTING_ARGS.no_data:
 # - - - - - - - - do the plots
 for var in fields:
     for cat in categories:
-        draw(PLOTTING_ARGS.hists_file, var, cat,
+        draw(var, cat,
+             hists_file=PLOTTING_ARGS.hists_file, 
              backgrounds=backgrounds,
              data=data,
              signals=analysis.signals,

@@ -14,7 +14,6 @@ ANA_ARGS = ana_parser.parse_args()
 
 ## local
 from hpana.config import Configuration
-from hpana.categories import TAUJET_CUTFLOW
 from hpana.analysis import Analysis
 from hpana.samples.sample  import Sample
 from hpana.cluster.parallel import FuncWorker, run_pool, Job
@@ -65,10 +64,6 @@ if ANA_ARGS.samples:
     samples = filter(lambda s: s.name in ANA_ARGS.samples, analysis.samples)
 else:
     samples = analysis.samples
-
-# - - - - - - - - - if you wish to cache the fake factors
-if ANA_ARGS.cache_ff:
-   print analysis.cache_ffs()
    
 # - - - - - - - - - - run on multicores
 if ANA_ARGS.parallel:
@@ -148,8 +143,8 @@ if ANA_ARGS.merge_hists:
     analysis.merge_hists(
         histsdir=ANA_ARGS.outdir,
         overwrite=True,
-        samples=ANA_ARGS.samples,
-        ncpu=ANA_ARGS.ncpu)
+        write=True, 
+        samples=ANA_ARGS.samples,)
 
     
 end_time = time.time()

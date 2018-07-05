@@ -382,14 +382,14 @@ class Sample(object):
             
         return 
     
-    def merge_hists(self, hist_set=[], histsdir=None, hists_file=None, write=False):
+    def merge_hists(self, hist_set=[], histsdir=None, hists_file=None, write=False, **kwargs):
         """ collect histograms for this sample and add them up properly.
         read the hist from the disk or get them on the fly.
         """
         log.info("merging %s hists"%self.name)
 
         if not hist_set:
-            log.info("reading dataset hists from %s"%self.histdir)
+            log.info("reading dataset hists from %s"%histsdir)
             assert histsdir, "hists dir is not provided!"
             # - - - - retrieve the samples hists
             hfiles = glob.glob("%s/%s.*"%(histsdir, self.name))
@@ -413,7 +413,6 @@ class Sample(object):
                             sample = match.group("sample")
                             category = match.group("category")
                             variable = match.group("variable")
-
                             fields.add(variable)
                             categories.add(category)
                             hist = htf.Get("%s/%s"%(systematic, hname))
@@ -435,6 +434,7 @@ class Sample(object):
         
         # - - - - make sure hists are for this sample
         hist_set = filter(lambda hs: hs.sample.startswith(self.name), hist_set)
+        
         # - - - - add them up
         merged_hist_set = []
         for systematic in self.systematics:

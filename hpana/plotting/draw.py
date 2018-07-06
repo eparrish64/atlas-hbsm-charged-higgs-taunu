@@ -83,12 +83,12 @@ def draw(var, category,
     
     # - - - - - - - - list of all objects to be drawn
     extra_info = []
-    main_hists = []
+    backgrounds_stack = []
     main_errors = []
 
     # - - - - - - - - prepare the canvas and pads 
     fig, main_pad, ratio_pad = create_canvas(show_ratio=show_ratio)
-
+    
     # - - - - - - - - backgrounds 
     if backgrounds:
         if not isinstance(backgrounds, (list, tuple)):
@@ -103,6 +103,7 @@ def draw(var, category,
                 bkg_hist = filter(
                     lambda hs: hs.sample==bkg.name and hs.category==category.name and hs.variable==var.name, hists_set)
                 bkg_hist = bkg_hist[0].hist
+            
             # - - - -  fold the overflow bin 
             if overflow:
                 fold_overflow(bkg_hist)
@@ -111,7 +112,7 @@ def draw(var, category,
             legend.AddEntry(bkg_hist, bkg.label, 'F')
             bkg_stack.Add(bkg_hist)
             backgrounds_hists.append(bkg_hist)
-        main_hists.append(bkg_stack)
+        backgrounds_stack.append(bkg_stack)
         
         # - - - - if you wish to add uncertainty band to the ratio plot
         if uncertainty_band:
@@ -138,7 +139,6 @@ def draw(var, category,
             if not systematics:
                 eleg = 'Stat'
             legend.AddEntry(backgrounds_error, eleg ,'F')
-        
     # - - - - - - - - signals
     if signals:
         if not isinstance(signals, (list, tuple)):
@@ -147,7 +147,7 @@ def draw(var, category,
         for sig in signals:
             if hists_file:
                 sig_hist = hfile.Get(
-                    "{0}/{1}".format(tree_name,HIST_NAME_TEMPLATE.format(sig.name, category.name, var.name)))
+                    "{0}/{1}".format(tree_name, HIST_NAME_TEMPLATE.format(sig.name, category.name, var.name)))
             else:
                 sig_hist = filter(
                     lambda hs: hs.sample==sig.name and hs.category==category.name and hs.variable==var.name, hists_set)
@@ -165,7 +165,6 @@ def draw(var, category,
 
             legend.AddEntry(sig_hist, sig_label, 'L')
             signals_hists.append(sig_hist)
-        main_hists += signals_hists
 
         # - - - - if you want to have signal errors on your plots
         if show_signal_error:
@@ -278,45 +277,58 @@ def draw(var, category,
     # - - - - - - - - set y axis limit
     if ylimits:
         ymin, ymax = ylimits
-    else:
-        ymax = max([h.GetMaximum() for h in main_hists])
-        ymin = min([h.GetMinimum() for h in main_hists])
-
-
+    elif backgrounds:
+        ymax = max([h.GetMaximum() for h in backgrounds_stack])
+        ymin = min([h.GetMinimum() for h in backgrounds_stack])
+    elif data:
+        ymax = data_hist.GetMaximum()
+        ymin = data_hist.GetMinimum()
+    elif signals:
+        ymax = max([h.GetMaximum() for h in signals_hists])
+        ymin = min([h.GetMinimum() for h in signals_hists])
+                        
+            
+    # - - - - - - - - draw bkg hists
+    if backgrounds_stack:
+        main_pad.cd()
+        for h in backgrounds_stack:
+            h.SetTitle("")
+            h.SetMinimum(ymin)
+            h.SetMaximum(ymax + 0.3 *ymax)
+            h.Draw("HIST")
+            if not show_ratio:
+                if isinstance(h, ROOT.THStack):
+                    h.GetHistogram().GetXaxis().SetTitle(var.title)
+                    
     # - -  add on the signals
     if signals:
         main_pad.cd()
         for sig, sh in zip(signals, signals_hists):
             sh.SetTitle("")
+            sh.SetMinimum(ymin)
+            sh.SetMaximum(ymax + 0.3 *ymax)
             sh.Draw("HIST SAME")
             sh.SetLineColor(sig.color)
             sh.SetLineStyle(sig.hist_decor["line_style"])
             
-    # - - - - - - - - draw hists
-    main_pad.cd()
-    for h in main_hists:
-        h.SetTitle("")
-        h.SetMinimum(ymin)
-        h.SetMaximum(ymax + 0.3 *ymax)
-        h.Draw("HIST SAME")
-        if not show_ratio:
-            if isinstance(h, ROOT.THStack):
-                h.GetHistogram().GetXaxis().SetTitle(var.title)
-                
     # - - - - - - - - draw errors
     for erf in main_errors:
         erf.Draw('SAME E2')
 
     # - - - - - - - - draw data
     if data:
-        data_hist.Draw('SAME E1')
-
-    legend.Draw("SAME")
-
+        if backgrounds or signals:
+            data_hist.Draw('SAME E1')
+        else:
+            data_hist.GetYaxis().SetTitle("# of events")
+            data_hist.GetXaxis().SetTitle(var.title)
+            data_hist.Draw('HIST')
+            
     # - - - - - - - - draw extra info
+    legend.Draw("SAME")
     for xif in extra_info:
         xif.Draw("SAME")
-    
+        
     # - - - - - - - - ratio plot
     if show_ratio:
         ratio_pad.cd()
@@ -324,7 +336,7 @@ def draw(var, category,
         rhist.Draw('SAME')
         if uncertainty_band:
             ratio_error.Draw('SAME E2')
-    
+        
     # - - - - - - - - create outputs
     if output_name is None:
         output_name = var.name
@@ -337,7 +349,9 @@ def draw(var, category,
     # - - - - - - - -save the figure
     if output_dir is None:
         output_dir = "./plots"
+        
     save_canvas(fig, output_dir, output_name, formats=output_formats)
+    return     
 
     #- - - - - - - - release the memory
     if hists_file:

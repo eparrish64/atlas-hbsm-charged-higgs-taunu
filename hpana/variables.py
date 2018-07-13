@@ -1,8 +1,15 @@
 import math
 
 from . import MC_CAMPAIGN
+import ROOT
 
-__all__ = [ "VARIABLES", "BDT_FEATURES", "rQCD_VARS"]
+__all__ = [
+    "VARIABLES",
+    "BDT_FEATURES",
+    "rQCD_VARS",
+    "tau_0_pt",
+    "tau_0_n_charged_tracks",
+    "tau_0_jet_bdt_score_trans"]
 
 ##------------------------------------------------------------------------------------------
 ## 
@@ -67,12 +74,11 @@ class Variable(object):
         """
         if self.tform:
             if isinstance(self.tform, dict):
-                if self.mc_camp in self.tform:
-                    tformula = self.tform[self.mc_camp]
-                else:
-                    tformula = self.tform["default"]
-            else:
+                tformula = self.tform[self.mc_camp]
+            elif isinstance(self.tform, str):
                 tformula = self.tform
+            else :
+                raise TypeError("<str> type is expected but found {}".format(type(self.tform)) )
         else:
             tformula = self.name 
             
@@ -170,6 +176,15 @@ tau_0_jet_bdt_score = Variable(
     "tau_0_jet_bdt_score",
     title='#font[152]{#tau}_{1} #font[52]{#tau Jet BDT score}',
     binning=(100, -1., 1.))
+
+tau_0_jet_bdt_score_trans = Variable(
+    "tau_0_jet_bdt_score_trans",
+    title='#font[152]{#tau}_{1} #font[52]{#tau Jet BDT score signal transformed}',
+    tformula = {
+        "mc15": "tau_0_jet_bdt_score_sig",
+        "mc16": "tau_0_jet_bdt_score_trans",
+    },
+    binning=(100, 0, 1.), )
 
 tau_0_jet_width = Variable(
     "tau_0_jet_width",
@@ -369,10 +384,10 @@ BDT_SELECTION_1P = "(tau_0_n_charged_tracks + ({0}>0.95)*({0}<1.05)*(tau_0_jet_b
 FastBDT_sig_90to120_1p3p = Variable(
     "FastBDT_sig_90to120_1p3p",    
     title='BDT score, 90 to 120 [GeV]',
-    tformula={
+    tformula= {
         "mc16": "({0}==1)*FastBDT_sig_7V_met150_Opt_90to120_1p"\
         "+ ({0}!=1)*FastBDT_sig_6V_met150_Opt_90to120_3p".format(BDT_SELECTION_1P),
-    },
+        },
     binning=(10, 0, 1), 
     blind_cut="(tau_0_n_charged_tracks == 1)*FastBDT_sig_7V_met150_Opt_90to120_1p"\
     "+ (tau_0_n_charged_tracks == 3)*FastBDT_sig_6V_met150_Opt_90to120_3p < 0.50",
@@ -436,8 +451,11 @@ BDT_SCORES = {
 }
 
 # - - - - - - - - add BDT scores to the list of analysis variables 
-VARIABLES["taujet"] += BDT_SCORES["taujet"]
+#VARIABLES["taujet"] += BDT_SCORES["taujet"]
 
 
 # - - - - - - - - variables for rQCD calcualtion
-rQCD_VARS = [tau_0_jet_bdt_score, tau_0_jet_width]
+rQCD_VARS = {"ntracks1": tau_0_jet_width, "ntracks3": tau_0_jet_bdt_score_trans}
+
+# - - - - - - - - variables for extracting FFs shapes 
+FFS_TEMPLATE_VARS = (tau_0_pt, tau_0_n_charged_tracks, tau_0_jet_bdt_score_trans)

@@ -34,14 +34,17 @@ log.info("ROOT is in batch mode")
 # - - - - - - - - build analysis main configuration object
 config = Configuration(
     PLOTTING_ARGS.channel,
+    year=PLOTTING_ARGS.year,
+    data_streams=("2015", "2016",),
     mc_campaign=PLOTTING_ARGS.mc_campaign,
-    ntuples_version=PLOTTING_ARGS.ntuples_version)
+    db_version=PLOTTING_ARGS.db_version)
 
 # - - - - - - - - instantiate the analysis
 analysis = Analysis(config)
 
 backgrounds = analysis.backgrounds
 data = analysis.data
+signals = analysis.signals
 
 # - - - - - - - - some checks on cmd args
 if PLOTTING_ARGS.fields:
@@ -64,13 +67,13 @@ else:
 if PLOTTING_ARGS.backgrounds:
      backgrounds = filter(lambda s: s.name in PLOTTING_ARGS.backgrounds, analysis.backgrounds)
 
-# - - - - if you wish to look at specific samples
+# - - - - if you wish to look at the signals
 if PLOTTING_ARGS.signals:
      signals = filter(lambda s: s.name in PLOTTING_ARGS.signals, analysis.signals)
 
 if PLOTTING_ARGS.no_data:
    data = None
-
+   
 # - - - - - - - - do the plots
 for var in fields:
     for cat in categories:
@@ -78,9 +81,10 @@ for var in fields:
              hists_file=PLOTTING_ARGS.hists_file, 
              backgrounds=backgrounds,
              data=data,
-             signals=analysis.signals,
+             signals=signals,
              signal_scale=5,
              output_dir=PLOTTING_ARGS.pdir,
              show_ratio=True,
-             show_pvalue=False,)
+             show_pvalue=False,
+             logy=True,)
             

@@ -36,8 +36,10 @@ log.info("ROOT is in batch mode")
 # - - - - - - - - build analysis main configuration object
 config = Configuration(
     ANA_ARGS.channel,
+    year=ANA_ARGS.year,
+    data_streams=("2015", "2016",),
     mc_campaign=ANA_ARGS.mc_campaign,
-    ntuples_version=ANA_ARGS.ntuples_version)
+    db_version=ANA_ARGS.db_version)
 
 # - - - - - - - - some checks on cmd args
 if ANA_ARGS.fields:
@@ -64,7 +66,7 @@ if ANA_ARGS.samples:
     samples = filter(lambda s: s.name in ANA_ARGS.samples, analysis.samples)
 else:
     samples = analysis.samples
-   
+    
 # - - - - - - - - - - run on multicores
 if ANA_ARGS.parallel:
     jobs = []

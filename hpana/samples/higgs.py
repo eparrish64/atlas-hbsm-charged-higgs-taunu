@@ -96,7 +96,8 @@ class Higgs(MC, Signal):
         self.samples = [(Higgs.SAMPLE_PATTERN[mode].format(mass)) ]
         log.debug("signal: {}".format(self.samples[0]))
 
+        database = kwargs.pop("database", None)
         # - - - - instantiate the base
-        super(Higgs, self).__init__(config, label=label, name=name, **kwargs)
+        super(Higgs, self).__init__(config, label=label, database=database, name=name, **kwargs)
 
     

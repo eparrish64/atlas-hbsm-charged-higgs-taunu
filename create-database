@@ -17,12 +17,12 @@ parser.add_argument('--validate-pattern', default=None)
 parser.add_argument('--validate-type', default=None)
 parser.add_argument('--validate-year', type=int, default=None)
 parser.add_argument('--info', action='store_true', default=False)
-parser.add_argument('--name', default='datasets')
+parser.add_argument('--name', default='DB')
 parser.add_argument('--config', default='hpana/db/datasets_config.yml')
 parser.add_argument('-v', '--verbose', action='store_true', default=False)
 parser.add_argument('--version', type=str)
 
-parser.add_argument('analysis', choices=("taujet", "taulep"))
+parser.add_argument('channel', choices=("taujet", "taulep"))
 args = parser.parse_args()
 
 
@@ -30,7 +30,7 @@ args = parser.parse_args()
 from hpana.db.datasets import Database
 
 # - - - - - - - - create a database 
-db = Database(name="%s_%s%s"%(args.name, args.analysis, args.version),
+db = Database(name="%s_%s%s"%(args.name, args.channel, args.version),
               verbose=args.verbose)
 
 # - - - - - - - - validate the database 
@@ -60,13 +60,13 @@ else:
     with open(args.config) as config:
         config_dict = yaml.load(config)
         year_config = config_dict[args.year]
-        if args.analysis not in year_config:
-            raise RuntimeError("no config found for %s"%args.analysis)
+        if args.channel not in year_config:
+            raise RuntimeError("no config found for %s"%args.channel)
         
     # - - - - pass the configs to the db
     params = {}
     params['data_grl'] = year_config['common'].get('grl', None)
-    params.update(year_config[args.analysis])
+    params.update(year_config[args.channel])
     db.scan(args.year,
             deep=args.deep,
             versioned=args.versioned,

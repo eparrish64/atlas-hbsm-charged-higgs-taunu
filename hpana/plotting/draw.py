@@ -103,13 +103,12 @@ def draw(var, category,
                 bkg_hist = filter(
                     lambda hs: hs.sample==bkg.name and hs.category==category.name and hs.variable==var.name, hists_set)
                 bkg_hist = bkg_hist[0].hist
-            
             # - - - -  fold the overflow bin 
             if overflow:
                 fold_overflow(bkg_hist)
             # - - - - hists should already be decorated when they're produced !
             bkg_hist.SetFillColor(bkg.color) 
-            legend.AddEntry(bkg_hist, bkg.label, 'F')
+            legend.AddEntry(bkg_hist, "%s(%i)"%(bkg.label, bkg_hist.Integral()), 'F')
             bkg_stack.Add(bkg_hist)
             backgrounds_hists.append(bkg_hist)
         backgrounds_stack.append(bkg_stack)
@@ -197,7 +196,7 @@ def draw(var, category,
         data_hist.SetYTitle("# events")
         if overflow:
             fold_overflow(data_hist)
-        legend.AddEntry(data_hist, data.label, "P")
+        legend.AddEntry(data_hist, "%s(%i)"%(data.label, data_hist.Integral()), "P")
         
         # - - - - - - - - blind the data in a specific range
         if isinstance(blind, tuple):
@@ -286,7 +285,13 @@ def draw(var, category,
     elif signals:
         ymax = max([h.GetMaximum() for h in signals_hists])
         ymin = min([h.GetMinimum() for h in signals_hists])
-                        
+
+    if logy:
+        # - - - - make sure ymin > 0 for log scale
+        if ymin<=0:
+            ymin = 0.001
+        main_pad.cd()
+        main_pad.SetLogy()
             
     # - - - - - - - - draw bkg hists
     if backgrounds_stack:
@@ -294,7 +299,10 @@ def draw(var, category,
         for h in backgrounds_stack:
             h.SetTitle("")
             h.SetMinimum(ymin)
-            h.SetMaximum(ymax + 0.3 *ymax)
+            if logy:
+                h.SetMaximum(ymax + 100 *ymax)
+            else:
+                h.SetMaximum(ymax + 0.4 *ymax)
             h.Draw("HIST")
             if not show_ratio:
                 if isinstance(h, ROOT.THStack):
@@ -349,9 +357,8 @@ def draw(var, category,
     # - - - - - - - -save the figure
     if output_dir is None:
         output_dir = "./plots"
-        
+
     save_canvas(fig, output_dir, output_name, formats=output_formats)
-    return     
 
     #- - - - - - - - release the memory
     if hists_file:

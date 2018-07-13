@@ -585,6 +585,6 @@ def ratio_hist(h1, h2):
     ratio_hist.GetYaxis().SetTitleFont(43)
     ratio_hist.GetYaxis().SetTitleSize(16)
     ratio_hist.GetYaxis().SetTitleOffset(1.8)
-    ratio_hist.GetYaxis().SetRangeUser(0.75, 1.25)
+    ratio_hist.GetYaxis().SetRangeUser(0.5, 1.5)
     
     return ratio_hist 

@@ -8,13 +8,15 @@ from collections import namedtuple, OrderedDict
 import yaml
 
 ## local imports
+from db.datasets import Database
+
 from . import log
 from . import samples
 from .samples.sample import Sample
 from .dataset_hists import dataset_hists
 
 from .samples import Higgs
-from .categories import TAUID_MEDIUM, ANTI_TAU
+from .categories import TAUID_MEDIUM, ANTI_TAU, Category
 from .cluster.parallel import close_pool
 from .config import Configuration
 import ROOT
@@ -24,7 +26,6 @@ import ROOT
 ## main analysis class
 ##---------------------------------------------------------------------------------
 class Analysis(object):
-
     """ main analysis class.
     Attributes
     ----------
@@ -60,19 +61,21 @@ class Analysis(object):
         
     "FakeFactors/CorrectUpsilon.C",
     "FakeFactors/CorrectUpsilon_1D_WCR.C",
-    "FakeFactors/CorrectUpsilon_1D_QCD.C",    
+    "FakeFactors/CorrectUpsilon_1D_QCD.C",
     ]
     CXX_MACROS = [os.path.join(__HERE, "cxxmacros", cm) for cm in CXX_MACROS]
     
     def __init__(self, config,
                  suffix=None,
                  use_embedding=False,
-                 random_mu=False,
-                 compile_cxx=False,
-                 mu=1.):
+                 compile_cxx=False,):
         # - - - - - - - - main configurer 
         self.config = config 
 
+        # - - - - - - - - database
+        self.database = Database(
+            name="DB_%s"%self.config.channel, version=self.config.db_version, verbose=False)
+            
         # - - - - - - - - loading and compiling cxx macros
         if compile_cxx:
             self.compile_cxx()
@@ -80,12 +83,6 @@ class Analysis(object):
         # - - - - - - - - some basic flags
         self.use_embedding = use_embedding
         self.suffix = suffix
-        if random_mu:
-            log.info("using a random mu (signal strength)")
-            self.mu = random.uniform(10, 1000)
-        else:
-            log.info("using a mu (signal strength) of {0:.1f}".format(mu))
-            self.mu = mu
         
         # - - - - - - - - analysis MC samples 
         if use_embedding:
@@ -93,45 +90,53 @@ class Analysis(object):
             log.info("Using embedded Ztautau")
             self.wtaunu = samples.Embedded_Wtaunu(
                 self.config,
+                database=self.database,
                 name='Wtaunu',
                 label='W#rightarrow#tau#nu',
                 color=16)
         else:
             self.wtaunu = samples.Sh_Wtaunu(
                 self.config,
+                database=self.database,
                 name='Wtaunu',
                 label='W#rightarrow#tau#nu',
                 color=16)
         self.wlnu = samples.Sh_Wlnu(
             self.config,
+            database=self.database,
             name='Wlnu',
             label='W#rightarrow l#nu',
             color=14)
         
         self.ztautau = samples.Sh_Ztautau(
             self.config, 
+            database=self.database,
             name='Ztautau',
             label='Z#rightarrow#tau#tau',
             color=ROOT.kYellow-1)
         self.zll = samples.Sh_Zll(
             self.config,
+            database=self.database,
             name='Zll',
             label='Z#rightarrow ll',
             color=ROOT.kYellow-3)
 
         self.others = samples.Others(
             self.config, 
+            database=self.database,
             name='Others',
             label='Others',
             color=ROOT.kViolet-2)
         self.diboson = samples.Diboson(
             self.config,
+            database=self.database,
             name='DiBoson',
             label='DiBoson',
             color=ROOT.kViolet)
         
         self.ttbar = samples.TTbar(
             self.config,
+            database=self.database,
             name='TTbar',
             label='t#bar{t}',
             pt_weighted=False,
@@ -139,6 +144,7 @@ class Analysis(object):
 
         self.single_top = samples.Single_Top(
             self.config,
+            database=self.database,
             name='SingleTop',
             label='single top',
             pt_weighted=False,
@@ -159,6 +165,7 @@ class Analysis(object):
         # - - - - - - - - DATA 
         self.data = samples.Data(
             self.config,
+            database=self.database,
             name='Data',
             label='Data',
             markersize=1.2,
@@ -223,6 +230,7 @@ class Analysis(object):
         colors = [ROOT.kRed, ROOT.kGreen, ROOT.kBlue]
         for i, mass in enumerate(masses):
             signals.append(samples.Higgs(self.config,
+                                         database=self.database,
                                          mass=mass,
                                          scale=scale,
                                          color=colors[i], line_style=2*i))
@@ -336,7 +344,7 @@ class Analysis(object):
             
         return merged_hists
     
-    def merge_hists(self, samples=[], hist_set=[],**kwargs):
+    def merge_hists(self, samples=[], hist_set=[], **kwargs):
         if samples:
             samples = filter(lambda s: s.name in samples, self.samples)
         else:
@@ -348,22 +356,60 @@ class Analysis(object):
             
         return merged_hists
 
+    def cutflow(self, cutflow_selections, samples=[], **kwargs):
+        """ cutflow hists sets for different samples.
+        """
+        # - - - - Histset container
+        cutflow_hist_sets = []
+        
+        field = kwargs.pop("field", self.config.variables[0])
+        if not samples:
+            samples = self.samples
+
+        # - - - - simulated samples 
+        sim_samples =  self.mc + [self.lepfakes] + self.signals
+        sim_samples = filter(lambda s: s.name in [s.name for s in samples], sim_samples)
+        
+        categories = []
+        cuts_list = []
+        for name, cut in cutflow_selections.iteritems():
+            if name.upper()=="TRIGGER":
+                cut = {self.config.mc_camp: self.config.trigger(dtype="MC") }
+            cuts_list += [cut]
+            categories.append(Category(name, cuts_list=cuts_list, mc_camp=self.config.mc_camp))
+
+        if sim_samples:    
+            cutflow_hist_sets += self.hists(
+                samples=sim_samples, categories=categories, fields=[field], systematics=["NOMINAL"], **kwargs)
+        
+        # - - - - treat QCD seperatly (due to different TAU ID)
+        if self.qcd.name in [s.name for s in samples]:
+            cutflow_hist_sets += self.qcd.cutflow(cutflow_selections, **kwargs)
+            
+        if self.data.name in [s.name for s in samples]:
+            cutflow_hist_sets += self.data.cutflow(cutflow_selections, **kwargs)
+        
+        return cutflow_hist_sets
+    
     def cache_ffs(self,
-                  template_var=None,
-                  template_var_bins=[],
+                  template_fields=[],
+                  template_hist=None,
+                  template_hist_bins=[],
                   control_regions=[],
-                  min_tau_jet_bdt_score_trans=0.01,
-                  tau_jet_bdt_score_trans_var="tau_0_jet_bdt_score_trans",
-                  n_charged_tracks=[1, 3], 
+                  tau_jet_bdt_score_trans_wps=[0.01, 0.02, 0.03],
+                  n_charged_tracks=[1, 3],
+                  trigger=None,
                   tauid=None, 
                   antitau=None,
-                  cache_file=None):
+                  subtract_mc=True,
+                  cache_file=None,
+                  write_cxx_macro=True,):
         """ calculate and cache the fake factors.
         Parameters
         - - - - - 
-        template_var: 
+        template_hist: 
             Variable type; see .variables.py
-        template_var_bins:
+        template_hist_bins:
             list type; bins for template fit
         control_regions:
             [Categories] type; contorl regions for the FF extraction.
@@ -371,19 +417,24 @@ class Analysis(object):
             {ROOT.TCut()} type; tauID selection cut
         antitau:
             {ROOT.TCut()} type; anti tau selection cut
+        min_tau_jet_bdt_score_trans_wps: 
+            list type; working points for tau_jet_bdt_score_trans 
         """
-
-        hist_templates = {
-            #<! PLS NOTE the tformula order is Z:Y:X and for the binning it's X, Y, Z !
-            "tau_0_pt":
-            ROOT.TH3F("tau_0_p4->Pt()/1000.:tau_0_n_charged_tracks:tau_0_p4->Eta()",
-                      "tau_0_eta", 20, -4., 4., 4, 0, 4, 100, 0, 3500),
-        }
+        # - - - - set the mc_camp property
+        for f in template_fields:
+            f.mc_camp = self.config.mc_camp
+        
+        if not template_hist:
+            if template_fields:
+                assert len(template_fields)==3, "wrong number of fields"
+                template_hist = {
+                    #<! PLS NOTE the tformula order is Z:Y:X and for the binning it's X, Y, Z !
+                    template_fields[0].name: ROOT.TH3F("{0} : {1} : {2}".format(*(v.tformula for v in template_fields)),
+                                                       "Z%s_Y%s_X%s".format(*(v.name for v in template_fields)),
+                                                       100, 0., 1., 4, 0, 4, 800, 0, 4000),}
+            else:
+                raise ValueError("template_hist or fields arg is needed")
             
-        # - - - - tau jet bdt score signal transformed cut threshold
-        tau_jet_bdt_score_trans_cut = ROOT.TCut("{0} > {1}".format(
-            tau_jet_bdt_score_trans_var, min_tau_jet_bdt_score_trans))
-
         if not control_regions:
             control_regions = self.config.ff_cr_regions
 
@@ -394,54 +445,56 @@ class Analysis(object):
             tauid = self.config.tauid
             
         if not antitau:
-            antitau = self.config.antitau
+            # - - - - PLEASE NOTE THAT tau_0_jet_bdt_score_sig cut is included in the template hist
+            antitau = ROOT.TCut("tau_0_jet_bdt_loose==0")
             
-        if not template_var:
-            template_var = self.config.variables[0] #<! tau_0_pt 
-        else:
-            assert template_var.name in [v.name for v in self.config.variables], "%s is not defined!"%template_var.name
-        if not template_var_bins:
+        if not template_hist_bins:
             # - - default for tau pt 
-            template_var_bins = [40, 50, 60, 80, 100, 3500]
+            template_hist_bins = [40, 50, 60, 80, 100, 3500]
             
         # - - - - parallel processing
         workers = []
         pool = multiprocessing.Pool(processes=multiprocessing.cpu_count())
         
         # - - - - DATA workers
-        data_tau_workers = self.data.workers(fields=[template_var], hist_templates=hist_templates,
-                                             categories=control_regions, tauid=tauid, extra_cuts=tau_jet_bdt_score_trans_cut)
+        data_tau_workers = self.data.workers(
+            fields=template_fields[:1], hist_templates=template_hist,
+            categories=control_regions, tauid=tauid, trigger=trigger,)
         # - - make worker names unique 
         for w in data_tau_workers:
             w.name += "_TAU"
         workers += data_tau_workers
             
-        data_antitau_workers = self.data.workers(fields=[template_var], hist_templates=hist_templates,
-                                                 categories=control_regions, tauid=antitau, extra_cuts=tau_jet_bdt_score_trans_cut)
+        data_antitau_workers = self.data.workers(
+            fields=template_fields[:1], hist_templates=template_hist,
+            categories=control_regions, tauid=antitau, trigger=trigger,)
         for w in data_antitau_workers:
             w.name += "_ANTITAU"
         workers += data_antitau_workers
 
-        # - - - - MC workers
-        mc_tau_workers = []
-        mc_antitau_workers = []
-        for mc in self.mc:
-            mc_tau_workers += mc.workers(fields=[template_var],hist_templates=hist_templates,
-                                         categories=control_regions, tauid=tauid, extra_cuts=tau_jet_bdt_score_trans_cut)
-            mc_antitau_workers += mc.workers(fields=[template_var], hist_templates=hist_templates,
-                                             categories=control_regions, tauid=antitau, extra_cuts=tau_jet_bdt_score_trans_cut)
+        if subtract_mc:
+            # - - - - MC workers
+            mc_tau_workers = []
+            mc_antitau_workers = []
+            for mc in self.mc:
+                mc_tau_workers += mc.workers(
+                    fields=template_fields[:1], hist_templates=template_hist,
+                    categories=control_regions, tauid=tauid, trigger=trigger,)
+                mc_antitau_workers += mc.workers(
+                    fields=template_fields[:1], hist_templates=template_hist,
+                    categories=control_regions, tauid=antitau, trigger=trigger,)
 
-        # add mc tau/antitau  workers to the list of all workers
-        for w in mc_tau_workers:
-            w.name += "_TAU"
-        workers += mc_tau_workers
+            # add mc tau/antitau  workers to the list of all workers
+            for w in mc_tau_workers:
+                w.name += "_TAU"
+            workers += mc_tau_workers
 
-        for w in mc_antitau_workers:
-            w.name += "_ANTITAU"
-        workers += mc_antitau_workers
+            for w in mc_antitau_workers:
+                w.name += "_ANTITAU"
+            workers += mc_antitau_workers
 
         # - - - - workers do some work please :D
-        rand_workers = [ workers[i] for i in sorted(random.sample(xrange(len(workers)), 20)) ]
+        rand_workers = [ workers[i] for i in sorted(random.sample(xrange(len(workers)), min(20, len(workers) ) ) ) ]
         log.debug(rand_workers)
         results = [pool.apply_async(dataset_hists, args=(w,)) for w in workers]
 
@@ -450,110 +503,135 @@ class Analysis(object):
             hist_sets += res.get(36000)
         # - - - - close the pool
         close_pool(pool)
-        
+
         # - - - -  organize the output
         data_tau_hists = filter(lambda hs: hs.name.startswith(self.data.name) and hs.name.endswith("_TAU"), hist_sets)
         data_antitau_hists = filter(lambda hs: hs.name.startswith(self.data.name) and hs.name.endswith("_ANTITAU"), hist_sets)
-        
-        mc_tau_hists = filter(lambda hs: not hs.name.startswith(self.data.name) and hs.name.endswith("_TAU"), hist_sets)
-        mc_antitau_hists = filter(lambda hs: not hs.name.startswith(self.data.name) and hs.name.endswith("_ANTITAU"), hist_sets)
+
+        if subtract_mc:
+            mc_tau_hists = filter(lambda hs: not hs.name.startswith(self.data.name) and hs.name.endswith("_TAU"), hist_sets)
+            mc_antitau_hists = filter(lambda hs: not hs.name.startswith(self.data.name) and hs.name.endswith("_ANTITAU"), hist_sets)
 
         # - - - - add up the histograms for each CR region 
-        ffs_hists = {}
         ffs_dict = {}
         for cr in control_regions:
             cr_name = cr.name
-            ffs_hists[cr_name] = OrderedDict()
             ffs_dict[cr_name] = OrderedDict()
             
             # - - data tau
             data_tau_hists_cat = filter(lambda hs: hs.category==cr_name, data_tau_hists)
             assert data_tau_hists_cat, "no (TAU) %s hist for %s CR"%(self.data.name, cr_name)
-            data_tau_hsum = data_tau_hists[0].hist.Clone()
-            for hs in data_tau_hists:
-                data_tau_hsum.Add(hs.hist)
+            data_tau_hsum = data_tau_hists_cat[0].hist.Clone()
+            if len(data_tau_hists_cat) > 1:
+                for hs in data_tau_hists_cat[1:]:
+                    data_tau_hsum.Add(hs.hist)
             
             # - - data antitau
             data_antitau_hists_cat = filter(lambda hs: hs.category==cr_name, data_antitau_hists)
             assert data_antitau_hists_cat, "no (ANTITAU) %s hist for %s CR"%(self.data.name, cr_name)
-            data_antitau_hsum = data_antitau_hists[0].hist.Clone()
-            for hs in data_antitau_hists:
-                data_antitau_hsum.Add(hs.hist)
-            
-            # - - mc tau
-            mc_tau_hists_cat = filter(lambda hs: hs.category==cr_name, mc_tau_hists)
-            assert mc_tau_hists_cat, "no (TAU) %s hist for %s CR"%("MC", cr_name)
-            mc_tau_hsum = mc_tau_hists[0].hist.Clone()
-            for hs in mc_tau_hists:
-                mc_tau_hsum.Add(hs.hist)
-                
-            # - - mc antitau
-            mc_antitau_hists_cat = filter(lambda hs: hs.category==cr_name, mc_antitau_hists)
-            assert mc_antitau_hists_cat, "no (ANTITAU) %s hist for %s CR"%("MC", cr_name)
-            mc_antitau_hsum = mc_antitau_hists[0].hist.Clone()
-            for hs in mc_antitau_hists:
-                mc_antitau_hsum.Add(hs.hist)
-                
-            # - - subtract MC from DATA
-            data_mc_tau_h = data_tau_hsum.Clone()
-            data_mc_tau_h.Add(mc_tau_hsum, -1)
+            data_antitau_hsum = data_antitau_hists_cat[0].hist.Clone()
+            if len(data_antitau_hists_cat) > 1:
+                for hs in data_antitau_hists_cat[1:]:
+                    data_antitau_hsum.Add(hs.hist)
 
-            data_mc_antitau_h = data_antitau_hsum.Clone()
-            data_mc_antitau_h.Add(mc_antitau_hsum, -1)
-            
-            # - - - - gather hists per tau pT and ntracks bin
-            for itk in n_charged_tracks:
-                ffs_hists[cr_name]["ntracks%i"%itk] = {"TAU": [], "ANTITAU": []}
-                ffs_dict[cr_name]["ntracks%i"%itk] = {}
-                for n in range(1, len(template_var_bins)):
-                    pkey = "pT%i"%template_var_bins[n]
+            if subtract_mc:
+                # - - mc tau
+                mc_tau_hists_cat = filter(lambda hs: hs.category==cr_name, mc_tau_hists)
+                assert mc_tau_hists_cat, "no (TAU) %s hist for %s CR"%("MC", cr_name)
+                mc_tau_hsum = mc_tau_hists_cat[0].hist.Clone()
+                for hs in mc_tau_hists_cat[1:]:
+                    mc_tau_hsum.Add(hs.hist)
+
+                # - - mc antitau
+                mc_antitau_hists_cat = filter(lambda hs: hs.category==cr_name, mc_antitau_hists)
+                assert mc_antitau_hists_cat, "no (ANTITAU) %s hist for %s CR"%("MC", cr_name)
+                mc_antitau_hsum = mc_antitau_hists_cat[0].hist.Clone()
+                for hs in mc_antitau_hists_cat[1:]:
+                    mc_antitau_hsum.Add(hs.hist)
                 
+            data_mc_tau_h = data_tau_hsum.Clone()
+            data_mc_antitau_h = data_antitau_hsum.Clone()
+
+            # - - subtract MC from DATA
+            if subtract_mc:
+                    data_mc_tau_h.Add(mc_tau_hsum, -1)
+                    data_mc_antitau_h.Add(mc_antitau_hsum, -1)
+            
+            log.info("TAU events; DATA: {}, MC: {}".format(data_tau_hsum.Integral() , mc_tau_hsum.Integral() if subtract_mc else "NAN") )
+            log.info("ANTITAU events; DATA: {}, MC: {}".format(data_antitau_hsum.Integral(), mc_antitau_hsum.Integral() if subtract_mc else "NAN") )
+            
+            jbs_nbins = data_mc_tau_h.GetNbinsX() + 2 
+            # - - - - gather hists per tau pT and ntracks bin and also tau_jet_bdt_score WPs
+            for jbs_n, jbs_wp in enumerate(tau_jet_bdt_score_trans_wps):
+                ffs_dict[cr_name]["tauJetBDT_0%i"%(jbs_n+1)] = {}
+                for itk in n_charged_tracks:
+                    tkey = "ntracks%i"%itk
+                    ffs_dict[cr_name]["tauJetBDT_0%i"%(jbs_n+1)][tkey]= {}
+
                     htmp_tau = data_mc_tau_h.Clone()
                     htmp_antitau = data_mc_antitau_h.Clone()
-                    suffix = "TRACKS{0}_PT{1}TO{2}".format(itk, template_var_bins[n-1], template_var_bins[n])
-                    hproj_tau = htmp_tau.ProjectionX(suffix, itk, itk+1, n-1, n, "e").Clone()
-                    hproj_antitau = htmp_antitau.ProjectionX(suffix, itk, itk+1, n-1, n, "e").Clone()
+                    tau_pt_hist = htmp_tau.ProjectionZ("tau_pt", jbs_n + 2, jbs_nbins, itk, itk+1, "e").Clone()
+                    antitau_pt_hist = htmp_antitau.ProjectionZ("antitau_pt", jbs_n + 2, jbs_nbins, itk, itk+1, "e").Clone()
+
+                    # - - - - different binning for 1p and 3p taus
+                    hist_bins = template_hist_bins[tkey]
+                    tau_pt_hist = tau_pt_hist.Rebin(len(hist_bins)-1, "htau", array("d", hist_bins))
+                    antitau_pt_hist = antitau_pt_hist.Rebin(len(hist_bins)-1, "hantitau", array("d", hist_bins))
                     
-                    # - - keep hists 
-                    ffs_hists[cr_name]["ntracks%i"%itk]["TAU"].append((template_var_bins[n], hproj_tau))
-                    ffs_hists[cr_name]["ntracks%i"%itk]["ANTITAU"].append((template_var_bins[n], hproj_antitau))
-
-                    # - - get the ratio of tau to antitau for this bin
-                    tau_bin = hproj_tau.Integral()
-                    antitau_bin = hproj_antitau.Integral()
-                    if antitau_bin==0:
-                        log.warning("{} bin for antitau is empty, setting tau/antitau to 1!".format(pkey))
-                        tau_antitau_ratio = 1
-                    else:
-                        tau_antitau_ratio = tau_bin/antitau_bin
-                    ffs_dict[cr_name]["ntracks%i"%itk][pkey] = tau_antitau_ratio
-
-                    # - - reset tmp hists
+                    for i, pt in enumerate(hist_bins):
+                        pkey = "pT%i"%hist_bins[i]
+                        tau_bin_cont = tau_pt_hist.GetBinContent(i)
+                        antitau_bin_cont = antitau_pt_hist.GetBinContent(i)
+                        if antitau_bin_cont==0:
+                            log.warning("{} bin for antitau is empty, setting tau/antitau to 1!".format(pkey))
+                            tau_antitau_ratio = 1.
+                        else:
+                            tau_antitau_ratio = "%.4f"%(tau_bin_cont/antitau_bin_cont)
+                            ffs_dict[cr_name]["tauJetBDT_0%i"%(jbs_n+1)][tkey][pkey] = tau_antitau_ratio
                     htmp_tau.Delete()
                     htmp_antitau.Delete()
                     
         if not cache_file:
-            cache_file = os.path.join(Analysis.__HERE, "cache", "FF_CR.pkl")
+            cache_file = os.path.join(Analysis.__HERE, "cache", "FF_CR.yml")
             if not os.path.isdir("%s/cache"%(Analysis.__HERE)):
                 os.system("mkdir -p %s/cache"%Analysis.__HERE)
-                
-        # - - - - cache histograms 
-        with open (cache_file, "w") as pkl_cache:
-            log.info("caching the fake factors histograms")
-            pickle.dump(ffs_hists, pkl_cache)
-
-            
-        # - - - - cache the FFs to a human readable format
-        if cache_file.endswith(".pkl"):
-            yml_file = cache_file.replace(".pkl", ".yml")
         else:
-            yml_file = "%s.yml"%cache_file
+            yml_file = cache_file
             
-        with open (yml_file, "w") as yml_cache:
+        with open (yml_file, "a") as yml_cache:
             log.info("caching the fake factors")
             yaml.dump(ffs_dict, yml_cache, default_flow_style=False)
 
         log.info("FFs: {} ".format(ffs_dict))
 
-        return ffs_dict, ffs_hists 
+        if write_cxx_macro:
+            if yml_file.endswith(".yml"): 
+                cxx_file = yml_file.replace(".yml", ".cxx")
+            else:
+                cxx_file = yml_file + ".cxx"
+                
+            with open(cxx_file, "a") as cxx_cache:
+                cxx_cache.write("#include <iostream>\n")
+                for cr in [c.name for c in control_regions]:
+                    for jbs_n, jbs_wp in enumerate(tau_jet_bdt_score_trans_wps):
+                        cxx_cache.write("//! tau_0_jet_bdt_score_trans lower cut ({})\n".format(jbs_wp))
+                        cxx_cache.write(
+                            "float GetFF0{0}_{1}(float pt, int nTracks){{\n".format(jbs_n+1, cr) )
+                        for itk in n_charged_tracks:
+                            tkey = "ntracks%i"%itk
+                            cxx_cache.write("\t if(nTracks==%i){\n"%itk)
+                            for pT in template_hist_bins[tkey][1:]:
+                                pkey = "pT%i"%pT
+                                ff = ffs_dict[cr]["tauJetBDT_0%i"%(jbs_n+1)][tkey][pkey]
+                                cxx_cache.write("\t\t if(pt < {0}) return {1};\n".format(pT, ff))
+
+                            # - - - -  close ntracks block   
+                            cxx_cache.write("\t\t else return 0;\n")   
+                            cxx_cache.write("\t\t }\n")
+
+                        # - - - - close tauJetBDTscore block
+                        cxx_cache.write("\t else return 0;\n")   
+                        cxx_cache.write("}\n\n\n")
+                 
+        return ffs_dict
     

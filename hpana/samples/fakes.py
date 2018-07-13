@@ -23,10 +23,13 @@ class QCD(Sample):
             "BVETO":2,
             "TTBAR":3,
             "SR_TAUJET":3,
-            "QCD":111,},
+            "QCD":111,
+            "FF_CR_MULTIJET":111},
         "taulep":{
-            "BVETO":6,
-            "TTBar":3,
+            "FF_CR_WJETS":222,
+            "TAUMU_BVETO":6,
+            "TAUEL_BVETO":6,
+            "DILEP_BTAG":3,
             "ZEE":4,
             "SR_TAUMU":7,
             "SR_TAUEL":7,
@@ -35,7 +38,7 @@ class QCD(Sample):
     }
 
     FF_WCR = "GetFF02_WCR({0}, {1})"
-    FF_QCD = "GetFF02_QCD({0}, {1})"
+    FF_QCD = "GetFF02_QCD({0}, {1})" 
     TEMPLATE_VARS = {
         "mc16": ("tau_0_p4->Pt()/1000.", "tau_0_n_charged_tracks"),
         "mc15": ("tau_0_pt/1000.", "tau_0_n_tracks"),}
@@ -68,7 +71,8 @@ class QCD(Sample):
         QCD.ANTI_TAU * FF(tau_0_pt, tau_0_n_tracks) 
         """
         tauid = kwargs.pop("tauid", self.tauid)
-        selection = super(QCD, self).cuts(tauid=tauid, **kwargs)
+        trigger = kwargs.pop("trigger", self.config.trigger(dtype="DATA") )
+        selection = super(QCD, self).cuts(tauid=tauid, trigger=trigger, **kwargs)
         log.debug(selection)
         return selection
     
@@ -92,7 +96,7 @@ class QCD(Sample):
             ff_weights[category.name] = [ff_weight]
 
             #!TMPFIX for cutflow 
-            if category.name in ["clean event", "trigger", "tau pt > 40 GeV"]:
+            if category.name.upper() in ["CLEANEVENT", "TRIGGER", "TAUPT40"]:
                 ff_weights[category.name] = ["1."]
             
         return ff_weights
@@ -105,6 +109,8 @@ class QCD(Sample):
         for name, cut in cuts.iteritems():
             if name.upper()=="TAUID":
                 cut = ANTI_TAU #<! ANTI_TAU * FF 
+            elif name.upper()=="TRIGGER":
+                cut = self.config.trigger(dtype="DATA")
             cuts_list += [cut]
             categories.append(Category(name, cuts_list=cuts_list, mc_camp=self.config.mc_camp))
             
@@ -133,6 +139,8 @@ class QCD(Sample):
             categories = self.config.categories
 
         tauid = kwargs.pop("tauid", self.tauid)
+        trigger = kwargs.pop("trigger", self.config.trigger(dtype="DATA"))
+        
         # - - - - prepare categories; deep copy since we don't want change categories
         categories_cp = copy.deepcopy(categories)
         for category in categories_cp:
@@ -240,7 +248,7 @@ class QCD(Sample):
 
         # - - close the pool 
         close_pool(pool)
-        
+
         # - - - - extract DATA/MC hists
         data_hist_set = filter(lambda hs: hs.sample.startswith("%s.DATA"%self.name), hist_sets)
         mc_hist_set = filter(lambda hs: not hs.sample.startswith("%s.DATA"%self.name), hist_sets)
@@ -266,97 +274,117 @@ class QCD(Sample):
                     
         return merged_hist_set
                 
-    def merge_hists(self, histsdir=None, hists_file=None, overwrite=False, write=False, **kwargs):
+    def merge_hists(self, hist_set=[], histsdir=None, hists_file=None, overwrite=False, write=False, **kwargs):
         """ needs a dedicated method since we have to subtract sum of MC from DATA.
         """
         log.info("merging %s hists"%self.name)
 
-        assert histsdir, "hists dir is not provided!"
-
-        # - - - - merged hists file
-        if not hists_file:
-            hists_file = self.config.hists_file
+        if not hist_set:
+            log.info("reading dataset hists from %s"%histsdir)
+            assert histsdir, "hists dir is not provided!"
             
-        # - - - - retrieve the samples hists
-        data_hfiles = glob.glob("%s/%s.DATA*"%(histsdir, self.name) ) 
-        mc_hfiles = list(set(glob.glob("%s/%s.*"%(histsdir, self.name) ) ) - set(data_hfiles) )
+            # - - - - retrieve the samples hists
+            data_hfiles = glob.glob("%s/%s.DATA*"%(histsdir, self.name) ) 
+            mc_hfiles = list(set(glob.glob("%s/%s.*"%(histsdir, self.name) ) ) - set(data_hfiles) )
 
-        if (not (data_hfiles and mc_hfiles)):
-            log.warning(" incomplete hists for %s in %s dir"%(self.name, histsdir))
-            return []
+            if (not (data_hfiles and mc_hfiles)):
+                log.warning(" incomplete hists for %s in %s dir"%(self.name, histsdir))
+                return []
 
-        # - - - - extract the hists 
-        fields = set()
-        categories = set()
-        mc_hist_set = []
-        # - - - - get QCD MC component hists (to be subtracted)
-        for hf in mc_hfiles:
-            htf = ROOT.TFile(hf, "READ")
-            for systematic in self.systematics:
-                systdir = htf.Get(systematic)
-                for hname in [k.GetName() for k in systdir.GetListOfKeys()]:
-                    # - - regex match the hist name
-                    match = re.match(self.config.hist_name_regex, hname)
-                    if match:
-                        sample = match.group("sample")
-                        category = match.group("category")
-                        variable = match.group("variable")
-                        
-                        fields.add(variable)
-                        categories.add(category)
+            # - - - - extract the hists 
+            fields = set()
+            categories = set()
+            mc_hist_set = []
+            # - - - - get QCD MC component hists (to be subtracted)
+            for hf in mc_hfiles:
+                htf = ROOT.TFile(hf, "READ")
+                for systematic in self.systematics:
+                    systdir = htf.Get(systematic)
+                    for hname in [k.GetName() for k in systdir.GetListOfKeys()]:
+                        # - - regex match the hist name
+                        match = re.match(self.config.hist_name_regex, hname)
+                        if match:
+                            sample = match.group("sample")
+                            category = match.group("category")
+                            variable = match.group("variable")
 
-                        hist = htf.Get("%s/%s"%(systematic, hname))
-                        hist.SetDirectory(0) #<! detach
-                        hset = Histset(sample=sample, category=category, variable=variable,
-                                       systematic=systematic, hist=hist)
-                        mc_hist_set.append(hset)
-            htf.Close()
-            
-        # - - - - get QCD data component hists
-        data_hist_set = []
-        for hf in data_hfiles:
-            htf = ROOT.TFile(hf, "READ")
-            for systematic in self.systematics:
-                systdir = htf.Get(systematic)
-                for hname in [k.GetName() for k in systdir.GetListOfKeys()]:
-                    # - - regex match the hist name
-                    match = re.match(self.config.hist_name_regex, hname)
-                    if match:
-                        sample = match.group("sample")
-                        category = match.group("category")
-                        variable = match.group("variable")
+                            fields.add(variable)
+                            categories.add(category)
 
-                        assert (variable in fields and category in categories), "sth missing!"
-                        
-                        hist = htf.Get("%s/%s"%(systematic, hname))
-                        hist.SetDirectory(0) #<! detach from the htf
-                        hset = Histset(sample=sample, category=category, variable=variable,
-                                       systematic=systematic, hist=hist)
-                        data_hist_set.append(hset)
-            htf.Close()
+                            hist = htf.Get("%s/%s"%(systematic, hname))
+                            hist.SetDirectory(0) #<! detach
+                            hset = Histset(sample=sample, category=category, variable=variable,
+                                           systematic=systematic, hist=hist)
+                            mc_hist_set.append(hset)
+                htf.Close()
+
+            # - - - - get QCD data component hists
+            data_hist_set = []
+            for hf in data_hfiles:
+                htf = ROOT.TFile(hf, "READ")
+                for systematic in self.systematics:
+                    systdir = htf.Get(systematic)
+                    for hname in [k.GetName() for k in systdir.GetListOfKeys()]:
+                        # - - regex match the hist name
+                        match = re.match(self.config.hist_name_regex, hname)
+                        if match:
+                            sample = match.group("sample")
+                            category = match.group("category")
+                            variable = match.group("variable")
+
+                            assert (variable in fields and category in categories), "sth missing!"
+
+                            hist = htf.Get("%s/%s"%(systematic, hname))
+                            hist.SetDirectory(0) #<! detach from the htf
+                            hset = Histset(sample=sample, category=category, variable=variable,
+                                           systematic=systematic, hist=hist)
+                            data_hist_set.append(hset)
+                htf.Close()
+        else:
+            # - - - - get list of categories and fields available in hist_set
+            fields = list(set([hs.variable for hs in hist_set] ) )
+            categories = list(set([hs.category for hs in hist_set] ) )
+
+            # - - - - gather hists for this sample
+            hist_set = filter(lambda hs: hs.sample.startswith(self.name), hist_set)
+            data_hist_set = filter(lambda hs: hs.sample.startswith("%s.DATA"%self.name), hist_set)
+            mc_hist_set = filter(lambda hs: not hs.sample.startswith("%s.DATA"%self.name), hist_set)
+        
         # - - - - bailing out if not hists    
         if not (mc_hist_set and data_hist_set):
             log.warning("no hist is found for %s; skipping the merge!"%self.name)
             return []
+
+        if write:
+            # - - - - output file
+            if not hists_file:
+                hists_file = self.config.hists_file
+            merged_hists_file = ROOT.TFile(os.path.join(histsdir, hists_file), "UPDATE")
         
         # - - - - add them up
-        merged_hists_file = ROOT.TFile(os.path.join(histsdir, hists_file), "UPDATE")
         merged_hist_set = []
         for systematic in self.systematics:
             for var in fields:
                 for cat in categories:
-                    data_hists = filter(
-                        lambda hs: (hs.systematic==systematic and hs.variable==var and hs.category==cat), data_hist_set)
-                    data_hsum = reduce(lambda h1, h2: h1 + h2, [hs.hist for hs in data_hists])
-                    
+                    data_hists = filter(lambda hs: (hs.systematic==systematic and hs.variable==var and hs.category==cat), data_hist_set)
+                    data_hsum = data_hists[0].hist
+                    for hs in data_hists[1:]:
+                        data_hsum.Add(hs.hist)
+        
                     mc_hists = filter(
                         lambda hs: (hs.systematic==systematic and hs.variable==var and hs.category==cat), mc_hist_set)
-                    mc_hsum = reduce(lambda h1, h2: h1 + h2, [hs.hist for hs in mc_hists])
+                    mc_hsum = mc_hists[0].hist
+                    for hs in mc_hists[1:]:
+                        mc_hsum.Add(hs.hist)
 
                     # - - subtract MC from DATA
-                    qcd_hsum = data_hsum - mc_hsum
+                    qcd_hsum = data_hsum.Clone()
+                    qcd_hsum.Add(mc_hsum, -1)
+                    
                     outname = self.config.hist_name_template.format(self.name, cat, var)
                     qcd_hsum.SetTitle(outname)
+                    merged_hist_set.append(
+                        Histset(sample=self.name, variable=var, category=cat, systematic=systematic, hist=qcd_hsum) )
 
                     if write:
                         # - - write it now

@@ -9,7 +9,8 @@ import ROOT
 from . import log
 from .sample import Sample, SystematicsSample, Histset
 from ..lumi import LUMI
-from ..cluster.parallel import FuncWorker, run_pool, map_pool
+from ..cluster.parallel import map_pool
+from ..categories import Category
 
 ##----------------------------------------------------------------------------------
 ##
@@ -53,37 +54,47 @@ class DataInfo():
 class Data(Sample):
     """
     """
-    STREAMS = ("2015", "2016",)# "2017", "2018")
+    STREAMS = ("2015", "2016", "2017", "2018")
     def __init__(self, config,
                  name='Data',
                  label='Data',
+                 streams=[],
                  blind=True,
                  blind_regions=[],
                  **kwargs):
+
+        database = kwargs.pop("database", None)
+        
         # - - - - intantiate the base class
-        super(Data, self).__init__(config, name=name, label=label, **kwargs)
+        super(Data, self).__init__(config, name=name, label=label, database=database, **kwargs)
 
         self.config = config
-        
+
+        if not streams:
+            streams = self.config.data_streams
+        for st in streams:
+            assert st in Data.STREAMS, "{0} stream not found in {1}".format(st, Data.STREAMS) 
+        self.streams = streams
+
+        log.info("DATA STREAMS: {}".format(self.streams))
         # - - - - Database 
-        self.db = self.config.database
+        self.database = database
 
-        # - - - - get datasets for the streams
-        if "1516" in name:
-            self.datasets = [self.db["Data1516"]]
-
+        # - - - - get datasets for the streams(TP FIX: KEEP 207 for r20.7)
+        if "207" in name:
+            self.datasets = [self.database["DATA207"]]
         else:
             self.datasets = []
-            for stream in Data.STREAMS:
+            for stream in self.streams:
                 dsprefix = "DATA%s_"%stream
-                for dk in self.db.keys():
+                for dk in self.database.keys():
                     if dk.startswith(dsprefix):
-                        self.datasets.append(self.db[dk])
+                        self.datasets.append(self.database[dk])
         self.info = DataInfo(self.config.data_lumi / 1e3, self.config.energy)
         self.blind = blind
         self.blind_regions = blind_regions
         
-    def cuts(self, *args, **kwargs):
+    def cuts(self, **kwargs):
         """Additional run number specific cuts.
         Parameters
         ----------
@@ -92,8 +103,31 @@ class Data(Sample):
         -------
         cut: Cut, updated Cut type.
         """
-        cut = super(Data, self).cuts(*args, **kwargs)
+
+        # - - - - data trigger
+        trigger = kwargs.pop("trigger", self.config.trigger(dtype="DATA"))
+        cut = super(Data, self).cuts(trigger=trigger, **kwargs)
         return cut
+
+    def cutflow(self, cuts, **kwargs):
+        """
+        """
+        categories = []
+        cuts_list = []
+        for name, cut in cuts.iteritems():
+            if name.upper()=="TRIGGER":
+                cut = self.config.trigger(dtype="DATA")
+            cuts_list += [cut]
+            categories.append(Category(name, cuts_list=cuts_list, mc_camp=self.config.mc_camp))
+            
+        field = kwargs.pop("field", self.config.variables[0])
+        hists = self.hists(categories=categories,
+                           fields=[field],
+                           systematics=["NOMINAL"],
+                           **kwargs)
+        
+        return hists
+    
     
     def workers(self, **kwargs):
         """
@@ -104,12 +138,15 @@ class Data(Sample):
         
         categories = kwargs.pop("categories", [])
         categories = filter(lambda c: c.name not in self.blind_regions, categories)
-            
+
+        # - - - - data trigger
+        trigger = kwargs.pop("trigger", self.config.trigger(dtype="DATA"))
+        
         _workers = super(Data, self).workers(
             categories=categories,
             systematics=["NOMINAL"],
             weighted=False,
+            trigger=trigger,
             **kwargs)
-        
         return _workers
     

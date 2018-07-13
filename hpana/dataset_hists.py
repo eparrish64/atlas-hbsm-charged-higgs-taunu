@@ -133,7 +133,8 @@ def dataset_hists(hist_worker,
     if not dataset.files:
         log.warning("%s dataset is empty!!"%dataset.name)
         return []
-
+    log.debug("DATASET {} files: {}".format(dataset.name, dataset.files))
+    
     canvas = ROOT.TCanvas()
     # - - - - containers for hists
     hist_set = []
@@ -221,7 +222,7 @@ def dataset_hists(hist_worker,
                         
                         nbins_z = ht.GetNbinsZ()
                         ht_z = ht.GetZaxis()
-                        ht_bins_z = (nbins_z, ht_z.GetBinLowEdge(1), ht_z.GetBinLowEdge(nbins_z) + ht_z.GetBinWidth(1) )
+                        ht_bins_z = (nbins_z, ht_z.GetBinLowEdge(1), ht_z.GetBinLowEdge(nbins_z) + ht_z.GetBinWidth(nbins_z) )
                         
                         ht_bins = ht_bins_x + ht_bins_y + ht_bins_z
                     else:
@@ -237,7 +238,8 @@ def dataset_hists(hist_worker,
                 htmp.SetDirectory(0)
                 hset = filter(lambda hs: hs.variable==var.name, cat_hists)[0]
                 hset.hist.Add(htmp)
-                hset.hist.SetName("category_%s_var_%s"%(category.name, var.name))
+                ##! - - - - need to make the name unique to avoid stupid ROOT.TAppend Warnings 
+                hset.hist.SetName("%s_category_%s_var_%s"%(outname, category.name, var.name))
                 htmp.Delete()
             tree.Delete()
         tfile.Close()
@@ -260,7 +262,7 @@ def dataset_hists(hist_worker,
         for hset in hist_set:
             hist = hset.hist
             hist.SetTitle(hist.GetName())
-            hist.Write("%s_%s"%(prefix, hist.GetName()), ROOT.TObject.kOverwrite)
+            hist.Write("%s"%(hist.GetName().replace(outname, prefix)), ROOT.TObject.kOverwrite)
         hfile.Close()
 
     canvas.Close()

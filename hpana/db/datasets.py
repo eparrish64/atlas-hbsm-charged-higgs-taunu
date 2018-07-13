@@ -38,8 +38,8 @@ try:
     from pyAMI.auth import AMI_CONFIG, create_auth_config
 except ImportError:
     USE_PYAMI = False
-    log.warning("pyAMI is not installed. "
-                "Cross section retrieval will be disabled.")
+    log.debug("pyAMI is not installed. "
+              "Cross section retrieval will be disabled.")
 
 ##--------------------------------------------------------------------------------
 ## consts
@@ -220,7 +220,7 @@ class Database(dict):
                 match.group('stream'),
                 match.group('tag'))
 
-    def __init__(self, name='datasets', version="", verbose=False, stream=sys.stdout):
+    def __init__(self, name='DB', version="", verbose=False, stream=sys.stdout):
         super(Database, self).__init__()
         self.name = name
         self.verbose = verbose
@@ -228,10 +228,10 @@ class Database(dict):
         self.version = version
         
         # - - - - - - - - where to put the database yml file
-        self.filepath = os.path.join(HERE, '%s%s.yml' % (self.name, self.version))
+        self.filepath = os.path.join(HERE, 'DataBase/%s%s.yml' % (self.name, self.version))
         if os.path.isfile(self.filepath):
             with open(self.filepath) as db:
-                log.info("Loading database '%s' ..." % self.name)
+                log.info("Loading database '%s' ..." % self.filepath)
                 d = yaml.load(db)
                 if d:
                     self.update(d)
@@ -506,7 +506,7 @@ class Dataset(Serializable):
         self.year = year
         self.stream = stream
         
-    @cached_property
+    @property
     def weight(self):
         if self.events !=0:
             return reduce(lambda x,y:x*y, self.xsec_kfact_effic) / self.events
@@ -514,7 +514,7 @@ class Dataset(Serializable):
             log.warning(" 0 lumi weight for %s"%self.name)
             return 0.
         
-    @cached_property
+    @property
     def events(self,
                events_cutflow_hist=EVENTS_CUTFLOW_HIST[MC_CAMPAIGN],
                events_cutflow_bin=EVENTS_CUTFLOW_BIN[MC_CAMPAIGN]):

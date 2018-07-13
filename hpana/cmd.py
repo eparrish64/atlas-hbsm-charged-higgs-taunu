@@ -30,8 +30,8 @@ def get_base_parser():
     base_parser.add_argument("--mc-campaign", "-mcc", type=str, default="mc16",choices=("mc15", "mc16"),
                         help="mc campaign; analysis samples, ntuples branches, etc. might be different among them")
 
-    base_parser.add_argument("--ntuples-version", "-nv", type=str, 
-                        help="ntuples version; should match the database version you want to use")
+    base_parser.add_argument("--db-version", "-nv", type=str, 
+                        help="database version; should match the database version you use when creating database")
 
     base_parser.add_argument("--fields", nargs="+",
                         help="list of the variables that you want to analyze")

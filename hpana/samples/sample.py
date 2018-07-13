@@ -73,10 +73,10 @@ class HistWorker:
         self.hist_templates = hist_templates
         
     def __repr__(self):
-        return "name=%r, sample=%r, systematic=%r\n"\
-            "||variables||=%r\n||categories||=%r\n||weights||=%r\n"%(
+        return "<<< \n name=%r, sample=%r, systematic=%r\n"\
+            "<variables>=%r\n<categories>=%r\n<weights>=%r\n<hist templates>=%r\n>>>\n"%(
                 self.name, self.sample, self.systematic,
-                self.fields, self.categories, self.weights)
+                self.fields, self.categories, self.weights, self.hist_templates)
         
         
 ##---------------------------------------------------------------------------------------
@@ -99,15 +99,19 @@ class Sample(object):
     def __init__(self, config,
                  name='Sample',
                  label='Sample',
+                 database=None,
                  **kwargs):
         # - - - - - - - - passing main configurations to the sample
         self.config = config
 
+        # - - - - - - - - database
+        self.database = database
+        
         # - - - - - - - - minimal flags
         self.name = name
         self.label = label
-        self.hist_name_template = kwargs.pop(
-            "hist_name_template", self.config.hist_name_template)
+        # self.hist_name_template = kwargs.pop(
+        #     "hist_name_template", self.config.hist_name_template)
         
         self.color = kwargs.get("color", 1)
         self.hist_decor = kwargs
@@ -155,7 +159,7 @@ class Sample(object):
         if category:
             cuts += category.cuts
         if not trigger:
-            cuts += self.config.trigger
+            cuts += self.config.trigger(dtype="MC")
         else:
             cuts += trigger
         
@@ -448,7 +452,6 @@ class Sample(object):
                     hsum = hists[0].hist
                     for hs in hists[1:]:
                         hsum.Add(hs.hist)
-                    #hsum = reduce(lambda h1, h2: h1 + h2, [hs.hist for hs in hists])
                     outname = self.config.hist_name_template.format(self.name, cat, var)
                     hsum.SetTitle(outname)
                     hsum.SetName(outname)
@@ -491,11 +494,12 @@ class SystematicsSample(Sample):
         which inherits from Sample class.
     """
     def __init__(self, *args, **kwargs):
-
+        database = kwargs.pop("database", None)
+        
         # - - - - - - - - instantiate the base class
-        super(SystematicsSample, self).__init__(*args, **kwargs)
-
-        db = kwargs.pop("db", None) 
+        super(SystematicsSample, self).__init__(*args, database=database, **kwargs)
+        self.database = database
+        
         # - - - - - - - - backgrounds
         if isinstance(self, Background):
             sample_key = self.__class__.__name__.lower()
@@ -527,15 +531,12 @@ class SystematicsSample(Sample):
         self.components = kwargs.pop("components", [])
         self.norms = {}
         
-        # - - - - - - - - Database 
-        self.db = self.config.database
-        
         # - - - - - - - loop over samples and get datasets for each
         for i, name in enumerate(self.samples):
             log.debug("--"*60)
             log.debug(name)
             try:
-                ds = self.db[name]
+                ds = self.database[name]
                 xsec, kfact, effic = ds.xsec_kfact_effic
                 log.debug(
                     "dataset: {0}  cross section: {1} [pb] \n"
@@ -545,7 +546,7 @@ class SystematicsSample(Sample):
                         ds.name, xsec, kfact, effic, ds.events))
                 self.datasets.append(ds)
             except KeyError:
-                log.warning("%s is missing in %s database"%(name, self.db.name))
+                log.warning("%s is missing in %s database"%(name, self.database.filepath))
                 
 
     @classmethod

@@ -1,4 +1,4 @@
-__all__ = ["WEIGHTS", "Weight"]
+__all__ = ["Weight"]
 
 from .trigger import TRIGGER_EFFICIENCIES 
 from . import MC_CAMPAIGN
@@ -30,15 +30,31 @@ class Weight:
                  "jet_sf_NOMINAL_global_ineffSF_MV2c10"),
     }
     # - - - - - - - - might be different between the channels
-    W_MU = ("1",)
-    W_EL = ("1",)
+    W_MU = (
+        "(n_muons==1)",
+        "mu_0_sf_NOMINAL_MuEffSF_TTVA",
+        "mu_0_sf_NOMINAL_MuEffSF_IsoFixedCutTight",
+        "mu_0_sf_NOMINAL_MuEffSF_Reco_QualTight")
     
-    #WIP:make it to work per year - - - - trigger
+    W_EL = (
+        "(n_electrons==1)",
+        "el_0_sf_NOMINAL_EleEffSF_offline_RecoTrk",
+        "el_0_sf_NOMINAL_EleEffSF_Isolation_TightLLH_d0z0_v13_isolFixedCutTight",
+        "el_0_sf_NOMINAL_EleEffSF_offline_MediumLLH_d0z0_v13",
+        
+        "el_0_sf_NOMINAL_EleEffSF_SINGLE_E_2015_e24_lhmedium_L1EM20VH_OR"\
+        "_e60_lhmedium_OR_e120_lhloose_2016_2017_e26_lhtight_nod0_ivarloose_"\
+        "OR_e60_lhmedium_nod0_OR_e140_lhloose_nod0_MediumLLH_d0z0_v13_isolFixedCutTight",
+        )
+
+    # - - - - since we 
+    W_LEP = ("({0} + {1})/(n_electrons+n_muons)".format("*".join(W_MU), "*".join(W_EL)), )
     
     W_TRIGGER_TAUJET = {
         "mc15": ("nominal_trig_eff({})".format("met_et/1000."), ),
         "mc16": ("nominal_trig_eff({})".format("met_p4->Et()/1000."), ),
     }
+                 
     
     W_TRIGGER_TAULEP = ("1",)
     
@@ -57,8 +73,9 @@ class Weight:
             "TAU": W_TAU,
             "JET": W_JET,
             "BJET": W_BJET,
-            "MU": W_MU,
-            "EL": W_EL,
+            #"MU": W_MU,
+            #"EL": W_EL,
+            "LEP": W_LEP,
             "TRIGGER": W_TRIGGER_TAULEP},
     }
     
@@ -101,7 +118,3 @@ class Weight:
         return "WEIGHT:: name=%r, type=%r, channel=%r, mc_camp=%r"%(
             self.name, self.wtype, self.channel, self.mc_camp)
     
-
-# - - - - - - - - instantiate weights 
-WEIGHTS = Weight.factory()
-

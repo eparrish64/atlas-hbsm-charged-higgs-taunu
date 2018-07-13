@@ -7,7 +7,7 @@ like selections , variables, weights, etc.
 import datetime, re
 
 # local
-from . import (MC_CAMPAIGN, NTUPLES_VERSION, CACHE_DIR, YEAR_ENERGY,
+from . import (MC_CAMPAIGN, CACHE_DIR, YEAR_ENERGY,
                EVENTS_CUTFLOW_HIST, EVENTS_CUTFLOW_BIN, NORM_FIELD)
 from .systematics import *
 from .categories import *
@@ -16,10 +16,6 @@ from .trigger import *
 from .weights import *
 from .variables import *
 
-from samples.data import Data
-from db.datasets import Database
-from db.decorators import cached_property
-
 ##--------------------------------------------------------------------------------------------------
 ## 
 class Configuration:
@@ -27,22 +23,20 @@ class Configuration:
     assuming variables/categories/weights are all the same for all years.
     """
     def __init__(self, channel,
+                 year="2018",
                  mc_campaign=MC_CAMPAIGN,
                  cache_dir=CACHE_DIR,
                  norm_field=NORM_FIELD,
-                 ntuples_version=NTUPLES_VERSION,):
+                 db_version="18v01",
+                 data_streams=("2015", "2016", )):
         self.channel = channel
         self.cache_dir = cache_dir
-        self.ntuples_version = ntuples_version
+        self.db_version = db_version
         self.norm_field = norm_field
         self.mc_camp = mc_campaign
-
-        #FIX ME: tmp fix 
-        if self.mc_camp == "mc16":
-            self.year = "2018"
-        if self.mc_camp == "mc15":
-            self.year = "2017"
-                    
+        self.data_streams = data_streams
+        self.year = year
+    
     @property
     def variables(self):
         variables = VARIABLES[self.channel]
@@ -50,16 +44,12 @@ class Configuration:
             var.mc_camp = self.mc_camp
         return variables
     
-    @property
-    def trigger(self):
-        """trigger should be unique per data taking year (stream)
+    def trigger(self, dtype="MC", category=None):
+        """trigger should be unique per data taking year (stream),
+        it's also different for DATA and MC.
         """
-        trigger_string = "(%s)"%TRIGGERS[self.channel][Data.STREAMS[0]] 
-        for stream in Data.STREAMS[1:]:
-            trigger_string += " || (%s)"% TRIGGERS[self.channel][stream]
+        return get_trigger(self.channel, data_streams=self.data_streams, dtype=dtype)
 
-        return ROOT.TCut(trigger_string)
-            
     @property
     def weights(self):
         """weights dictionary with keys as weight type 
@@ -82,7 +72,7 @@ class Configuration:
     
     @property
     def categories(self):
-        return Category.factory(channel=self.channel, mc_camp=self.mc_camp)
+        return Category.factory(channel=self.channel, mc_camp=self.mc_camp) + self.ff_cr_regions
 
     @property
     def systematics(self):
@@ -95,7 +85,7 @@ class Configuration:
         """ lumi is per data taking year (stream)
         """
         lumi = 0
-        for stream in Data.STREAMS:
+        for stream in self.data_streams:
             try:
                 lumi += LUMI[stream]
             except KeyError:
@@ -106,7 +96,7 @@ class Configuration:
     def energy(self):
         """ should be the same among different streams.
         """
-        stream = Data.STREAMS[0]
+        stream = self.data_streams[0]
         return YEAR_ENERGY[stream]
 
     @property
@@ -139,12 +129,6 @@ class Configuration:
     def signal_masses(self):
         return SIGNAL_MASSES
 
-    @cached_property
-    def database(self):
-        return Database(
-            name="datasets_%s%s"%(self.channel, self.ntuples_version),
-            verbose=False)
-    
     @property
     def hists_file(self):
         return "HISTS_%s_%s.root"%(self.channel, datetime.datetime.today().strftime("%Y_%m_%d"))

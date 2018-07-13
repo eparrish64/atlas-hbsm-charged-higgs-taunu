@@ -64,6 +64,13 @@ class Analysis(object):
     "FakeFactors/CorrectUpsilon_1D_QCD.C",
     ]
     CXX_MACROS = [os.path.join(__HERE, "cxxmacros", cm) for cm in CXX_MACROS]
+
+    ROOT_CONF_FILES = [
+        "TriggerEfficiency/met_efficiencies_lcw70.root",
+        "TriggerEfficiency/met_efficiencies_mht110.root",
+        "TriggerEfficiency/met_efficiencies_mht90.root",
+    ]
+    ROOT_CONF_FILES = [os.path.join(__HERE, "cxxmacros", cm) for cm in ROOT_CONF_FILES]
     
     def __init__(self, config,
                  suffix=None,
@@ -79,7 +86,11 @@ class Analysis(object):
         # - - - - - - - - loading and compiling cxx macros
         if compile_cxx:
             self.compile_cxx()
-            
+
+            # - - - - - - - - copy root config files to working dir
+            for rf in Analysis.ROOT_CONF_FILES:
+                os.system("cp %s %s"%(rf, os.getcwd()))
+                
         # - - - - - - - - some basic flags
         self.use_embedding = use_embedding
         self.suffix = suffix

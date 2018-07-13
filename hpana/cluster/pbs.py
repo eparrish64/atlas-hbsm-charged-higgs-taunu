@@ -124,7 +124,7 @@ class PBSMonitor(object):
 
 
 ## job monitoring 
-MONITOR = PBSMonitor()
+#MONITOR = PBSMonitor()
 
 def qsub(cmd,
          queue='medium',

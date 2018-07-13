@@ -91,9 +91,9 @@ void load_data(){
 
   if(fit_met_nominal_110) return;
 
-  TFile* f_70 = TFile::Open("/cluster/warehouse/sbahrase/HPlusTauNu/hpana/hpana/cxxmacros/TriggerEfficiency/met_efficiencies_lcw70.root");
-  TFile* f_90 = TFile::Open("/cluster/warehouse/sbahrase/HPlusTauNu/hpana/hpana/cxxmacros/TriggerEfficiency/met_efficiencies_mht90.root");
-  TFile* f_110 = TFile::Open("/cluster/warehouse/sbahrase/HPlusTauNu/hpana/hpana/cxxmacros/TriggerEfficiency/met_efficiencies_mht110.root");
+  TFile* f_70 = TFile::Open("met_efficiencies_lcw70.root");
+  TFile* f_90 = TFile::Open("met_efficiencies_mht90.root");
+  TFile* f_110 = TFile::Open("met_efficiencies_mht110.root");
 
   fit_met_3jets_70 = dynamic_cast<TF1*> (f_70->Get("fit_met_3jets"));       
   fit_met_binning_70 = dynamic_cast<TF1*> (f_70->Get("fit_met_binning"));     

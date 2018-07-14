@@ -48,21 +48,19 @@ class Configuration:
         """trigger should be unique per data taking year (stream),
         it's also different for DATA and MC.
         """
+        # - - check if it is a MULTIJET (aka QCD) control region
+        if category:
+            if ("MULTIJET" in category.name or "QCD" in category.name):
+                log.debug("applying multijet trigger for %s category"%category.name)
+                return ROOT.TCut(MULTIJET_TRIGGER)
+            
         return get_trigger(self.channel, data_streams=self.data_streams, dtype=dtype)
-
-    @property
-    def weights(self):
-        """weights dictionary with keys as weight type 
-        and items as a list of weight string
-        """
-        return self.weight_fields
     
     @property
     def weight_fields(self):
         """weight fields list
         """
-        wfs = Weight.factory(channel=self.channel, mc_camp=self.mc_camp)
-        return [w.name for w in wfs]
+        return Weight.factory(channel=self.channel, mc_camp=self.mc_camp)
     
     @property
     def event_total_weight(self):

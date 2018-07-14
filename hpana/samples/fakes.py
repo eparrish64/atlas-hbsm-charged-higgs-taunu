@@ -16,7 +16,11 @@ from .. import log
 ## - - dedicated sample class for jets faking taus background 
 ##---------------------------------------------------------------------------------------
 class QCD(Sample):
-    #WIP: - - - - - - - -  Fake-Factor weights are different for different selection categories
+    """
+    
+    """
+    
+    # - - - -  Fake-Factor weights are different for different selection categories
     FF_TYPES = {
         "taujet": {
             "PRESELECTION":1,
@@ -37,12 +41,15 @@ class QCD(Sample):
         }
     }
 
+    # - - - - control region FFs are calcualted with a the following fucntions, loaded in the global ROOT scope. 
     FF_WCR = "GetFF02_WCR({0}, {1})"
-    FF_QCD = "GetFF02_QCD({0}, {1})" 
+    FF_QCD = "GetFF02_QCD({0}, {1})"
+    
     TEMPLATE_VARS = {
         "mc16": ("tau_0_p4->Pt()/1000.", "tau_0_n_charged_tracks"),
         "mc15": ("tau_0_pt/1000.", "tau_0_n_tracks"),}
-    
+
+    # - - - - combinined FFs are calcualted with a the following fucntion, loaded in the global ROOT scope. 
     rQCD = "GetFFCombined({0}, {1}, {2}, {3}, {4})"
     
     
@@ -138,14 +145,30 @@ class QCD(Sample):
         if not categories:
             categories = self.config.categories
 
+        if not trigger:
+            data_triggers = self.data.triggers(categories)
+            mc_triggers = self.mc[0].triggers(categories)
+            
+        # - - - - tauID = ANTITAU * FF
         tauid = kwargs.pop("tauid", self.tauid)
-        trigger = kwargs.pop("trigger", self.config.trigger(dtype="DATA"))
+
+        """
+        ## prepare categories; deep copy since we don't want change categories.
+        ## in general selections might be different for DATA and MC 
+        ## due to additional filters like trigger, tauid, 
+        ## truth-match, etc. beside the selection category cuts.
+        ## keep in the mind that the trigger might be different for different selection categories.
+        """
         
-        # - - - - prepare categories; deep copy since we don't want change categories
-        categories_cp = copy.deepcopy(categories)
-        for category in categories_cp:
-            # - - - - filters
-            category.cuts += self.cuts(extra_cuts=extra_cuts, tauid=tauid, trigger=trigger)
+        mc_categories = copy.deepcopy(categories)
+        for mc_category in mc_categories:
+            mc_category.cuts += self.cuts(trigger=trigger if trigger else mc_triggers[mc_category.name],
+                                           extra_cuts=extra_cuts, tauid=tauid,)
+
+        data_categories = copy.deepcopy(categories)
+        for data_category in data_categories:
+            data_category.cuts += self.cuts(trigger=trigger if trigger else data_triggers[data_category.name],
+                                            extra_cuts=extra_cuts, tauid=tauid,)
 
         # - - - - prepare MC and FF weights
         mc_weights = self.weights(categories=categories)
@@ -178,7 +201,7 @@ class QCD(Sample):
                             dataset=ds,
                             systematic=systematic,
                             fields=fields,
-                            categories=categories_cp,
+                            categories=mc_categories,
                             weights=total_weights)
 
                     mc_workers.append(worker)
@@ -195,7 +218,7 @@ class QCD(Sample):
                     dataset=ds,
                     systematic=systematic,
                     fields=fields,
-                    categories=categories_cp,
+                    categories=data_categories,
                     weights=ff_weights)
 
                 data_workers.append(worker)
@@ -402,9 +425,11 @@ class QCD(Sample):
     
     
 ##---------------------------------------------------------------------------------------
-## leptons faking a tau 
+## - - leptons faking a tau 
+##---------------------------------------------------------------------------------------
 class LepFake(Sample):
-        
+    """
+    """
     def __init__(self, config, mc, name="LepFake", label="l->#tau", **kwargs):
         # - - - - instantiate base 
         super(LepFake, self).__init__(config, name=name, label=label, **kwargs)
@@ -445,7 +470,7 @@ class LepFake(Sample):
             categories = self.config.categories
             
         # - - - - prepare categories; deep copy since we don't want change categories
-        categories_cp = copy.deepcopy(categories)
+        mc_categories = copy.deepcopy(categories)
             
         truth_match_tau = kwargs.pop("truth_match_tau", None)
         
@@ -453,7 +478,7 @@ class LepFake(Sample):
         lepfake_workers = []
         for mc in self.mc:
             # - - - - turn off truth matching 
-            lepfake_workers += mc.workers(categories=categories_cp, fields=fields,systematics=systematics,
+            lepfake_workers += mc.workers(categories=mc_categories, fields=fields,systematics=systematics,
                                           weighted=weighted,truth_match_tau=self.leptau,**kwargs)
 
         # - - - - add LepFake prefix to the workers names

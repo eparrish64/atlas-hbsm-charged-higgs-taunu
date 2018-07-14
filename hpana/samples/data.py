@@ -93,6 +93,21 @@ class Data(Sample):
         self.info = DataInfo(self.config.data_lumi / 1e3, self.config.energy)
         self.blind = blind
         self.blind_regions = blind_regions
+
+    def triggers(self, categories=[]):
+        """ trigger could be different for different selection categories.
+        Parameters
+        -----------
+        categories:
+         list(Category type): selection categories. 
+        """
+        
+        trigger_dict = {} 
+        for cat in categories:
+            trigger_dict[cat.name] = self.config.trigger(dtype="DATA", category=cat)
+            
+        return trigger_dict
+
         
     def cuts(self, **kwargs):
         """Additional run number specific cuts.
@@ -132,21 +147,19 @@ class Data(Sample):
     def workers(self, **kwargs):
         """
         """
+        # - - - - not applicable to DATA
+        kwargs.pop("systematics", None)
+        
         # - - - - no weight on DATA and no hist for blind regions
-        systematics = kwargs.pop("systematics", ["NOMINAL"])
         weighted = kwargs.pop("weighted", False)
         
         categories = kwargs.pop("categories", [])
         categories = filter(lambda c: c.name not in self.blind_regions, categories)
-
-        # - - - - data trigger
-        trigger = kwargs.pop("trigger", self.config.trigger(dtype="DATA"))
         
         _workers = super(Data, self).workers(
             categories=categories,
             systematics=["NOMINAL"],
             weighted=False,
-            trigger=trigger,
             **kwargs)
         return _workers
     

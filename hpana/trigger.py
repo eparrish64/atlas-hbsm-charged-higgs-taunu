@@ -53,7 +53,7 @@ TRIGGER_EFFICIENCIES["taujet"] = {
 
 
 # - - - - multijet trigger for FFs multijet CR
-MULTI_JET_TRIGGER = ROOT.TCut("(run_number<288000 && HLT_4j85) || ((run_number>288000 && HLT_4j100))")
+MULTIJET_TRIGGER = "(run_number<288000 && HLT_4j85) || ((run_number>288000 && HLT_4j100))"
 
 
 ##-------------------------------------------------------------------------------------------
@@ -63,6 +63,8 @@ def get_trigger(channel, dtype="MC", data_streams=("2015", "2016")):
     """trigger should be unique per data taking year (stream),
     it could lso different for DATA and MC.
     """
+    assert dtype in ("MC", "DATA"), "choose from (DATA, MC)"
+    
     trigger_string = "||".join((TRIGGERS[channel][dtype][st] for st in data_streams))
     return ROOT.TCut(trigger_string)
                                                     

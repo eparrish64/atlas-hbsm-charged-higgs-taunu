@@ -14,7 +14,6 @@ import ROOT
 ## local imports
 from . import log
 from ..dataset_hists import dataset_hists
-
 from ..db import samples as samples_db, datasets
 from ..db.decorators import cached_property
 from ..systematics import get_systematics, iter_systematics, systematic_name
@@ -110,8 +109,6 @@ class Sample(object):
         # - - - - - - - - minimal flags
         self.name = name
         self.label = label
-        # self.hist_name_template = kwargs.pop(
-        #     "hist_name_template", self.config.hist_name_template)
         
         self.color = kwargs.get("color", 1)
         self.hist_decor = kwargs
@@ -133,6 +130,20 @@ class Sample(object):
             self.hist_decor.update(hist_decor)
         return self
 
+    def triggers(self, categories=[]):
+        """ trigger could be different for different selection categories, 
+        and also it could be different for DATA and MC.
+        Parameters
+        -----------
+        categories:
+             list(Category type): selection categories. 
+
+        """
+        trigger_dict = {} 
+        for cat in categories:
+            trigger_dict[cat.name] = self.config.trigger(dtype="MC", category=cat)
+        return trigger_dict
+    
     def cuts(self,
              category=None,
              trigger=None,
@@ -140,16 +151,20 @@ class Sample(object):
              extra_cuts=None,
              truth_match_tau=None,
              **kwargs):
-        """ to apply some cuts on the sample.
+        """ this method is for applying the overall selection. 
+        It will update the cuts list of the category with different trigger, tauid, etc. cuts.
         
         Parameters
         ----------
-        category: Category object;
+        category: 
+            Category type;
+        trigger: 
+            ROOT.TCut type; trigger selection
+        tauid: 
+            ROOT.TCut type; tau ID selection
+        truth_match_tau: 
+            ROOT.TCut type; truth matchig selection
 
-        region_cut: ROOT.TCut type, CR/SR region
-        trigger_Cut: ROOT.TCut type
-        systematic: str; systematics type.
-      
         Returns
         -------
         cuts: ROOT.TCut object
@@ -159,7 +174,7 @@ class Sample(object):
         if category:
             cuts += category.cuts
         if not trigger:
-            cuts += self.config.trigger(dtype="MC")
+            cuts += self.config.trigger(dtype="MC", category=category)
         else:
             cuts += trigger
         
@@ -183,18 +198,27 @@ class Sample(object):
 
 
     def weights(self, categories=[]):
-        """ MC scale factors 
+        """ MC scale factors.
+        The weights could in general be dependent on the category selection.
         """
+
+        # - - - - defensive copy
+        weight_fields = self.config.weight_fields[:]
         
-        # - - - - - - - - MC common weights
+        # - - - - MC common weights
         if not categories:
             categories = self.config.categories
-        weights = {}
+        weights_dict = {}
         for category in categories:
-            weights[category.name] = self.config.weight_fields
-
-        return weights
-    
+            # - - - - if MJ trigger is applied for a regio,then we don't need MET trigger efficiency applied.
+            if category.name == self.config.ff_cr_regions[0].name:
+                for wf in weight_fields:
+                    if wf.wtype =="TRIGGER":
+                        weight_fields.remove(wf)
+                        
+            weights_dict[category.name] = [wf.name for wf in weight_fields]
+        
+        return weights_dict
     @property
     def systematics(self):
         return ["NOMINAL"]
@@ -250,13 +274,20 @@ class Sample(object):
             fields = self.config.variables
         if not categories:
             categories = self.config.categories
+
+        # - - - - same trigger for all selection categories ?
+        if not trigger:
+            triggers = self.triggers(categories)
             
         # - - - - defensive copy 
         categories_cp = copy.deepcopy(categories)
         for category in categories_cp:
-            # - - - - filters
-            category.cuts += self.cuts(
-                trigger=trigger, tauid=tauid, extra_cuts=extra_cuts, truth_match_tau=truth_match_tau)
+            # - - additional filters like trigger, tauid, truth-match, etc. beside the selection category cuts.
+            # - - keep in the mind that the trigger might be different for different selection categories.
+            # - - and for DATA and MC
+            category.cuts += self.cuts(trigger=trigger if trigger else triggers[category.name],
+                                       tauid=tauid, extra_cuts=extra_cuts, truth_match_tau=truth_match_tau)
+            
         # - - - - one worker per dataset per systematic
         workers = set()
         for ds in self.datasets:

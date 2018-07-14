@@ -98,7 +98,7 @@ class Analysis(object):
         # - - - - - - - - analysis MC samples 
         if use_embedding:
             raise RuntimeError("Embedding is not ready yet!")
-            log.info("Using embedded Ztautau")
+            log.info("Using embedded W --> taunu")
             self.wtaunu = samples.Embedded_Wtaunu(
                 self.config,
                 database=self.database,
@@ -335,9 +335,15 @@ class Analysis(object):
     def hists(self, samples=[], categories=[], fields=[], systematics=[], **kwargs):
         """
         """
-        workers = self.workers(samples=samples, categories=categories, fields=fields, systematics=systematics, **kwargs)
+        workers = self.workers(
+            samples=samples, categories=categories, fields=fields, systematics=systematics, **kwargs)
         log.debug(workers)
 
+        log.info(
+            "************** submitting %i jobs  ************"%len(workers))
+        log.info(
+            "***********************************************")
+        
         pool = multiprocessing.Pool(multiprocessing.cpu_count())
         results = [pool.apply_async(dataset_hists, (wk,)) for wk in workers]
 

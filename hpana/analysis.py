@@ -51,13 +51,17 @@ class Analysis(object):
     "FakeFactors/WCR/GetFF02_WCR.C",
     "FakeFactors/WCR/GetFF01_WCR.C",
     "FakeFactors/WCR/GetFF03_WCR.C",
-    "FakeFactors/GetFFCombined.C",
+    #"FakeFactors/GetFFCombined.C",
     "FakeFactors/GetFFCombined_up.C",
     "FakeFactors/GetFFCombined_dn.C",
     "FakeFactors/GetElFakeSF.C",
         
     "TriggerEfficiency/ApplyEff.C",
     "GetTopPtWeight.C",
+
+    # - - - - new (derived within the hpana and from r21 ntuples)
+    "FakeFactors/FFs_COMBINED.cxx",
+    "FakeFactors/FFs_CR.cxx",    
         
     "FakeFactors/CorrectUpsilon.C",
     "FakeFactors/CorrectUpsilon_1D_WCR.C",
@@ -463,11 +467,8 @@ class Analysis(object):
             
         if not antitau:
             # - - - - PLEASE NOTE THAT tau_0_jet_bdt_score_sig cut is included in the template hist
-            antitau = ROOT.TCut("tau_0_jet_bdt_loose==0")
+            antitau = ROOT.TCut("tau_0_jet_bdt_loose==0 && tau_0_jet_bdt_score_trans > 0.02")
             
-        if not template_hist_bins:
-            # - - default for tau pt 
-            template_hist_bins = [40, 50, 60, 80, 100, 3500]
             
         # - - - - parallel processing
         workers = []
@@ -582,7 +583,7 @@ class Analysis(object):
             for jbs_n, jbs_wp in enumerate(tau_jet_bdt_score_trans_wps):
                 ffs_dict[cr_name]["tauJetBDT_0%i"%(jbs_n+1)] = {}
                 for itk in n_charged_tracks:
-                    tkey = "ntracks%i"%itk
+                    tkey = "%i"%itk
                     ffs_dict[cr_name]["tauJetBDT_0%i"%(jbs_n+1)][tkey]= {}
 
                     htmp_tau = data_mc_tau_h.Clone()
@@ -596,7 +597,7 @@ class Analysis(object):
                     antitau_pt_hist = antitau_pt_hist.Rebin(len(hist_bins)-1, "hantitau", array("d", hist_bins))
                     
                     for i, pt in enumerate(hist_bins):
-                        pkey = "pT%i"%hist_bins[i]
+                        pkey = "%i"%hist_bins[i]
                         tau_bin_cont = tau_pt_hist.GetBinContent(i)
                         antitau_bin_cont = antitau_pt_hist.GetBinContent(i)
                         if antitau_bin_cont==0:
@@ -635,10 +636,10 @@ class Analysis(object):
                         cxx_cache.write(
                             "float GetFF0{0}_{1}(float pt, int nTracks){{\n".format(jbs_n+1, cr) )
                         for itk in n_charged_tracks:
-                            tkey = "ntracks%i"%itk
+                            tkey = "%i"%itk
                             cxx_cache.write("\t if(nTracks==%i){\n"%itk)
                             for pT in template_hist_bins[tkey][1:]:
-                                pkey = "pT%i"%pT
+                                pkey = "%i"%pT
                                 ff = ffs_dict[cr]["tauJetBDT_0%i"%(jbs_n+1)][tkey][pkey]
                                 cxx_cache.write("\t\t if(pt < {0}) return {1};\n".format(pT, ff))
 

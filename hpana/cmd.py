@@ -178,8 +178,8 @@ def get_ffs_parser(base_parser=None):
     ffs_parser.add_argument("--cache-ffs-hists", action="store_true",
                               help="cache histograms used for evaluating FFs")
     
-    ffs_parser.add_argument("--plot-shapes", action="store_true",
-                              help="plot template shapes")
+    ffs_parser.add_argument("--validation-plots", action="store_true",
+                              help="get different validation plots")
     
     ffs_parser.add_argument("--eval-rqcd", action="store_true",
                               help="evaluate rQCD")

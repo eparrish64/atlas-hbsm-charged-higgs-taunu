@@ -17,33 +17,34 @@ from .. import log
 ##---------------------------------------------------------------------------------------
 class QCD(Sample):
     """
-    
     """
     
     # - - - -  Fake-Factor weights are different for different selection categories
+    # - - - - THE ORDER IS SET IN ..weights.Weight 
     FF_TYPES = {
         "taujet": {
-            "PRESELECTION":1,
-            "BVETO":2,
-            "TTBAR":3,
-            "SR_TAUJET":3,
-            "QCD":111,
-            "FF_CR_MULTIJET":111},
+            "SR_TAUJET":1000,
+            "TTBAR":1001,
+            "BVETO":1002,
+            "PRESELECTION":1003,
+            "FF_CR_MULTIJET":1004},
         "taulep":{
-            "FF_CR_WJETS":222,
-            "TAUMU_BVETO":6,
-            "TAUEL_BVETO":6,
-            "DILEP_BTAG":3,
-            "ZEE":4,
-            "SR_TAUMU":7,
-            "SR_TAUEL":7,
-            "SR_TAULEP":7,
+            "SR_TAUEL":1005,
+            "SR_TAUMU":1006,
+            "SR_TAULEP":1007,
+            "TAUEL_BVETO":1008,
+            "TAUMU_BVETO":1009,
+            "SS_TAUEL": 1010,
+            "SS_TAUMU": 1011,
+            "DILEP_BTAG":1012,
+            "ZEE":1013,
+            "FF_CR_WJETS":1014,
         }
     }
 
     # - - - - control region FFs are calcualted with a the following fucntions, loaded in the global ROOT scope. 
-    FF_WCR = "GetFF02_WCR({0}, {1})"
-    FF_QCD = "GetFF02_QCD({0}, {1})"
+    FF_WCR = "GetFF02_FF_CR_WJETS({0}, {1})"
+    FF_QCD = "GetFF02_FF_CR_MULTIJET({0}, {1})"
     
     TEMPLATE_VARS = {
         "mc16": ("tau_0_p4->Pt()/1000.", "tau_0_n_charged_tracks"),

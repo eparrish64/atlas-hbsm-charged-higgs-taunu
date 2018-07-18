@@ -174,21 +174,21 @@ tau_0_upsilon = Variable(
 
 tau_0_jet_bdt_score = Variable(
     "tau_0_jet_bdt_score",
-    title='#font[152]{#tau}_{1} #font[52]{#tau Jet BDT score}',
+    title='#font[152]{#tau}_{1} #font[52]{Jet BDT score}',
     binning=(100, -1., 1.))
 
 tau_0_jet_bdt_score_trans = Variable(
     "tau_0_jet_bdt_score_trans",
-    title='#font[152]{#tau}_{1} #font[52]{#tau Jet BDT score signal transformed}',
+    title='#font[152]{#tau}_{1} #font[52]{Jet BDT score signal transformed}',
     tformula = {
         "mc15": "tau_0_jet_bdt_score_sig",
         "mc16": "tau_0_jet_bdt_score_trans",
     },
-    binning=(100, 0, 1.), )
+    binning=(20, 0, 1.), )
 
 tau_0_jet_width = Variable(
     "tau_0_jet_width",
-    title='#font[152]{#tau}_{1} #font[52]{#tau Jet width}',
+    title='#font[152]{#tau}_{1} #font[52]{Jet width}',
     binning=(40, 0., .4))
 
 
@@ -454,8 +454,8 @@ BDT_SCORES = {
 #VARIABLES["taujet"] += BDT_SCORES["taujet"]
 
 
-# - - - - - - - - variables for rQCD calcualtion
-rQCD_VARS = {"ntracks1": tau_0_jet_width, "ntracks3": tau_0_jet_bdt_score_trans}
+# - - - - - - - - variables for rQCD calcualtion (different for 1p and 3p taus)
+rQCD_VARS = {"1": tau_0_jet_width, "3": tau_0_jet_bdt_score_trans}
 
 # - - - - - - - - variables for extracting FFs shapes 
 FFS_TEMPLATE_VARS = (tau_0_pt, tau_0_n_charged_tracks, tau_0_jet_bdt_score_trans)

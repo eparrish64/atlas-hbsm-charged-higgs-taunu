@@ -73,8 +73,8 @@ TAU_DECAY_MODE = {
     "mc16": TCut("tau_0_decay_mode==0"),
 }
 TAUID_LOOSE = {
-    "mc15": TCut("tau_0_jet_bdt_loose==1 && tau_0_jet_bdt_score_sig>0.02"),
-    "mc16": TCut("tau_0_jet_bdt_loose==1 && tau_0_jet_bdt_score_trans>0.02"),
+    "mc15": TCut("tau_0_jet_bdt_loose==0 && tau_0_jet_bdt_score_sig>0.02"),
+    "mc16": TCut("tau_0_jet_bdt_loose==0 && tau_0_jet_bdt_score_trans>0.02"),
 }
 TAUID_MEDIUM = {
     "mc15":TCut("tau_0_jet_bdt_medium==1"),
@@ -447,25 +447,27 @@ class Category:
     #>>> presel = Category("Preselection", label="presel", channel="taujet", year="2017")
     #>>> categories = Category.factory()
     """
+    
+    # - - - - PLEAS KEEP THE ORDER (NEEDED FOR FFs WEIGHTS INDEXING)
     TYPES = {
-        "taujet":{
-            "PRESELECTION": "presel",
-            "TTBAR": "ttbar CR",
-            #"QCD": "qcd CR",
-            "BVETO": "b-veto CR",
-            "SR_TAUJET": "#tau-jet SR",},
+        "taujet": OrderedDict([
+            ("SR_TAUJET", "#tau-jet SR",), #<! (name, label)
+            ("TTBAR", "ttbar CR"),
+            ("BVETO", "b-veto CR"),
+            ("PRESELECTION", "presel"),
+        ]),
         
-        "taulep":{
-            "PRESELECTION": "presel",
-            "SR_TAUEL": "#tau-e SR",
-            "SR_TAUMU": "#tau-#mu SR",
-            "TAUMU_BVETO": "#tau-#mu b-veto CR",
-            "TAUEL_BVETO": "#tau-e b-veto CR",
-            "DILEP_BTAG": "#mu-e b-tag CR",
-            "SS_TAUEL": "same sign #tau-el CR",
-            "SS_TAUMU": "same sign #tau-#mu CR",
-            #"ZEE": "Zee CR",
-        },
+        "taulep":OrderedDict([
+            ("SR_TAUEL", "#tau-e SR"),
+            ("SR_TAUMU", "#tau-#mu SR"),
+            ("TAUEL_BVETO", "#tau-e b-veto CR"),
+            ("TAUMU_BVETO", "#tau-#mu b-veto CR"),
+            ("SS_TAUEL", "same sign #tau-el CR"),
+            ("SS_TAUMU", "same sign #tau-#mu CR"),
+            ("DILEP_BTAG", "#mu-e b-tag CR"),
+            #("ZEE","Zee CR"),
+            ("PRESELECTION", "presel"),
+        ]),
     }
     
     @classmethod

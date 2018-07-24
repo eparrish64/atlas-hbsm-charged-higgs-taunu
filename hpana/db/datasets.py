@@ -64,7 +64,6 @@ MC16_NTUP_PATTERN = re.compile(
     '\.(?P<tag>\w+)'
     '\.(?P<suffix>\w+)$'
 )
-
 NTUP_PATTERN_2018 = re.compile(
     '^(?P<prefix>(group.phys-higgs|user))'
     '\.(?P<uname>\w+)'
@@ -344,7 +343,8 @@ class Database(dict):
                         if match.group('type') != 'mc':
                             continue
                         dsid = match.group('id')
-                        name = match.group('name')
+                        # - - - - get the name from XS file (due to Grid limitations ntuples names are shortend)
+                        name = Dataset.get_name(dsid)
                         stream = "mc%s"%match.group('stream')
                         tag = match.group('tag')
                         version = match.group('version')
@@ -474,13 +474,20 @@ class Dataset(Serializable):
     @classmethod
     def get_name(cls, dsid):
         """ get name of a dsid from the xsec file
+        if the dsid is missing in the xsec file, give a tmp name and throw a warning.
         """
         with open(XSEC_FILE, "r") as xsec_file:
             lines = filter(lambda l: l[0].isdigit(), xsec_file.readlines())
+            
+        name = None
         for l in lines:
             if str(dsid)==l.split()[0]:
-                return l.split()[1]
-        
+                name = l.split()[1]
+        if not name:
+            log.warning("MISSING %s dataset in %s XS file"%(dsid, XSEC_FILE))
+            name = "MISSING_IN_XS_%s"%dsid
+        return name 
+    
     def __init__(self, name, datatype, treename, ds, dirs,
                  file_pattern='*.root*',
                  id=None,

@@ -2110,7 +2110,10 @@
 309500	 MadGraphPythia8EvtGen_A14NNPDF23LO_VBSWZlvlljj_m250_ISH0p5	 0.0077112	 0.77191	 1.0	 1.0
 309501	 MadGraphPythia8EvtGen_A14NNPDF23LO_VBSWZlvlljj_m350_ISH0p5	 0.0045857	 0.77473	 1.0	 1.0
 309538	 PowhegPythia8EvtGen_CT10_AZNLOCTEQ6L1_ggFH125_ZZ4nu_MET50	 30.19	 0.30784	 1.0	 1.0
-341003	 aMcAtNloPythia8EvtGen_A14NNPDF23LO_Hplus4FS_H400_taunu	 0.12879	 1.0	 1.0	 1.0
+
+341003	 aMcAtNloPythia8EvtGen_A14NNPDF23LO_Hplus4FS_H400_taunu	 1. 1. 1. 1. 
+##0.12879	 1.0	 1.0	 1.0
+
 341074	 MadGraphPythia8EvtGen_A14_CTEQ6LQ_jjaH_Hbb_SM_M125	 0.0843	 1.0	 1.0	 1.0
 341075	 MadGraphPythia8EvtGen_A14_CTEQ6LQ_jjaH_Hbb_HEFT_M125	 0.01539	 1.0	 1.0	 1.0
 341077	 MadGraphPythia8EvtGen_A14_CTEQ6LQ_ZbbjjaEWK	 6.7593	 1.0	 1.0	 1.0
@@ -3593,9 +3596,14 @@
 344254	 MadGraphPythia8EvtGen_A14NNPDF23LO_HplusInt_H180_taunu	 0.62192	 1.0	 1.0	 1.0
 344283	 Sherpa_NNPDF30NNLO_Zee2jets_Min_N_TChannel	 0.63161	 1.0	 1.0	 1.0
 344284	 Sherpa_NNPDF30NNLO_Zmm2jets_Min_N_TChannel	 0.63282	 1.0	 1.0	 1.0
-344287	 MadGraphPythia8EvtGen_A14NNPDF23LO_Hplus_H90_taunu	 476.01	 1.0	 1.0	 1.0
+
+344287	 MadGraphPythia8EvtGen_A14NNPDF23LO_Hplus_H90_taunu 1. 1. 1. 1.
+##476.01	 1.0	 1.0	 1.0
 344288	 MadGraphPythia8EvtGen_A14NNPDF23LO_Hplus_H100_taunu	 476.01	 1.0	 1.0	 1.0
-344289	 MadGraphPythia8EvtGen_A14NNPDF23LO_Hplus_H110_taunu	 476.01	 1.0	 1.0	 1.0
+
+344289	 MadGraphPythia8EvtGen_A14NNPDF23LO_Hplus_H110_taunu 1. 1. 1. 1.
+##476.01	 1.0	 1.0	 1.0
+
 344290	 MadGraphPythia8EvtGen_A14NNPDF23LO_Hplus_H120_taunu	 476.01	 1.0	 1.0	 1.0
 344291	 MadGraphPythia8EvtGen_A14NNPDF23LO_Hplus_H130_taunu	 476.01	 1.0	 1.0	 1.0
 344292	 MadGraphPythia8EvtGen_A14NNPDF23LO_Hplus_H140_taunu	 476.01	 1.0	 1.0	 1.0

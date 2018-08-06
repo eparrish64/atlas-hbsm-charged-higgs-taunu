@@ -133,6 +133,9 @@ def get_plotting_parser(base_parser=None):
     plotting_parser.add_argument('--signals', action="store_true",
                                  help='plot signals', )
     
+    plotting_parser.add_argument('--logy', action="store_true",
+                                 help='Y axis in log scale', )
+    
     plotting_parser.add_argument('--no-data', action="store_true",
                                  help='dont plot data', )
     return plotting_parser
@@ -151,6 +154,9 @@ def get_yields_parser(base_parser=None):
     
     yields_parser.add_argument("--yields-table", action="store_true",
                               help="print yields table")
+    
+    yields_parser.add_argument("--latex", action="store_true",
+                              help="LaTeX formatted table")
     
     yields_parser.add_argument("--samples", nargs="+",
                             help="list of samples to process")

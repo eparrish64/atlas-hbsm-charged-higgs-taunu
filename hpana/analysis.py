@@ -336,7 +336,7 @@ class Analysis(object):
                 
         return _workers
     
-    def hists(self, samples=[], categories=[], fields=[], systematics=[], **kwargs):
+    def hists(self, samples=[], categories=[], fields=[], systematics=[], dry_run=False, **kwargs):
         """
         """
         workers = self.workers(
@@ -347,6 +347,9 @@ class Analysis(object):
             "************** submitting %i jobs  ************"%len(workers))
         log.info(
             "***********************************************")
+        if dry_run:
+            log.info(workers)
+            return 
         
         pool = multiprocessing.Pool(multiprocessing.cpu_count())
         results = [pool.apply_async(dataset_hists, (wk,)) for wk in workers]
@@ -425,7 +428,9 @@ class Analysis(object):
                   subtract_mc=True,
                   cache_file=None,
                   write_cxx_macro=True,):
-        """ calculate and cache the fake factors.
+        """ calculate and cache the fake factors in dedicated control regions.
+        These factors then will be evaluated in other selection regions based on the fraction of q/g jets faking taus.
+
         Parameters
         - - - - - 
         template_hist: 
@@ -449,7 +454,7 @@ class Analysis(object):
             if template_fields:
                 assert len(template_fields)==3, "wrong number of fields"
                 template_hist = {
-                    #<! PLS NOTE the tformula order is Z:Y:X and for the binning it's X, Y, Z !
+                    #<! PLS NOTE that the tformula order is Z:Y:X and for the binning it's X, Y, Z !
                     template_fields[0].name: ROOT.TH3F("{0} : {1} : {2}".format(*(v.tformula for v in template_fields)),
                                                        "Z%s_Y%s_X%s".format(*(v.name for v in template_fields)),
                                                        100, 0., 1., 4, 0, 4, 800, 0, 4000),}
@@ -467,8 +472,7 @@ class Analysis(object):
             
         if not antitau:
             # - - - - PLEASE NOTE THAT tau_0_jet_bdt_score_sig cut is included in the template hist
-            antitau = ROOT.TCut("tau_0_jet_bdt_loose==0 && tau_0_jet_bdt_score_trans > 0.02")
-            
+            antitau = ROOT.TCut("tau_0_jet_bdt_loose==0")
             
         # - - - - parallel processing
         workers = []
@@ -577,37 +581,61 @@ class Analysis(object):
             
             log.info("TAU events; DATA: {}, MC: {}".format(data_tau_hsum.Integral() , mc_tau_hsum.Integral() if subtract_mc else "NAN") )
             log.info("ANTITAU events; DATA: {}, MC: {}".format(data_antitau_hsum.Integral(), mc_antitau_hsum.Integral() if subtract_mc else "NAN") )
-            
-            jbs_nbins = data_mc_tau_h.GetNbinsX() + 2 
-            # - - - - gather hists per tau pT and ntracks bin and also tau_jet_bdt_score WPs
-            for jbs_n, jbs_wp in enumerate(tau_jet_bdt_score_trans_wps):
-                ffs_dict[cr_name]["tauJetBDT_0%i"%(jbs_n+1)] = {}
-                for itk in n_charged_tracks:
-                    tkey = "%i"%itk
-                    ffs_dict[cr_name]["tauJetBDT_0%i"%(jbs_n+1)][tkey]= {}
 
+            # - - number of bins for the jet bdt score variable
+            jbs_nbins = data_mc_tau_h.GetNbinsX() + 2 
+            # - - gather hists per tau pT and ntracks bin and also tau_jet_bdt_score WPs
+            for jbs_n, jbs_wp in enumerate(tau_jet_bdt_score_trans_wps):
+                jkey = "tauJetBDT_0%i"%(100*jbs_wp)
+                ffs_dict[cr_name][jkey] = {}
+                for itk_n, itk in enumerate(n_charged_tracks):
+                    tkey = "%i"%itk
+                    ffs_dict[cr_name][jkey][tkey]= {}
+                    
                     htmp_tau = data_mc_tau_h.Clone()
                     htmp_antitau = data_mc_antitau_h.Clone()
-                    tau_pt_hist = htmp_tau.ProjectionZ("tau_pt", jbs_n + 2, jbs_nbins, itk, itk+1, "e").Clone()
-                    antitau_pt_hist = htmp_antitau.ProjectionZ("antitau_pt", jbs_n + 2, jbs_nbins, itk, itk+1, "e").Clone()
 
-                    # - - - - different binning for 1p and 3p taus
-                    hist_bins = template_hist_bins[tkey]
-                    tau_pt_hist = tau_pt_hist.Rebin(len(hist_bins)-1, "htau", array("d", hist_bins))
-                    antitau_pt_hist = antitau_pt_hist.Rebin(len(hist_bins)-1, "hantitau", array("d", hist_bins))
-                    
-                    for i, pt in enumerate(hist_bins):
-                        pkey = "%i"%hist_bins[i]
-                        tau_bin_cont = tau_pt_hist.GetBinContent(i)
-                        antitau_bin_cont = antitau_pt_hist.GetBinContent(i)
+                    # - - project along X and Y to get the bins
+                    htmp_X = htmp_tau.Project3D("x").Clone()
+                    htmp_Y = htmp_tau.Project3D("y").Clone()
+
+                    # - - keep jet BDT score along X (only a lower cut)
+                    x_low = htmp_X.FindBin(jbs_wp)
+                    x_high = htmp_X.GetNbinsX() + 2
+
+                    # - - ntracks along Y
+                    y_low = htmp_Y.FindBin(itk)
+                    y_high = htmp_Y.FindBin(n_charged_tracks[itk_n])
+
+                    # - - fitting bins for the actual shape variable
+                    fitting_bins = template_hist_bins[tkey]
+                    for _bin in range(1, len(fitting_bins)):
+                        pkey = "%i"%fitting_bins[_bin]
+                        htmp_Z = htmp_antitau.Project3D("z").Clone()
+                        z_low = htmp_Z.FindBin(fitting_bins[_bin-1])
+                        z_high = htmp_Z.FindBin(fitting_bins[_bin])
+                        
+                        tau_bin_cont = htmp_tau.Integral(x_low, x_high, y_low, y_high, z_low, z_high)
+                        antitau_bin_cont = htmp_antitau.Integral(x_low, x_high, y_low, y_high, z_low, z_high)
                         if antitau_bin_cont==0:
                             log.warning("{} bin for antitau is empty, setting tau/antitau to 1!".format(pkey))
                             tau_antitau_ratio = 1.
                         else:
                             tau_antitau_ratio = "%.4f"%(tau_bin_cont/antitau_bin_cont)
-                            ffs_dict[cr_name]["tauJetBDT_0%i"%(jbs_n+1)][tkey][pkey] = tau_antitau_ratio
+                        ffs_dict[cr_name][jkey][tkey][pkey] = tau_antitau_ratio
+                        
+                        log.debug("bins: {}".format((x_low, x_high, y_low, y_high, z_low, z_high)))
+                        log.debug("ratio in << {}  >> bin: {} ".format((jkey, tkey, pkey), tau_antitau_ratio))
+                        log.debug("--"*60)
+                        
+                        # - - clean up
+                        htmp_Z.Delete()
+                        
+                    htmp_X.Delete()
+                    htmp_Y.Delete()
                     htmp_tau.Delete()
                     htmp_antitau.Delete()
+                    
                     
         if not cache_file:
             cache_file = os.path.join(Analysis.__HERE, "cache", "FF_CR.yml")
@@ -632,15 +660,16 @@ class Analysis(object):
                 cxx_cache.write("#include <iostream>\n")
                 for cr in [c.name for c in control_regions]:
                     for jbs_n, jbs_wp in enumerate(tau_jet_bdt_score_trans_wps):
-                        cxx_cache.write("//! tau_0_jet_bdt_score_trans lower cut ({})\n".format(jbs_wp))
+                        jkey = "tauJetBDT_0%i"%(100*jbs_wp)
+                        cxx_cache.write("//! tau_0_jet_bdt_score_trans lower cut ({})\n".format(100*jbs_wp))
                         cxx_cache.write(
-                            "float GetFF0{0}_{1}(float pt, int nTracks){{\n".format(jbs_n+1, cr) )
+                            "float GetFF0{0}_{1}(float pt, int nTracks){{\n".format(100*jbs_wp, cr) )
                         for itk in n_charged_tracks:
                             tkey = "%i"%itk
                             cxx_cache.write("\t if(nTracks==%i){\n"%itk)
                             for pT in template_hist_bins[tkey][1:]:
                                 pkey = "%i"%pT
-                                ff = ffs_dict[cr]["tauJetBDT_0%i"%(jbs_n+1)][tkey][pkey]
+                                ff = ffs_dict[cr][jkey][tkey][pkey]
                                 cxx_cache.write("\t\t if(pt < {0}) return {1};\n".format(pT, ff))
 
                             # - - - -  close ntracks block   

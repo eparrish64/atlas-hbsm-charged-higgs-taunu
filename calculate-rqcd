@@ -20,7 +20,6 @@ FFs_ARGS = ffs_parser.parse_args()
 ## local
 from hpana.rqcd import fit_alpha, prep_ff_hists
 from hpana.variables import rQCD_VARS, FFS_TEMPLATE_VARS, tau_0_jet_width, tau_0_jet_bdt_score_trans
-from hpana.categories import TAUID_LOOSE
 from hpana.config import Configuration
 from hpana.analysis import Analysis
 from hpana.samples.sample import Sample, Histset
@@ -44,10 +43,10 @@ ROOT.gErrorIgnoreLevel = ROOT.kWarning #<! turn off useless ROOT Info messages (
 ##------------------------------------------------------------------------------------
 ## - - build both taujet and taulep analyses (FF CR s are for different channels)
 ##------------------------------------------------------------------------------------
-taujet_config = Configuration("taujet", data_streams=("2015", "2016"), mc_campaign=FFs_ARGS.mc_campaign, db_version="18v02")
+taujet_config = Configuration("taujet", data_streams=("2015", "2016"), mc_campaign=FFs_ARGS.mc_campaign, db_version="18v03")
 taujet_analysis = Analysis(taujet_config, compile_cxx=True)
 
-taulep_config = Configuration("taulep", data_streams=("2016",), mc_campaign=FFs_ARGS.mc_campaign, db_version="18v02")
+taulep_config = Configuration("taulep", data_streams=("2015", "2016",), mc_campaign=FFs_ARGS.mc_campaign, db_version="18v03")
 taulep_analysis = Analysis(taulep_config, compile_cxx=True)
 
 ##------------------------------------------------------------------------------------
@@ -67,9 +66,9 @@ FFS_CONTROL_REGIONS = taujet_config.ff_cr_regions + taulep_config.ff_cr_regions
 FIT_HIST_TEMPLATES = {
     #<! PLS NOTE the tformula order is Z:Y:X and for the binning it's X, Y, Z !
     "tau_0_jet_width":
-    ROOT.TH3F("tau_0_p4->Pt()/1000.:tau_0_n_charged_tracks:tau_0_jet_width", "tau_0_jet_width", 20, 0, .4, 4, 0, 4, 800, 0, 4000),
+    ROOT.TH3F("tau_0_p4->Pt():tau_0_n_charged_tracks:tau_0_jet_width_trks_dr04", "tau_0_jet_width", 20, 0, .4, 4, 0, 4, 800, 0, 4000),
     "tau_0_jet_bdt_score_trans":
-    ROOT.TH3F("tau_0_p4->Pt()/1000.:tau_0_n_charged_tracks:tau_0_jet_bdt_score_trans", "tau_0_jet_bdt_score_trans", 20, 0, 1., 4, 0, 4, 800, 0, 4000),
+    ROOT.TH3F("tau_0_p4->Pt():tau_0_n_charged_tracks:tau_0_jet_bdt_score_trans", "tau_0_jet_bdt_score_trans", 50, 0, .5, 4, 0, 4, 800, 0, 4000),
 }
 
 ## - - - - samples with true tau, lep faking tau and data
@@ -107,7 +106,7 @@ if FFs_ARGS.cache_cr_ffs:
         "tau_jet_bdt_score_trans_wps": [0.01, 0.02, 0.03],
         "n_charged_tracks": N_CHARGED_TRAKCS,
         "cache_file": FFs_ARGS.ffs_cr_cache,
-        "subtract_mc": True,
+        "subtract_mc": False,
     }
 
     # - - - - taujet 
@@ -125,8 +124,7 @@ else:
             CR_FFs = yaml.load(ffs_cr_cache)
     except Exception, err:
         log.warning("failed to load CR FFs")
-    print CR_FFs
-    
+        
 ## - - - - validation plots
 if FFs_ARGS.validation_plots:
     if CR_FFs:
@@ -171,6 +169,7 @@ if FFs_ARGS.validation_plots:
 
         os.system("mkdir -p %s"%FFs_ARGS.pdir)
         canvas.Print(os.path.join(FFs_ARGS.pdir, "FFs_inclusive_tracks_pT.png"))
+        log.info(os.path.join(FFs_ARGS.pdir, "FFs_inclusive_tracks_pT.png"))
         canvas.Close()
         
         
@@ -204,7 +203,6 @@ else:
     except Exception, err:
         log.warning("failed to load hists for FFs calculation")
     
-## - - - - fit is done per pT and nTracks bin
 if FFs_ARGS.eval_rqcd:
     cr_hists = []
     target_hists = []

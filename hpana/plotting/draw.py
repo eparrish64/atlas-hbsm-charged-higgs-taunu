@@ -96,12 +96,18 @@ def draw(var, category,
         backgrounds_hists   = []
         bkg_stack = ROOT.THStack("bkgs", "bkgs")
         for bkg in reversed(backgrounds):
+            hname = "{0}/{1}".format(tree_name, HIST_NAME_TEMPLATE.format(bkg.name, category.name, var.name))
             if hists_file:
-                bkg_hist = hfile.Get(
-                    "{0}/{1}".format(tree_name, HIST_NAME_TEMPLATE.format(bkg.name, category.name, var.name)))
+                bkg_hist = hfile.Get(hname)
+                if not bkg_hist:
+                    log.warning("can't find %s hist; skipping!"%hname)
+                    continue
             else:
                 bkg_hist = filter(
                     lambda hs: hs.sample==bkg.name and hs.category==category.name and hs.variable==var.name, hists_set)
+                if not bkg_hist:
+                    log.warning("can't find %s hist; skipping!"%hname)
+                    continue
                 bkg_hist = bkg_hist[0].hist
             # - - - -  fold the overflow bin 
             if overflow:
@@ -144,12 +150,18 @@ def draw(var, category,
             signals = [signals]
         signals_hists   = []
         for sig in signals:
+            hname = "{0}/{1}".format(tree_name, HIST_NAME_TEMPLATE.format(sig.name, category.name, var.name))
             if hists_file:
-                sig_hist = hfile.Get(
-                    "{0}/{1}".format(tree_name, HIST_NAME_TEMPLATE.format(sig.name, category.name, var.name)))
+                sig_hist = hfile.Get(hname)
+                if not sig_hist:
+                    log.warning("can't find %s hist; skipping!"%hname)
+                    continue
             else:
                 sig_hist = filter(
                     lambda hs: hs.sample==sig.name and hs.category==category.name and hs.variable==var.name, hists_set)
+                if not sig_hist:
+                    log.warning("can't find %s hist; skipping!"%hname)
+                    continue
                 sig_hist = sig_hist[0].hist
 
             # - - - - scale signals if needed 
@@ -184,14 +196,17 @@ def draw(var, category,
                 
     # - - - - - - - - data
     if data:
+        hname = "{0}/{1}".format(tree_name, HIST_NAME_TEMPLATE.format(data.name, category.name, var.name))
         if hists_file:
             data_hist = hfile.Get(
                 "{0}/{1}".format(tree_name, HIST_NAME_TEMPLATE.format(data.name, category.name, var.name)))
         else:
             data_hist = filter(
                 lambda hs: hs.sample==data.name and hs.category==category.name and hs.variable==var.name, hists_set)
-            data_hist = data_hist[0].hist 
-                
+            if data_hist:
+                data_hist = data_hist[0].hist 
+        if not data_hist:
+            raise RuntimeError("can't find %s hist"%hname)
         data_hist.SetXTitle(var.title)
         data_hist.SetYTitle("# events")
         if overflow:

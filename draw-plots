@@ -86,5 +86,6 @@ for var in fields:
              output_dir=PLOTTING_ARGS.pdir,
              show_ratio=True,
              show_pvalue=False,
-             logy=True,)
+             logy=PLOTTING_ARGS.logy,
+        )
             

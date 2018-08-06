@@ -52,7 +52,7 @@ class Weight:
     
     W_TRIGGER_TAUJET = {
         "mc15": ("nominal_trig_eff({})".format("met_et/1000."), ),
-        "mc16": ("nominal_trig_eff({})".format("met_p4->Et()/1000."), ),
+        "mc16": ("nominal_trig_eff({})".format("met_p4->Et()"), ),
     }
                  
     

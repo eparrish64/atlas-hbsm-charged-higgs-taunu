@@ -140,7 +140,7 @@ tau_0_pt = Variable(
         "mc15": "tau_0_pt"},
     binning=(20, 0, 400),
     unit='GeV',
-    scale=0.001)
+    scale=1.)
 
 tau_0_eta = Variable(
     "tau_0_eta" , 
@@ -200,7 +200,7 @@ met_et = Variable(
         "mc16":"met_p4->Et()",
         "mc15": "met_et"},
     binning=(20, 0, 400),
-    scale=0.001,
+    scale=1.,
     unit='GeV')
 
 met_etx = Variable(
@@ -210,7 +210,7 @@ met_etx = Variable(
         "mc16":"met_p4->Px()",
         "mc15": "met_etx"},
     binning=(20, -75, 75),
-    scale=0.001,
+    scale=1.,
     unit='GeV')   
 
 met_ety = Variable(
@@ -220,7 +220,7 @@ met_ety = Variable(
         "mc16":"met_p4->Py()",
         "mc15": "met_ety"},
     binning=(20, -75, 75),
-    scale=0.001,
+    scale=1.,
     unit='GeV')
 
 met_phi = Variable(
@@ -242,7 +242,7 @@ tau_0_met_mt = Variable(
     title='m_{T}(#tau, E^{miss}_{T})GeV',
     binning=(50, 0, 500), 
     workspace_binning=(1000, 0, 1000),
-    scale=0.001,
+    scale=1.,
     unit='GeV')
 
 #WIP - - - - - - - muon
@@ -272,7 +272,7 @@ jet_0_pt =  Variable(
         "mc16": "jet_0_p4->Pt()",
         "mc15": "jet_0_pt",},
     binning=(20, 0, 500),
-    scale=0.001,
+    scale=1.,
     unit='GeV')
 
 bjet_0_pt =  Variable(
@@ -282,7 +282,7 @@ bjet_0_pt =  Variable(
         "mc16": "bjet_0_p4->Pt()",
         "mc15": "bjet_0_pt",},
     binning=(20, 0, 500),
-    scale=0.001,
+    scale=1.,
     unit='GeV')
 
 #WIP: FIX ME - - - - subleading light jet (make sure it's not a bjet)
@@ -293,7 +293,7 @@ jet_1_pt = Variable(
         "mc16": "jet_1_p4->Pt()",
         "mc15": "jet_1_pt",},
     binning=(20, 0, 500),
-    scale=0.001,
+    scale=1.,
     unit='GeV')
 
 jet_0_eta = Variable(

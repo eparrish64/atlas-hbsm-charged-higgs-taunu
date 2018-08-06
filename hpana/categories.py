@@ -13,6 +13,7 @@ from .trigger import get_trigger
 
 """
 This module provides all selections needed for the analysis.
+PLEASE NOTE THAT THE UNIT IS CHANGED FROM MeV to GeV as of version 18v04 of the ntuples.
 """
 
 ##------------------------------------------------------------------------------------
@@ -22,7 +23,7 @@ This module provides all selections needed for the analysis.
 # - - - - - - - - event 
 CLEAN_EVT = {
     "mc15": TCut("(event_clean==1) && (n_vx>=1) && (bsm_tj_dirty_jet==0)"),
-    "mc16": TCut("(n_vx>=1)")
+    "mc16": TCut("n_vx > 0"),
 }
 
 ##------------------------------------------------------------------------------------
@@ -30,34 +31,34 @@ CLEAN_EVT = {
 ##------------------------------------------------------------------------------------
 MET50 = {
     "mc15": TCut("met_et>50000"),
-    "mc16": TCut("met_p4->Et() > 50000"),
+    "mc16": TCut("met_p4->Et() > 50"),
 }
 MET100 = {
     "mc15": TCut("met_et>100000"),
-    "mc16": TCut("met_p4->Et() > 100000"),
+    "mc16": TCut("met_p4->Et() > 100"),
 }
     
 MET150 = {
     "mc15": TCut("met_et > 150000"),
-    "mc16": TCut("met_p4->Et() > 150000"),
+    "mc16": TCut("met_p4->Et() > 150"),
 }
 
 MET_MAX150 = {
     "mc15": TCut("met_et < 150000"),
-    "mc16": TCut("met_p4->Et() < 150000"),
+    "mc16": TCut("met_p4->Et() < 150"),
 }
 MET_MAX80 = {
     "mc15": TCut("met_et < 80000"),
-    "mc16": TCut("met_p4->Et() < 80000"),
+    "mc16": TCut("met_p4->Et() < 80"),
 }
 
 MT50 = {
     "mc15": TCut("tau_0_met_mt > 50000"),
-    "mc16": TCut("tau_0_met_mt > 50000")
+    "mc16": TCut("tau_0_met_mt > 50")
 }
 MT_MAX100 = {
     "mc15": TCut("tau_0_met_mt < 100000"),
-    "mc16": TCut("tau_0_met_mt < 100000")
+    "mc16": TCut("tau_0_met_mt < 100")
 }
 
  
@@ -99,17 +100,19 @@ TAU_TRACKS = {
 
 TAU_PT30 = {
     "mc15": TCut("tau_0_pt > 30000"),
-    "mc16": TCut("tau_0_p4->Pt() > 30000") ,
+    "mc16": TCut("tau_0_p4->Pt() > 30") ,
 }
 TAU_PT40 = {
     "mc15": TCut("tau_0_pt > 40000"),
-    "mc16": TCut("tau_0_p4->Pt() > 40000") ,
+    "mc16": TCut("tau_0_p4->Pt() > 40") ,
 }
 TAU_ETA = {
     "mc15": TCut("abs(tau_0_eta)<2.3 && !(abs(tau_0_eta)< 1.52 && abs(tau_0_eta)> 1.37)"),
     "mc16": TCut("abs(tau_0_p4->Eta())<2.3 && !(abs(tau_0_p4->Eta())< 1.52 && abs(tau_0_p4->Eta())> 1.37)") ,
 }
 
+
+TAU_EL_OLR_PASS = ROOT.TCut("tau_0_ele_olr_pass==1")
 
 TAU_IS_LEP = {
     "mc15": TCut("abs(tau_0_truth_universal_pdgId)==11 || abs(tau_0_truth_universal_pdgId)==13"),
@@ -156,7 +159,7 @@ ONE_LEP = {
 }
 LEP_PT30 = {
     "mc15": TCut("(mu_0_pt + el_0_pt)> 30000"),
-    "mc16": TCut("(mu_0_p4->Pt() + el_0_p4->Pt()) > 30000") ,
+    "mc16": TCut("(mu_0_p4->Pt() + el_0_p4->Pt()) > 30") ,
 }
 
 # - - - - lep ID
@@ -172,12 +175,12 @@ MUID_TIGHT = {
 EL_BASE = {
     "mc15": ROOT.TCut("n_electrons==1 && el_0_et > 30000 && el_0_id_tight && el_0_iso_FixedCutTight"\
                       "&& (abs(el_0_eta) < 2.47 && !(abs(el_0_eta)< 1.52 && abs(el_0_eta)> 1.37 ))"),
-    "mc16": ROOT.TCut("n_electrons==1 && el_0_p4->Pt() > 30000 && el_0_id_veryloose && el_0_iso_FixedCutTight"\
+    "mc16": ROOT.TCut("n_electrons==1 && el_0_p4->Pt() > 30 && el_0_id_veryloose && el_0_iso_FixedCutTight"\
                       "&& (abs(el_0_p4->Eta()) < 2.47 && !(abs(el_0_p4->Eta()) < 1.52 && abs(el_0_p4->Eta()) > 1.37))"),
 }
 MU_BASE = {
     "mc15": ROOT.TCut("n_muons==1 && mu_0_pt > 30000 && mu_0_id_tight && mu_0_iso_FixedCutTight && abs(mu_0_eta) < 2.5"),
-    "mc16": ROOT.TCut("n_muons==1 && mu_0_p4->Pt() > 30000 && mu_0_id_loose"),# && mu_0_iso_FixedCutTight && abs(mu_0_p4->Eta()) < 2.5"),
+    "mc16": ROOT.TCut("n_muons==1 && mu_0_p4->Pt() > 30 && mu_0_id_loose && mu_0_iso_FixedCutTight && abs(mu_0_p4->Eta()) < 2.5"),
 }
 VETO_EL = {
     "mc15": ROOT.TCut("n_electrons==0"),
@@ -223,7 +226,7 @@ W_LEP_MT_60 = {
     "mc16": TCut("(sqrt(2. * el_0_p4->Pt() * met_p4->Et()"\
                  "* (1-cos(met_p4->Phi() - el_0_p4->Phi())))"\
                  "+ sqrt(2. * mu_0_p4->Pt() * met_p4->Et()"\
-                 "* (1 - cos(met_p4->Phi()-mu_0_p4->Phi() ) ) ) ) > 60000")
+                 "* (1 - cos(met_p4->Phi()-mu_0_p4->Phi() ) ) ) ) > 60")
 }
 W_LEP_MT_MAX160 = {
     "mc15": TCut("(sqrt(2. * el_0_pt * met_et"\
@@ -234,7 +237,7 @@ W_LEP_MT_MAX160 = {
     "mc16": TCut("(sqrt(2. * el_0_p4->Pt() * met_p4->Et()"\
                  "* (1-cos(met_p4->Phi() - el_0_p4->Phi())))"\
                  "+ sqrt(2. * mu_0_p4->Pt() * met_p4->Et()"\
-                 "* (1 - cos(met_p4->Phi()-mu_0_p4->Phi() ) ) ) ) < 160000")
+                 "* (1 - cos(met_p4->Phi()-mu_0_p4->Phi() ) ) ) ) < 160")
 }
 
 
@@ -269,11 +272,11 @@ BVETO = {
 }
 JET_PT25 = {
     "mc15": TCut("jet_0_pt > 25000"),
-    "mc16": TCut("jet_0_p4->Pt() > 25000"),
+    "mc16": TCut("jet_0_p4->Pt() > 25"),
 }
 BJET_PT25 = {
     "mc15": TCut("bjet_0_pt > 25000"),
-    "mc16": TCut("bjet_0_p4->Pt() > 25000"),
+    "mc16": TCut("bjet_0_p4->Pt() > 25"),
 }
 
 #WIP! - - - - BDT scores for partial blinding 
@@ -292,6 +295,7 @@ SELECTIONS["taujet"]["BASE"] = (
     CLEAN_EVT,
     TAU_PT40,
     TAU_ETA,
+    TAU_EL_OLR_PASS,
     LEP_VETO,
     TAU_TRACKS)
 
@@ -340,7 +344,7 @@ SELECTIONS["taujet"]["SR_TAUJET"] = (
 ##-------------------------------------
 SELECTIONS["taulep"]["BASE"] = (
     CLEAN_EVT,
-    #ONE_LEP,
+    TAU_EL_OLR_PASS,
 )
 
 SELECTIONS["taulep"]["PRESELECTION"] = (
@@ -400,9 +404,9 @@ SELECTIONS["taulep"]["TAUMU_BVETO"] = (
 # - - - - dilepton b-tag (ttbar) control region
 SELECTIONS["taulep"]["DILEP_BTAG"] = (
     EL_BASE,
-    #OS_MU_EL,
-    #TAU_BASE,
-    #VETO_TAU,
+    OS_MU_EL,
+    TAU_BASE,
+    VETO_TAU,
     NUM_JETS1,
     JET_PT25,
     NUM_BJETS1,
@@ -433,6 +437,16 @@ SELECTIONS["taulep"]["SS_TAUMU"] = (
     MET50,
 )
 
+# - - - - Z-->ee CR
+SELECTIONS["taulep"]["ZEE"] = (
+    TAU_BASE,
+    EL_BASE,
+    NUM_JETS1,
+    JET_PT25,
+    BVETO,
+    #@FIX ME: can't add TLorentzVectors! 
+    #ROOT.TCut(" 40 < (tau_0_p4 + ele_0_p4)->M() < 140")
+)
 
 ##------------------------------------------------------------------------------------
 ## - - base class for selection categories
@@ -465,7 +479,7 @@ class Category:
             ("SS_TAUEL", "same sign #tau-el CR"),
             ("SS_TAUMU", "same sign #tau-#mu CR"),
             ("DILEP_BTAG", "#mu-e b-tag CR"),
-            #("ZEE","Zee CR"),
+            ("ZEE","Z #to e^{+}e^{-}"),
             ("PRESELECTION", "presel"),
         ]),
     }
@@ -566,6 +580,47 @@ FF_CR_REGIONS["taujet"] = [FF_CR_MULTIJET]
 FF_CR_REGIONS["taulep"] = [FF_CR_WJETS]
 
 
+##------------------------------------------------------------------------------------
+## - - MET trigger efficency control regions 
+##------------------------------------------------------------------------------------
+MET_TRIGG_EFF_CUTS_BASE = [
+    ROOT.TCut("n_taus==1"),
+    ROOT.TCut("n_electrons==1"),
+    ROOT.TCut("el_0_p4->Pt() > 26"),
+    # - - trigger matched electron
+    ROOT.TCut( 
+        "(el_0_trig_HLT_e24_lhmedium_L1EM20VH==1 && run_number <= 288000)" #<! 2015
+        "|| (el_0_trig_HLT_e26_lhtight_nod0_ivarloose==1 && run_number > 288000)" #<! 2016
+        #"||(el_0_trig_trigger_matched==1 && HLT_e26_lhtight_nod0_ivarloose==1 && run_number > 288000)"
+    ),
+    
+    ROOT.TCut("n_jets>1 && n_bjets>0"),
+    ROOT.TCut("jet_0_p4->Pt() > 25 && jet_1_p4->Pt() > 25"),
+    
+    # - - only for the bkg modelling in this region (not applied for calcualting trigger efficency).
+    #ROOT.TCut("met_p4->Et() > 100"),
+]
+
+## - - - - systematic variations from tau/el ID and number of jets.
+MET_TRIGG_EFF_VARIATIONS = {
+    "NOM": [ROOT.TCut("tau_0_jet_bdt_loose==1"), ROOT.TCut("el_0_id_loose==1")],
+    "TAU_ID_MED": [ROOT.TCut("tau_0_jet_bdt_medium==1"), ROOT.TCut("el_0_id_loose==1")],
+    "TAU_ID_TIGHT": [ROOT.TCut("tau_0_jet_bdt_tight==1"), ROOT.TCut("el_0_id_loose==1")],
+    
+    "EL_ID_MED": [ROOT.TCut("tau_0_jet_bdt_loose==1"), ROOT.TCut("el_0_id_medium==1")],
+    "EL_ID_TIGHT": [ROOT.TCut("tau_0_jet_bdt_loose==1"), ROOT.TCut("el_0_id_tight==1")],
+    
+    "NJETS3": [ROOT.TCut("tau_0_jet_bdt_loose==1"), ROOT.TCut("el_0_id_loose==1"), ROOT.TCut("n_jets > 2")], 
+}
+
+MET_TRIG_EFF_CRs = []
+for var, cuts in MET_TRIGG_EFF_VARIATIONS.iteritems():
+    MET_TRIG_EFF_CRs.append(
+        Category("MET_TRIG_EFF_CR_%s"%var,
+                 label="MET trigger eff CR(%s)"%var,
+                 cuts_list=MET_TRIGG_EFF_CUTS_BASE+cuts)
+    )
+    
 ##------------------------------------------------------------------------------------
 ## - - cutflow selections 
 ##------------------------------------------------------------------------------------

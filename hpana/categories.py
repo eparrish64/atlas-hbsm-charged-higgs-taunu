@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-
 from math import pi
 from collections import OrderedDict
 
@@ -65,26 +64,13 @@ MT_MAX100 = {
 ##------------------------------------------------------------------------------------
 ##  - - tau
 ##------------------------------------------------------------------------------------
-TAU_Q = {
-    "mc15": TCut("abs(tau_0_q)==1"),
-    "mc16": TCut("abs(tau_0_q)==1"),
-}
-TAU_DECAY_MODE = {
-    "mc15": TCut("tau_0_decay_mode==0"),
-    "mc16": TCut("tau_0_decay_mode==0"),
-}
-TAUID_LOOSE = {
-    "mc15": TCut("tau_0_jet_bdt_loose==0 && tau_0_jet_bdt_score_sig>0.02"),
-    "mc16": TCut("tau_0_jet_bdt_loose==0 && tau_0_jet_bdt_score_trans>0.02"),
-}
-TAUID_MEDIUM = {
-    "mc15":TCut("tau_0_jet_bdt_medium==1"),
-    "mc16":TCut("tau_0_jet_bdt_medium==1"),
-}
-TAUID_TIGHT = {
-    "mc15": TCut("tau_0_jet_bdt_tight==1"),
-    "mc16": TCut("tau_0_jet_bdt_tight==1"),
-}
+TAU_Q = TCut("abs(tau_0_q)==1")
+TAU_DECAY_MODE = TCut("tau_0_decay_mode==0")
+
+TAUID_LOOSE = TCut("tau_0_jet_bdt_loose==1")
+TAUID_MEDIUM = TCut("tau_0_jet_bdt_medium==1")
+TAUID_TIGHT = TCut("tau_0_jet_bdt_tight==1")
+
 TAU_1_TRACK = {
     "mc15": TCut("tau_0_n_tracks==1"),
     "mc16": TCut("tau_0_n_charged_tracks==1"),
@@ -111,39 +97,38 @@ TAU_ETA = {
     "mc16": TCut("abs(tau_0_p4->Eta())<2.3 && !(abs(tau_0_p4->Eta())< 1.52 && abs(tau_0_p4->Eta())> 1.37)") ,
 }
 
+## tau truth lable
+TAU_IS_TRUE = TCut("true_tau_0_isTau")
+TAU_IS_LEP = TCut("true_tau_0_isMuon || true_tau_0_isEle")
+TAU_IS_EL = TCut("true_tau_0_isEle")
+TAU_IS_EL_OR_HAD = TCut("true_tau_0_isTau || true_tau_0_isEle")
+TAU_IS_LEP_OR_HAD = TCut("true_tau_0_isTau || true_tau_0_isEle || true_tau_0_isMuon")
 
-TAU_EL_OLR_PASS = ROOT.TCut("tau_0_ele_olr_pass==1")
+## tau jet parton label 
+TAU_IS_LIGHT_QUARK = TCut("true_tau_0_jet_pdgId>0 && true_tau_0_jet_pdgId <4")
+TAU_IS_C_QUARK = TCut("true_tau_0_jet_pdgId==4")
+TAU_IS_B_QUARK = TCut("true_tau_0_jet_pdgId==5")
+TAU_IS_GLUON = TCut("true_tau_0_jet_pdgId==21")
+TAU_IS_OTHER = TCut("!(%s || %s || %s ||%s ||%s || %s)"%(
+    TAU_IS_EL.GetTitle(), TAU_IS_LIGHT_QUARK, TAU_IS_C_QUARK, TAU_IS_B_QUARK, TAU_IS_GLUON, TAU_IS_TRUE))
 
-TAU_IS_LEP = {
-    "mc15": TCut("abs(tau_0_truth_universal_pdgId)==11 || abs(tau_0_truth_universal_pdgId)==13"),
-    "mc16": TCut("true_tau_0_isMuon || true_tau_0_isEle"),
-}
-TAU_IS_EL = {
-    "mc15": TCut("abs(tau_0_truth_universal_pdgId)==11"),
-    "mc16": TCut("true_tau_0_isEle"),
-}
+## QCD fake tau
+TAU_IS_FAKE = TCut("!(%s || %s)"%(TAU_IS_TRUE, TAU_IS_LEP))
 
-TAU_IS_TRUE = {
-    "mc15": TCut("abs(tau_0_truth_universal_pdgId)==15"),
-    "mc16": TCut("true_tau_0_isTau"),
-}
-TAU_IS_FAKE = {
-    "mc15": TCut("!"+(TAU_IS_TRUE["mc15"].GetTitle()+"||"+TAU_IS_LEP["mc15"].GetTitle() ) ),
-    "mc16": TCut("!"+(TAU_IS_TRUE["mc16"].GetTitle()+"||"+TAU_IS_LEP["mc16"].GetTitle() ) ),
-}
 ANTI_TAU = {
     "mc15": TCut("tau_0_jet_bdt_score_sig > 0.02 && tau_0_jet_bdt_loose==0"),
     "mc16": TCut("tau_0_jet_bdt_score_trans > 0.02 && tau_0_jet_bdt_loose==0"),
 }
 
-VETO_TAU = {
-    "mc15": ROOT.TCut("n_taus==0"),
-    "mc16": ROOT.TCut("n_taus==0"),
+VETO_TAU = ROOT.TCut("n_taus==0")
+TAU_EL_OLR_PASS = {
+    "mc15": TCut("tau_0_ele_olr_pass==1"),
+    "mc16": TCut("tau_0_ele_olr_pass==1"),
 }
 
 TAU_BASE = {}
 for mcc in ["mc15", "mc16"]:
-    TAU_BASE[mcc] = TAU_PT30[mcc] + TAU_ETA[mcc] + TAU_TRACKS[mcc]
+    TAU_BASE[mcc] = TAU_PT30[mcc] + TAU_ETA[mcc] + TAU_TRACKS[mcc] + TAU_EL_OLR_PASS[mcc]
 
     
 ##------------------------------------------------------------------------------------
@@ -153,10 +138,8 @@ LEP_VETO = {
     "mc15": TCut("(n_electrons + n_muons)==0"),
     "mc16": TCut("(n_electrons + n_muons)==0"),
 }
-ONE_LEP = {
-    "mc15": TCut("(n_electrons + n_muons)==1"),
-    "mc16": TCut("(n_electrons + n_muons)==1"),
-}
+ONE_LEP = TCut("(n_electrons + n_muons)==1")
+
 LEP_PT30 = {
     "mc15": TCut("(mu_0_pt + el_0_pt)> 30000"),
     "mc16": TCut("(mu_0_p4->Pt() + el_0_p4->Pt()) > 30") ,
@@ -175,48 +158,40 @@ MUID_TIGHT = {
 EL_BASE = {
     "mc15": ROOT.TCut("n_electrons==1 && el_0_et > 30000 && el_0_id_tight && el_0_iso_FixedCutTight"\
                       "&& (abs(el_0_eta) < 2.47 && !(abs(el_0_eta)< 1.52 && abs(el_0_eta)> 1.37 ))"),
-    "mc16": ROOT.TCut("n_electrons==1 && el_0_p4->Pt() > 30 && el_0_id_veryloose && el_0_iso_FixedCutTight"\
+    "mc16": ROOT.TCut("n_electrons==1 && el_0_p4->Pt() > 30 && el_0_id_tight && el_0_iso_FixedCutTight"\
                       "&& (abs(el_0_p4->Eta()) < 2.47 && !(abs(el_0_p4->Eta()) < 1.52 && abs(el_0_p4->Eta()) > 1.37))"),
 }
 MU_BASE = {
     "mc15": ROOT.TCut("n_muons==1 && mu_0_pt > 30000 && mu_0_id_tight && mu_0_iso_FixedCutTight && abs(mu_0_eta) < 2.5"),
-    "mc16": ROOT.TCut("n_muons==1 && mu_0_p4->Pt() > 30 && mu_0_id_loose && mu_0_iso_FixedCutTight && abs(mu_0_p4->Eta()) < 2.5"),
-}
-VETO_EL = {
-    "mc15": ROOT.TCut("n_electrons==0"),
-    "mc16": ROOT.TCut("n_electrons==0"),
-}
-VETO_MU = {
-    "mc15": ROOT.TCut("n_muons==0"),
-    "mc16": ROOT.TCut("n_muons==0"),
-}
-SS_TAU_MU = {
-    "mc15": ROOT.TCut("tau_0_q*mu_0_q==1"),
-    "mc16": ROOT.TCut("tau_0_q*mu_0_q==1"),
-}
-SS_TAU_EL = {
-    "mc15": ROOT.TCut("tau_0_q*el_0_q==1"),
-    "mc16": ROOT.TCut("tau_0_q*el_0_q==1"),
-}
-OS_TAU_MU = {
-    "mc15": ROOT.TCut("tau_0_q*mu_0_q==-1"),
-    "mc16": ROOT.TCut("tau_0_q*mu_0_q==-1"),
-}
-OS_TAU_EL = {
-    "mc15": ROOT.TCut("tau_0_q*el_0_q==-1"),
-    "mc16": ROOT.TCut("tau_0_q*el_0_q==-1"),
+    "mc16": ROOT.TCut("n_muons==1 && mu_0_p4->Pt() > 30 && mu_0_id_tight && mu_0_iso_FixedCutTight && abs(mu_0_p4->Eta()) < 2.5"),
 }
 
-SS_MU_EL = {
-    "mc15": ROOT.TCut("mu_0_q*el_0_q==1"),
-    "mc16": ROOT.TCut("mu_0_q*el_0_q==1"),
-}
-OS_MU_EL = {
-    "mc15": ROOT.TCut("el_0_q*mu_0_q==-1"),
-    "mc16": ROOT.TCut("el_0_q*mu_0_q==-1"),
-}
+LEP_BASE = {}
+for mc_camp in ["mc15", "mc16"]:
+    LEP_BASE[mc_camp] = TCut("%s &&(%s || %s)"%(ONE_LEP, EL_BASE[mc_camp], MU_BASE[mc_camp]))
 
-# - - - - W lep 
+VETO_EL = ROOT.TCut("n_electrons==0")
+VETO_MU = ROOT.TCut("n_muons==0")
+
+## charges
+SS_TAU_MU = ROOT.TCut("tau_0_q*mu_0_q==1")
+SS_TAU_EL = ROOT.TCut("tau_0_q*el_0_q==1")
+SS_TAU_LEP = ROOT.TCut("(tau_0_q * el_0_q)==1 ||(tau_0_q * mu_0_q)==1")
+
+OS_TAU_MU = ROOT.TCut("tau_0_q*mu_0_q==-1")
+OS_TAU_EL = ROOT.TCut("tau_0_q*el_0_q==-1")
+OS_TAU_LEP = ROOT.TCut("(tau_0_q * el_0_q)==-1 ||(tau_0_q * mu_0_q)==-1")
+
+SS_MU_EL = ROOT.TCut("mu_0_q*el_0_q==1")
+OS_MU_EL = ROOT.TCut("el_0_q*mu_0_q==-1")
+
+## masses
+TAU_EL_MASS = ROOT.TCut(" 40 < sqrt((tau_0_p4->E() + el_0_p4->E())**2"\
+                        " - (tau_0_p4->Px() + el_0_p4->Px())**2"\
+                        " - (tau_0_p4->Py() + el_0_p4->Py())**2"\
+                        " - (tau_0_p4->Pz() + el_0_p4->Pz())**2) < 140")
+
+# - - - - W lep
 W_LEP_MT_60 = {
     "mc15": TCut("(sqrt(2. * el_0_pt * met_et"\
                       "* (1 - cos(met_phi - el_0_phi)))"\
@@ -244,32 +219,14 @@ W_LEP_MT_MAX160 = {
 ##------------------------------------------------------------------------------------
 ##  - - jets
 ##------------------------------------------------------------------------------------
-NUM_BJETS1 = {
-    "mc15": TCut("n_bjets > 0"),
-    "mc16": TCut("n_bjets > 0"),
-}
-NUM_BJETS2 = {
-    "mc15": TCut("n_bjets > 1"),
-    "mc16": TCut("n_bjets > 1"),
-}
-NUM_JETS1  = {
-    "mc15": TCut("n_jets > 0"),
-    "mc16": TCut("n_jets > 0"),
-}
+NUM_JETS1  = TCut("n_jets > 0")
+NUM_JETS3  = TCut("n_jets > 2")
+NUM_JETS4  = TCut("n_jets > 3")
 
-NUM_JETS3  = {
-    "mc15": TCut("n_jets > 2"),
-    "mc16": TCut("n_jets > 2"),
-}
-NUM_JETS4  = {
-    "mc15": TCut("n_jets > 3"),
-    "mc16": TCut("n_jets > 3"),
-}
+NUM_BJETS1 = TCut("n_bjets > 0")
+NUM_BJETS2 = TCut("n_bjets > 1")
+BVETO = TCut("n_bjets==0")
 
-BVETO = {
-    "mc15": TCut("n_bjets==0"),
-    "mc16": TCut("n_bjets==0"),
-}
 JET_PT25 = {
     "mc15": TCut("jet_0_pt > 25000"),
     "mc16": TCut("jet_0_p4->Pt() > 25"),
@@ -293,11 +250,8 @@ SELECTIONS = {"taujet":{}, "taulep": {} }
 # - - - -  base selections
 SELECTIONS["taujet"]["BASE"] = (
     CLEAN_EVT,
-    TAU_PT40,
-    TAU_ETA,
-    TAU_EL_OLR_PASS,
-    LEP_VETO,
-    TAU_TRACKS)
+    TAU_BASE,
+    LEP_VETO,)
 
 # - - - - Preselection
 SELECTIONS["taujet"]["PRESELECTION"] = (
@@ -308,30 +262,34 @@ SELECTIONS["taujet"]["PRESELECTION"] = (
 
 # - - - - TTBar_CR
 SELECTIONS["taujet"]["TTBAR"] = (
+    TAU_PT40,
     NUM_JETS3,
     NUM_BJETS2,
     BJET_PT25,
     MET150,
     MT_MAX100)
-    
-# - - - - QCD CR
-SELECTIONS["taujet"]["QCD"] = (
-    NUM_JETS3,
-    JET_PT25,
-    BVETO,
-    MET_MAX150,
-    MT50)
 
 # - - - - WJets CR
-SELECTIONS["taujet"]["BVETO"] = (
+SELECTIONS["taujet"]["WJETS"] = (
+    TAU_PT40,
     NUM_JETS3,
     JET_PT25,
     BVETO,
     MET150,
     MT_MAX100)
+
+# - - - - b-veto CR (for QCD fakes validation)
+SELECTIONS["taujet"]["BVETO"] = (
+    TAU_PT40,
+    NUM_JETS3,
+    JET_PT25,
+    BVETO,
+    MET150,
+    MT50)
     
 # - - - -  Signal 
 SELECTIONS["taujet"]["SR_TAUJET"] = (
+    TAU_PT40,
     NUM_JETS3,
     JET_PT25,
     MET150,
@@ -339,19 +297,30 @@ SELECTIONS["taujet"]["SR_TAUJET"] = (
     NUM_BJETS1,
     BJET_PT25)
 
-##-------------------------------------
+##--------------------------------------------------------------
 # - - TAULEP (BASE will be added to all)
-##-------------------------------------
+##--------------------------------------------------------------
 SELECTIONS["taulep"]["BASE"] = (
-    CLEAN_EVT,
-    TAU_EL_OLR_PASS,
-)
+    CLEAN_EVT,)
 
 SELECTIONS["taulep"]["PRESELECTION"] = (
     TAU_BASE,
-    ONE_LEP,
+    LEP_BASE,
     NUM_JETS1,
-    JET_PT25)
+    JET_PT25
+)
+
+# - - - - tau-lep signal region
+SELECTIONS["taulep"]["SR_TAULEP"] = (
+    TAU_BASE,
+    LEP_BASE,
+    OS_TAU_LEP,
+    NUM_JETS1,
+    JET_PT25,
+    NUM_BJETS1,
+    BJET_PT25,
+    MET50,
+)
 
 # - - - - tau-el signal region
 SELECTIONS["taulep"]["SR_TAUEL"] = (
@@ -404,15 +373,14 @@ SELECTIONS["taulep"]["TAUMU_BVETO"] = (
 # - - - - dilepton b-tag (ttbar) control region
 SELECTIONS["taulep"]["DILEP_BTAG"] = (
     EL_BASE,
+    MU_BASE,
     OS_MU_EL,
-    TAU_BASE,
     VETO_TAU,
     NUM_JETS1,
     JET_PT25,
     NUM_BJETS1,
     BJET_PT25,
     MET50,
-    MU_BASE,
 )
 
 # - - - - same sign tau-el control region
@@ -441,11 +409,12 @@ SELECTIONS["taulep"]["SS_TAUMU"] = (
 SELECTIONS["taulep"]["ZEE"] = (
     TAU_BASE,
     EL_BASE,
+    VETO_MU,
+    OS_TAU_EL,
     NUM_JETS1,
     JET_PT25,
     BVETO,
-    #@FIX ME: can't add TLorentzVectors! 
-    #ROOT.TCut(" 40 < (tau_0_p4 + ele_0_p4)->M() < 140")
+    TAU_EL_MASS,
 )
 
 ##------------------------------------------------------------------------------------
@@ -462,16 +431,18 @@ class Category:
     #>>> categories = Category.factory()
     """
     
-    # - - - - PLEAS KEEP THE ORDER (NEEDED FOR FFs WEIGHTS INDEXING)
+    # - - - - PLEASE KEEP THE ORDER (NEEDED FOR FFs WEIGHTS INDEXING)!
     TYPES = {
         "taujet": OrderedDict([
             ("SR_TAUJET", "#tau-jet SR",), #<! (name, label)
             ("TTBAR", "ttbar CR"),
             ("BVETO", "b-veto CR"),
+            ("WJETS", "W/Z jets CR"),
             ("PRESELECTION", "presel"),
         ]),
         
         "taulep":OrderedDict([
+            ("SR_TAULEP", "#tau-lep SR"),
             ("SR_TAUEL", "#tau-e SR"),
             ("SR_TAUMU", "#tau-#mu SR"),
             ("TAUEL_BVETO", "#tau-e b-veto CR"),
@@ -555,6 +526,7 @@ FF_CR_MULTIJET = Category(
     cuts_list=[
         CLEAN_EVT,
         TAU_PT30,
+        TAU_EL_OLR_PASS,
         NUM_JETS3,
         LEP_VETO,
         BVETO,
@@ -566,6 +538,7 @@ FF_CR_WJETS = Category(
     "FF_CR_WJETS", label="ff Wjets CR",
     cuts_list=[
         CLEAN_EVT,
+        TAU_EL_OLR_PASS,
         EL_BASE,
         TAU_BASE,
         BVETO,
@@ -578,6 +551,18 @@ FF_CR_WJETS = Category(
 FF_CR_REGIONS = {}
 FF_CR_REGIONS["taujet"] = [FF_CR_MULTIJET]
 FF_CR_REGIONS["taulep"] = [FF_CR_WJETS]
+
+
+## - - - - fake tau origin
+FAKE_TAU_SOURCE = {
+    "electron": TAU_IS_EL,
+    "lquark": TAU_IS_LIGHT_QUARK,
+    "cquark": TAU_IS_B_QUARK,
+    "bquark": TAU_IS_C_QUARK,
+    "gluon": TAU_IS_GLUON,
+    "other": TAU_IS_OTHER,
+    "tau": TAU_IS_TRUE,
+}
 
 
 ##------------------------------------------------------------------------------------
@@ -626,16 +611,18 @@ for var, cuts in MET_TRIGG_EFF_VARIATIONS.iteritems():
 ##------------------------------------------------------------------------------------
 CUTFLOW = {
     "taujet": OrderedDict(
-        [("cleanEvent",  CLEAN_EVT),
-         ("trigger", {"mc16": ROOT.TCut("1>0"), "mc15": ROOT.TCut("1>0")}), #<! trigger is applied globally (just a place holder here)
-         ("tauPt40", TAU_PT40),
-         ("tauID", TAUID_MEDIUM),
-         ("lepVeto", LEP_VETO),
-         ("3jets", NUM_JETS3),
-         ("jetPt25", JET_PT25),
-         ("1bjets", NUM_BJETS1),
-         ("MET150", MET150),
-         ("mT50", MT50),
+        [
+            ("cleanEvent",  CLEAN_EVT),
+            ("trigger", {"mc16": ROOT.TCut("1>0"), "mc15": ROOT.TCut("1>0")}), #<! trigger is applied globally (just a place holder here)
+            ("ElOLR", TAU_EL_OLR_PASS),
+            ("tauPt40", TAU_PT40),
+            ("tauID", TAUID_MEDIUM),
+            ("lepVeto", LEP_VETO),
+            ("3jets", NUM_JETS3),
+            ("jetPt25", JET_PT25),
+            ("1bjets", NUM_BJETS1),
+            ("MET150", MET150),
+            ("mT50", MT50),
         ]),
     "taulep":
     OrderedDict(
@@ -643,7 +630,7 @@ CUTFLOW = {
          ("trigger", {"mc16": ROOT.TCut("1>0"), "mc15": ROOT.TCut("1>0")}), #<! trigger is applied globally (just a place holder here)
          ("tauPt40", TAU_PT40),
          ("tauID", TAUID_MEDIUM),
-         ("eBase", EL_BASE),
+         ("eBase", LEP_BASE),
          ("3jets", NUM_JETS3),
          ("jetPt25", JET_PT25),
          ("1bjets", NUM_BJETS1),

@@ -6,50 +6,49 @@ from . import MC_CAMPAIGN
 class Weight:
     """
     """
+    ##FIXME : do nparts==0 & nparts>0*SF returns 0 sometimes! 
+    W_STR_FMT = "({0}!=1+({0}==1)*{1})"
     W_BASE = ("weight_mc",) #<! TRAILING COMMA IS NECESSARY FOR ONE ELEMENT TUPLES!
 
     W_PILEUP = ("weight_total/weight_mc",)
 
     W_TAU =  (
-        "tau_0_sf_NOMINAL_TauEffSF_JetBDTmedium",
-        "tau_0_sf_NOMINAL_TauEffSF_VeryLooseLlhEleOLR_electron",
-        "tau_0_sf_NOMINAL_TauEffSF_reco")
+        W_STR_FMT.format("n_taus", "tau_0_sf_NOMINAL_TauEffSF_JetBDTmedium"),
+        W_STR_FMT.format("n_taus", "tau_0_sf_NOMINAL_TauEffSF_VeryLooseLlhEleOLR_electron"),
+        W_STR_FMT.format("n_taus", "tau_0_sf_NOMINAL_TauEffSF_reco"),
+    )
 
     #- - - - - - - - might be different among different MC campaigns (or ntuples versions)
-    W_JET = {
-        "mc15": ("jet_sf_NOMINAL_central_jets_global_ineffSF_JVT",
-                 "jet_sf_NOMINAL_central_jets_global_effSF_JVT"),
-        "mc16": ("jet_sf_NOMINAL_central_jets_global_effSF_JVT",
-                 "jet_sf_NOMINAL_central_jets_global_ineffSF_JVT"),
-    }
-
+    W_JET = (
+        "jet_sf_NOMINAL_central_jets_global_effSF_JVT",
+        "jet_sf_NOMINAL_central_jets_global_ineffSF_JVT",
+    )
+    
     W_BJET = {
         "mc15": ("jet_sf_NOMINAL_global_effSF_MVX",
                  "jet_sf_NOMINAL_global_ineffSF_MVX"),
-        "mc16": ("jet_sf_NOMINAL_global_effSF_MV2c10",
-                 "jet_sf_NOMINAL_global_ineffSF_MV2c10"),
+        "mc16": (
+            "jet_sf_NOMINAL_global_effSF_MV2c10",
+            "jet_sf_NOMINAL_global_ineffSF_MV2c10"),
     }
+        
     # - - - - - - - - might be different between the channels
     W_MU = (
-        "(n_muons==1)",
-        "mu_0_sf_NOMINAL_MuEffSF_TTVA",
-        "mu_0_sf_NOMINAL_MuEffSF_IsoFixedCutTight",
-        "mu_0_sf_NOMINAL_MuEffSF_Reco_QualTight")
+        W_STR_FMT.format("n_muons", "mu_0_sf_NOMINAL_MuEffSF_TTVA"),
+        W_STR_FMT.format("n_muons", "mu_0_sf_NOMINAL_MuEffSF_IsoFixedCutTight"),
+        W_STR_FMT.format("n_muons", "mu_0_sf_NOMINAL_MuEffSF_Reco_QualTight"),
+    )
     
     W_EL = (
-        "(n_electrons==1)",
-        "el_0_sf_NOMINAL_EleEffSF_offline_RecoTrk",
-        "el_0_sf_NOMINAL_EleEffSF_Isolation_TightLLH_d0z0_v13_isolFixedCutTight",
-        "el_0_sf_NOMINAL_EleEffSF_offline_MediumLLH_d0z0_v13",
+        W_STR_FMT.format("n_electrons", "el_0_sf_NOMINAL_EleEffSF_offline_RecoTrk"),
+        W_STR_FMT.format("n_electrons", "el_0_sf_NOMINAL_EleEffSF_Isolation_TightLLH_d0z0_v13_isolFixedCutTight"),
+        W_STR_FMT.format("n_electrons", "el_0_sf_NOMINAL_EleEffSF_offline_MediumLLH_d0z0_v13"),
         
-        "el_0_sf_NOMINAL_EleEffSF_SINGLE_E_2015_e24_lhmedium_L1EM20VH_OR"\
+        W_STR_FMT.format("n_electrons", "el_0_sf_NOMINAL_EleEffSF_SINGLE_E_2015_e24_lhmedium_L1EM20VH_OR"\
         "_e60_lhmedium_OR_e120_lhloose_2016_2017_e26_lhtight_nod0_ivarloose_"\
-        "OR_e60_lhmedium_nod0_OR_e140_lhloose_nod0_MediumLLH_d0z0_v13_isolFixedCutTight",
-        )
+        "OR_e60_lhmedium_nod0_OR_e140_lhloose_nod0_MediumLLH_d0z0_v13_isolFixedCutTight"),
+    )
 
-    # - - - - since we 
-    W_LEP = ("({0} + {1})/(n_electrons+n_muons)".format("*".join(W_MU), "*".join(W_EL)), )
-    
     W_TRIGGER_TAUJET = {
         "mc15": ("nominal_trig_eff({})".format("met_et/1000."), ),
         "mc16": ("nominal_trig_eff({})".format("met_p4->Et()"), ),
@@ -65,7 +64,8 @@ class Weight:
             "TAU": W_TAU,
             "JET": W_JET,
             "BJET": W_BJET,
-            "TRIGGER": W_TRIGGER_TAUJET},
+            "TRIGGER": W_TRIGGER_TAUJET
+        },
          
         "taulep":{
             "BASE": W_BASE,
@@ -73,10 +73,10 @@ class Weight:
             "TAU": W_TAU,
             "JET": W_JET,
             "BJET": W_BJET,
-            #"MU": W_MU,
-            #"EL": W_EL,
-            "LEP": W_LEP,
-            "TRIGGER": W_TRIGGER_TAULEP},
+            "MU": W_MU,
+            "EL": W_EL,
+            #"TRIGGER": W_TRIGGER_TAULEP
+        },
     }
     
     CHANNELS = ["taujet", "taulep"]

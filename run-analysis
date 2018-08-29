@@ -20,10 +20,6 @@ from hpana.cluster.parallel import FuncWorker, run_pool, Job
 from hpana.dataset_hists import dataset_hists
 from hpana import log
 
-# - - - - time it
-start_time = time.time()
-
-
 # - - - - - - - -  set log level
 log.setLevel(ANA_ARGS.log)
 
@@ -33,15 +29,19 @@ ROOT.SetSignalPolicy(ROOT.kSignalFast)
 ROOT.gROOT.SetBatch(True)
 log.info("ROOT is in batch mode")
 
-# - - - - - - - - build analysis main configuration object
+##-------------------------------------------------------------
+## consts 
+##-------------------------------------------------------------
+
+# - - - - build analysis main configuration object
 config = Configuration(
     ANA_ARGS.channel,
     year=ANA_ARGS.year,
-    data_streams=("2015", "2016",),
+    data_streams=ANA_ARGS.data_streams,
     mc_campaign=ANA_ARGS.mc_campaign,
     db_version=ANA_ARGS.db_version)
 
-# - - - - - - - - some checks on cmd args
+# - - - - some checks on cmd args
 if ANA_ARGS.fields:
     fields = filter(lambda v: v.name in ANA_ARGS.fields, config.variables)
 else:
@@ -58,7 +58,7 @@ if ANA_ARGS.systematics:
 else:
     systematics = ["NOMINAL"]
     
-# - - - - - - - - instantiate the analysis
+# - - - - instantiate the analysis
 analysis = Analysis(config, compile_cxx=not ANA_ARGS.no_cxx)
 
 # - - - - if you wish to look at specific samples
@@ -66,90 +66,102 @@ if ANA_ARGS.samples:
     samples = filter(lambda s: s.name in ANA_ARGS.samples, analysis.samples)
 else:
     samples = analysis.samples
-    
-# - - - - - - - - - - run on multicores
-if ANA_ARGS.parallel:
-    jobs = []
-    for worker in analysis.workers(
-            samples=samples,
-            fields=fields,
-            categories=categories,
-            systematics=systematics):
-        
-        jobs.append(Job(dataset_hists, worker,
-                        write_hists=True,outdir=ANA_ARGS.outdir) )
 
-        if ANA_ARGS.dry_run:
-                print "--"*100
-                print worker
-    if not ANA_ARGS.dry_run:
+##-------------------------------------------------------------
+## main driver 
+##-------------------------------------------------------------
+def main():    
+    # - -  run on multicores
+    if ANA_ARGS.parallel:
+        jobs = []
+        for worker in analysis.workers(
+                samples=samples,
+                fields=fields,
+                categories=categories,
+                systematics=systematics):
+
+            jobs.append(Job(dataset_hists, worker,
+                            write_hists=True, outdir=ANA_ARGS.outdir) )
+
+            if ANA_ARGS.dry_run:
+                    print "--"*100
+                    print worker
+        if not ANA_ARGS.dry_run:
+            log.info(
+                "************** submitting %i jobs  ************"%len(jobs))
+            log.info(
+                "***********************************************")
+            run_pool(jobs, n_jobs=ANA_ARGS.ncpu)
+            
+    # - -  run on cluster
+    if ANA_ARGS.cluster:
+        # # - -  pickle the analysis: KEEP IT IN THE MAIN DIR, 
+        # # IF YOU DONT WANT TO SHIP THE WHOLE CODE TO THE NODES.
+        if ANA_ARGS.pickle_analysis:
+            with open (ANA_ARGS.pickle_analysis, "wb") as pfile:
+                dill.dump(analysis, pfile)
+        if ANA_ARGS.pickled_analysis:
+            with open (ANA_ARGS.pickled_analysis, "rb") as pfile:
+                pickled_analysis = dill.load(pfile)
+
+        # - - clusters' resource manager and scheduler
+        if ANA_ARGS.rs_manager=="TORQUE":
+            # - - write jobs
+            from hpana.cluster.job_template import PBS_JOB_TEMPLATE
+
+            # - - setup the submit dir
+            os.system("mkdir -p {0}/jobs {0}/failed {0}/done {0}/submitted {0}/hists".format(ANA_ARGS.outdir))
+            log.info(
+                "************** submitting %i jobs to the cluster ************"%len(pickled_analysis.workers()))
+            log.info(
+                "**************************************************************")
+
+            os.system("mkdir -p %s %s/jobs/"%(ANA_ARGS.logsdir, ANA_ARGS.outdir))
+            # - -  create the job scripts and run them.
+            for aw in pickled_analysis.workers()[:2]:
+                jfile_name = "%s/jobs/%s.pbs"%(ANA_ARGS.outdir, aw.name)
+
+                # - - write the job submission script with right permissions
+                jfile = os.open(jfile_name, os.O_CREAT|os.O_WRONLY, 0755)
+                os.write(jfile, 
+                         PBS_JOB_TEMPLATE.format(logsdir=ANA_ARGS.logsdir,
+                                                 outdir=ANA_ARGS.outdir,
+                                                 local_scratch=ANA_ARGS.local_scratch,
+                                                 pickled_analysis=ANA_ARGS.pickled_analysis,
+                                                 script_path="process-dataset",
+                                                 jobname=aw.name,) )
+
+                os.close(jfile)
+
+                # - - - - submit the job now
+                log.info("submitting  %s ..."%aw.name)
+                if not ANA_ARGS.dry_run:
+                    os.system("qsub {0}".format(jfile_name))
+
+
+    # - - - - - - - - @NOTE: if you submitted jobs to the cluster wait till they're all done!
+    if ANA_ARGS.merge_hists:
+        if ANA_ARGS.cluster:
+            raise RuntimeError("jobs are submitted to the cluster wait for them to get done")
         log.info(
-            "************** submitting %i jobs  ************"%len(jobs))
+            "************** merging histograms  ************")
         log.info(
             "***********************************************")
-        run_pool(jobs, n_jobs=ANA_ARGS.ncpu)
-        
-# - - - - - - - - - - run on cluster
-if ANA_ARGS.cluster:
-    # # - - - - - - - - pickle the analysis: KEEP IT IN THE MAIN DIR, 
-    # # IF YOU DONT WANT TO SHIP THE WHOLE CODE TO THE NODES.
-    if ANA_ARGS.pickle_analysis:
-        with open (ANA_ARGS.pickle_analysis, "wb") as pfile:
-            dill.dump(analysis, pfile)
-    if ANA_ARGS.pickled_analysis:
-        with open (ANA_ARGS.pickled_analysis, "rb") as pfile:
-            pickled_analysis = dill.load(pfile)
-                    
-    # - - - - clusters' resource manager and scheduler
-    if ANA_ARGS.rs_manager=="TORQUE":
-        # - - write jobs
-        from hpana.cluster.job_template import PBS_JOB_TEMPLATE
-
-        # - - setup the submit dir
-        os.system("mkdir -p {0}/jobs {0}/failed {0}/done {0}/submitted {0}/hists".format(ANA_ARGS.outdir))
-        log.info(
-            "************** submitting %i jobs to the cluster ************"%len(pickled_analysis.workers))
-        log.info(
-            "**************************************************************")
-
-        # - -  create the job scripts and run them.
-        for aw in pickled_analysis.workers:
-            jfile_name = "%s/jobs/%s.pbs"%(ANA_ARGS.outdir, aw.name)
-
-            # - - write the job submission script with right permissions
-            jfile = os.open(jfile_name, os.O_CREAT|os.O_WRONLY, 0755)
-            os.write(jfile, 
-                     PBS_JOB_TEMPLATE.format(logsdir=ANA_ARGS.logsdir,
-                                             outdir=ANA_ARGS.outdir,
-                                             local_scratch=ANA_ARGS.local_scratch,
-                                             pickled_analysis=ANA_ARGS.pickled_analysis,
-                                             script_path="process-dataset",
-                                             jobname=aw.name,) )
-
-            os.close(jfile)
-
-            # - - - - submit the job now
-            log.info("submitting  %s ..."%aw.name)
-            if not ANA_ARGS.dry_run:
-                os.system("qsub {0}".format(jfile_name))
+        analysis.merge_hists(
+            histsdir=ANA_ARGS.outdir,
+            overwrite=True,
+            write=True, 
+            samples=ANA_ARGS.samples,)
 
 
-# - - - - - - - - @NOTE: if you submitted jobs to the cluster wait till they're all done!
-if ANA_ARGS.merge_hists:
-    if ANA_ARGS.cluster:
-        raise RuntimeError("jobs are submitted to the cluster wait for them to get done")
-    log.info(
-        "************** merging histograms  ************")
-    log.info(
-        "***********************************************")
-    analysis.merge_hists(
-        histsdir=ANA_ARGS.outdir,
-        overwrite=True,
-        write=True, 
-        samples=ANA_ARGS.samples,)
-
+##-------------------------------------------------------------
+## run 
+##-------------------------------------------------------------
+if __name__=="__main__":
+    start_time = time.time()
+    main()
     
-end_time = time.time()
-elapsed_time = (end_time - start_time)/60.
-log.info("\n****************** elapsed time: %0.1f mins ******************"%elapsed_time)
+    end_time = time.time()
+    elapsed_time = (end_time - start_time)/60.
+    log.info("\n****************** elapsed time: %0.1f mins ******************"%elapsed_time)
     

@@ -35,7 +35,7 @@ log.info("ROOT is in batch mode")
 config = Configuration(
     PLOTTING_ARGS.channel,
     year=PLOTTING_ARGS.year,
-    data_streams=("2015", "2016",),
+    data_streams=PLOTTING_ARGS.data_streams,
     mc_campaign=PLOTTING_ARGS.mc_campaign,
     db_version=PLOTTING_ARGS.db_version)
 

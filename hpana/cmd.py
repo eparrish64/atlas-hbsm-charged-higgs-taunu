@@ -33,6 +33,9 @@ def get_base_parser():
     base_parser.add_argument("--db-version", "-nv", type=str, 
                         help="database version; should match the database version you use when creating database")
 
+    base_parser.add_argument("--data-streams", nargs="+", choices=["2015","2016", "2017", "2018",],
+                             help="DATA taking yeats", default=["2015", "2016"])
+    
     base_parser.add_argument("--fields", nargs="+",
                         help="list of the variables that you want to analyze")
     base_parser.add_argument("--categories", nargs="+",
@@ -170,10 +173,16 @@ def get_yields_parser(base_parser=None):
 ## fake factors parser
 def get_ffs_parser(base_parser=None):
 
-    if not base_parser:
-        ffs_parser = get_base_parser()
-    else:
+    if base_parser:
         ffs_parser = base_parser
+    ffs_parser = ArgumentParser("hpana FFs parser")
+    
+    ffs_parser.add_argument("--log", "-l",
+                        choices=["VERBOSE", "DEBUG", "INFO", "WARNING", "ERROR"], default="INFO")
+    ffs_parser.add_argument("--db-version", "-nv", type=str, 
+                        help="database version; should match the database version you use when creating database")
+    ffs_parser.add_argument("--fake-sources", action="store_true",
+                              help="what is the source of fake tau")
 
     ffs_parser.add_argument("--cache-cr-ffs", action="store_true",
                               help="cache CR fake factors for the FF CRs")
@@ -193,10 +202,10 @@ def get_ffs_parser(base_parser=None):
     ffs_parser.add_argument("--samples", nargs="+",
                             help="list of samples to process")
     
-    ffs_parser.add_argument("--ffs-cr-cache", default="FF_CR.pkl",
+    ffs_parser.add_argument("--ffs-cr-cache", default="FFs_CR_DEFAULT.yml",
                             help="write CR FFs to this file")
     
-    ffs_parser.add_argument("--rqcd-cache", default="FF_rQCD.pkl",
+    ffs_parser.add_argument("--rqcd-cache", default="FF_rQCD.yml",
                             help="write combined FFs to this file")
     
     ffs_parser.add_argument("--ffs-hists-cache", default="FF_HISTS.pkl",
@@ -206,3 +215,16 @@ def get_ffs_parser(base_parser=None):
                                  help='where to put the plots', )
     
     return ffs_parser
+
+##--------------------------------------------------------------------------------------------------
+## fake factors parser
+def get_trig_eff_parser(base_parser=None):
+    if base_parser:
+        ffs_parser = base_parser
+    trig_eff_parser = ArgumentParser("hpana FFs parser")
+    
+    trig_eff_parser.add_argument("--log", "-l",
+                        choices=["VERBOSE", "DEBUG", "INFO", "WARNING", "ERROR"], default="INFO")
+    trig_eff_parser.add_argument("--db-version", "-nv", type=str, 
+                        help="database version; should match the database version you use when creating database")
+    

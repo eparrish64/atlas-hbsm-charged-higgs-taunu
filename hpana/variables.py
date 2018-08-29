@@ -54,38 +54,47 @@ class Variable(object):
         self.title = title
         self.unit = unit
         self.scale = scale
-        self.tform = tformula
         self.binning = binning
         self.bins = bins
         
         # - - - - - - - - see __init__.py
         self.mc_camp = kwargs.pop("mc_camp", MC_CAMPAIGN)
-
+        
         # - - - - variable might have different binning for plotting and WS
         self.workspace_binning = kwargs.pop("workspace_binning", None)
         
         # - - - - blinding a varibale based of some selection
         if blind_cut:
             self.blind_cut = blind_cut
+
+        # - - - - setup flexible TFormula string
+        if tformula:
+            if isinstance(tformula, dict):
+                self.tformula = tformula[self.mc_camp]
+            elif isinstance(tformula, str):
+                self.tformula = tformula
+            else :
+                raise TypeError("<str> type is expected but found {}".format(type(tformula)) )
+        else:
+            self.tformula = self.name 
             
+        if self.scale:
+            self.tformula = "({0}) * ({1})".format(self.scale, self.tformula)
+       
     @property    
     def tformula(self):
         """ build a flexible ROOT.TFormula string
         """
-        if self.tform:
-            if isinstance(self.tform, dict):
-                tformula = self.tform[self.mc_camp]
-            elif isinstance(self.tform, str):
-                tformula = self.tform
-            else :
-                raise TypeError("<str> type is expected but found {}".format(type(self.tform)) )
+        return self.__tformula
+    
+    @tformula.setter
+    def tformula(self, value):
+        if isinstance(value, dict):
+            self.__tformula = value[self.mc_camp]
+        elif isinstance(value, str):
+            self.__tformula = value
         else:
-            tformula = self.name 
-            
-        if self.scale:
-            tformula = "({0}) * ({1})".format(self.scale, tformula)
-            
-        return tformula
+            raise TypeError("%r is not supported"%value)
     
     @property 
     def label(self):
@@ -137,7 +146,7 @@ tau_0_pt = Variable(
     title='#font[52]{p}_{T}(#tau_{1}) GeV',
     tformula={
         "mc16": "tau_0_p4->Pt()",
-        "mc15": "tau_0_pt"},
+        "mc15": "0.001*tau_0_pt"},
     binning=(20, 0, 400),
     unit='GeV',
     scale=1.)
@@ -162,13 +171,14 @@ tau_0_q = Variable(
     "tau_0_q",
     title='#font[152]{#tau}_{1} #font[52]{Charge}',
     binning=(5, -2.5, 2.5))
-  
+
+## - - only defined for 1 prong taus
 tau_0_upsilon = Variable(
     "tau_0_upsilon", 
     title='#font[52]{#Upsilon}',
     tformula = {
         "mc15": '(tau_0_n_tracks==1)*(2.0*tau_0_allTrk_pt/tau_0_pt-1) + -111*(tau_0_n_tracks!=1)',
-        "mc16": '(tau_0_n_charged_tracks==1)*(2.0*tau_0_allTrk_pt/tau_0_p4->Pt()-1) + -111*(tau_0_n_charged_tracks!=1)',
+        "mc16": "((tau_0_n_charged_tracks==1)*tau_0_upsilon_pt_based+ -111*(tau_0_n_charged_tracks!=1))"
     },
     binning=(31, -1.05, 2.05))
 
@@ -235,13 +245,12 @@ met_phi = Variable(
 tau_0_met_dphi = Variable(
     "tau_0_met_dphi",
     title='#Delta#phi(#tau, E^{miss}_{T})',
-    binning=(10, 0, math.pi))
+    binning=(20, 0, math.pi))
 
 tau_0_met_mt = Variable(
     "tau_0_met_mt",
     title='m_{T}(#tau, E^{miss}_{T})GeV',
-    binning=(50, 0, 500), 
-    workspace_binning=(1000, 0, 1000),
+    binning=(20, 0, 500), 
     scale=1.,
     unit='GeV')
 

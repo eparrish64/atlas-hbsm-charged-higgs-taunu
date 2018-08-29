@@ -114,7 +114,7 @@ def draw(var, category,
                 fold_overflow(bkg_hist)
             # - - - - hists should already be decorated when they're produced !
             bkg_hist.SetFillColor(bkg.color) 
-            legend.AddEntry(bkg_hist, "%s(%i)"%(bkg.label, bkg_hist.Integral()), 'F')
+            legend.AddEntry(bkg_hist, "%s(%i)"%(bkg.label, bkg_hist.Integral(0, -1)), 'F')
             bkg_stack.Add(bkg_hist)
             backgrounds_hists.append(bkg_hist)
         backgrounds_stack.append(bkg_stack)
@@ -206,12 +206,13 @@ def draw(var, category,
             if data_hist:
                 data_hist = data_hist[0].hist 
         if not data_hist:
-            raise RuntimeError("can't find %s hist"%hname)
+            log.warning("can't find %s hist; skipping! "%hname)
+            return 
         data_hist.SetXTitle(var.title)
         data_hist.SetYTitle("# events")
         if overflow:
             fold_overflow(data_hist)
-        legend.AddEntry(data_hist, "%s(%i)"%(data.label, data_hist.Integral()), "P")
+        legend.AddEntry(data_hist, "%s(%i)"%(data.label, data_hist.Integral(0, -1)), "P")
         
         # - - - - - - - - blind the data in a specific range
         if isinstance(blind, tuple):

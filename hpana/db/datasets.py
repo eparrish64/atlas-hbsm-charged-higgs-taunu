@@ -65,13 +65,14 @@ MC16_NTUP_PATTERN = re.compile(
     '\.(?P<suffix>\w+)$'
 )
 NTUP_PATTERN_2018 = re.compile(
-    '^(?P<prefix>(group.phys-higgs|user))'
-    '\.(?P<uname>\w+)'
+    '^(?P<prefix>(group.phys-higgs)|(user\.\w+))'
+    #'\.(?P<uname>\w+)'
+    '((\.\w+)|)'
     '\.(?P<type>mc|data)'
     '(?P<stream>15|16|17|18)_13TeV'
     '\.(?P<id>\d+)'
-    '\.(?P<name>\w+)'
-    '\.(?P<derivation>\w+)'
+    '\.(?P<name>\w+)|(?P<derivation>D1|D2)'
+    #'\.(?P<derivation>\w+)'
     '\.(?P<tag>\w+)'
     '\.(?P<version>\w+)'
     '\_hist$')

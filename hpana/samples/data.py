@@ -55,12 +55,14 @@ class Data(Sample):
     """
     """
     STREAMS = ("2015", "2016", "2017", "2018")
+    __HERE = os.path.dirname(os.path.abspath(__file__))
     def __init__(self, config,
                  name='Data',
                  label='Data',
                  streams=[],
                  blind=True,
                  blind_regions=[],
+                 grls=["data_2015_lumi.csv", "data_2016_lumi.csv", "data_2017_lumi.csv"],
                  **kwargs):
 
         database = kwargs.pop("database", None)
@@ -69,7 +71,8 @@ class Data(Sample):
         super(Data, self).__init__(config, name=name, label=label, database=database, **kwargs)
 
         self.config = config
-
+        self.grls = grls
+        
         if not streams:
             streams = self.config.data_streams
         for st in streams:
@@ -82,14 +85,41 @@ class Data(Sample):
 
         # - - - - get datasets for the streams(TP FIX: KEEP 207 for r20.7)
         if "207" in name:
+            # - - r20.7 ntuples are merged! 
             self.datasets = [self.database["DATA207"]]
         else:
             self.datasets = []
+            data_runs = [] 
             for stream in self.streams:
                 dsprefix = "DATA%s_"%stream
                 for dk in self.database.keys():
                     if dk.startswith(dsprefix):
                         self.datasets.append(self.database[dk])
+                        data_runs.append(self.database[dk].id)
+
+        if len(self.datasets) > 1:
+            # - - - - update the data lumi based on the existing data runs
+            data_lumi = 0
+            good_runs = []
+            # - - - - in CSV:
+            # - - - - Run, Good, Bad, LDelivered, LRecorded, LAr Corrected, Prescale Corrected, Live Fraction, LAr Fraction, Prescale Fraction
+            for grl in self.grls:
+                grlf = os.path.join(Data.__HERE, grl)
+                with open(grlf, "r") as grl_file:
+                    good_runs += grl_file.readlines() 
+            good_runs = filter(lambda gl: gl[0].isdigit(), good_runs)
+
+            for grun_line in good_runs:
+                # - - add 00 prefix 
+                grun = "00%s"%grun_line.split(",")[0] #<! ,Run
+                if (grun in data_runs):
+                    glumi = float(grun_line.split(",")[6]) #<! ,Prescale Corrected
+                    data_lumi += glumi
+            if (data_lumi != self.config.data_lumi):
+                log.warning(
+                    "default LUMI is %0.4f and calculated one is %0.4f; updating the default"%(self.config.data_lumi / 1e3, data_lumi / 1e3))
+                self.config.data_lumi = data_lumi
+                
         self.info = DataInfo(self.config.data_lumi / 1e3, self.config.energy)
         self.blind = blind
         self.blind_regions = blind_regions
@@ -108,7 +138,6 @@ class Data(Sample):
             
         return trigger_dict
 
-        
     def cuts(self, **kwargs):
         """Additional run number specific cuts.
         Parameters

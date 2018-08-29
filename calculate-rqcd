@@ -8,9 +8,11 @@
 
 ## stdlib
 import os, sys, time, array, pickle, yaml 
+import multiprocessing
 
 ## PyPI
 import numpy as np
+from tabulate import tabulate
 
 # - - - - - - - -  parse ana args (needed before ROOT)
 from hpana.cmd import get_ffs_parser 
@@ -18,14 +20,14 @@ ffs_parser = get_ffs_parser()
 FFs_ARGS = ffs_parser.parse_args()
 
 ## local
-from hpana.rqcd import fit_alpha, prep_ff_hists
+from hpana.rqcd import fit_alpha, prep_ff_hists, fake_sources
 from hpana.variables import rQCD_VARS, FFS_TEMPLATE_VARS, tau_0_jet_width, tau_0_jet_bdt_score_trans
+from hpana.categories import FAKE_TAU_SOURCE, FF_CR_MULTIJET, FF_CR_WJETS
 from hpana.config import Configuration
 from hpana.analysis import Analysis
-from hpana.samples.sample import Sample, Histset
 from hpana.trigger import MULTIJET_TRIGGER
 from hpana import log
- 
+
 # - - - - time it
 start_time = time.time()
 
@@ -43,26 +45,29 @@ ROOT.gErrorIgnoreLevel = ROOT.kWarning #<! turn off useless ROOT Info messages (
 ##------------------------------------------------------------------------------------
 ## - - build both taujet and taulep analyses (FF CR s are for different channels)
 ##------------------------------------------------------------------------------------
-taujet_config = Configuration("taujet", data_streams=("2015", "2016"), mc_campaign=FFs_ARGS.mc_campaign, db_version="18v03")
+taujet_config = Configuration("taujet", data_streams=("2015","2016"), mc_campaign="mc16", db_version="18v04")
 taujet_analysis = Analysis(taujet_config, compile_cxx=True)
 
-taulep_config = Configuration("taulep", data_streams=("2015", "2016",), mc_campaign=FFs_ARGS.mc_campaign, db_version="18v03")
+taulep_config = Configuration("taulep", data_streams=("2015","2016"), mc_campaign="mc16", db_version="18v04")
 taulep_analysis = Analysis(taulep_config, compile_cxx=True)
 
 ##------------------------------------------------------------------------------------
 ## - - consts 
 ##------------------------------------------------------------------------------------
-LOOSE_TAU = ROOT.TCut("tau_0_jet_bdt_loose==0 && tau_0_jet_bdt_score_trans>00.005")
-
+COLORS = [ROOT.kRed, ROOT.kBlue, ROOT.kBlack, ROOT.kMagenta, ROOT.kOrange, ROOT.kGreen]
+LOOSE_TAU = ROOT.TCut("tau_0_jet_bdt_loose==0")
 N_CHARGED_TRAKCS = [1, 3] 
 TAU_PT_BINS = {
     "1":[30, 35, 40, 45, 50, 60, 75, 90, 105, 120, 140, 160, 200, 300, 3500],
-    "3":[30, 35, 40, 50, 75, 100, 150, 200, 3500],
-}
+    "3":[30, 35, 40, 50, 75, 100, 150, 200, 3500],}
 
-TARGET_REGIONS = taujet_config.categories + taulep_config.categories
+## - - - - CR and target selection regions
+TAULEP_TARGET_REGIONS = taulep_config.categories
+TAUJET_TARGET_REGIONS = taujet_config.categories
+TARGET_REGIONS = TAUJET_TARGET_REGIONS + TAULEP_TARGET_REGIONS
 FFS_CONTROL_REGIONS = taujet_config.ff_cr_regions + taulep_config.ff_cr_regions
 
+## - - - - hist template for rQCD calculation
 FIT_HIST_TEMPLATES = {
     #<! PLS NOTE the tformula order is Z:Y:X and for the binning it's X, Y, Z !
     "tau_0_jet_width":
@@ -95,342 +100,429 @@ TAULEP_SAMPLES = [
 if FFs_ARGS.samples:
     TAUJET_SAMPLES = filter(lambda s: s.name in FFs_ARGS.samples, TAUJET_SAMPLES)
     TAULEP_SAMPLES = filter(lambda s: s.name in FFs_ARGS.samples, TAULEP_SAMPLES)
-    
-##------------------------------------------------------------------------------------
-## - - cache the Fake Factors for the corresponding CR
-##------------------------------------------------------------------------------------
-if FFs_ARGS.cache_cr_ffs:
-    kparams = {
-        "template_fields": FFS_TEMPLATE_VARS,
-        "template_hist_bins":TAU_PT_BINS,
-        "tau_jet_bdt_score_trans_wps": [0.01, 0.02, 0.03],
-        "n_charged_tracks": N_CHARGED_TRAKCS,
-        "cache_file": FFs_ARGS.ffs_cr_cache,
-        "subtract_mc": False,
-    }
 
-    # - - - - taujet 
-    tj_ffs = taujet_analysis.cache_ffs(control_regions=[], trigger=MULTIJET_TRIGGER, **kparams)
-
-    # - - - - taulep
-    tl_ffs = taulep_analysis.cache_ffs(control_regions=[], **kparams)
-
-    CR_FFs = tj_ffs.update(tl_ffs)
-else:
-    # - - load them
-    log.info("loading FFs from %s"%FFs_ARGS.ffs_cr_cache)
-    try:
-        with open(FFs_ARGS.ffs_cr_cache, "r") as ffs_cr_cache:
-            CR_FFs = yaml.load(ffs_cr_cache)
-    except Exception, err:
-        log.warning("failed to load CR FFs")
+if __name__=="__main__":
+    ##------------------------------------------------------------------------------------
+    ## - - Fake tau source 
+    ##------------------------------------------------------------------------------------
+    if FFs_ARGS.fake_sources:
+        all_events = {}
+        regions = ["SR_TAUJET", "SR_TAULEP", "FF_CR_MULTIJET", "FF_CR_WJETS"]
+        fnames = ["electron", "lquark", "cquark", "bquark", "gluon", "other", "tau"]
         
-## - - - - validation plots
-if FFs_ARGS.validation_plots:
-    if CR_FFs:
-        canvas = ROOT.TCanvas()
-        colors = [ROOT.kBlue, ROOT.kRed, ROOT.kBlack, ROOT.kMagenta]
-        cr_ff_legend = ROOT.TLegend(0.6, 0.8, 0.9, 0.9)
+        # - - taujet SR (MAKE SURE U R NOT VETOING LEPS, INDEED YOU HAVE TO LET ONE LEP GOES THROUGH!)
+        taujet_SR = filter(lambda c: c.name=="SR_TAUJET", taujet_config.categories)[0]
+        all_events.update(fake_sources(
+            [taujet_analysis.ttbar, taujet_analysis.single_top],  taujet_SR, ftypes=FAKE_TAU_SOURCE))
 
-        hists = []
-        # - - - - retrive hists 
-        for itk in N_CHARGED_TRAKCS:
-            tkey = "%i"%itk
-            pt_bins = TAU_PT_BINS[tkey][1:]
-            for cr in [c.name for c in FFS_CONTROL_REGIONS]:
-                hist = ROOT.TH1F("%s__%i"%(cr, itk), "", len(pt_bins)-1, array.array("d", pt_bins))
-                for nbin, pt in enumerate(pt_bins):
-                    pkey = "%i"%pt
-                    ff = CR_FFs[cr]["tauJetBDT_02"][tkey][pkey]
-                    hist.SetBinContent(nbin+1, float(ff))
-                    hist.SetBinError(nbin+1, 0.001)
-                hists += [hist]
-
-        # - - - - plot them
-        n = 0
-        for h, cl in zip(hists, colors):
-            h.SetMarkerColor(cl)
-            h.SetLineColor(cl)
-            cr_ff_legend.AddEntry(h, "%s (nprongs=%s)"%(h.GetName().split("__")[0], h.GetName().split("__")[-1]), "L")
-            if n==0:
-                h.SetMaximum(10)
-                h.SetMinimum(0.01)
-                h.Draw("")
-                h.GetYaxis().SetTitle("FF")
-                h.GetXaxis().SetTitle("#tau p_{T} GeV")
-            else:
-                h.Draw("SAME")
-            n += 1
-
-        cr_ff_legend.Draw("SAME")
-
-        canvas.SetLogx()
-        canvas.SetLogy()
-
-        os.system("mkdir -p %s"%FFs_ARGS.pdir)
-        canvas.Print(os.path.join(FFs_ARGS.pdir, "FFs_inclusive_tracks_pT.png"))
-        log.info(os.path.join(FFs_ARGS.pdir, "FFs_inclusive_tracks_pT.png"))
-        canvas.Close()
+        # - - taujet multijet CR
+        all_events.update(fake_sources(
+            [taujet_analysis.ttbar, taujet_analysis.single_top],  FF_CR_MULTIJET, ftypes=FAKE_TAU_SOURCE))
         
+        # - - taulep SR
+        taulep_SR = filter(lambda c: c.name=="SR_TAULEP", taulep_config.categories)[0]
+        all_events.update(fake_sources(
+            [taulep_analysis.ttbar, taulep_analysis.single_top], taulep_SR, ftypes=FAKE_TAU_SOURCE))
         
-##------------------------------------------------------------------------------------
-## - - calcualte rQCD 
-## - - we need the histograms per pT and nTracks bin (benefiting from 3D histograms)
-##------------------------------------------------------------------------------------
-if FFs_ARGS.cache_ffs_hists:
-    COMBINED_FFs_HISTS = {"taulep": {}, "taujet": {}}
-    
-    taulep_hists = taulep_analysis.hists(
-        fields=rQCD_VARS.values(), categories=taulep_config.categories, samples=TAULEP_SAMPLES,
-        parallel=True, tauid=LOOSE_TAU, hist_templates=FIT_HIST_TEMPLATES,)
-    COMBINED_FFs_HISTS["taulep"] = taulep_hists
-    
-    taujet_hists = taujet_analysis.hists(
-        fields=rQCD_VARS.values(), categories=taujet_config.categories, samples=TAUJET_SAMPLES,
-        parallel=True, tauid=LOOSE_TAU, hist_templates=FIT_HIST_TEMPLATES,)
-    COMBINED_FFs_HISTS["taujet"] = taujet_hists
+        # - - taulep Wjets CR
+        all_events.update(fake_sources(
+            [taulep_analysis.wlnu], FF_CR_WJETS, ftypes=FAKE_TAU_SOURCE))
 
-
-    # - - - - write the histograms to disk
-    with open(FFs_ARGS.ffs_hists_cache, "w") as pfile:
-        pickle.dump(COMBINED_FFs_HISTS, pfile)
-else:
-    # - - - - load histograms from disk
-    try:
-        with open(FFs_ARGS.ffs_hists_cache, "r") as ifile:
-            ffs_hists = pickle.load(ifile)
-        COMBINED_FFs_HISTS = ffs_hists
-    except Exception, err:
-        log.warning("failed to load hists for FFs calculation")
-    
-if FFs_ARGS.eval_rqcd:
-    cr_hists = []
-    target_hists = []
-    # - - - - convert 3D hists to 1D hists with the desired binning
-    for analysis in [taujet_analysis, taulep_analysis]:
-        channel = analysis.config.channel
-        cr_regions = analysis.config.ff_cr_regions
-        target_regions = analysis.config.categories
-        
-        hsets = prep_ff_hists(COMBINED_FFs_HISTS[channel],
-                              control_regions=cr_regions, target_regions=target_regions, shape_vars=rQCD_VARS, fitting_bins=TAU_PT_BINS)
-        cr_hists += filter(lambda hs: hs.category in [c.name for c in cr_regions], hsets)
-        target_hists += filter(lambda hs: hs.category in [t.name for t in target_regions], hsets)
-
-    cr_hists_dict, target_hists_dict, alphas_min, chi2s = fit_alpha(
-        cr_hists, target_hists, fitting_bins=TAU_PT_BINS, shape_vars=rQCD_VARS)
-    
-    ##------------------------------------------------
-    ## - - cache rQCD 
-    ##------------------------------------------------
-    if FFs_ARGS.cache_rqcd:
-        with open(FFs_ARGS.rqcd_cache, "w") as cache:
-            yaml.dump(alphas_min, cache, default_flow_style=False)
-
-        cxx_file = FFs_ARGS.rqcd_cache.replace(".yml", ".cxx")
-        with open(cxx_file, "w") as cxx_cache:
-            cxx_cache.write("#include <iostream>\n")
-            cxx_cache.write(
-                "float GetFFCombined(float pt, int ntracks, float FF_CR_MULTIJET, float FF_CR_WJETS, int index){\n")
-            for index, cat in enumerate(TARGET_REGIONS):
-                cxx_cache.write("\t //! Combined FFs for ({}) target region\n".format(cat.name))
-                cxx_cache.write("\t if (index==%i) {\n"%(1000+index))
-                for itk in N_CHARGED_TRAKCS:
-                    tkey = "%i"%itk
-                    cxx_cache.write("\t\t if(ntracks==%i){\n"%itk)
-                    for pT in TAU_PT_BINS[tkey][2:]:
-                        pkey = "%i"%pT
-                        alpha = alphas_min[tkey][pkey][cat.name]
-                        cxx_cache.write("\t\t\t if(pt < {0}) return ({1}*FF_CR_MULTIJET) + ({2}*FF_CR_WJETS);\n".format(pT, alpha, 1 - alpha ))
-                    cxx_cache.write("\t\t }\n")
-
-                # - - - -  close ntracks block   
-                cxx_cache.write("\t\t else return 0;\n")   
-                cxx_cache.write("\t }\n")
-
-            # - - - - close index block
-            cxx_cache.write("\t else return 0;\n")   
-            cxx_cache.write("}\n\n\n")
-
-    
-    ##------------------------------------------------
-    ## - - plot all the validiation plots! 
-    ##------------------------------------------------
-    if FFs_ARGS.validation_plots:
-        # - - - - dedicated dir for ff plots
-        os.system("mkdir -p %s"%FFs_ARGS.pdir)
-        
-        # - - - - create a canvas
-        canvas = ROOT.TCanvas("c", "c", 800, 600)
-        for itk in N_CHARGED_TRAKCS:
-            tkey = "%i"%(itk)
-            # - - - - different vars for 1p and 3p taus
-            var = rQCD_VARS[tkey]
-            pt_bins = TAU_PT_BINS[tkey]   
-            for n in range(1, len(pt_bins)):
-                pkey = "%i"%pt_bins[n]
-
-                # - - pT and tracks lable for the plots
-                tlabel = ROOT.TLatex(
-                    canvas.GetLeftMargin() + 0.5, canvas.GetBottomMargin() + 0.6,
-                    "#splitline{n-prongs = %i}{%i GeV < p^{T}_{#tau} < %i GeV}"%(itk, int(pt_bins[n-1]), int(pt_bins[n])))
-                tlabel.SetNDC()
-                tlabel.SetTextFont(43)
-                tlabel.SetTextSize(15)
-                tlabel.SetTextAlign(11)
-
-                ##--------------------------------------------------------
-                # - - plot FF CR hists
-                ##--------------------------------------------------------
-                cr_legend = ROOT.TLegend(0.6, 0.8, 0.9, 0.9) 
-                if not cr_hists_dict[tkey][pkey]:
-                    continue
+        print all_events
+        rows = [[""] + ["tau | antitau"]*len(regions)]
+        rows += [[fn] for fn in fnames]
+        for n, row in enumerate(rows[1:]):
+            for rg in regions:
+                wrong_taus = 100*(all_events["%s__%s"%(rg, row[0])]["TAU"])/all_events["%s__sum"%rg]["TAU"]
+                wrong_antitaus = 100*all_events["%s__%s"%(rg, row[0])]["ANTITAU"]/all_events["%s__sum"%rg]["ANTITAU"]
+                vals = "%.1f | %.1f"%(wrong_taus, wrong_antitaus)
+                row.append(vals)
                 
-                wj_hist, mj_hist = cr_hists_dict[tkey][pkey]
-                wj_hist.SetMarkerColor(ROOT.kRed)
-                wj_hist.SetLineColor(ROOT.kRed)
-                wj_hist.Draw("")
-                wj_hist.GetXaxis().SetTitle(var.title)
-                wj_hist.GetYaxis().SetTitle("fraction of events")
-                cr_legend.AddEntry(wj_hist, "W-jets CR", "P")
+        print tabulate(rows, headers=regions)        
+        with open("fakes_sources.TXT", "a") as ofile:        
+            ofile.write("{0}\n\n".format(tabulate(rows, headers=regions)))
+            ofile.write("{0}\n\n".format(tabulate(rows, headers=regions, tablefmt="latex")))
 
-                mj_hist.SetMarkerColor(ROOT.kBlack)
-                mj_hist.SetLineColor(ROOT.kBlack)
+        
+    ##------------------------------------------------------------------------------------
+    ## - - cache the Fake Factors for the corresponding CR
+    ##------------------------------------------------------------------------------------
+        
+    if FFs_ARGS.cache_cr_ffs:
+        kparams = {
+            "template_fields": FFS_TEMPLATE_VARS,
+            "template_hist_bins":TAU_PT_BINS,
+            "tau_jet_bdt_score_trans_wps": [0.01, 0.02, 0.03],
+            "n_charged_tracks": N_CHARGED_TRAKCS,
+            "cache_file": FFs_ARGS.ffs_cr_cache,
+            "subtract_mc": True,
+            "antitau": LOOSE_TAU,
+            "validation_plots":FFs_ARGS.validation_plots, 
+        }
 
-                mj_hist.Draw("SAME")
-                cr_legend.AddEntry(mj_hist, "Multi-jets CR", "P")
+        # - - - - taujet 
+        tj_ffs = taujet_analysis.cache_ffs(control_regions=[], trigger=MULTIJET_TRIGGER, **kparams)
 
-                tlabel.Draw("")
-                cr_legend.Draw("SAME")
-                canvas.Print(os.path.join(FFs_ARGS.pdir, "FF_CR_%s_%s.png"%(tkey, pkey) ) )
-                canvas.Clear()
+        # - - - - taulep
+        tl_ffs = {}#taulep_analysis.cache_ffs(control_regions=[], **kparams)
 
-                ##--------------------------------------------------------
-                # - - plot target regions hists and fitted functions
-                ##--------------------------------------------------------
-                for cat in TARGET_REGIONS:
-                    if not pkey in target_hists_dict[tkey]:
-                        log.warning("missing TARGET %s %s "%(tkey, pkey))
+        CR_FFs = tj_ffs.update(tl_ffs)
+    else:
+        # - - load them
+        log.info("loading FFs from %s"%FFs_ARGS.ffs_cr_cache)
+        try:
+            with open(FFs_ARGS.ffs_cr_cache, "r") as ffs_cr_cache:
+                CR_FFs = yaml.load(ffs_cr_cache)
+        except Exception, err:
+            log.warning("failed to load CR FFs")
+    ## - - - - validation plots
+    if FFs_ARGS.validation_plots:
+        if CR_FFs:
+            canvas = ROOT.TCanvas("c", "c", 800, 600)
+            cr_ff_legend = ROOT.TLegend(0.6, 0.8, 0.9, 0.9)
+
+            hists = []
+            # - - - - retrive hists 
+            for itk in N_CHARGED_TRAKCS:
+                tkey = "%i"%itk
+                pt_bins = TAU_PT_BINS[tkey][1:]
+                for cr in [c.name for c in FFS_CONTROL_REGIONS]:
+                    hist = ROOT.TH1F("%s__%i"%(cr, itk), "", len(pt_bins)-1, array.array("d", pt_bins))
+                    for nbin, pt in enumerate(pt_bins):
+                        pkey = "%i"%pt
+                        ff = CR_FFs[cr]["tauJetBDT_02"][tkey][pkey]
+                        hist.SetBinContent(nbin+1, float(ff))
+                        hist.SetBinError(nbin+1, 0.001)
+                    hists += [hist]
+
+            # - - - - plot them
+            n = 0
+            for h, cl in zip(hists, COLORS):
+                h.SetMarkerColor(cl)
+                h.SetLineColor(cl)
+                cr_ff_legend.AddEntry(h, "%s (nprongs=%s)"%(h.GetName().split("__")[0], h.GetName().split("__")[-1]), "L")
+                if n==0:
+                    h.SetMaximum(10)
+                    h.SetMinimum(0.01)
+                    h.Draw("")
+                    h.GetYaxis().SetTitle("FF")
+                    h.GetXaxis().SetTitle("#tau p_{T} GeV")
+                else:
+                    h.Draw("SAME")
+                n += 1
+
+            cr_ff_legend.Draw("SAME")
+
+            canvas.SetLogx()
+            canvas.SetLogy()
+
+            os.system("mkdir -p %s"%FFs_ARGS.pdir)
+            canvas.Print(os.path.join(FFs_ARGS.pdir, "FFs_inclusive_tracks_pT.png"))
+            log.info(os.path.join(FFs_ARGS.pdir, "FFs_inclusive_tracks_pT.png"))
+            canvas.Close()
+
+
+    ##------------------------------------------------------------------------------------
+    ## - - calcualte rQCD 
+    ## - - we need the histograms per pT and nTracks bin (benefiting from 3D histograms)
+    ##------------------------------------------------------------------------------------
+    if FFs_ARGS.cache_ffs_hists:
+        COMBINED_FFs_HISTS = {"taulep": {}, "taujet": {}}
+
+        taujet_hists = taujet_analysis.hists(
+            fields=rQCD_VARS.values(), categories=TAUJET_TARGET_REGIONS, samples=TAUJET_SAMPLES,
+            parallel=True, tauid=LOOSE_TAU, hist_templates=FIT_HIST_TEMPLATES,)
+        COMBINED_FFs_HISTS["taujet"] = taujet_hists
+
+        taulep_hists = taulep_analysis.hists(
+            fields=rQCD_VARS.values(), categories=TAULEP_TARGET_REGIONS, samples=TAULEP_SAMPLES,
+            parallel=True, tauid=LOOSE_TAU, hist_templates=FIT_HIST_TEMPLATES,)
+        COMBINED_FFs_HISTS["taulep"] = taulep_hists
+
+
+        # - - - - write the histograms to disk
+        with open(FFs_ARGS.ffs_hists_cache, "w") as pfile:
+            pickle.dump(COMBINED_FFs_HISTS, pfile)
+    else:
+        # - - - - load histograms from disk
+        try:
+            with open(FFs_ARGS.ffs_hists_cache, "r") as ifile:
+                ffs_hists = pickle.load(ifile)
+            COMBINED_FFs_HISTS = ffs_hists
+        except Exception, err:
+            log.warning("failed to load hists for FFs calculation")
+        
+    if FFs_ARGS.eval_rqcd:
+        cr_hists = []
+        target_hists = []
+        # - - - - convert 3D hists to 1D hists with the desired binning
+        for analysis in [taujet_analysis, taulep_analysis]:
+            channel = analysis.config.channel
+            cr_regions = analysis.config.ff_cr_regions
+            target_regions = analysis.config.categories
+
+            hsets = prep_ff_hists(COMBINED_FFs_HISTS[channel],
+                                  control_regions=cr_regions, target_regions=target_regions, shape_vars=rQCD_VARS, fitting_bins=TAU_PT_BINS)
+            cr_hists += filter(lambda hs: hs.category in [c.name for c in cr_regions], hsets)
+            target_hists += filter(lambda hs: hs.category in [t.name for t in target_regions], hsets)
+        cr_hists_dict, target_hists_dict, alphas_min, chi2s = fit_alpha(
+            cr_hists, target_hists, fitting_bins=TAU_PT_BINS, shape_vars=rQCD_VARS)
+
+        ##------------------------------------------------
+        ## - - cache rQCD 
+        ##------------------------------------------------
+        if FFs_ARGS.cache_rqcd:
+            with open(FFs_ARGS.rqcd_cache, "w") as cache:
+                yaml.dump(alphas_min, cache, default_flow_style=False)
+
+            cxx_file = FFs_ARGS.rqcd_cache.replace(".yml", ".cxx")
+            with open(cxx_file, "w") as cxx_cache:
+                cxx_cache.write("#include <iostream>\n")
+                cxx_cache.write(
+                    "float GetFFCombined(float pt, int ntracks, float FF_CR_MULTIJET, float FF_CR_WJETS, int index){\n")
+                for index, cat in enumerate(TARGET_REGIONS):
+                    cxx_cache.write("\t //! Combined FFs for ({}) target region\n".format(cat.name))
+                    cxx_cache.write("\t if (index==%i) {\n"%(1000+index))
+                    for itk in N_CHARGED_TRAKCS:
+                        tkey = "%i"%itk
+                        cxx_cache.write("\t\t if(ntracks==%i){\n"%itk)
+                        for pT in TAU_PT_BINS[tkey][2:]:
+                            pkey = "%i"%pT
+                            if not cat.name in alphas_min[tkey][pkey]:
+                                log.warning("alpha for %s category is missing; skipping"%cat.name)
+                                continue
+                            alpha = alphas_min[tkey][pkey][cat.name]
+                            cxx_cache.write("\t\t\t if(pt < {0}) return ({1}*FF_CR_MULTIJET) + ({2}*FF_CR_WJETS);\n".format(pT, alpha, 1 - alpha ))
+                        cxx_cache.write("\t\t }\n")
+
+                    # - - - -  close ntracks block   
+                    cxx_cache.write("\t\t else return 0;\n")   
+                    cxx_cache.write("\t }\n")
+
+                # - - - - close index block
+                cxx_cache.write("\t else return 0;\n")   
+                cxx_cache.write("}\n\n\n")
+
+
+        ##------------------------------------------------
+        ## - - plot all the validiation plots! 
+        ##------------------------------------------------
+        if FFs_ARGS.validation_plots:
+            # - - - - dedicated dir for ff plots
+            os.system("mkdir -p %s"%FFs_ARGS.pdir)
+
+            # - - - - create a canvas
+            canvas = ROOT.TCanvas("c", "c", 800, 600)
+            for itk in N_CHARGED_TRAKCS:
+                tkey = "%i"%(itk)
+                # - - - - different vars for 1p and 3p taus
+                var = rQCD_VARS[tkey]
+                pt_bins = TAU_PT_BINS[tkey]   
+                for n in range(1, len(pt_bins)):
+                    pkey = "%i"%pt_bins[n]
+
+                    # - - pT and tracks lable for the plots
+                    tlabel = ROOT.TLatex(
+                        canvas.GetLeftMargin() + 0.5, canvas.GetBottomMargin() + 0.6,
+                        "#splitline{n-prongs = %i}{%i GeV < p^{T}_{#tau} < %i GeV}"%(itk, int(pt_bins[n-1]), int(pt_bins[n])))
+                    tlabel.SetNDC()
+                    tlabel.SetTextFont(43)
+                    tlabel.SetTextSize(15)
+                    tlabel.SetTextAlign(11)
+
+                    ##--------------------------------------------------------
+                    # - - plot FF CR hists
+                    ##--------------------------------------------------------
+                    cr_legend = ROOT.TLegend(0.6, 0.8, 0.9, 0.9) 
+                    if not cr_hists_dict[tkey][pkey]:
                         continue
-                    if not cat.name in target_hists_dict[tkey][pkey]:
-                        log.warning("missing TARGET %s %s  %s"%(cat.name, tkey, pkey))
-                        continue
 
-                    tr_legend = ROOT.TLegend(0.6, 0.8, 0.9, 0.9) 
-                    target_hist, target_fit = target_hists_dict[tkey][pkey][cat.name]
+                    wj_hist, mj_hist = cr_hists_dict[tkey][pkey]
+                    wj_hist.SetMarkerColor(ROOT.kRed)
+                    wj_hist.SetLineColor(ROOT.kRed)
+                    wj_hist.Draw("")
+                    wj_hist.GetXaxis().SetTitle(var.title)
+                    wj_hist.GetYaxis().SetTitle("fraction of events")
+                    cr_legend.AddEntry(wj_hist, "W-jets CR", "P")
 
-                    target_fit.SetMarkerColor(ROOT.kRed)
-                    target_fit.SetLineColor(ROOT.kRed)
-                    target_fit.Draw("PAC")
+                    mj_hist.SetMarkerColor(ROOT.kBlack)
+                    mj_hist.SetLineColor(ROOT.kBlack)
 
-                    target_hist.SetMarkerColor(ROOT.kBlack)
-                    target_hist.SetLineColor(ROOT.kBlack)
-                    target_fit.GetXaxis().SetTitle(var.title)
-                    target_fit.GetYaxis().SetTitle("fraction of events")
-                    target_hist.Draw("SAME")
+                    mj_hist.Draw("SAME")
+                    cr_legend.AddEntry(mj_hist, "Multi-jets CR", "P")
 
-                    tr_legend.AddEntry(target_hist, "%s region"%cat.name, "P")
-                   
-                    tr_legend.AddEntry(target_fit, "fit", "L")
-
-                    # - - add legends, labels and save canvas
-                    tr_legend.Draw("SAME")
-                    tlabel.Draw("SAME")
-                    canvas.Print(os.path.join(FFs_ARGS.pdir, "TARGET_%s_%s_%s.png"%(cat.name, tkey, pkey) ) )
+                    tlabel.Draw("")
+                    cr_legend.Draw("SAME")
+                    canvas.Print(os.path.join(FFs_ARGS.pdir, "FF_CR_%s_%s.png"%(tkey, pkey) ) )
                     canvas.Clear()
 
                     ##--------------------------------------------------------
-                    # - - plot chi2
+                    # - - plot target regions hists and fitted functions
                     ##--------------------------------------------------------
-                    chi2_graph = chi2s[tkey][pkey][cat.name]
-                    chi2_graph.SetLineWidth(3)
-                    chi2_graph.SetLineColor(ROOT.kBlue)
-                    chi2_graph.Draw("AL")
-                    chi2_graph.GetXaxis().SetTitle("#alpha_{MJ}")
-                    chi2_graph.GetYaxis().SetTitle("#chi^{2}/ndf")
-                    tlabel.Draw("SAME")
+                    for cat in TARGET_REGIONS:
+                        if not pkey in target_hists_dict[tkey]:
+                            log.warning("missing TARGET %s %s "%(tkey, pkey))
+                            continue
+                        if not cat.name in target_hists_dict[tkey][pkey]:
+                            log.warning("missing TARGET %s %s  %s"%(cat.name, tkey, pkey))
+                            continue
 
-                    # - - find the min and draw a line there
-                    xarr = chi2_graph.GetX()
-                    yarr = chi2_graph.GetY()
+                        tr_legend = ROOT.TLegend(0.6, 0.8, 0.9, 0.9) 
+                        target_hist, target_fit = target_hists_dict[tkey][pkey][cat.name]
 
-                    ymin = min(yarr)
-                    xmin_index = [i for i, y in enumerate(yarr) if y==ymin][0]
-                    xmin = xarr[xmin_index]
-                    ymax = max(yarr)
+                        target_fit.SetMarkerColor(ROOT.kRed)
+                        target_fit.SetLineColor(ROOT.kRed)
+                        target_fit.Draw("PAC")
 
-                    chi2_graph.SetMinimum(0)
-                    chi2_graph.SetMaximum(1.2*ymax)
-                    tline = ROOT.TLine(xmin, 0, xmin , ymax)
-                    tline.SetLineColor(ROOT.kRed)
-                    tline.SetLineWidth(2)
-                    tline.Draw("SAME")
+                        target_hist.SetMarkerColor(ROOT.kBlack)
+                        target_hist.SetLineColor(ROOT.kBlack)
+                        target_fit.GetXaxis().SetTitle(var.title)
+                        target_fit.GetYaxis().SetTitle("fraction of events")
+                        target_hist.Draw("SAME")
 
-                    tline_up = ROOT.TLine(1.2*xmin, 0, 1.2*xmin , ymax)
-                    tline_up.SetLineColor(ROOT.kRed)
-                    tline_up.SetLineWidth(2)
-                    tline_up.SetLineStyle(10)
-                    tline_up.Draw("SAME")
+                        tr_legend.AddEntry(target_hist, "%s region"%cat.name, "P")
 
-                    tline_dn = ROOT.TLine(0.8*xmin, 0, 0.8*xmin , ymax)
-                    tline_dn.SetLineColor(ROOT.kRed)
-                    tline_dn.SetLineWidth(2)
-                    tline_dn.SetLineStyle(10)
-                    tline_dn.Draw("SAME")
+                        tr_legend.AddEntry(target_fit, "fit", "L")
 
-                    canvas.Print(os.path.join(FFs_ARGS.pdir, "CHI2_%s_%s_%s.png"%(cat.name, tkey, pkey) ) )
-                    canvas.Clear()
+                        # - - add legends, labels and save canvas
+                        tr_legend.Draw("SAME")
+                        tlabel.Draw("SAME")
+                        canvas.Print(os.path.join(FFs_ARGS.pdir, "TARGET_%s_%s_%s.png"%(cat.name, tkey, pkey) ) )
+                        canvas.Clear()
 
-            ##--------------------------------------------------------
-            # - -  plot ALPHA as a function of pT for 1p/3p taus
-            ##--------------------------------------------------------
+                        ##--------------------------------------------------------
+                        # - - plot chi2
+                        ##--------------------------------------------------------
+                        chi2_graph = chi2s[tkey][pkey][cat.name]
+                        chi2_graph.SetLineWidth(3)
+                        chi2_graph.SetLineColor(ROOT.kBlue)
+                        chi2_graph.Draw("AL")
+                        chi2_graph.GetXaxis().SetTitle("#alpha_{MJ}")
+                        chi2_graph.GetYaxis().SetTitle("#chi^{2}/ndf")
+                        tlabel.Draw("SAME")
+                        tr_legend.Draw("SAME")
 
-            # - - n tracks lable for the plots
-            alabel = ROOT.TLatex(
-                canvas.GetLeftMargin() + 0.6, canvas.GetBottomMargin() + 0.5,"n-prongs = %i"%itk)
-            alabel.SetNDC()
-            alabel.SetTextFont(43)
-            alabel.SetTextSize(15)
-            alabel.SetTextAlign(11)
-            
-            alphas = alphas_min[tkey]
-            pt_bins = sorted([int(k) for k in alphas.keys()])
-            
-            for cat in TARGET_REGIONS:
+                        # - - find the min and draw a line there
+                        xarr = chi2_graph.GetX()
+                        yarr = chi2_graph.GetY()
+
+                        ymin = min(yarr)
+                        xmin_index = [i for i, y in enumerate(yarr) if y==ymin][0]
+                        xmin = xarr[xmin_index]
+                        ymax = max(yarr)
+
+                        chi2_graph.SetMinimum(0)
+                        chi2_graph.SetMaximum(1.2*ymax)
+                        tline = ROOT.TLine(xmin, 0, xmin , ymax)
+                        tline.SetLineColor(ROOT.kRed)
+                        tline.SetLineWidth(2)
+                        tline.Draw("SAME")
+
+                        tline_up = ROOT.TLine(1.2*xmin, 0, 1.2*xmin , ymax)
+                        tline_up.SetLineColor(ROOT.kRed)
+                        tline_up.SetLineWidth(2)
+                        tline_up.SetLineStyle(10)
+                        tline_up.Draw("SAME")
+
+                        tline_dn = ROOT.TLine(0.8*xmin, 0, 0.8*xmin , ymax)
+                        tline_dn.SetLineColor(ROOT.kRed)
+                        tline_dn.SetLineWidth(2)
+                        tline_dn.SetLineStyle(10)
+                        tline_dn.Draw("SAME")
+                        
+                        canvas.Print(os.path.join(FFs_ARGS.pdir, "CHI2_%s_%s_%s.png"%(cat.name, tkey, pkey) ) )
+                        canvas.Clear()
+
+                ##--------------------------------------------------------
+                # - -  plot ALPHA as a function of pT for 1p/3p taus
+                ##--------------------------------------------------------
+
+                # - - n tracks lable for the plots
+                alabel = ROOT.TLatex(
+                    canvas.GetLeftMargin() + 0.6, canvas.GetBottomMargin() + 0.5,"n-prongs = %i"%itk)
+                alabel.SetNDC()
+                alabel.SetTextFont(43)
+                alabel.SetTextSize(15)
+                alabel.SetTextAlign(11)
+
+                alphas = alphas_min[tkey]
+                pt_bins = sorted([int(k) for k in alphas.keys()])
+                
+                alpha_hists = []
+                comb_ff_hists = []
                 a_legend = ROOT.TLegend(0.7, 0.7, 0.9, 0.9)
-                log.info("\n****************** rQCD estimation (category:{0}, nTracks={1}) ******************".format(cat.name, itk))
-                alpha_h = ROOT.TH1F(
-                    "alpha_%s_%s"%(cat, itk), "#alpha_{MJ}",len(pt_bins) - 1, array.array("d", pt_bins))
-                for nbin, pt in enumerate(pt_bins[1:]):
-                    pkey = "%i"%pt
-                    if not pkey in alphas:
-                        log.warning(" no alpha is fitted for %i bin! setting it to 0"%pt)
-                        alpha_h.SetBinContent(nbin+1, 0) 
-                        alpha_h.SetBinError(nbin+1, 0.0001) #<! dummy error for plotting purpose only
-                        continue
+                for ic, cat in enumerate(TARGET_REGIONS):
+                    log.info("\n****************** rQCD estimation (category:{0}, nTracks={1}) ******************".format(cat.name, itk))
+                    alpha_h = ROOT.TH1F(
+                        "alpha_%s_%s"%(cat, itk), "#alpha_{MJ}",len(pt_bins) - 1, array.array("d", pt_bins))
+                    
+                    comb_ff_h = ROOT.TH1F(
+                        "comb_ff_%s_%s"%(cat, itk), "#COM_{FF}",len(pt_bins) - 1, array.array("d", pt_bins))
+                    for nbin, pt in enumerate(pt_bins[1:]):
+                        pkey = "%i"%pt
+                        if not pkey in alphas:
+                            log.warning(" no alpha is fitted for %i bin! setting it to 0"%pt)
+                            alpha_h.SetBinContent(nbin+1, 0) 
+                            alpha_h.SetBinError(nbin+1, 0.0001) #<! dummy error for plotting purpose only
+                            
+                            comb_ff_h.SetBinContent(nbin+1, 0) 
+                            comb_ff_h.SetBinError(nbin+1, 0.0001) #<! dummy error for plotting purpose only
+                            continue
+                        if not cat.name in alphas[pkey]:
+                            continue
+                        alpha = alphas[pkey][cat.name]
+                        log.info("(pT, alpha): {}, {}".format(pkey, alpha))
+                        
+                        alpha_h.SetBinContent(nbin+1, alpha) 
+                        alpha_h.SetBinError(nbin+1, 0.001) #<! dummy error for plotting purpose only
+                        
+                        ff = alpha*float(CR_FFs["FF_CR_MULTIJET"]["tauJetBDT_02"][tkey][pkey]) + (1-alpha)*float(CR_FFs["FF_CR_WJETS"]["tauJetBDT_02"][tkey][pkey])
+                        comb_ff_h.SetBinContent(nbin+1, ff) 
+                        comb_ff_h.SetBinError(nbin+1, 0.0001) #<! dummy error for plotting purpose only
+                        
+                    alpha_h.SetLineColor(COLORS[ic])
+                    alpha_h.SetLineWidth(2)
+                    alpha_h.GetYaxis().SetTitle("#alpha_{MJ}")
+                    alpha_h.GetXaxis().SetTitle("p^{T}_{#tau} GeV")
+                    alpha_hists.append(alpha_h)
+                    
+                    alpha_h.Draw("E1")
+                    alpha_h.GetYaxis().SetRangeUser(-2., 5)
+                    a_legend.AddEntry(alpha_h, "%s"%cat.label, "L")
 
-                    alpha = alphas[pkey][cat.name]
-                    log.info("(pT, alpha): {}, {}".format(pkey, alpha))
-                    alpha_h.SetBinContent(nbin+1, alpha) 
-                    alpha_h.SetBinError(nbin+1, 0.001) #<! dummy error for plotting purpose only
+                    comb_ff_h.SetLineColor(COLORS[ic])
+                    comb_ff_h.SetLineWidth(2)
+                    comb_ff_h.GetYaxis().SetTitle("FF_{COM}")
+                    comb_ff_h.GetXaxis().SetTitle("p^{T}_{#tau} GeV")
 
-                alpha_h.SetLineColor(ROOT.kGreen)
-                alpha_h.SetLineWidth(2)
-                alpha_h.GetYaxis().SetTitle("#alpha_{MJ}")
-                alpha_h.GetXaxis().SetTitle("p^{T}_{#tau} GeV")
-
-                alpha_h.Draw("E1")
-                alpha_h.GetYaxis().SetRangeUser(-1, 2)
-                a_legend.AddEntry(alpha_h, "%s"%cat.label, "L")
-
+                    comb_ff_h.GetYaxis().SetRangeUser(0.001, 10)
+                    comb_ff_hists.append(comb_ff_h)
+            
+                for i, ah in enumerate(alpha_hists):
+                    if i==0:
+                        ah.Draw("E1")
+                    else:
+                        ah.Draw("E1 SAME")
                 alabel.Draw("SAME")
                 a_legend.Draw("SAME")
                 canvas.SetLogx()
-                canvas.Print(os.path.join(FFs_ARGS.pdir, "ALPHA_%s_%s.png"%(cat.name, tkey)) )
-                alpha_h.Delete()
+                canvas.Print(os.path.join(FFs_ARGS.pdir, "ALPHA_inclusive_%s.png"%(tkey)) )
                 canvas.Clear()
-        canvas.Close()
-            
+                    
+                for i, fh in enumerate(comb_ff_hists):
+                    if i==0:
+                        fh.Draw("E1")
+                    else:
+                        fh.Draw("E1 SAME")
+                canvas.SetLogy()
+                canvas.SetLogx()
+                alabel.Draw("SAME")
+                a_legend.Draw("SAME")
+                canvas.Print(os.path.join(FFs_ARGS.pdir, "FFs_COM_inclusive_%s.png"%(tkey)) )
+                canvas.Clear()
+                
+            canvas.Close()
+
     
 end_time = time.time()
 elapsed_time = (end_time - start_time)/60.

@@ -50,6 +50,7 @@ config = Configuration(
     YIELDS_ARGS.channel,
     year=YIELDS_ARGS.year,
     mc_campaign=YIELDS_ARGS.mc_campaign,
+    data_streams=YIELDS_ARGS.data_streams,
     db_version=YIELDS_ARGS.db_version)
 
 # - - - - - - - - instantiate the analysis
@@ -59,10 +60,12 @@ analysis = Analysis(config, compile_cxx=True)
 categories = config.categories 
 if YIELDS_ARGS.categories:
     categories = filter(lambda c: c.name in YIELDS_ARGS.categories, categories)
+
 systematics = ["NOMINAL"]
+fields = config.variables[:1] #<! tau_0_pt 
 
 # - - - - - - - - samples    
-samples = analysis.backgrounds + [analysis.data] + analysis.signals 
+samples = analysis.backgrounds + [analysis.data]# + analysis.signals 
 backgrounds = analysis.backgrounds
 if YIELDS_ARGS.samples:
     samples = filter(lambda s: s.name in YIELDS_ARGS.samples, samples)
@@ -77,7 +80,7 @@ if YIELDS_ARGS.yields_table:
     # - - - - - - - - read from the histograms 
     if YIELDS_ARGS.hists_file:
         hfile = ROOT.TFile(YIELDS_ARGS.hists_file, "READ")
-        var = config.variables[0] 
+        var = fields[0]
         for sample in samples:
             for systematic in systematics:
                 for cat in categories:
@@ -86,7 +89,7 @@ if YIELDS_ARGS.yields_table:
                     if not hist:
                         log.warning("can't find %s hist; skipping!"%hname)
                         continue
-                    events = hist.Integral(-1, hist.GetNbinsX() + 2)
+                    events = hist.Integral(0, -1)
                     yields.append(
                         Yield(sample=sample.name, category=cat.name, systematic=systematic, events=events))
     
@@ -94,11 +97,11 @@ if YIELDS_ARGS.yields_table:
     else:
         log.info("calculating yields on the fly ...")
         y_hists = analysis.hists(
-            samples=samples, fields=config.variables[:1], categories=categories, systematics=systematics)
+            samples=samples, fields=fields, categories=categories, systematics=systematics)
         
         yields = []
         for hs in y_hists:
-            nevents = hs.hist.Integral(-1, hs.hist.GetNbinsX()+2) #<! include underflow/overflow bins
+            nevents = hs.hist.Integral(0, -1) #<! include underflow/overflow bins
             yields.append(
                 Yield(sample=hs.sample, category=hs.category, systematic=hs.systematic, events=nevents))
 
@@ -150,7 +153,7 @@ if YIELDS_ARGS.cutflow:
         for cname, cf in cutflow_selections.iteritems():
             for hs in sample_hists:
                 if hs.category==cname:
-                    events.append(hs.hist.Integral(0, hs.hist.GetNbinsX()+2) )
+                    events.append(hs.hist.Integral(0, hs.hist.GetNbinsX()+1) )
 
         # - - - - the the fraction of events failing 
         s_fractions = [0]*len(cutflow_selections)

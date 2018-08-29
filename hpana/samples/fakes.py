@@ -1,16 +1,20 @@
 ## stdlib
 import os, glob, copy, re, random 
-import multiprocessing, signal 
+import multiprocessing
+from collections import OrderedDict
 
 ## ROOT
 import ROOT 
 
 ## local
-from .sample import Sample, Histset, HistWorker
+from .sample import Sample
+from ..containers import  Histset, HistWorker
 from ..dataset_hists import dataset_hists
-from ..categories import ANTI_TAU, TAU_IS_LEP, Category
 from ..cluster.parallel import close_pool
 from .. import log
+from ..categories import (
+    ANTI_TAU, TAU_IS_LEP, TAU_IS_TRUE, TAU_IS_LEP_OR_HAD, FF_CR_REGIONS, Category)
+
 
 ##---------------------------------------------------------------------------------------
 ## - - dedicated sample class for jets faking taus background 
@@ -20,39 +24,35 @@ class QCD(Sample):
     """
     
     # - - - -  Fake-Factor weights are different for different selection categories
-    # - - - - THE ORDER IS SET IN ..weights.Weight 
-    FF_TYPES = {
-        "taujet": {
-            "SR_TAUJET":1000,
-            "TTBAR":1001,
-            "BVETO":1002,
-            "PRESELECTION":1003,
-            "FF_CR_MULTIJET":1004},
-        "taulep":{
-            "SR_TAUEL":1005,
-            "SR_TAUMU":1006,
-            "SR_TAULEP":1007,
-            "TAUEL_BVETO":1008,
-            "TAUMU_BVETO":1009,
-            "SS_TAUEL": 1010,
-            "SS_TAUMU": 1011,
-            "DILEP_BTAG":1012,
-            "ZEE":1013,
-            "FF_CR_WJETS":1014,
-        }
-    }
-
-    # - - - - control region FFs are calcualted with a the following fucntions, loaded in the global ROOT scope. 
+    FF_TYPES = OrderedDict()
+    ff_index = 999
+    ff_cr_index = 9000
+    for ch in ["taujet", "taulep"]:
+        FF_TYPES[ch] = {}
+        for ct in Category.TYPES[ch].keys():
+            ff_index += 1 
+            FF_TYPES[ch][ct] = ff_index
+        for cr in FF_CR_REGIONS[ch]:
+            ff_cr_index +=1
+            FF_TYPES[ch][cr.name] = ff_cr_index
+            
+    # - - - - control region FFs are calcualted with a the following funtions, loaded in the global ROOT scope. 
     FF_WCR = "GetFF02_FF_CR_WJETS({0}, {1})"
     FF_QCD = "GetFF02_FF_CR_MULTIJET({0}, {1})"
     
     TEMPLATE_VARS = {
-        "mc16": ("tau_0_p4->Pt()/1000.", "tau_0_n_charged_tracks"),
+        "mc16": ("tau_0_p4->Pt()", "tau_0_n_charged_tracks"),
         "mc15": ("tau_0_pt/1000.", "tau_0_n_tracks"),}
 
     # - - - - combinined FFs are calcualted with a the following fucntion, loaded in the global ROOT scope. 
     rQCD = "GetFFCombined({0}, {1}, {2}, {3}, {4})"
-    
+
+
+    # - - - - correction factor for tau polarization variable (using Inverse Smirnov transformation)
+    Y_CORRECTIO_WEIGHT = {
+        "mc15": "CorrectUpsilon({0}, tau_0_n_tracks)", #< Y, ntracks
+        "mc16": "CorrectUpsilon_1D_QCD({0}, tau_0_n_charged_tracks)", #< Y, ntracks
+    }
     
     @staticmethod
     def sample_compatibility(data, mc):
@@ -61,7 +61,7 @@ class QCD(Sample):
         if not mc:
             raise ValueError("mc must contain at least one MC sample")
     
-    def __init__(self, config, data, mc, name="QCD", label="fakes", **kwargs):
+    def __init__(self, config, data, mc, name="QCD", label="fakes", correct_upsilon=True, **kwargs):
         
         # - - - - quick sanity check
         QCD.sample_compatibility(data, mc)
@@ -73,10 +73,11 @@ class QCD(Sample):
         self.data = data
         self.mc = mc
         self.tauid = ANTI_TAU[self.config.mc_camp]
+        self.correct_upsilon = correct_upsilon
         
     def cuts(self, **kwargs):
         """ fakes tauID MEDIUM corresponds to 
-        QCD.ANTI_TAU * FF(tau_0_pt, tau_0_n_tracks) 
+        ANTI_TAU * FF(tau_0_pt, tau_0_n_tracks) 
         """
         tauid = kwargs.pop("tauid", self.tauid)
         trigger = kwargs.pop("trigger", self.config.trigger(dtype="DATA") )
@@ -97,14 +98,17 @@ class QCD(Sample):
         for category in categories:
             if not category.name.upper() in QCD.FF_TYPES[self.config.channel]:
                 log.warning("no dedicated FFs for %s region; using the PRESEL one"%category.name)
-                ff_weight_index = 1
+                if self.config.channel=="taujet":
+                    ff_weight_index = 1000 #< TAUJET SR
+                else:
+                    ff_weight_index
             else:
                 ff_weight_index = QCD.FF_TYPES[self.config.channel][category.name.upper()]
             ff_weight = QCD.rQCD.format(v0, v1, ff_qcd, ff_wcr, ff_weight_index)
             ff_weights[category.name] = [ff_weight]
 
             #!TMPFIX for cutflow 
-            if category.name.upper() in ["CLEANEVENT", "TRIGGER", "TAUPT40"]:
+            if category.name.upper() in ["CLEANEVENT", "TRIGGER", "TAUPT40", "ELOLR"]:
                 ff_weights[category.name] = ["1."]
             
         return ff_weights
@@ -143,6 +147,17 @@ class QCD(Sample):
         """
         if not fields:
             fields = self.config.variables
+
+        # - - - - correct tau polarization for fakes
+        if self.correct_upsilon:
+            log.debug("correcting upsilon for %s sample"%self.name)
+            for field in fields:
+                if field.name=="tau_0_upsilon":
+                    ur_tf = field.tformula
+                    mcc = field.mc_camp
+                    field.tformula = "({0}*({1}))".format(
+                        ur_tf, QCD.Y_CORRECTIO_WEIGHT[mcc].format(ur_tf))
+            
         if not categories:
             categories = self.config.categories
 
@@ -160,16 +175,17 @@ class QCD(Sample):
         ## truth-match, etc. beside the selection category cuts.
         ## keep in the mind that the trigger might be different for different selection categories.
         """
-        
+
+        # - - - - make sure to truth match taus to lep or hadronic tau in MC
         mc_categories = copy.deepcopy(categories)
         for mc_category in mc_categories:
             mc_category.cuts += self.cuts(trigger=trigger if trigger else mc_triggers[mc_category.name],
-                                           extra_cuts=extra_cuts, tauid=tauid,)
+                                           extra_cuts=extra_cuts, tauid=tauid, truth_match_tau=TAU_IS_LEP_OR_HAD)
 
         data_categories = copy.deepcopy(categories)
         for data_category in data_categories:
             data_category.cuts += self.cuts(trigger=trigger if trigger else data_triggers[data_category.name],
-                                            extra_cuts=extra_cuts, tauid=tauid,)
+                                            extra_cuts=extra_cuts, tauid=tauid)
 
         # - - - - prepare MC and FF weights
         mc_weights = self.weights(categories=categories)
@@ -194,18 +210,18 @@ class QCD(Sample):
                     for cat in categories:    
                         total_weights[cat.name] += [str(lumi_weight)]
                         
-                    # - - - - one worker per systematic per dataset
-                    for systematic in systematics:
-                        worker = HistWorker(
-                            name="%s.%s.%s"%(self.name, ds.name, systematic),
-                            sample=self.name,
-                            dataset=ds,
-                            systematic=systematic,
-                            fields=fields,
-                            categories=mc_categories,
-                            weights=total_weights)
-
-                    mc_workers.append(worker)
+                # - - - - one worker per systematic per dataset
+                for systematic in systematics:
+                    worker = HistWorker(
+                        name="%s.%s.%s"%(self.name, ds.name, systematic),
+                        sample=self.name,
+                        dataset=ds,
+                        systematic=systematic,
+                        fields=fields,
+                        categories=mc_categories,
+                        weights=total_weights)
+                    
+                mc_workers.append(worker)
 
         # - - - - DATA workers
         data_workers = []
@@ -289,12 +305,12 @@ class QCD(Sample):
                     mc_hists = filter(
                         lambda hs: (hs.systematic==systematic and hs.variable==var.name and hs.category==cat.name), mc_hist_set)
                     mc_hsum = reduce(lambda h1, h2: h1 + h2, [hs.hist for hs in mc_hists])
-
+                    
                     # - - subtract MC from DATA
                     qcd_hsum = data_hsum - mc_hsum
                     outname = self.config.hist_name_template.format(self.name, cat, var)
                     qcd_hsum.SetTitle(outname)
-                    merged_hist_set.append(Histset(sample=self.name, category=cat.name, variable=var.name, hist=qcd_hsum) )
+                    merged_hist_set += [Histset(sample=self.name, category=cat.name, variable=var.name, hist=qcd_hsum)]
                     
         return merged_hist_set
                 
@@ -309,8 +325,10 @@ class QCD(Sample):
             
             # - - - - retrieve the samples hists
             data_hfiles = glob.glob("%s/%s.DATA*"%(histsdir, self.name) ) 
+            assert len(data_hfiles)==len(self.data.datasets), "not fully processed!"
+            
             mc_hfiles = list(set(glob.glob("%s/%s.*"%(histsdir, self.name) ) ) - set(data_hfiles) )
-
+            
             if (not (data_hfiles and mc_hfiles)):
                 log.warning(" incomplete hists for %s in %s dir"%(self.name, histsdir))
                 return []
@@ -341,7 +359,7 @@ class QCD(Sample):
                                            systematic=systematic, hist=hist)
                             mc_hist_set.append(hset)
                 htf.Close()
-
+                
             # - - - - get QCD data component hists
             data_hist_set = []
             for hf in data_hfiles:
@@ -384,7 +402,7 @@ class QCD(Sample):
             if not hists_file:
                 hists_file = self.config.hists_file
             merged_hists_file = ROOT.TFile(os.path.join(histsdir, hists_file), "UPDATE")
-        
+
         # - - - - add them up
         merged_hist_set = []
         for systematic in self.systematics:
@@ -400,7 +418,9 @@ class QCD(Sample):
                     mc_hsum = mc_hists[0].hist
                     for hs in mc_hists[1:]:
                         mc_hsum.Add(hs.hist)
-
+                        
+                    log.debug("Category {} >> DATA: {}; MC: {}".format(cat, data_hsum.Integral(0, -1), mc_hsum.Integral(0, -1)))
+                    
                     # - - subtract MC from DATA
                     qcd_hsum = data_hsum.Clone()
                     qcd_hsum.Add(mc_hsum, -1)
@@ -439,7 +459,7 @@ class LepFake(Sample):
         self.mc = mc
         self.name = name
         self.label = label
-        self.leptau = TAU_IS_LEP[self.config.mc_camp]
+        self.leptau = TAU_IS_LEP
 
     def cuts(self, *args, **kwargs):
         """Additional run number specific cuts.

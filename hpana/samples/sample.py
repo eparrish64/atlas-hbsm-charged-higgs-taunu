@@ -19,64 +19,7 @@ from ..db.decorators import cached_property
 from ..systematics import get_systematics, iter_systematics, systematic_name
 from ..categories import TAU_IS_TRUE, Category
 from ..cluster.parallel import close_pool
-    
-##---------------------------------------------------------------------------------------
-## - - container class for histograms 
-##---------------------------------------------------------------------------------------
-class Histset:
-    """simple container class for histograms
-    """
-    def __init__(self,
-                 name="Histset",
-                 sample=None,
-                 variable=None,
-                 category=None,
-                 hist=None,
-                 systematic="NOMINAL",):
-        self.sample = sample
-        self.name = name
-        self.variable =variable
-        self.category = category
-        self.systematic = systematic
-        self.hist = hist
-
-    def __repr__(self):
-        return "(name=%r, sample=%r, systematic=%r, "\
-            "variable=%r, category=%r, hist=%r)\n"%(
-                self.name, self.sample, self.systematic,
-                self.variable, self.category, self.hist.Integral() if self.hist else "NAN")
-    
-    
-##---------------------------------------------------------------------------------------
-## - - container class for histogram workers 
-##---------------------------------------------------------------------------------------
-class HistWorker:
-    """
-    lightweight container class for histogram workers
-    """
-    def __init__(self, name="HistWorker",
-                 sample=None,
-                 dataset=None,
-                 systematic="NOMINAL",
-                 fields=[],
-                 categories=[],
-                 weights=[],
-                 hist_templates={}):
-        self.name = name
-        self.sample = sample
-        self.dataset = dataset
-        self.fields = fields
-        self.categories = categories
-        self.systematic = systematic
-        self.weights = weights
-        self.hist_templates = hist_templates
-        
-    def __repr__(self):
-        return "<<< \n name=%r, sample=%r, systematic=%r\n"\
-            "<variables>=%r\n<categories>=%r\n<weights>=%r\n<hist templates>=%r\n>>>\n"%(
-                self.name, self.sample, self.systematic,
-                self.fields, self.categories, self.weights, self.hist_templates)
-        
+from ..containers import Histset, HistWorker    
         
 ##---------------------------------------------------------------------------------------
 ## - - base analysis sample class
@@ -210,11 +153,11 @@ class Sample(object):
             categories = self.config.categories
         weights_dict = {}
         for category in categories:
-            # - - - - if MJ trigger is applied for a regio,then we don't need MET trigger efficiency applied.
-            if category.name == self.config.ff_cr_regions[0].name:
-                for wf in weight_fields:
-                    if wf.wtype =="TRIGGER":
-                        weight_fields.remove(wf)
+            # # - - - - if MJ trigger is applied for a regio,then we don't need MET trigger efficiency applied.
+            # if category.name == self.config.ff_cr_regions[0].name:
+            #     for wf in weight_fields:
+            #         if wf.wtype =="TRIGGER":
+            #             weight_fields.remove(wf)
                         
             weights_dict[category.name] = [wf.name for wf in weight_fields]
         
@@ -223,24 +166,25 @@ class Sample(object):
     def systematics(self):
         return ["NOMINAL"]
     
-    def events(self, category,
+    def events(self, categories,
                systematic="NOMINAL",
                **kwargs):
         """ get event counts using hists method
         """
-        
+        nevents = {}
         field = self.config.variables[0]
-        hist_set =  self.hists(categories=[category],
-                               fields=[field],
-                               systematic=systematic,
-                               **kwargs)
+        hist_set =  self.hists(categories=categories,fields=[field],
+                               systematic=systematic,**kwargs)
 
         hist = hist_set[0].hist
-        # - - - - add the events from overflow bin too 
-        nbins = hist.GetNbinsX() + 2
-        nevents = hist.Integral(0, nbins)
-        log.info("# of events from %s tree of %s sample in category %s: %0.4f"%(
-            systematic, self.name, category.name, nevents))
+        for cat in categories:
+            hcat = filter(lambda hs: hs.category==cat.name, hist_set)
+            hist = hcat[0].hist
+            # - - - - add the events from overflow bin too 
+            nbins = hist.GetNbinsX() + 2
+            nevents[cat.name] = hist.Integral(0, nbins)
+            log.info("# of events from %s tree of %s sample in category %s: %0.4f"%(
+                systematic, self.name, cat.name, nevents[cat.name]))
         
         return nevents
 
@@ -311,7 +255,7 @@ class Sample(object):
                     weights[category.name] = ["1."]
                     if extra_weight:
                         weights[category.name] += [extra_weight]
-            
+
             # - - - - one worker per systematic per dataset
             for systematic in systematics:
                 sname = self.name

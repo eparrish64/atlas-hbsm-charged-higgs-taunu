@@ -16,7 +16,7 @@ from .samples.sample import Sample
 from .dataset_hists import dataset_hists
 
 from .samples import Higgs
-from .categories import TAUID_MEDIUM, ANTI_TAU, Category
+from .categories import TAUID_MEDIUM, ANTI_TAU, TAU_IS_EL_OR_HAD, Category
 from .cluster.parallel import close_pool
 from .config import Configuration
 import ROOT
@@ -45,24 +45,25 @@ class Analysis(object):
     """
     __HERE = os.path.dirname(os.path.abspath(__file__))
     CXX_MACROS = [
-    "FakeFactors/QCD/GetFF02_QCD.C",
-    "FakeFactors/QCD/GetFF01_QCD.C",
-    "FakeFactors/QCD/GetFF03_QCD.C",
-    "FakeFactors/WCR/GetFF02_WCR.C",
-    "FakeFactors/WCR/GetFF01_WCR.C",
-    "FakeFactors/WCR/GetFF03_WCR.C",
-    #"FakeFactors/GetFFCombined.C",
-    "FakeFactors/GetFFCombined_up.C",
-    "FakeFactors/GetFFCombined_dn.C",
-    "FakeFactors/GetElFakeSF.C",
+    # "FakeFactors/QCD/GetFF02_QCD.C",
+    # "FakeFactors/QCD/GetFF01_QCD.C",
+    # "FakeFactors/QCD/GetFF03_QCD.C",
+    # "FakeFactors/WCR/GetFF02_WCR.C",
+    # "FakeFactors/WCR/GetFF01_WCR.C",
+    # "FakeFactors/WCR/GetFF03_WCR.C",
+    # #"FakeFactors/GetFFCombined.C",
+    # "FakeFactors/GetFFCombined_up.C",
+    # "FakeFactors/GetFFCombined_dn.C",
+    # "FakeFactors/GetElFakeSF.C",
         
     "TriggerEfficiency/ApplyEff.C",
-    "GetTopPtWeight.C",
+    # "GetTopPtWeight.C",
 
     # - - - - new (derived within the hpana and from r21 ntuples)
     "FakeFactors/FFs_COMBINED.cxx",
     "FakeFactors/FFs_CR.cxx",    
-        
+
+    # - - - - correction factor for tau polarization(only applied to 1 prong taus, upsilon varibale, and QCD sample)    
     "FakeFactors/CorrectUpsilon.C",
     "FakeFactors/CorrectUpsilon_1D_WCR.C",
     "FakeFactors/CorrectUpsilon_1D_QCD.C",
@@ -174,7 +175,7 @@ class Analysis(object):
             self.diboson,
             self.zll, 
             self.wlnu,
-            self.others, #<! super small
+            #self.others, #<! super small
             ]
         
         # - - - - - - - - DATA 
@@ -187,6 +188,13 @@ class Analysis(object):
             blind=False,
             linewidth=1)
         
+        # - - - - - - - - leptons faking a tau
+        self.lepfakes = samples.LepFake(
+            self.config, self.mc[:], #<! defensive copy 
+            name='LepFakes',
+            label='lep #rightarrow #tau',
+            color=ROOT.kGreen+3)
+        
         # - - - - - - - - jets faking a tau
         self.qcd = samples.QCD(
             self.config, self.data, self.mc,
@@ -194,12 +202,6 @@ class Analysis(object):
             label='jet #rightarrow #tau',
             color=ROOT.kAzure-9)
 
-        # - - - - - - - - leptons faking a tau
-        self.lepfakes = samples.LepFake(
-            self.config, self.mc[:], #<! defensive copy 
-            name='LepFakes',
-            label='lep #rightarrow #tau',
-            color=ROOT.kGreen+3)
         
         self.backgrounds = [
             self.lepfakes,
@@ -336,31 +338,32 @@ class Analysis(object):
                 
         return _workers
     
-    def hists(self, samples=[], categories=[], fields=[], systematics=[], dry_run=False, **kwargs):
+    def hists(self, samples=[], categories=[], fields=[], systematics=[], parallel=True, dry_run=False, **kwargs):
         """
         """
         workers = self.workers(
             samples=samples, categories=categories, fields=fields, systematics=systematics, **kwargs)
         log.debug(workers)
-
-        log.info(
-            "************** submitting %i jobs  ************"%len(workers))
-        log.info(
-            "***********************************************")
+        hists = []
         if dry_run:
             log.info(workers)
             return 
-        
-        pool = multiprocessing.Pool(multiprocessing.cpu_count())
-        results = [pool.apply_async(dataset_hists, (wk,)) for wk in workers]
+        if parallel:
+            log.info(
+                "************** submitting %i jobs  ************"%len(workers))
+            log.info(
+                "***********************************************")
 
-        # - - close the pool
-        close_pool(pool)
+            pool = multiprocessing.Pool(multiprocessing.cpu_count())
+            results = [pool.apply_async(dataset_hists, (wk,)) for wk in workers]
+            # - - close the pool
+            close_pool(pool)
+            for res in results:
+                hists += res.get(36000) #<! without the timeout this blocking call ignores all signals.
+        else:
+            for w in workers:
+                hists += [dataset_hists(w)]
             
-        hists = []
-        for res in results:
-            hists += res.get(36000) #<! without the timeout this blocking call ignores all signals.
-        
         # - - - - merge hists
         merged_hists = []
         for sample in samples:
@@ -427,8 +430,12 @@ class Analysis(object):
                   antitau=None,
                   subtract_mc=True,
                   cache_file=None,
-                  write_cxx_macro=True,):
-        """ calculate and cache the fake factors in dedicated control regions.
+                  write_cxx_macro=True,
+                  validation_plots=False,):
+        """
+        FF = N_tau/N_antitau where N_antitau = N_anittau(DATA) - N_antitau(MC) 
+        for MC where tau fails tau ID but is truth matched to an electron or a tau.
+        Then 
         These factors then will be evaluated in other selection regions based on the fraction of q/g jets faking taus.
 
         Parameters
@@ -493,7 +500,6 @@ class Analysis(object):
         for w in data_antitau_workers:
             w.name += "_ANTITAU"
         workers += data_antitau_workers
-
         if subtract_mc:
             # - - - - MC workers
             mc_tau_workers = []
@@ -501,10 +507,13 @@ class Analysis(object):
             for mc in self.mc:
                 mc_tau_workers += mc.workers(
                     fields=template_fields[:1], hist_templates=template_hist,
-                    categories=control_regions, tauid=tauid, trigger=trigger,)
+                    categories=control_regions, tauid=tauid, trigger=trigger, tau_truth_match=TAU_IS_EL_OR_HAD)
+
+                # - - taus not passing nominal tau ID (medium)
+                not_tau = ROOT.TCut("!%s"%self.config.tauid.GetTitle())
                 mc_antitau_workers += mc.workers(
                     fields=template_fields[:1], hist_templates=template_hist,
-                    categories=control_regions, tauid=antitau, trigger=trigger,)
+                    categories=control_regions, tauid=not_tau, trigger=trigger,truth_match_tau=TAU_IS_EL_OR_HAD)
 
             # add mc tau/antitau  workers to the list of all workers
             for w in mc_tau_workers:
@@ -533,7 +542,7 @@ class Analysis(object):
         if subtract_mc:
             mc_tau_hists = filter(lambda hs: not hs.name.startswith(self.data.name) and hs.name.endswith("_TAU"), hist_sets)
             mc_antitau_hists = filter(lambda hs: not hs.name.startswith(self.data.name) and hs.name.endswith("_ANTITAU"), hist_sets)
-
+            
         # - - - - add up the histograms for each CR region 
         ffs_dict = {}
         for cr in control_regions:
@@ -570,20 +579,51 @@ class Analysis(object):
                 mc_antitau_hsum = mc_antitau_hists_cat[0].hist.Clone()
                 for hs in mc_antitau_hists_cat[1:]:
                     mc_antitau_hsum.Add(hs.hist)
-                
+                    
             data_mc_tau_h = data_tau_hsum.Clone()
             data_mc_antitau_h = data_antitau_hsum.Clone()
-
             # - - subtract MC from DATA
             if subtract_mc:
-                    data_mc_tau_h.Add(mc_tau_hsum, -1)
-                    data_mc_antitau_h.Add(mc_antitau_hsum, -1)
+                #data_mc_tau_h.Add(mc_tau_hsum, -1)
+                data_mc_antitau_h.Add(mc_antitau_hsum, -1)
             
-            log.info("TAU events; DATA: {}, MC: {}".format(data_tau_hsum.Integral() , mc_tau_hsum.Integral() if subtract_mc else "NAN") )
-            log.info("ANTITAU events; DATA: {}, MC: {}".format(data_antitau_hsum.Integral(), mc_antitau_hsum.Integral() if subtract_mc else "NAN") )
+            log.info("TAU events; DATA: {}, MC: {}".format(data_tau_hsum.Integral(), "NAN") )
+            log.info("ANTITAU events; DATA: {}, MC: {}".format(
+                data_antitau_hsum.Integral(), mc_antitau_hsum.Integral() if subtract_mc else "NAN") )
 
-            # - - number of bins for the jet bdt score variable
-            jbs_nbins = data_mc_tau_h.GetNbinsX() + 2 
+            htmp_tau = data_mc_tau_h.Clone()
+            htmp_antitau = data_mc_antitau_h.Clone()
+            
+            # - - project along X and Y to get the bins
+            htmp_X = htmp_antitau.ProjectionX().Clone()
+            htmp_Y = htmp_antitau.ProjectionY().Clone()
+            htmp_Z = htmp_antitau.ProjectionZ().Clone()
+            
+            if validation_plots:
+                canvas = ROOT.TCanvas()
+                
+                htmp_tau.Draw("")
+                canvas.Print("h3_tau.png")
+                canvas.Clear()
+
+                htmp_antitau.Draw("")
+                canvas.Print("h3_antitau.png")
+                canvas.Clear()
+
+                htmp_X.Draw()
+                canvas.Print("hX_antitau.png")
+                canvas.Clear()
+
+                htmp_Y.Draw()
+                canvas.Print("hY_antitau.png")
+                canvas.Clear()
+
+                htmp_Z.Draw()
+                canvas.Print("hZ_antitau.png")
+                canvas.Clear()
+
+                canvas.Close()
+            
             # - - gather hists per tau pT and ntracks bin and also tau_jet_bdt_score WPs
             for jbs_n, jbs_wp in enumerate(tau_jet_bdt_score_trans_wps):
                 jkey = "tauJetBDT_0%i"%(100*jbs_wp)
@@ -592,53 +632,44 @@ class Analysis(object):
                     tkey = "%i"%itk
                     ffs_dict[cr_name][jkey][tkey]= {}
                     
-                    htmp_tau = data_mc_tau_h.Clone()
-                    htmp_antitau = data_mc_antitau_h.Clone()
-
-                    # - - project along X and Y to get the bins
-                    htmp_X = htmp_tau.Project3D("x").Clone()
-                    htmp_Y = htmp_tau.Project3D("y").Clone()
-
                     # - - keep jet BDT score along X (only a lower cut)
                     x_low = htmp_X.FindBin(jbs_wp)
-                    x_high = htmp_X.GetNbinsX() + 2
-
+                    x_high = -1 #<! to include overflow bin too
+                    
                     # - - ntracks along Y
                     y_low = htmp_Y.FindBin(itk)
-                    y_high = htmp_Y.FindBin(n_charged_tracks[itk_n])
-
+                    y_high = htmp_Y.FindBin(itk)+1
+                    
                     # - - fitting bins for the actual shape variable
                     fitting_bins = template_hist_bins[tkey]
                     for _bin in range(1, len(fitting_bins)):
                         pkey = "%i"%fitting_bins[_bin]
-                        htmp_Z = htmp_antitau.Project3D("z").Clone()
                         z_low = htmp_Z.FindBin(fitting_bins[_bin-1])
-                        z_high = htmp_Z.FindBin(fitting_bins[_bin])
-                        
+                        z_high = htmp_Z.FindBin(fitting_bins[_bin])-1
+
                         tau_bin_cont = htmp_tau.Integral(x_low, x_high, y_low, y_high, z_low, z_high)
                         antitau_bin_cont = htmp_antitau.Integral(x_low, x_high, y_low, y_high, z_low, z_high)
                         if antitau_bin_cont==0:
                             log.warning("{} bin for antitau is empty, setting tau/antitau to 1!".format(pkey))
                             tau_antitau_ratio = 1.
                         else:
-                            tau_antitau_ratio = "%.4f"%(tau_bin_cont/antitau_bin_cont)
+                            tau_antitau_ratio = "%.6f"%(tau_bin_cont/float(antitau_bin_cont))
                         ffs_dict[cr_name][jkey][tkey][pkey] = tau_antitau_ratio
                         
                         log.debug("bins: {}".format((x_low, x_high, y_low, y_high, z_low, z_high)))
-                        log.debug("ratio in << {}  >> bin: {} ".format((jkey, tkey, pkey), tau_antitau_ratio))
+                        log.debug("ratio in << {}  >> bin: tau:{}, antitau: {}, ratio: {} ".format(
+                            (jkey, tkey, pkey), tau_bin_cont, antitau_bin_cont, tau_antitau_ratio))
                         log.debug("--"*60)
                         
-                        # - - clean up
-                        htmp_Z.Delete()
-                        
-                    htmp_X.Delete()
-                    htmp_Y.Delete()
-                    htmp_tau.Delete()
-                    htmp_antitau.Delete()
-                    
+            # - - clean up
+            htmp_X.Delete()
+            htmp_Y.Delete()
+            htmp_Z.Delete()
+            htmp_tau.Delete()
+            htmp_antitau.Delete()
                     
         if not cache_file:
-            cache_file = os.path.join(Analysis.__HERE, "cache", "FF_CR.yml")
+            cache_file = os.path.join(Analysis.__HERE, "cache", "FFs_CR.yml")
             if not os.path.isdir("%s/cache"%(Analysis.__HERE)):
                 os.system("mkdir -p %s/cache"%Analysis.__HERE)
         else:
@@ -661,9 +692,9 @@ class Analysis(object):
                 for cr in [c.name for c in control_regions]:
                     for jbs_n, jbs_wp in enumerate(tau_jet_bdt_score_trans_wps):
                         jkey = "tauJetBDT_0%i"%(100*jbs_wp)
-                        cxx_cache.write("//! tau_0_jet_bdt_score_trans lower cut ({})\n".format(100*jbs_wp))
+                        cxx_cache.write("//! tau_0_jet_bdt_score_trans lower cut ({})\n".format(jbs_wp))
                         cxx_cache.write(
-                            "float GetFF0{0}_{1}(float pt, int nTracks){{\n".format(100*jbs_wp, cr) )
+                            "float GetFF0{0}_{1}(float pt, int nTracks){{\n".format(int(100*jbs_wp), cr) )
                         for itk in n_charged_tracks:
                             tkey = "%i"%itk
                             cxx_cache.write("\t if(nTracks==%i){\n"%itk)

@@ -1,0 +1,93 @@
+#! /usr/bin/env python
+
+"""
+* This script provides functionalities for evaluating MET trigger efficiency. 
+* The Emiss trigger is not well described in simulation. The strategy for the treatment of the Emiss trigger in
+* simulation is to derive the trigger efficiency from data in bins of offline Emiss. The binned Emiss-dependent
+* efficiency is transformed into a continuous efficiency by fitting it to the error function. This is done to
+* remove bias caused by the binning. Simulated events are weighted using the efficiency curve, based on
+* the offline Emiss in the event.
+* EFF =  (event selections + given trigger)/(event selections)
+"""
+
+## stdlib
+import os, sys, time, array, pickle, yaml 
+
+## local
+from hpana.config import Configuration
+from hpana.analysis import Analysis
+from hpana.categories import MET_TRIG_EFF_CRs
+from hpana.variables import met_et
+from hpana import log
+ 
+# - - - - time it
+start_time = time.time()
+
+
+# - - - - - - - -  set log level
+log.setLevel("INFO")
+
+# - - - - - - - - Speed things up a bit
+import ROOT
+ROOT.SetSignalPolicy(ROOT.kSignalFast)
+ROOT.gROOT.SetBatch(True)
+log.info("ROOT is in batch mode")
+ROOT.gErrorIgnoreLevel = ROOT.kWarning #<! turn off useless ROOT Info messages
+
+##------------------------------------------------------------------------------------
+## - - consts 
+##------------------------------------------------------------------------------------
+    
+## container for all the histograms
+TRIGG_EFF_HISTS = []
+
+##------------------------------------------------------------------------------------
+## - - build the taulep analysis (run only on relevant streams) 
+##------------------------------------------------------------------------------------
+for trig, cuts in MET_TRIGGERS.iteritems():
+    year = trig.split("_")[-1]
+    if year != "2015":
+        continue
+    config = Configuration("taulep", data_streams=(year,), mc_campaign="mc16", db_version="18v03")
+    analysis = Analysis(config, compile_cxx=True)
+    samples = [analysis.data]
+
+    # - - - - since we want to vary the tauid (already included in MET_TRIG_EFF_CRs), we pass global tauid=ROOT.TCut("1>0").
+    hists_with_trigger = analysis.hists(
+        fields=[met_et], categories=MET_TRIG_EFF_CRs, samples=samples,
+        parallel=True, trigger=cuts[0], tauid=ROOT.TCut("1>0"), dry_run=True)
+        
+    hists_without_trigger =analysis.hists(
+        fields=[met_et], categories=MET_TRIG_EFF_CRs, samples=samples,
+        parallel=True, trigger=ROOT.TCut("1>0"), tauid=ROOT.TCut("1>0"), dry_run=True)
+
+    for hs in hists_with_trigger:
+        hs.name = trig
+    TRIGG_EFF_HISTS += hists_with_trigger
+    
+    for hs in hists_without_trigger:
+        hs.name = "NO_TRIGGER"
+    TRIGG_EFF_HISTS += hists_without_trigger
+
+    
+for category in MET_TRIG_EFF_CRs:
+    hs_cat = filter(lambda hs: hs.category==category.name, TRIGG_EFF_HISTS)
+    for trig in MET_TRIGGERS:
+        if "2015" not in trig:
+            continue
+        hist_trig = None
+        hist_no_trig = None
+        for hs in hs_cat:
+            print hs.name, hs.category, trig
+            if hs.name==trig:
+                hist_trig = hs.hist
+            if hs.name=="NO_TRIGGER":
+                hist_no_trig = hs.hist
+        assert (hist_trig and hist_no_trig), "couldn't retrieve hists for %s"%category.name
+
+        hist_trig.Divide(hist_no_trig)
+        print hist_trig, hist_trig.Integral()
+        
+        canvas = ROOT.TCanvas()
+        hist_trig.Draw("")
+        canvas.Print("MET_trig_eff_%s_%s.png"%(category.name, trig))

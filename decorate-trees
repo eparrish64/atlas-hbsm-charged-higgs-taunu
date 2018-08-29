@@ -8,12 +8,12 @@ from multiprocessing import Process
 ##-------------------------------------------------------------------------------------
 ## setup cmd args
 parser = argparse.ArgumentParser()
+parser.add_argument('action', choices=['rm', 'ab', 'at', 'skim', "mtf"],
+                    help='remove branches, add branches, add trees, or skim trees', )
 parser.add_argument('--files', nargs='+', 
                     help='ntuples to be decorated')
 parser.add_argument('--outdir', "-od", type=str, 
                     help='if you wish to move the decorated files to a new direcctory, keeping the same structure as the input dir')
-parser.add_argument('action', choices=['rm', 'ab', 'at', 'skim'],
-                    help='remove branches, add branches, add trees, or skim trees', )
 parser.add_argument("--suffix", type=str, default="skim",
                     help="suffix for the proccesed files if you want to copy them")
 parser.add_argument("--update-in-place", "-uip", action="store_true",
@@ -258,6 +258,16 @@ def skim_tree(file_name, selections=SELECTIONS, **kwargs):
     
     return
 
+##----------------------------------------------------------------------------------------
+##
+def merge_tfiles(idir, **kwargs):
+    ifiles = glob.glob("%s/*.root*"%idir)
+    ds_name = idir.split("/")[-1]
+    outname = "%s/%s.MERGED.root"%(idir, ds_name)
+
+    hargs = " ".join(ifiles)
+    os.system("hadd %s %s"%(outname, hargs))
+
 
 #----------------------------------------------------------------------------------------
 ## simple class for parallel processing
@@ -349,9 +359,7 @@ if __name__=='__main__':
     elif args.action=='skim':
         workfunc = skim_tree
     
-    elif args.action=="merge-files":
-        if not (args.indir):
-            raise IOError("input dir pls?\n")
+    elif args.action=="mtf":
         workfunc = merge_tfiles
         
     else:

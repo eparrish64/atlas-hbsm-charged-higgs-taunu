@@ -1,41 +1,15 @@
 ## stdlib 
 import os
 
+## PYPI
+
 ## local
 from . import log
+from .mem_branches import MEM_BRANCHES
+from .containers import Histset
 
 ## ROOT
 import ROOT
-
-
-##---------------------------------------------------------------------------------------
-## - - Hist container class
-##--------------------------------------------------------------------------
-class Histset:
-    """simple container class for histograms
-    """
-    def __init__(self,
-                 name="Histset",
-                 sample=None,
-                 variable=None,
-                 category=None,
-                 hist=None,
-                 systematic="NOMINAL",):
-        self.sample = sample
-        self.name = name
-        self.variable =variable
-        self.category = category
-        self.systematic = systematic
-        self.hist = hist
-
-    def __repr__(self):
-        return "(name=%r, sample=%r, systematic=%r, "\
-            "variable=%r, category=%r, hist=%r)\n"%(
-                self.name, self.sample, self.systematic,
-                self.variable, self.category, self.hist.Integral() if self.hist else "NAN")
-    
-
-
 
 ##--------------------------------------------------------------------------
 ## - - helper for Pool processing (looping over events directly; slower!)
@@ -122,6 +96,7 @@ def dataset_hists(hist_worker,
     """ produces histograms for a dataset. 
     This static method is mainly used for parallel processing.
     """
+    channel = hist_worker.channel
     dataset = hist_worker.dataset
     fields = hist_worker.fields
     categories = hist_worker.categories
@@ -129,6 +104,7 @@ def dataset_hists(hist_worker,
     systematic = hist_worker.systematic
     outname = kwargs.pop("outname", hist_worker.name)
     hist_templates = hist_worker.hist_templates
+    
     log.debug("*********** processing %s dataset ***********"%dataset.name)
     if not dataset.files:
         log.warning("%s dataset is empty!!"%dataset.name)
@@ -138,7 +114,7 @@ def dataset_hists(hist_worker,
     canvas = ROOT.TCanvas()
     # - - - - containers for hists
     hist_set = []
-    hist_templates_tformuals = {} #<! since we have to update hists name, keep tformilas untouched
+    hist_templates_tformuals = {} #<! since we have to update hists name, keep tformulas untouched
     for var in fields:
         if hist_templates and var.name in hist_templates:
             hist_templates_tformuals[var.name] = hist_templates[var.name].GetName()
@@ -177,15 +153,24 @@ def dataset_hists(hist_worker,
             log.warning("%s has no %s tree!"%(fn, systematic))
             continue
     
-        # - - prepares selection categories 
-        for category in categories:
+        # - - prepares selection categories
+        keep_branches = ["*"]
+        for n, category in enumerate(categories):
             # - - hists for the current category
             cat_hists = filter(lambda hs: hs.category==category.name, hist_set)
             
-            # get the tree 
+            # - - get the tree 
             tree = tfile.Get(systematic)
 
-            # - - get the list of the events that pass the selections
+            # - - speed up by reading to memory only the branches that are required
+            if n==0:
+                branches = [br.GetName() for br in tree.GetListOfBranches()]
+                keep_branches = filter(lambda b: b in branches, MEM_BRANCHES[channel])
+            tree.SetBranchStatus("*", 0)
+            for br in keep_branches:
+                tree.SetBranchStatus(br, 1)
+            
+            # - - cache only the events that pass the selections
             selection = category.cuts.GetTitle()
             eventweight = "*".join(weights[category.name])
             tree.Draw(">>eventlist_%s"%category.name, selection)
@@ -236,10 +221,12 @@ def dataset_hists(hist_worker,
 
                 htmp = ROOT.gDirectory.Get(histname)
                 htmp.SetDirectory(0)
+                
                 hset = filter(lambda hs: hs.variable==var.name, cat_hists)[0]
                 hset.hist.Add(htmp)
                 ##! - - - - need to make the name unique to avoid stupid ROOT.TAppend Warnings 
                 hset.hist.SetName("%s_category_%s_var_%s"%(outname, category.name, var.name))
+                
                 htmp.Delete()
             tree.Delete()
         tfile.Close()
@@ -266,6 +253,7 @@ def dataset_hists(hist_worker,
         hfile.Close()
 
     canvas.Close()
+    log.debug(hist_set)
     log.info("processed %s tree from %s dataset with %i events"%(systematic, dataset.name, nevents))
     return hist_set
 

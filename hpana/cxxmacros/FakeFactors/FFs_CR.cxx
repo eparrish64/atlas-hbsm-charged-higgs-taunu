@@ -2,31 +2,31 @@
 //! tau_0_jet_bdt_score_trans lower cut (0.01)
 float GetFF01_FF_CR_MULTIJET(float pt, int nTracks){
 	 if(nTracks==1){
-		 if(pt < 35) return 0.2047;
-		 if(pt < 40) return 0.1894;
-		 if(pt < 45) return 0.1740;
-		 if(pt < 50) return 0.1615;
-		 if(pt < 60) return 0.1367;
-		 if(pt < 75) return 0.1098;
-		 if(pt < 90) return 0.1267;
-		 if(pt < 105) return 0.1350;
-		 if(pt < 120) return 0.1348;
-		 if(pt < 140) return 0.1278;
-		 if(pt < 160) return 0.1223;
-		 if(pt < 200) return 0.1189;
-		 if(pt < 300) return 0.1061;
-		 if(pt < 3500) return 0.0981;
+		 if(pt < 35) return 0.142598;
+		 if(pt < 40) return 0.135518;
+		 if(pt < 45) return 0.124711;
+		 if(pt < 50) return 0.122396;
+		 if(pt < 60) return 0.111415;
+		 if(pt < 75) return 0.097673;
+		 if(pt < 90) return 0.098309;
+		 if(pt < 105) return 0.099986;
+		 if(pt < 120) return 0.097033;
+		 if(pt < 140) return 0.092176;
+		 if(pt < 160) return 0.087563;
+		 if(pt < 200) return 0.082947;
+		 if(pt < 300) return 0.072914;
+		 if(pt < 3500) return 0.066984;
 		 else return 0;
 		 }
 	 if(nTracks==3){
-		 if(pt < 35) return 0.0432;
-		 if(pt < 40) return 0.0445;
-		 if(pt < 50) return 0.0345;
-		 if(pt < 75) return 0.0234;
-		 if(pt < 100) return 0.0175;
-		 if(pt < 150) return 0.0185;
-		 if(pt < 200) return 0.0201;
-		 if(pt < 3500) return 0.0166;
+		 if(pt < 35) return 0.026549;
+		 if(pt < 40) return 0.025690;
+		 if(pt < 50) return 0.021541;
+		 if(pt < 75) return 0.015924;
+		 if(pt < 100) return 0.012062;
+		 if(pt < 150) return 0.011447;
+		 if(pt < 200) return 0.012128;
+		 if(pt < 3500) return 0.010666;
 		 else return 0;
 		 }
 	 else return 0;
@@ -36,31 +36,31 @@ float GetFF01_FF_CR_MULTIJET(float pt, int nTracks){
 //! tau_0_jet_bdt_score_trans lower cut (0.02)
 float GetFF02_FF_CR_MULTIJET(float pt, int nTracks){
 	 if(nTracks==1){
-		 if(pt < 35) return 0.2047;
-		 if(pt < 40) return 0.1894;
-		 if(pt < 45) return 0.1740;
-		 if(pt < 50) return 0.1615;
-		 if(pt < 60) return 0.1367;
-		 if(pt < 75) return 0.1098;
-		 if(pt < 90) return 0.1267;
-		 if(pt < 105) return 0.1350;
-		 if(pt < 120) return 0.1348;
-		 if(pt < 140) return 0.1278;
-		 if(pt < 160) return 0.1223;
-		 if(pt < 200) return 0.1189;
-		 if(pt < 300) return 0.1061;
-		 if(pt < 3500) return 0.0981;
+		 if(pt < 35) return 0.202822;
+		 if(pt < 40) return 0.192755;
+		 if(pt < 45) return 0.179240;
+		 if(pt < 50) return 0.176608;
+		 if(pt < 60) return 0.163133;
+		 if(pt < 75) return 0.145492;
+		 if(pt < 90) return 0.144859;
+		 if(pt < 105) return 0.147564;
+		 if(pt < 120) return 0.144854;
+		 if(pt < 140) return 0.138142;
+		 if(pt < 160) return 0.132030;
+		 if(pt < 200) return 0.127750;
+		 if(pt < 300) return 0.112522;
+		 if(pt < 3500) return 0.103869;
 		 else return 0;
 		 }
 	 if(nTracks==3){
-		 if(pt < 35) return 0.0432;
-		 if(pt < 40) return 0.0445;
-		 if(pt < 50) return 0.0345;
-		 if(pt < 75) return 0.0234;
-		 if(pt < 100) return 0.0175;
-		 if(pt < 150) return 0.0185;
-		 if(pt < 200) return 0.0201;
-		 if(pt < 3500) return 0.0166;
+		 if(pt < 35) return 0.041107;
+		 if(pt < 40) return 0.040568;
+		 if(pt < 50) return 0.035255;
+		 if(pt < 75) return 0.027583;
+		 if(pt < 100) return 0.021458;
+		 if(pt < 150) return 0.020634;
+		 if(pt < 200) return 0.021541;
+		 if(pt < 3500) return 0.017991;
 		 else return 0;
 		 }
 	 else return 0;
@@ -70,66 +70,65 @@ float GetFF02_FF_CR_MULTIJET(float pt, int nTracks){
 //! tau_0_jet_bdt_score_trans lower cut (0.03)
 float GetFF03_FF_CR_MULTIJET(float pt, int nTracks){
 	 if(nTracks==1){
-		 if(pt < 35) return 0.2666;
-		 if(pt < 40) return 0.2482;
-		 if(pt < 45) return 0.2290;
-		 if(pt < 50) return 0.2133;
-		 if(pt < 60) return 0.1822;
-		 if(pt < 75) return 0.1481;
-		 if(pt < 90) return 0.1681;
-		 if(pt < 105) return 0.1809;
-		 if(pt < 120) return 0.1809;
-		 if(pt < 140) return 0.1723;
-		 if(pt < 160) return 0.1636;
-		 if(pt < 200) return 0.1615;
-		 if(pt < 300) return 0.1417;
-		 if(pt < 3500) return 0.1330;
+		 if(pt < 35) return 0.264276;
+		 if(pt < 40) return 0.253127;
+		 if(pt < 45) return 0.236771;
+		 if(pt < 50) return 0.234690;
+		 if(pt < 60) return 0.215254;
+		 if(pt < 75) return 0.193094;
+		 if(pt < 90) return 0.191562;
+		 if(pt < 105) return 0.196921;
+		 if(pt < 120) return 0.193540;
+		 if(pt < 140) return 0.185456;
+		 if(pt < 160) return 0.176470;
+		 if(pt < 200) return 0.172077;
+		 if(pt < 300) return 0.150157;
+		 if(pt < 3500) return 0.140583;
 		 else return 0;
 		 }
 	 if(nTracks==3){
-		 if(pt < 35) return 0.0579;
-		 if(pt < 40) return 0.0600;
-		 if(pt < 50) return 0.0477;
-		 if(pt < 75) return 0.0344;
-		 if(pt < 100) return 0.0257;
-		 if(pt < 150) return 0.0266;
-		 if(pt < 200) return 0.0288;
-		 if(pt < 3500) return 0.0236;
+		 if(pt < 35) return 0.055255;
+		 if(pt < 40) return 0.055010;
+		 if(pt < 50) return 0.049021;
+		 if(pt < 75) return 0.039895;
+		 if(pt < 100) return 0.031438;
+		 if(pt < 150) return 0.029801;
+		 if(pt < 200) return 0.030932;
+		 if(pt < 3500) return 0.025678;
 		 else return 0;
 		 }
 	 else return 0;
 }
 
 
-#include <iostream>
 //! tau_0_jet_bdt_score_trans lower cut (0.01)
 float GetFF01_FF_CR_WJETS(float pt, int nTracks){
 	 if(nTracks==1){
-		 if(pt < 35) return 0.2847;
-		 if(pt < 40) return 0.2871;
-		 if(pt < 45) return 0.2822;
-		 if(pt < 50) return 0.2771;
-		 if(pt < 60) return 0.2555;
-		 if(pt < 75) return 0.2368;
-		 if(pt < 90) return 0.2231;
-		 if(pt < 105) return 0.2246;
-		 if(pt < 120) return 0.2276;
-		 if(pt < 140) return 0.2390;
-		 if(pt < 160) return 0.2415;
-		 if(pt < 200) return 0.2130;
-		 if(pt < 300) return 0.1779;
-		 if(pt < 3500) return 0.1974;
+		 if(pt < 35) return 0.203764;
+		 if(pt < 40) return 0.204067;
+		 if(pt < 45) return 0.201733;
+		 if(pt < 50) return 0.200172;
+		 if(pt < 60) return 0.173081;
+		 if(pt < 75) return 0.152899;
+		 if(pt < 90) return 0.141474;
+		 if(pt < 105) return 0.136526;
+		 if(pt < 120) return 0.134976;
+		 if(pt < 140) return 0.142733;
+		 if(pt < 160) return 0.140626;
+		 if(pt < 200) return 0.135284;
+		 if(pt < 300) return 0.119311;
+		 if(pt < 3500) return 0.112477;
 		 else return 0;
 		 }
 	 if(nTracks==3){
-		 if(pt < 35) return 0.0581;
-		 if(pt < 40) return 0.0572;
-		 if(pt < 50) return 0.0475;
-		 if(pt < 75) return 0.0443;
-		 if(pt < 100) return 0.0391;
-		 if(pt < 150) return 0.0358;
-		 if(pt < 200) return 0.0316;
-		 if(pt < 3500) return 0.0246;
+		 if(pt < 35) return 0.037234;
+		 if(pt < 40) return 0.035881;
+		 if(pt < 50) return 0.028394;
+		 if(pt < 75) return 0.023711;
+		 if(pt < 100) return 0.016301;
+		 if(pt < 150) return 0.014113;
+		 if(pt < 200) return 0.012871;
+		 if(pt < 3500) return 0.013776;
 		 else return 0;
 		 }
 	 else return 0;
@@ -139,31 +138,31 @@ float GetFF01_FF_CR_WJETS(float pt, int nTracks){
 //! tau_0_jet_bdt_score_trans lower cut (0.02)
 float GetFF02_FF_CR_WJETS(float pt, int nTracks){
 	 if(nTracks==1){
-		 if(pt < 35) return 0.2847;
-		 if(pt < 40) return 0.2871;
-		 if(pt < 45) return 0.2822;
-		 if(pt < 50) return 0.2771;
-		 if(pt < 60) return 0.2555;
-		 if(pt < 75) return 0.2368;
-		 if(pt < 90) return 0.2231;
-		 if(pt < 105) return 0.2246;
-		 if(pt < 120) return 0.2276;
-		 if(pt < 140) return 0.2390;
-		 if(pt < 160) return 0.2415;
-		 if(pt < 200) return 0.2130;
-		 if(pt < 300) return 0.1779;
-		 if(pt < 3500) return 0.1974;
+		 if(pt < 35) return 0.276691;
+		 if(pt < 40) return 0.278082;
+		 if(pt < 45) return 0.277905;
+		 if(pt < 50) return 0.277201;
+		 if(pt < 60) return 0.242059;
+		 if(pt < 75) return 0.216324;
+		 if(pt < 90) return 0.202533;
+		 if(pt < 105) return 0.201743;
+		 if(pt < 120) return 0.192791;
+		 if(pt < 140) return 0.212742;
+		 if(pt < 160) return 0.206322;
+		 if(pt < 200) return 0.202199;
+		 if(pt < 300) return 0.176744;
+		 if(pt < 3500) return 0.183460;
 		 else return 0;
 		 }
 	 if(nTracks==3){
-		 if(pt < 35) return 0.0581;
-		 if(pt < 40) return 0.0572;
-		 if(pt < 50) return 0.0475;
-		 if(pt < 75) return 0.0443;
-		 if(pt < 100) return 0.0391;
-		 if(pt < 150) return 0.0358;
-		 if(pt < 200) return 0.0316;
-		 if(pt < 3500) return 0.0246;
+		 if(pt < 35) return 0.054971;
+		 if(pt < 40) return 0.053358;
+		 if(pt < 50) return 0.043544;
+		 if(pt < 75) return 0.038078;
+		 if(pt < 100) return 0.027158;
+		 if(pt < 150) return 0.025251;
+		 if(pt < 200) return 0.022457;
+		 if(pt < 3500) return 0.022826;
 		 else return 0;
 		 }
 	 else return 0;
@@ -173,31 +172,31 @@ float GetFF02_FF_CR_WJETS(float pt, int nTracks){
 //! tau_0_jet_bdt_score_trans lower cut (0.03)
 float GetFF03_FF_CR_WJETS(float pt, int nTracks){
 	 if(nTracks==1){
-		 if(pt < 35) return 0.3630;
-		 if(pt < 40) return 0.3663;
-		 if(pt < 45) return 0.3639;
-		 if(pt < 50) return 0.3564;
-		 if(pt < 60) return 0.3282;
-		 if(pt < 75) return 0.3021;
-		 if(pt < 90) return 0.2916;
-		 if(pt < 105) return 0.2969;
-		 if(pt < 120) return 0.3069;
-		 if(pt < 140) return 0.3197;
-		 if(pt < 160) return 0.3267;
-		 if(pt < 200) return 0.2771;
-		 if(pt < 300) return 0.2358;
-		 if(pt < 3500) return 0.2674;
+		 if(pt < 35) return 0.352364;
+		 if(pt < 40) return 0.354369;
+		 if(pt < 45) return 0.357011;
+		 if(pt < 50) return 0.355436;
+		 if(pt < 60) return 0.311045;
+		 if(pt < 75) return 0.275644;
+		 if(pt < 90) return 0.264752;
+		 if(pt < 105) return 0.263601;
+		 if(pt < 120) return 0.258451;
+		 if(pt < 140) return 0.284150;
+		 if(pt < 160) return 0.282550;
+		 if(pt < 200) return 0.266528;
+		 if(pt < 300) return 0.234552;
+		 if(pt < 3500) return 0.255299;
 		 else return 0;
 		 }
 	 if(nTracks==3){
-		 if(pt < 35) return 0.0764;
-		 if(pt < 40) return 0.0758;
-		 if(pt < 50) return 0.0642;
-		 if(pt < 75) return 0.0610;
-		 if(pt < 100) return 0.0553;
-		 if(pt < 150) return 0.0514;
-		 if(pt < 200) return 0.0462;
-		 if(pt < 3500) return 0.0352;
+		 if(pt < 35) return 0.071982;
+		 if(pt < 40) return 0.070237;
+		 if(pt < 50) return 0.058586;
+		 if(pt < 75) return 0.052539;
+		 if(pt < 100) return 0.038544;
+		 if(pt < 150) return 0.036188;
+		 if(pt < 200) return 0.033016;
+		 if(pt < 3500) return 0.032590;
 		 else return 0;
 		 }
 	 else return 0;

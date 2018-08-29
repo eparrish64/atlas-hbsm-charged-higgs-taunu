@@ -18,7 +18,7 @@ from .variables import *
 
 ##--------------------------------------------------------------------------------------------------
 ## 
-class Configuration:
+class Configuration(object):
     """ simple class for wrapping different analysis configurations.
     assuming variables/categories/weights are all the same for all years.
     """
@@ -36,7 +36,15 @@ class Configuration:
         self.mc_camp = mc_campaign
         self.data_streams = data_streams
         self.year = year
-    
+
+        # - - - - DATA luminosity
+        self.data_lumi = 0
+        for stream in self.data_streams:
+            try:
+                self.data_lumi += LUMI[stream]
+            except KeyError:
+                raise RuntimeError("failed to get lumi for %s! "%stream)
+            
     @property
     def variables(self):
         variables = VARIABLES[self.channel]
@@ -82,13 +90,10 @@ class Configuration:
     def data_lumi(self):
         """ lumi is per data taking year (stream)
         """
-        lumi = 0
-        for stream in self.data_streams:
-            try:
-                lumi += LUMI[stream]
-            except KeyError:
-                raise ("failed to get lumi for %s! "%stream)
-        return lumi
+        return self.__data_lumi
+    @data_lumi.setter
+    def data_lumi(self, value):
+        self.__data_lumi = value
     
     @property
     def energy(self):
@@ -112,17 +117,22 @@ class Configuration:
     
     @property
     def tauid(self):
-        return TAUID_MEDIUM[self.mc_camp]
-
+        if isinstance(TAUID_MEDIUM, dict):
+            return TAUID_MEDIUM[self.mc_camp]
+        return TAUID_MEDIUM
+    
     @property
     def antitau(self):
-        return ANTI_TAU[self.mc_camp]
-
+        if isinstance(ANTI_TAU, dict):
+            return ANTI_TAU[self.mc_camp]
+        return ANTI_TAU
     
     @property
     def true_tau(self):
-        return TAU_IS_TRUE[self.mc_camp]
-    
+        if isinstance(TAU_IS_TRUE, dict):
+            return TAU_IS_TRUE[self.mc_camp]
+        return TAU_IS_TRUE
+            
     @property
     def signal_masses(self):
         return SIGNAL_MASSES

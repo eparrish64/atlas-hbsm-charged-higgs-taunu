@@ -15,10 +15,18 @@ TRIGGERS = {
         "DATA":{
             "2015": "(run_number <= 284484 && HLT_xe70_tc_lcw)", 
             "2016": "(run_number > 284484 && HLT_xe90_mht_L1XE50 && run_number <= 302872)||(run_number > 302872 && HLT_xe110_mht_L1XE50)",
+            "2017":("((run_number >= 325713 && run_number <= 328393) && HLT_xe90_pufit_L1XE50)"\
+                    "|| ((run_number >= 329385 && run_number <= 330470) && HLT_xe100_pufit_L1XE55)"\
+                    "|| ((run_number >= 330857 && run_number <= 331975) && HLT_xe110_pufit_L1XE55)"\
+                    "|| ((run_number >= 332303 && run_number <= 340453) && HLT_xe110_pufit_L1XE50)")
         },
         "MC":{
-            "2015": "(run_number <= 284484 && HLT_xe70_tc_lcw)", 
-            "2016": "(run_number > 284484 && HLT_xe90_mht_L1XE50 && run_number <= 302872)||(run_number > 302872 && HLT_xe110_mht_L1XE50)",
+            "2015": "(NOMINAL_pileup_random_run_number <= 284484 && HLT_xe70_tc_lcw)", 
+            "2016": "(NOMINAL_pileup_random_run_number > 284484 && HLT_xe90_mht_L1XE50 && NOMINAL_pileup_random_run_number <= 302872)||(NOMINAL_pileup_random_run_number > 302872 && HLT_xe110_mht_L1XE50)",
+            "2017":("((NOMINAL_pileup_random_run_number >= 325713 && NOMINAL_pileup_random_run_number <= 328393) && HLT_xe90_pufit_L1XE50)"\
+                    "|| ((NOMINAL_pileup_random_run_number >= 329385 && NOMINAL_pileup_random_run_number <= 330470) && HLT_xe100_pufit_L1XE55)"\
+                    "|| ((NOMINAL_pileup_random_run_number >= 330857 && NOMINAL_pileup_random_run_number <= 331975) && HLT_xe110_pufit_L1XE55)"\
+                    "|| ((NOMINAL_pileup_random_run_number >= 332303 && NOMINAL_pileup_random_run_number <= 340453) && HLT_xe110_pufit_L1XE50)")
         },
     },
     "taulep":{
@@ -27,7 +35,7 @@ TRIGGERS = {
                      "(HLT_e24_lhmedium_L1EM20VH || HLT_e60_lhmedium || HLT_e120_lhloose || HLT_mu20_iloose_L1MU15 || HLT_mu50))"), 
             "2016": ("((run_number > 288000)"\
                      "&&(HLT_e26_lhtight_nod0_ivarloose || HLT_e60_lhmedium_nod0 || HLT_e140_lhloose_nod0 || HLT_mu26_ivarmedium || HLT_mu50))"),
-            "2017": "",
+            "2017": ("(HLT_e26_lhtight_nod0_ivarloose || HLT_e60_lhmedium_nod0 || HLT_e140_lhloose_nod0 || HLT_mu26_ivarmedium || HLT_mu50)"),
             "2018": ""
         },
         "MC":{
@@ -35,7 +43,7 @@ TRIGGERS = {
                      "&&(HLT_e24_lhmedium_L1EM20VH || HLT_e60_lhmedium || HLT_e120_lhloose || HLT_mu20_iloose_L1MU15 || HLT_mu50))"), 
             "2016": ("((run_number > 288000)"\
                      "&&(HLT_e26_lhtight_nod0_ivarloose || HLT_e60_lhmedium_nod0 || HLT_e140_lhloose_nod0 || HLT_mu26_ivarmedium || HLT_mu50))"),
-            "2017": (""),
+            "2017": ("(HLT_e26_lhtight_nod0_ivarloose || HLT_e60_lhmedium_nod0 || HLT_e140_lhloose_nod0 || HLT_mu26_ivarmedium || HLT_mu50)"),
             "2018": ("")
         },
     },
@@ -53,7 +61,34 @@ TRIGGER_EFFICIENCIES["taujet"] = {
 
 
 # - - - - multijet trigger for FFs multijet CR
-MULTIJET_TRIGGER = "(run_number<288000 && HLT_4j85) || ((run_number>288000 && HLT_4j100))"
+MULTIJET_TRIGGER = "(run_number<288000 && (HLT_4j85||HLT_xe70_tc_lcw) )"\
+                   "|| (run_number>288000 && HLT_4j100)"\
+                   "|| (run_number > 284484 && HLT_xe90_mht_L1XE50 && run_number <= 302872)||(run_number > 302872 && HLT_xe110_mht_L1XE50)"
+
+# - - - - MET triggers for trigger efficiency
+MET_TRIGGERS = {
+    "2015":{
+        "HLT_xe70_tc_lcw": (
+            ROOT.TCut("(run_number <= 284484 && HLT_xe70_tc_lcw==1)"), 3.2), #<! 2015 (3.2 fb-1)
+    },
+    "2016":{
+        "HLT_xe90_mht_L1XE50": (
+            ROOT.TCut("(run_number > 284484 && HLT_xe90_mht_L1XE50 && run_number <= 302872)"), 6.11), #<! 2016(6.11) up to D3 period
+        "HLT_xe110_mht_L1XE50": (
+            ROOT.TCut(
+                "(run_number > 302872 && HLT_xe110_mht_L1XE50)"), 26.75), #<! 2016 (26.75) D4-L periods
+    },
+    "2017":{
+        "HLT_xe90_pufit_L1XE50": (
+            ROOT.TCut("(run_number >= 325713 && run_number <= 328393) && HLT_xe90_pufit_L1XE50)"), 5.3687), #<! period B  
+        "HLT_xe100_pufit_L1XE55":(
+            ROOT.TCut("(run_number >= 329385 && run_number <= 330470) && HLT_xe100_pufit_L1XE55"), 2.3613), #<! priod C
+        "HLT_xe110_pufit_L1XE55":(
+            ROOT.TCut("(run_number >= 330857 && run_number <= 331975) && HLT_xe110_pufit_L1XE55"), 5.0998), #<! period D1-D5 
+        "HLT_xe110_pufit_L1XE50":(
+            ROOT.TCut("(run_number >= 332303 && run_number <= 340453) && HLT_xe110_pufit_L1XE50"), 31.4773), #<!
+    },
+}
 
 
 ##-------------------------------------------------------------------------------------------

@@ -1,5 +1,5 @@
 ## stdlib 
-import os
+import os, array
 
 ## PYPI
 
@@ -122,8 +122,12 @@ def dataset_hists(hist_worker,
             if hist_templates and var.name in hist_templates:
                 hist = hist_templates[var.name]
             else:
-                hist = ROOT.TH1F(
-                    "category_%s_var_%s"%(category.name, var.name), var.name, *var.binning)
+                if var.bins:
+                    hist = ROOT.TH1F(
+                        "category_%s_var_%s"%(category.name, var.name), var.name, len(var.bins)-1, array.array("d", var.bins))
+                else:    
+                    hist = ROOT.TH1F(
+                        "category_%s_var_%s"%(category.name, var.name), var.name, *var.binning)
                 
             hset = Histset(
                 name=outname,
@@ -215,12 +219,13 @@ def dataset_hists(hist_worker,
                     tree.Draw("{0} >> {1}{2}".format(var_formula, histname, ht_bins), eventweight)
                 else:
                     tree.Draw("{0} >> {1}{2}".format(var.tformula, histname, var.binning), eventweight)
-                
-                log.debug("{0} >> {1}{2}".format(var.tformula, histname, var.binning))
+                log.debug("{0} >> {1}{2}".format(var.tformula, histname, var.bins if var.bins else var.binning))
                 log.debug("({0}) * ({1})".format(selection, eventweight))
 
                 htmp = ROOT.gDirectory.Get(histname)
                 htmp.SetDirectory(0)
+                if var.bins:
+                    htmp = htmp.Rebin(len(var.bins)-1, "hn", array.array("d", var.bins))
                 
                 hset = filter(lambda hs: hs.variable==var.name, cat_hists)[0]
                 hset.hist.Add(htmp)

@@ -56,7 +56,9 @@ class Analysis(object):
     # "FakeFactors/GetFFCombined_dn.C",
     # "FakeFactors/GetElFakeSF.C",
         
-    "TriggerEfficiency/ApplyEff.C",
+    #"TriggerEfficiency/ApplyEff.C",
+    "metTrigEff.cxx",
+        
     # "GetTopPtWeight.C",
 
     # - - - - new (derived within the hpana and from r21 ntuples)

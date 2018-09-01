@@ -588,7 +588,7 @@ MET_TRIGG_EFF_CUTS_BASE = [
 
 ## - - - - systematic variations from tau/el ID and number of jets.
 MET_TRIGG_EFF_VARIATIONS = OrderedDict()
-MET_TRIGG_EFF_VARIATIONS["NOM"] = [ROOT.TCut("tau_0_jet_bdt_loose==1"), ROOT.TCut("el_0_id_loose==1")]
+MET_TRIGG_EFF_VARIATIONS["NOMINAL"] = [ROOT.TCut("tau_0_jet_bdt_loose==1"), ROOT.TCut("el_0_id_loose==1")]
 MET_TRIGG_EFF_VARIATIONS["TAU_ID_MED"] = [ROOT.TCut("tau_0_jet_bdt_medium==1"), ROOT.TCut("el_0_id_loose==1")]
 MET_TRIGG_EFF_VARIATIONS["TAU_ID_TIGHT"] = [ROOT.TCut("tau_0_jet_bdt_tight==1"), ROOT.TCut("el_0_id_loose==1")]
 MET_TRIGG_EFF_VARIATIONS["EL_ID_MED"] = [ROOT.TCut("tau_0_jet_bdt_loose==1"), ROOT.TCut("el_0_id_medium==1")]
@@ -599,7 +599,7 @@ MET_TRIG_EFF_CRs = []
 for var, cuts in MET_TRIGG_EFF_VARIATIONS.iteritems():
     MET_TRIG_EFF_CRs.append(
         Category("MET_TRIG_EFF_CR_%s"%var,
-                 label="MET trigger eff CR(%s)"%var,
+                 label=var.lower(),
                  cuts_list=MET_TRIGG_EFF_CUTS_BASE+cuts)
     )
     

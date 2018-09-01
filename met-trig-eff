@@ -46,14 +46,14 @@ ROOT.Math.MinimizerOptions.SetDefaultMinimizer("Minuit2")
 ## - - consts
 ##------------------------------------------------------------------------------------
 ERR_FUNC_STR = "{0}*(1 + TMath::Erf((met_et - {1})/{2}))+{3}"
-MET_ET.bins = range(0, 100, 10) + range(100, 200, 20) + range(200, 400, 50)
-
+MET_ET.bins = range(0, 200, 20) + range(200, 400, 50)
+COLORS = [ROOT.kRed, ROOT.kBlue, ROOT.kGreen, ROOT.kMagenta, ROOT.kOrange, ROOT.kYellow]
 
 ##------------------------------------------------------------------------------------
 ## - - build the taulep analysis (run only on relevant streams) 
 ##------------------------------------------------------------------------------------
 def get_trig_hists(triggers=MET_TRIGGERS,
-                   categories = MET_TRIG_EFF_CRs,
+                   categories=MET_TRIG_EFF_CRs,
                    db_version=TRIG_EFF_ARGS.db_version,
                    data_streams=TRIG_EFF_ARGS.data_streams,
                    hists_cache=TRIG_EFF_ARGS.hists_cache,
@@ -94,14 +94,14 @@ def get_trig_hists(triggers=MET_TRIGGERS,
             """
             for trigger, info in trig_dict.iteritems():
                 workers_with_trigger = analysis.workers(
-                    fields=[MET_ET], categories=categories, samples=samples,
+                    channel="taulep", fields=[MET_ET], categories=categories, samples=samples,
                     trigger=info["TRIGGER"], tauid=ROOT.TCut(""))
                 for wt in workers_with_trigger:
                     wt.name = "%s.%s.%s"%(wt.name, year, trigger)
                     workers.append(wt)
                     
                 workers_without_trigger = analysis.workers(
-                    fields=[MET_ET], categories=categories, samples=samples,
+                    channel="taulep", fields=[MET_ET], categories=categories, samples=samples,
                     trigger=info["NO_TRIGGER"], tauid=ROOT.TCut(""))
                 for wto in workers_without_trigger:
                     wto.name = "%s.%s.%s.NO_TRIGGER"%(wto.name, year, trigger)
@@ -210,7 +210,7 @@ def fit_eff(eff_hists,
             istring = "float metTrigEff(float met_et, int variation_index){\n"
             cfile.write(istring)
             index = 1000
-            for n, variation in enumerate(MET_TRIG_EFF_CRs[:1]):
+            for n, variation in enumerate(MET_TRIG_EFF_CRs):
                 cfile.write("\t //! variation: %s\n"%variation.name)
                 cfile.write("\t if(variation_index==%i){\n"%(index+n))
                 cfile.write("\t\t return %s;"%(" + ".join(fit_params[variation.name]) ) )
@@ -222,7 +222,7 @@ def fit_eff(eff_hists,
 ##------------------------------------------------------------------------------------
 ## - - plot fit functions 
 ##------------------------------------------------------------------------------------
-def draw_fits(fit_funcs, pdir=TRIG_EFF_ARGS.pdir):
+def draw_fits(fit_funcs, pdir=TRIG_EFF_ARGS.pdir, overlay=True):
     """ Given a dict of hists, fit funcs draw them 
     """
     canvas = ROOT.TCanvas()
@@ -231,10 +231,14 @@ def draw_fits(fit_funcs, pdir=TRIG_EFF_ARGS.pdir):
         variations = filter(lambda var: var.name in fit_funcs[year][triggers[0]].keys(), MET_TRIG_EFF_CRs)
         for trigger in triggers:
             lumi = MET_TRIGGERS[year][trigger]["LUMI"]
-            legend = ROOT.TLegend(0.15, 0.8, 0.45, 0.9)
+            if overlay:
+                legend = ROOT.TLegend(0.15, 0.7, 0.45, 0.85)
+            else:
+                legend = ROOT.TLegend(0.15, 0.8, 0.45, 0.85)
+                
             rlabel = ROOT.TLatex(
                 canvas.GetLeftMargin() + 0.45,
-                1 - canvas.GetTopMargin() - 0.075,
+                1 - canvas.GetTopMargin() - 0.055,
                 '#bf{%s} (%s, %0.2f fb^{-1})'%(trigger, year, lumi))
             rlabel.SetNDC()
             rlabel.SetTextFont(43)
@@ -243,22 +247,40 @@ def draw_fits(fit_funcs, pdir=TRIG_EFF_ARGS.pdir):
             
             for n, variation in enumerate(variations):
                 hist, fit_func = fits[trigger][variation.name]
-                fit_func.SetLineColor(ROOT.kRed)
+                if overlay:
+                    fit_func.SetLineColor(COLORS[n])
+                else:
+                    fit_func.SetLineColor(COLORS[0])
+                    
                 if n==0:
                     hist.GetXaxis().SetTitle(MET_ET.title)
                     hist.GetYaxis().SetTitle("efficiency")
                     hist.Draw("PE1")
                     fit_func.Draw("P SAME")
-                else:
-                    hist.Draw("SAME")
+                if overlay:    
                     fit_func.Draw("EP SAME")
-                    
-                legend.AddEntry(fit_func, variation.label, "L")
+                    legend.AddEntry(fit_func, variation.label, "L")
+                else:
+                    hist.GetXaxis().SetTitle(MET_ET.title)
+                    hist.GetYaxis().SetTitle("efficiency")
+                    hist.Draw("PE1")
+                    fit_func.Draw("P SAME")
+                    legend.AddEntry(fit_func, variation.label, "L")
+
+                    legend.Draw("SAME")
+                    rlabel.Draw("SAME")
+                    os.system("mkdir -p %s"%pdir)
+                    canvas.Print("%s/MET_trig_eff%s_%s_%s.png"%(pdir, year, variation.name, trigger))
+                    legend.Clear()
+                    canvas.Clear()
+            if overlay:
                 legend.Draw("SAME")
                 rlabel.Draw("SAME")
                 os.system("mkdir -p %s"%pdir)
-                canvas.Print("%s/MET_trig_eff%s_%s_%s.png"%(pdir, year, variation.name, trigger))
+                canvas.Print("%s/MET_trig_eff%s_%s.png"%(pdir, year, trigger))
+                legend.Clear()
                 canvas.Clear()
+            
     canvas.Close()
                     
 ##------------------------------------------------------------------------------------
@@ -269,7 +291,7 @@ if __name__=="__main__":
     
     trigger_hists = get_trig_hists()
     fit_funcs, fit_params = fit_eff(trigger_hists)
-    draw_fits(fit_funcs)
+    draw_fits(fit_funcs, overlay=True)
     
     end_time = time.time()
     elapsed_time = (end_time - start_time)/60.

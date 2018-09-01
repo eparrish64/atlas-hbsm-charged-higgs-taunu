@@ -219,7 +219,8 @@ class QCD(Sample):
                         systematic=systematic,
                         fields=fields,
                         categories=mc_categories,
-                        weights=total_weights)
+                        weights=total_weights,
+                        channel=self.config.channel)
                     
                 mc_workers.append(worker)
 
@@ -236,7 +237,8 @@ class QCD(Sample):
                     systematic=systematic,
                     fields=fields,
                     categories=data_categories,
-                    weights=ff_weights)
+                    weights=ff_weights,
+                    channel=self.config.channel)
 
                 data_workers.append(worker)
 
@@ -500,7 +502,7 @@ class LepFake(Sample):
         for mc in self.mc:
             # - - - - turn off truth matching 
             lepfake_workers += mc.workers(categories=mc_categories, fields=fields,systematics=systematics,
-                                          weighted=weighted,truth_match_tau=self.leptau,**kwargs)
+                                          weighted=weighted,truth_match_tau=self.leptau, channel=self.config.channel, **kwargs)
 
         # - - - - add LepFake prefix to the workers names
         # - - - - so that are no mistaken with DATA/MC workers.

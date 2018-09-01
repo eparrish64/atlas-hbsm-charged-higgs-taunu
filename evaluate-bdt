@@ -1,0 +1,385 @@
+#!/usr/bin/env python2.7
+
+import sys, os, re, gc, glob, argparse, shutil, array 
+from multiprocessing import Process    
+import numpy as np
+
+# set the path to FastBDT here pls.
+sys.path.append("/home/sbahrase/WorkDesk/TMVA/FastBDT/")
+import PyFastBDT.FastBDT as fbdt
+from hpana.variables import BDT_FEATURES
+from hpana import log
+from hpana.cluster.parallel import run_pool
+ 
+# Setup cmd args
+parser = argparse.ArgumentParser()
+parser.add_argument('files', nargs='+', 
+                    help='ntuples to append BDT score to them')
+parser.add_argument('--bdts', '-b', help='path to bdt files')
+parser.add_argument('--channel', '-c', default='tau_jet',
+                    help='tau+lep or tau+jet', choices=['taujet', 'taulep'])
+parser.add_argument('--log', '-l', help='logging level', default='INFO')
+parser.add_argument('--sys', action='store_true', help='include sys trees or not')
+parser.add_argument('--pp', help='parallel processing', action='store_true')
+args = parser.parse_args() 
+
+# Setup ROOT
+import ROOT
+ROOT.gROOT.SetBatch(True)
+ROOT.gROOT.LoadMacro(
+    "/home/sbahrase/WorkDesk/HPlusTauNu/HPlusTauNuAnalysisCode/FakeFactors/CorrectUpsilon.C")
+ROOT.gROOT.LoadMacro(
+    "/home/sbahrase/WorkDesk/HPlusTauNu/HPlusTauNuAnalysisCode/FakeFactors/CorrectUpsilon_1D_QCD.C")
+ROOT.gROOT.LoadMacro(
+    "/home/sbahrase/WorkDesk/HPlusTauNu/HPlusTauNuAnalysisCode/FakeFactors/CorrectUpsilon_1D_WCR.C")
+
+#ROOT.gErrorIgnoreLevel = 3#ROOT.kPrint, ROOT.kInfo, ROOT.kWarning#, kError, kBreak, kSysError, kFatal
+
+#-----------------------------------------------
+# consts
+#-----------------------------------------------
+COPY_FILE = True
+USE_FASTBDT = True
+BDT_FILE_PATTERN = re.compile(
+    '^(?P<name>\w+)'
+    '_(?P<mass>\w+)'
+    '_rem_(?P<rem>\d+)'
+    '_mod_(?P<mod>\d+)'
+    '(?P<prong>\w+)'
+    '\.(?P<suffix>\w+)$')
+
+INPUT_FEATURES = BDT_FEATURES[args.channel]
+
+#-----------------------------------------------
+def get_bdts(bdts_path):
+    """
+    retrive all trained models from the given path.
+    Parameters
+    ----------
+    bdts_path: str, path to trained models
+
+    Return
+    bdts: dict, holding all trained bdts for different masses and folds.
+    """
+    # loop over trained models and prepare them.
+    bdtfiles = os.listdir(bdts_path)
+    bdts = dict()
+    for bdtf in bdtfiles:
+        match = re.match(BDT_FILE_PATTERN, bdtf)
+        if not match:
+            log.warning(' %s not matched'%bdtf)
+            continue
+
+        log.info("Loading: %s"%bdtf)
+        name = match.group('name')
+        mass = match.group('mass')
+        rem  = int(match.group('rem'))
+        prong= match.group('prong')
+
+        bdtf = os.path.join(bdts_path, bdtf)
+        name = '%s_%s%s'%(name, mass, prong) #<! 9V stands for number of input features 8/9(6/7), 
+        if mass not in bdts: 
+            bdts[mass] = dict()
+        if rem not in bdts[mass]: 
+            bdts[mass][rem] = dict()
+ 
+        if USE_FASTBDT:
+            # retrive the trained model
+            bdt = fbdt.Classifier()
+            fbdt.FastBDT_library.Load(bdt.forest, bdtf)
+            bdts[mass][rem][name] = bdt
+
+        else: #<! use TMVA.READER to load models
+            bdt_reader = ROOT.TMVA.Reader()
+            input_variables = {}
+            for feat in FEATURES_TAUJET:
+                if ':=' in feat:
+                    feat = feat.split(':=')[0].strip()
+                input_variables[feat] = array.array('f', [-1.])
+                bdt_reader.AddVariable(feat, input_variables[feat])
+            bdt_reader.BookMVA(bdtf, bdtf)
+            bdts[mass][rem][name] = bdt_reader
+
+    return bdts
+ 
+
+#-----------------------------------------------
+def get_trees(tfile):
+    """=
+    Retrun a list of TTrees in a given root file.
+    """
+    trees = set()
+    trees.add(tfile.Get('NOMINAL'))
+    if args.sys:
+        keys = [k.GetName() for k in tfile.GetListOfKeys()]
+        keys = filter(lambda k: isinstance(tfile.Get(k), ROOT.TTree), keys)
+        for k in keys:
+            if k=='EventLoop_FileExecuted':
+                continue
+            trees.add(tfile.Get(k))
+        
+    return trees
+
+#-----------------------------------------------
+def setup_score_branches(tree, bdts):
+    """
+    # Setup MVA score output branches
+    # TODO look up how many mass points there are based on number of trained BDTs...
+    """
+    
+    scores = dict()
+    score_branches = []
+    for mass in sorted(list(bdts.keys())):
+        for name in bdts[mass][0]:
+            # if score branch is already in tree do nothing.
+            if name in [b.GetName() for b in tree.GetListOfBranches()]:
+                log.warning("%s is already in %s (skipping tree)"%(name, tree.GetName()))
+                continue
+            score = array.array('f', [0.])
+            scores[name] = score
+            sb = tree.Branch(name, score, name+"/F")
+            score_branches.append(sb)
+    
+    return scores, score_branches
+
+#-----------------------------------------------
+def setup_tformulas(tree, features):
+    # Setup a TTreeFormula for each feature
+    forms_tau = []
+    for feat in features:
+        forms_tau.append(ROOT.TTreeFormula(feat.name, feat.tformula, tree) )
+    forms_fake = forms_tau[:]
+    
+    for form in forms_tau: form.SetQuickLoad(True)
+    for form in forms_fake: form.SetQuickLoad(True)
+    
+    return forms_tau, forms_fake
+
+#-----------------------------------------------
+def evaluate_scores(file_name, bdts):
+    """
+    Update tree with score branches which are
+    evaluated using the available trained bdts.
+    
+    Parameters
+    ----------
+    tree: ROOT.TTree, tree to evaluate and append bdt scores to it
+    bdts: dict, holding available trained bdts
+
+    Return
+    ------
+    None
+    """
+    # retrive trees in the tfile and loop over them
+    tfile = ROOT.TFile.Open(file_name, 'UPDATE')
+    trees = get_trees(tfile)
+    for tree in trees:
+        # setup input features tformulas and score branches
+        tree_name = tree.GetName()
+        tau_0_n_tracks =  ROOT.TTreeFormula("tau_0_n_charged_tracks", "tau_0_n_charged_tracks", tree)
+        tau_0_decay_mode = ROOT.TTreeFormula("tau_0_decay_mode", "tau_0_decay_mode", tree)
+        event_number = ROOT.TTreeFormula("event_number", "event_number", tree)
+        isFake = ROOT.TTreeFormula("tau_0_jet_bdt_loose == 0", "tau_0_jet_bdt_loose == 0", tree)
+        
+        forms_tau, forms_fake = setup_tformulas(tree, INPUT_FEATURES)
+        scores, score_branches = setup_score_branches(tree, bdts)
+        # if all branches exist in tree, nothing to do!
+        if len(score_branches)==0:
+            continue
+        
+        # Loop over events in tree
+        tree.SetCacheSize(32*2**20) # 20
+        tree.SetCacheLearnEntries()
+        totalEntries = tree.GetEntries()
+        blockSize = 2**18  # 16
+        blocks = totalEntries/blockSize
+        for block in xrange(blocks+1):
+            modulus = 0
+            for mass in bdts:
+                modulus = len(bdts[mass])
+                break
+
+            #--------------------------
+            # Evaluate features vector
+            #--------------------------
+            allFeats = dict()
+            for rem in xrange(modulus):
+                allFeats[rem] = []
+            for entry in xrange(block*blockSize, 
+                                min(totalEntries, (block+1)*blockSize)):
+                if (entry%1000==0): 
+                    log.info("Tree: {0}, Event: {1}/{2}".format(tree_name, entry+1, totalEntries))
+                tree.LoadTree(entry)
+                if False: 
+                    t.GetEntry(entry) # Try with this on a small file, to make sure the output is identical
+
+                # evaluate input features on tree entry
+                feats = []
+                if not isFake.EvalInstance():
+                    # True tau candidate
+                    for form in forms_tau: 
+                        feats.append(form.EvalInstance())          
+                else:
+                    # Anti-tau (or at least not a loose tau)
+                    for form in forms_fake: 
+                        # correct upsilon for fakes (only for 1p)
+                        if form.GetName()=="upsilon":
+                            # Yform = ROOT.TTreeFormula("upsilon_corrected", "upsilon_corrected", tree)
+                            # feats.append(Yform.EvalInstance())
+                            if tau_0_n_tracks.EvalInstance()==1:
+                                if tree_name == 'upsilon_up': #<! FIX ME: do the check at a better place
+                                    Y_corrected = ROOT.CorrectUpsilon_1D_QCD(form.EvalInstance(), 1) 
+                                else:
+                                    Y_corrected = ROOT.CorrectUpsilon_1D_WCR(form.EvalInstance(), 1) #<! _1D_WCR as a NOMINAL
+                                feats.append(Y_corrected)
+                               
+                            # Y is not used for 3 p, no correction needed
+                            else:
+                                feats.append(form.EvalInstance())
+                        else:
+                            feats.append(form.EvalInstance())
+
+                n = int(event_number.EvalInstance())
+                rem = n % modulus
+                allFeats[rem].append(feats)
+
+            #----------------------
+            # Evaluate score from trained 
+            # algorithm 
+            #-----------------------    
+            nFolds = len(allFeats)
+            for rem in sorted(list(allFeats.keys())):
+                log.info("Formatting data for fold {} / {}".format(rem, nFolds))
+                mva_feats = allFeats[rem][:]
+                if not len(allFeats[rem]):
+                    del allFeats[rem] # Nothing in this fold
+                else:
+                    allFeats[rem] = np.require(allFeats[rem],
+                                               dtype=np.float64,
+                                               requirements=['A', 'W', 'C', 'O'])
+            results = dict()
+            for mass in sorted(list(bdts.keys())):
+                results[mass] = dict()
+                for rem in sorted(list(allFeats.keys())):
+                    results[mass][rem] = dict()
+                    # if branch was already in tree do nothing.
+                    for name in bdts[mass][rem]:
+                        if name not in scores.keys():
+                            continue
+                        log.debug(
+                            "Tree: {0}, Mass: {1}, {2} {3} / {4} Evaluating".format(tree_name, mass, name, rem+1, len(bdts[mass])))
+                        log.debug("Events number: {0}".format(n))
+                        log.debug("Input Features: {0}".format(allFeats[rem]))
+                        if USE_FASTBDT:
+                            log.debug('Predicted score: {0}'.format(bdts[mass][rem][name].predict(allFeats[rem])))
+                            results[mass][rem][name] = bdts[mass][rem][name].predict(allFeats[rem])
+                        else:
+                            log.error("NOT IMPLEMENTED YET")
+                            sys.exit(0)
+                            # TO IMPLEMENT
+                            # FIX ME : pass allFeats[rem] to EvaluateMVA
+                            # results[mass][rem][name] = bdts[mass][rem][name].EvaluateMVA(mva_feats, TMP_BDT)
+                            
+            #-----------------------
+            # Fill score branches
+            #-----------------------            
+            # Remember: scores are a 1-element array that needs updating in-place
+            offset = dict()
+            for rem in allFeats: offset[rem] = 0
+
+            log.info(' Writing BDT score branches {0}'.format([sb.GetName() for sb in score_branches]))
+            for entry in xrange(block*blockSize, min(totalEntries, (block+1)*blockSize)):
+                if entry%1000 == 0: 
+                    log.info("------->>>>------ {0}: {1}/{2}".format(tree_name, entry+1, totalEntries))
+                tree.LoadTree(entry)
+                for b in score_branches: 
+                    b.GetEntry(entry)
+                n = int(event_number.EvalInstance())
+                rem = n % modulus
+                for mass in results:
+                    for name in results[mass][rem]:
+                        scores[name][0] = results[mass][rem][name][offset[rem]]
+
+                offset[rem] += 1
+
+                for sb in score_branches:
+                    sb.Fill()
+
+            # Make sure no events were missed
+            for rem in allFeats: assert offset[rem] == len(allFeats[rem])
+        pass #<! blocks loop
+
+        tree.Write(tree.GetName(), ROOT.TObject.kOverwrite)
+    pass #<! trees loop
+    tfile.Close()
+
+    return 
+
+
+#-----------------------------------------------
+# simple class for parallel processing
+#-----------------------------------------------
+class Job(Process):
+    """
+    simpel worker class for parallel
+    processing. the run method is necessary,
+    which will overload the run method of Procces.
+    """
+    def __init__(self, file_name, bdts, copy_file=False):
+        super(Job, self).__init__()
+        self.file_name = file_name
+        job_name = file_name
+        if '/' in job_name:
+            job_name = job_name.split('/')[-1]
+        self.job_name = job_name.replace('.root','') 
+        self.bdts = bdts
+        self.copy_file = copy_file
+        
+    def run(self):
+        file_name = self.file_name
+        
+        # copy to new file
+        if self.copy_file:
+            output = file_name+'.nn'
+            if os.path.exists(output):
+                log.warning(" {} already exists (will skip copying if file is in good shape)" .format(output))
+                tf = ROOT.TFile.Open(output, 'READ')
+                if not tf:
+                    log.warning("{} exists but it's ZOMBIE, replacing it".format(output))
+                    os.remove(output)
+                    shutil.copy(file_name, output)
+            else:
+                log.info("copying {0} to {1} ...".format(file_name, output))
+                shutil.copy(file_name, output)
+        else:
+            output = file_name
+        
+        # the actual calculation happens here
+        evaluate_scores(output, self.bdts)
+
+        return 
+
+    
+if __name__=='__main__':
+    import time
+    if not args.bdts:
+        raise IOError('Path to trained bdts pls ?')
+    
+    BDTS = get_bdts(args.bdts)
+
+    # sort files based on size to start the heavier ones sooner.
+    args.files.sort(key=lambda f: os.path.getsize(f), reverse=True)
+    jobs = [Job(f, BDTS, copy_file=COPY_FILE) for f in args.files]
+
+    st = time.time()
+    # run a pool of jobs
+    if args.pp or len(jobs)> 1:
+        run_pool(jobs, n_jobs=-1)
+    else:
+        # processing one file only (also for PBS, CONDOR Batch)
+        for job in jobs:
+            job.run()
+            
+    ft = time.time()
+
+    print "Delta t: ", (ft - st)

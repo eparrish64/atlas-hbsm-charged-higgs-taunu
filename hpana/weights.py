@@ -1,6 +1,5 @@
 __all__ = ["Weight"]
 
-from .trigger import TRIGGER_EFFICIENCIES 
 from . import MC_CAMPAIGN
 
 class Weight:
@@ -51,9 +50,8 @@ class Weight:
 
     W_TRIGGER_TAUJET = {
         "mc15": ("nominal_trig_eff({})".format("met_et/1000."), ),
-        "mc16": ("nominal_trig_eff({})".format("met_p4->Et()"), ),
+        "mc16": ("metTrigEff({}, 1000)".format("met_p4->Et()"), ), 
     }
-                 
     
     W_TRIGGER_TAULEP = ("1",)
     

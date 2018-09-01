@@ -54,8 +54,8 @@ class Variable(object):
         self.title = title
         self.unit = unit
         self.scale = scale
-        self.binning = binning
-        self.bins = bins
+        self._binning = binning
+        self._bins = bins
         
         # - - - - - - - - see __init__.py
         self.mc_camp = kwargs.pop("mc_camp", MC_CAMPAIGN)
@@ -108,25 +108,25 @@ class Variable(object):
 
     @property
     def binning(self):
-        return self.__binning
+        return self._binning
         
     @binning.setter
     def binning(self, value):
         if isinstance(value, dict):
-            self.__binning = value.values()[0]
+            self._binning = value.values()[0]
         elif isinstance(value, (tuple, list)):
-            self.__binning = tuple(value)
+            self._binning = tuple(value)
         else:
             raise TypeError("%r is not supported"%value)
         
     @property
     def bins(self):
-        return self.__bins
+        return self._bins
 
     @bins.setter
     def bins(self, value):
         if isinstance(value, (list, tuple)):
-            self.__bins = value
+            self._bins = value
             
     def blind(self,low, high):
         pass

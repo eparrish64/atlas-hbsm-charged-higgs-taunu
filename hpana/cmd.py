@@ -179,7 +179,7 @@ def get_ffs_parser(base_parser=None):
     
     ffs_parser.add_argument("--log", "-l",
                         choices=["VERBOSE", "DEBUG", "INFO", "WARNING", "ERROR"], default="INFO")
-    ffs_parser.add_argument("--db-version", "-nv", type=str, 
+    ffs_parser.add_argument("--db-version",
                         help="database version; should match the database version you use when creating database")
     ffs_parser.add_argument("--fake-sources", action="store_true",
                               help="what is the source of fake tau")
@@ -217,14 +217,34 @@ def get_ffs_parser(base_parser=None):
     return ffs_parser
 
 ##--------------------------------------------------------------------------------------------------
-## fake factors parser
+## met trigger efficiency parser
 def get_trig_eff_parser(base_parser=None):
-    if base_parser:
-        ffs_parser = base_parser
-    trig_eff_parser = ArgumentParser("hpana FFs parser")
+    trig_eff_parser = ArgumentParser("hpana:: MET trig eff parser")
     
     trig_eff_parser.add_argument("--log", "-l",
                         choices=["VERBOSE", "DEBUG", "INFO", "WARNING", "ERROR"], default="INFO")
-    trig_eff_parser.add_argument("--db-version", "-nv", type=str, 
-                        help="database version; should match the database version you use when creating database")
     
+    trig_eff_parser.add_argument("--db-version",
+                        help="database version; should match the database version you use when creating database")
+
+    trig_eff_parser.add_argument("--data-streams", nargs="+", choices=["2015","2016", "2017", "2018",],
+                             help="DATA taking yeats", default=["2015", "2016"])
+    
+    trig_eff_parser.add_argument("--pdir", default="trigeff_plots",
+                                 help="where to put the plots")
+
+    trig_eff_parser.add_argument("--hists-cache",
+                                 help="read all the histograms from the cache")
+    trig_eff_parser.add_argument("--fit-cache",
+                                 help="cache fit parameters to this")
+
+    trig_eff_parser.add_argument("--parallel", action="store_true",
+                            help="if you want to do parallel processing")
+
+    trig_eff_parser.add_argument("--ncpu", type=int, default=multiprocessing.cpu_count(),
+                            help="how many cores to use")
+    
+    trig_eff_parser.add_argument("--dry-run", action="store_true",
+                            help="if you just want to see the scripts that will be submitted to the cluster")
+    
+    return trig_eff_parser

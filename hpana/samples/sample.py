@@ -271,7 +271,8 @@ class Sample(object):
                     categories=categories_cp,
                     weights=weights,
                     systematic=systematic,
-                    hist_templates=hist_templates)
+                    hist_templates=hist_templates,
+                    channel=self.config.channel) 
                 
                 workers.add(worker)
 

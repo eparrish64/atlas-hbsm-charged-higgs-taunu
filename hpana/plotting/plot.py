@@ -1,5 +1,5 @@
 
-import os, math
+import os, math, array
 from contextlib import contextmanager
 import threading
 
@@ -17,6 +17,8 @@ __all__= [
     "create_canvas",
     "ratio_hist",
     "ATLAS_LABEL",
+    "optimize_binning",
+    "rebin",
 ]
 
 """
@@ -399,7 +401,7 @@ def label_plot(pad,
 
 ##----------------------------------------------------------------------------
 ##
-def uncertainty_band(models, systematics, overflow=True):
+def uncertainty_band(hists, systematics, overflow=True):
     
     """
     add separate variations in quadrature,
@@ -407,7 +409,7 @@ def uncertainty_band(models, systematics, overflow=True):
     
     Parameters
     ----------
-    models = list (dict), holding backgrounds info and hists
+    hists = list (dict), holding backgrounds info and hists
     systematics:list, list of analysis systematics.
     
     Returns
@@ -416,20 +418,9 @@ def uncertainty_band(models, systematics, overflow=True):
     corrsponding to total nom, low band and high band error
     """
 
-    if not isinstance(models, (list, tuple)):
-        models = [models]
-
-    ## nom hists
-    nom_hists = []
-    for model in models:
-        mname = model.keys()[0]
-        m_obj = model[mname]['INFO']
-        nom_hists.append(model[m_obj.name]['HISTS']['NOMINAL'])
-
-    if overflow:
-        [fold_overflow(h) for h in nom_hists]
-
-    total_nom = reduce(lambda h1, h2: h1+h2,nom_hists) 
+    if not isinstance(hists, (list, tuple)):
+        hists = [hists]
+    total_nom = reduce(lambda h1, h2: h1+h2, hists) 
     
     var_high = []
     var_low = []
@@ -466,7 +457,7 @@ def uncertainty_band(models, systematics, overflow=True):
             total_low = total_high.Clone()
             total_max = total_high.Clone()
             total_min = total_high.Clone()
-            for model in models:
+            for model in hists:
                 mname = model.keys()[0]
                 m_obj = model[mname]['INFO']
                 nom_hist = model[m_obj.name]['HISTS']['NOMINAL']
@@ -562,7 +553,9 @@ def create_canvas(show_ratio=True):
 ##----------------------------------------------------------------------------
 ##
 def ratio_hist(h1, h2):
-    
+
+    h1.Sumw2()
+    h2.Sumw2()
     ratio_hist = h1.Clone()
     ratio_hist.Divide(h2)
     
@@ -588,3 +581,33 @@ def ratio_hist(h1, h2):
     ratio_hist.GetYaxis().SetRangeUser(0.5, 1.5)
     
     return ratio_hist 
+
+##----------------------------------------------------------------------------
+##
+def optimize_binning(hist):
+    """
+    rebin histogram 
+    """
+
+    nbins = hist.GetNbinsX()
+    axis = hist.GetXaxis()
+    new_bins = []
+    i = 1
+    x0 = hist.GetBinLowEdge(1) 
+    dx = hist.GetBinWidth(1)
+    while i <= nbins:
+        y = hist.GetBinContent(i)
+        if y <=10:
+            i += 1
+            continue
+        else:
+            new_bins.append(x0 + i*dx)
+            i +=1
+            
+    new_bins.insert(0, hist.GetBinLowEdge(1)) #<! include underflow bin
+    return new_bins
+
+##----------------------------------------------------------------------------
+##
+def rebin(hist, bins):
+    return hist.Rebin(len(bins)-1, hist.GetTitle(), array.array("d", bins))

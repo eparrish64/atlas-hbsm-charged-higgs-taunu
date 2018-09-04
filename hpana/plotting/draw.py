@@ -20,7 +20,7 @@ def draw(var, category,
          signals=[],
          systematics=None,
          tree_name="NOMINAL",
-         uncertainty_band=False,
+         error_bars=False,
          signal_scale=1.,
          show_signal_error=False,
          plot_label=None,
@@ -39,6 +39,7 @@ def draw(var, category,
          top_label=None,
          poisson_errors=True,
          ylimits=None,
+         bin_optimization=True,
          ):
 
     """
@@ -86,6 +87,9 @@ def draw(var, category,
     backgrounds_stack = []
     main_errors = []
 
+    # - - - - - - - - binning
+    opt_bins = []
+    
     # - - - - - - - - prepare the canvas and pads 
     fig, main_pad, ratio_pad = create_canvas(show_ratio=show_ratio)
     
@@ -94,7 +98,6 @@ def draw(var, category,
         if not isinstance(backgrounds, (list, tuple)):
             backgrounds = [backgrounds]
         backgrounds_hists   = []
-        bkg_stack = ROOT.THStack("bkgs", "bkgs")
         for bkg in reversed(backgrounds):
             hname = "{0}/{1}".format(tree_name, HIST_NAME_TEMPLATE.format(bkg.name, category.name, var.name))
             if hists_file:
@@ -115,14 +118,29 @@ def draw(var, category,
             # - - - - hists should already be decorated when they're produced !
             bkg_hist.SetFillColor(bkg.color) 
             legend.AddEntry(bkg_hist, "%s(%i)"%(bkg.label, bkg_hist.Integral(0, -1)), 'F')
-            bkg_stack.Add(bkg_hist)
             backgrounds_hists.append(bkg_hist)
+            
+        # - - - - optimize binning
+        hsum = reduce(lambda h1, h2: h1+h2, backgrounds_hists)
+        opt_bins = optimize_binning(hsum)
+        
+        bkg_stack = ROOT.THStack("bkgs", "bkgs")
+        backgrounds_stack = []
+        rebinned_bkg_hists = []
+        for bkg_hist in backgrounds_hists:
+            if opt_bins and bin_optimization:
+                hnew = rebin(bkg_hist, opt_bins)
+                bkg_stack.Add(hnew)
+                rebinned_bkg_hists.append(hnew)
+            else:
+                bkg_stack.Add(bkg_hist)
         backgrounds_stack.append(bkg_stack)
+        backgrounds_hists = rebinned_bkg_hists[:]
         
         # - - - - if you wish to add uncertainty band to the ratio plot
-        if uncertainty_band:
+        if error_bars:
             total_backgrounds, high_band_backgrounds, low_band_backgrounds = uncertainty_band(
-                backgrounds, systematics, overflow=overflow)
+                backgrounds_hists, systematics, overflow=overflow)
         
             backgrounds_error = ROOT.TGraphAsymmErrors()
             for i in range(0, total_backgrounds.GetNbinsX()):
@@ -173,7 +191,9 @@ def draw(var, category,
             #- - - - fold the overflow bin to the last bin
             if overflow:
                 fold_overflow(sig_hist)
-
+            if bin_optimization and opt_bins:
+                rebin(sig_hist, opt_bins)
+                
             legend.AddEntry(sig_hist, sig_label, 'L')
             signals_hists.append(sig_hist)
 
@@ -207,12 +227,14 @@ def draw(var, category,
                 data_hist = data_hist[0].hist 
         if not data_hist:
             log.warning("can't find %s hist; skipping! "%hname)
-            return 
+            return
         data_hist.SetXTitle(var.title)
         data_hist.SetYTitle("# events")
         if overflow:
             fold_overflow(data_hist)
         legend.AddEntry(data_hist, "%s(%i)"%(data.label, data_hist.Integral(0, -1)), "P")
+        if bin_optimization and opt_bins:
+            data_hist = rebin(data_hist, opt_bins)
         
         # - - - - - - - - blind the data in a specific range
         if isinstance(blind, tuple):
@@ -253,15 +275,18 @@ def draw(var, category,
     # - - - - - - - - the ratio plot
     if show_ratio:
         sum_bkgs = reduce(lambda h1, h2: h1+h2, backgrounds_hists)
+        if bin_optimization:
+            sum_bkgs = rebin(sum_bkgs, opt_bins) 
+        
         rhist = ratio_hist(data_hist, sum_bkgs)
         rhist.GetXaxis().SetTitle(var.title)
         rhist.GetYaxis().SetTitle('Data/Sum bkg')
 
         # - - - - draw band below points on ratio plot
-        if uncertainty_band:
+        if error_bars:
             # - - background uncertainty band
             total_backgrounds, high_band_backgrounds, low_band_backgrounds = uncertainty_band(
-                backgrounds, systematics, overflow=overflow)
+                backgrounds_hists, systematics, overflow=overflow)
             ratio_hist_high = total_backgrounds + high_band_backgrounds
             ratio_hist_high.Divide(total_backgrounds)
 
@@ -269,20 +294,21 @@ def draw(var, category,
             ratio_hist_low.Divide(total_backgrounds)
 
             ratio_error = ROOT.TGraphAsymmErrors()
-            for i in range(0, ratio_hist.GetNbinsX()):
-                ratio_error.SetPoint(i, ratio_hist.GetXaxis().GetBinCenter(i), 
-                                     ratio_hist.GetBinContent(i))
+            for i in range(0, rhist.GetNbinsX()):
+                ratio_error.SetPoint(i, rhist.GetXaxis().GetBinCenter(i), 
+                                     rhist.GetBinContent(i))
 
-                eyh = abs(ratio_hist_high.GetBinContent(i) - ratio_hist.GetBinContent(i))
-                eyl = abs(ratio_hist.GetBinContent(i) - ratio_hist_low.GetBinContent(i))
+                eyh = abs(ratio_hist_high.GetBinContent(i) - rhist.GetBinContent(i))
+                eyl = abs(rhist.GetBinContent(i) - ratio_hist_low.GetBinContent(i))
                 # - - dummy x error for plotting
-                exh = ratio_hist.GetXaxis().GetBinWidth(i)/2.
+                exh = rhist.GetXaxis().GetBinWidth(i)/2.
                 exl = exh
                 ratio_error.SetPointError(i, exl, exh, eyl, eyh)
 
-            ratio_error.SetFillColor(ROOT.kYellow-1)
+            ratio_error.SetLineColor(ROOT.kYellow)
+            ratio_error.SetMarkerColor(ROOT.kRed)
             ratio_error.SetFillStyle(3004)
-    
+            
     # - - - - - - - - add lumi, category , ... labels 
     extra_info += label_plot(main_pad,
                              category=category.label,

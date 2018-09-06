@@ -527,6 +527,7 @@ FF_CR_MULTIJET = Category(
         CLEAN_EVT,
         TAU_PT30,
         TAU_EL_OLR_PASS,
+        TAU_TRACKS,
         NUM_JETS3,
         LEP_VETO,
         BVETO,
@@ -539,8 +540,18 @@ FF_CR_WJETS = Category(
     cuts_list=[
         CLEAN_EVT,
         TAU_EL_OLR_PASS,
-        EL_BASE,
-        TAU_BASE,
+        
+        ROOT.TCut("n_electrons==1"),
+        ROOT.TCut("el_0_p4->Pt() > 26"),
+        # - - trigger matched electron
+        ROOT.TCut( 
+            "(el_0_trig_HLT_e24_lhmedium_L1EM20VH==1 && run_number <= 288000)" #<! 2015
+            "|| (el_0_trig_HLT_e26_lhtight_nod0_ivarloose==1 && run_number > 288000)" #<! 2016
+            #"||(el_0_trig_trigger_matched==1 && HLT_e26_lhtight_nod0_ivarloose==1 && run_number > 288000)"
+        ),
+        #EL_BASE,
+        #TAU_BASE,
+        ROOT.TCut("n_taus==1"), 
         BVETO,
         W_LEP_MT_60,
         W_LEP_MT_MAX160,

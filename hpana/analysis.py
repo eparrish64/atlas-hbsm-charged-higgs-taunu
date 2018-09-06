@@ -16,7 +16,7 @@ from .samples.sample import Sample
 from .dataset_hists import dataset_hists
 
 from .samples import Higgs
-from .categories import TAUID_MEDIUM, ANTI_TAU, TAU_IS_EL_OR_HAD, Category
+from .categories import TAUID_MEDIUM, ANTI_TAU, TAU_IS_TRUE, TAU_IS_LEP_OR_HAD, Category
 from .cluster.parallel import close_pool
 from .config import Configuration
 import ROOT
@@ -168,7 +168,7 @@ class Analysis(object):
             pt_weighted=False,
             color=ROOT.kOrange)
         
-        # - - - - - - - - MC BKG components 
+        # - - - - - - - - MC with prompt tau BKG components 
         self.mc = [
             self.ttbar,
             self.single_top,
@@ -192,7 +192,7 @@ class Analysis(object):
         
         # - - - - - - - - leptons faking a tau
         self.lepfakes = samples.LepFake(
-            self.config, self.mc[:], #<! defensive copy 
+            self.config, self.mc[:],
             name='LepFakes',
             label='lep #rightarrow #tau',
             color=ROOT.kGreen+3)
@@ -433,9 +433,10 @@ class Analysis(object):
                   subtract_mc=True,
                   cache_file=None,
                   write_cxx_macro=True,
-                  validation_plots=False,):
+                  validation_plots=False,
+                  pdir="ffplots"):
         """
-        FF = N_tau/N_antitau where N_antitau = N_anittau(DATA) - N_antitau(MC) 
+        FF = N_tau/N_antitau where N_tau/antitau = N_tau/anittau(DATA) - N_tau/antitau(MC) 
         for MC where tau fails tau ID but is truth matched to an electron or a tau.
         Then 
         These factors then will be evaluated in other selection regions based on the fraction of q/g jets faking taus.
@@ -502,6 +503,7 @@ class Analysis(object):
         for w in data_antitau_workers:
             w.name += "_ANTITAU"
         workers += data_antitau_workers
+        
         if subtract_mc:
             # - - - - MC workers
             mc_tau_workers = []
@@ -509,13 +511,13 @@ class Analysis(object):
             for mc in self.mc:
                 mc_tau_workers += mc.workers(
                     fields=template_fields[:1], hist_templates=template_hist,
-                    categories=control_regions, tauid=tauid, trigger=trigger, tau_truth_match=TAU_IS_EL_OR_HAD)
+                    categories=control_regions, tauid=tauid, trigger=trigger, truth_match_tau=TAU_IS_LEP_OR_HAD)
 
                 # - - taus not passing nominal tau ID (medium)
                 not_tau = ROOT.TCut("!%s"%self.config.tauid.GetTitle())
                 mc_antitau_workers += mc.workers(
                     fields=template_fields[:1], hist_templates=template_hist,
-                    categories=control_regions, tauid=not_tau, trigger=trigger,truth_match_tau=TAU_IS_EL_OR_HAD)
+                    categories=control_regions, tauid=antitau, trigger=trigger, truth_match_tau=TAU_IS_TRUE)
 
             # add mc tau/antitau  workers to the list of all workers
             for w in mc_tau_workers:
@@ -527,10 +529,14 @@ class Analysis(object):
             workers += mc_antitau_workers
 
         # - - - - workers do some work please :D
+        log.info(
+            "************** submitting %i jobs  ************"%len(workers))
+        log.info(
+            "***********************************************")
         rand_workers = [ workers[i] for i in sorted(random.sample(xrange(len(workers)), min(20, len(workers) ) ) ) ]
         log.debug(rand_workers)
         results = [pool.apply_async(dataset_hists, args=(w,)) for w in workers]
-
+        
         hist_sets = []
         for res in results:
             hist_sets += res.get(36000)
@@ -544,7 +550,7 @@ class Analysis(object):
         if subtract_mc:
             mc_tau_hists = filter(lambda hs: not hs.name.startswith(self.data.name) and hs.name.endswith("_TAU"), hist_sets)
             mc_antitau_hists = filter(lambda hs: not hs.name.startswith(self.data.name) and hs.name.endswith("_ANTITAU"), hist_sets)
-            
+        
         # - - - - add up the histograms for each CR region 
         ffs_dict = {}
         for cr in control_regions:
@@ -586,10 +592,11 @@ class Analysis(object):
             data_mc_antitau_h = data_antitau_hsum.Clone()
             # - - subtract MC from DATA
             if subtract_mc:
-                #data_mc_tau_h.Add(mc_tau_hsum, -1)
+                data_mc_tau_h.Add(mc_tau_hsum, -1)
                 data_mc_antitau_h.Add(mc_antitau_hsum, -1)
             
-            log.info("TAU events; DATA: {}, MC: {}".format(data_tau_hsum.Integral(), "NAN") )
+            log.info("TAU events; DATA: {}, MC: {}".format(
+                data_tau_hsum.Integral(), mc_tau_hsum.Integral() if subtract_mc else "NAN") )
             log.info("ANTITAU events; DATA: {}, MC: {}".format(
                 data_antitau_hsum.Integral(), mc_antitau_hsum.Integral() if subtract_mc else "NAN") )
 
@@ -602,26 +609,27 @@ class Analysis(object):
             htmp_Z = htmp_antitau.ProjectionZ().Clone()
             
             if validation_plots:
+                os.system("mkdir -p %s"%pdir)
                 canvas = ROOT.TCanvas()
                 
                 htmp_tau.Draw("")
-                canvas.Print("h3_tau.png")
+                canvas.Print("%s/h3_tau.png"%pdir)
                 canvas.Clear()
 
                 htmp_antitau.Draw("")
-                canvas.Print("h3_antitau.png")
+                canvas.Print("%s/h3_antitau.png"%pdir)
                 canvas.Clear()
 
                 htmp_X.Draw()
-                canvas.Print("hX_antitau.png")
+                canvas.Print("%s/hX_antitau.png"%pdir)
                 canvas.Clear()
 
                 htmp_Y.Draw()
-                canvas.Print("hY_antitau.png")
+                canvas.Print("%s/hY_antitau.png"%pdir)
                 canvas.Clear()
 
                 htmp_Z.Draw()
-                canvas.Print("hZ_antitau.png")
+                canvas.Print("%s/hZ_antitau.png"%pdir)
                 canvas.Clear()
 
                 canvas.Close()

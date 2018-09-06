@@ -37,6 +37,12 @@ MEM_BRANCHES["taulep"] = [
     "HLT_xe90_mht_wEFMu_L1XE50",
     "HLT_xe90_tc_lcw_wEFMu_L1XE50",
     
+    "HLT_xe90_pufit_L1XE50",
+    "HLT_xe100_pufit_L1XE55",
+    "HLT_xe100_pufit_L1XE55",
+    "HLT_xe110_pufit_L1XE50",
+    "HLT_xe110_pufit_L1XE55",
+    
     "NOMINAL_pileup_random_run_number",
     "PRWHash",
     

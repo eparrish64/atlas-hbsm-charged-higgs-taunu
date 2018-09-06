@@ -37,13 +37,8 @@ class Configuration(object):
         self.data_streams = data_streams
         self.year = year
 
-        # - - - - DATA luminosity
-        self.data_lumi = 0
-        for stream in self.data_streams:
-            try:
-                self.data_lumi += LUMI[stream]
-            except KeyError:
-                raise RuntimeError("failed to get lumi for %s! "%stream)
+        # - - - - DATA luminosity dictionary (keys are data streams)
+        self.data_lumi = LUMI
             
     @property
     def variables(self):

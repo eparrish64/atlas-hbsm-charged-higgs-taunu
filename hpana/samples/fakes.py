@@ -38,7 +38,7 @@ class QCD(Sample):
             
     # - - - - control region FFs are calcualted with a the following funtions, loaded in the global ROOT scope. 
     FF_WCR = "GetFF02_FF_CR_WJETS({0}, {1})"
-    FF_QCD = "GetFF02_FF_CR_MULTIJET({0}, {1})"
+    FF_MJCR = "GetFF02_FF_CR_MULTIJET({0}, {1})"
     
     TEMPLATE_VARS = {
         "mc16": ("tau_0_p4->Pt()", "tau_0_n_charged_tracks"),
@@ -81,7 +81,8 @@ class QCD(Sample):
         """
         tauid = kwargs.pop("tauid", self.tauid)
         trigger = kwargs.pop("trigger", self.config.trigger(dtype="DATA") )
-        selection = super(QCD, self).cuts(tauid=tauid, trigger=trigger, **kwargs)
+        truth_match_tau = kwargs.pop("truth_match_tau", ROOT.TCut(""))
+        selection = super(QCD, self).cuts(tauid=tauid, trigger=trigger, truth_match_tau=truth_match_tau, **kwargs)
         log.debug(selection)
         return selection
     
@@ -94,7 +95,7 @@ class QCD(Sample):
         ff_weights = {}
         v0, v1 = QCD.TEMPLATE_VARS[self.config.mc_camp]
         ff_wcr = QCD.FF_WCR.format(v0, v1)
-        ff_qcd = QCD.FF_QCD.format(v0, v1)
+        ff_qcd = QCD.FF_MJCR.format(v0, v1)
         for category in categories:
             if not category.name.upper() in QCD.FF_TYPES[self.config.channel]:
                 log.warning("no dedicated FFs for %s region; using the PRESEL one"%category.name)
@@ -202,7 +203,7 @@ class QCD(Sample):
                 if weighted:
                     # - - lumi weight
                     if ds.events !=0:
-                        lumi_weight = self.config.data_lumi * reduce(
+                        lumi_weight = self.lumi(ds.stream) * reduce(
                             lambda x,y:x*y, ds.xsec_kfact_effic) / ds.events
                     else:
                         log.warning(" 0 lumi weight for %s"%ds.name)
@@ -410,6 +411,7 @@ class QCD(Sample):
         for systematic in self.systematics:
             for var in fields:
                 for cat in categories:
+                    if cat=="FF_CR_MULTIJET": continue
                     data_hists = filter(lambda hs: (hs.systematic==systematic and hs.variable==var and hs.category==cat), data_hist_set)
                     data_hsum = data_hists[0].hist
                     for hs in data_hists[1:]:

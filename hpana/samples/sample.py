@@ -20,7 +20,7 @@ from ..systematics import get_systematics, iter_systematics, systematic_name
 from ..categories import TAU_IS_TRUE, Category
 from ..cluster.parallel import close_pool
 from ..containers import Histset, HistWorker    
-        
+
 ##---------------------------------------------------------------------------------------
 ## - - base analysis sample class
 ##---------------------------------------------------------------------------------------
@@ -165,7 +165,13 @@ class Sample(object):
     @property
     def systematics(self):
         return ["NOMINAL"]
-    
+
+    def lumi(self, data_streams):
+        """
+        lumi for the given data streams
+        """
+        return sum([self.config.data_lumi[ds] for ds in data_streams])
+        
     def events(self, categories,
                systematic="NOMINAL",
                **kwargs):
@@ -235,6 +241,11 @@ class Sample(object):
         # - - - - one worker per dataset per systematic
         workers = set()
         for ds in self.datasets:
+            if isinstance(self, MC):
+                ## - - just do the datasets for the requested data streams
+                sts = set(ds.stream) - set(self.config.data_streams)
+                if len(sts)>0:
+                    continue
             # - - selections and weights 
             weights = self.weights(categories=categories)
             for category in categories:
@@ -242,7 +253,7 @@ class Sample(object):
                 if weighted:
                     # - - lumi weight
                     if ds.events !=0:
-                        lumi_weight = self.config.data_lumi * reduce(
+                        lumi_weight = self.lumi(ds.stream) * reduce(
                             lambda x,y:x*y, ds.xsec_kfact_effic) / ds.events
                     else:
                         log.warning(" 0 lumi weight for %s"%ds.name)
@@ -511,19 +522,20 @@ class SystematicsSample(Sample):
         for i, name in enumerate(self.samples):
             log.debug("--"*60)
             log.debug(name)
-            try:
-                ds = self.database[name]
-                xsec, kfact, effic = ds.xsec_kfact_effic
-                log.debug(
+
+            if isinstance(self, MC):
+                ## - - query on database with dataset ds property which is the same as sample's name
+                dss = self.database.query(ds=name, streams=self.config.data_streams)
+                for ds in dss:
+                    xsec, kfact, effic = ds.xsec_kfact_effic
+                    log.debug(
                     "dataset: {0}  cross section: {1} [pb] \n"
-                    "k-factor: {2} \n"
-                    "filtering efficiency: {3}\n"
-                    "events {4}".format(
-                        ds.name, xsec, kfact, effic, ds.events))
-                self.datasets.append(ds)
-            except KeyError:
-                log.warning("%s is missing in %s database"%(name, self.database.filepath))
-                
+                        "k-factor: {2} \n"
+                        "filtering efficiency: {3}\n"
+                        "events {4}".format(
+                            ds.name, xsec, kfact, effic, ds.events))
+                    self.datasets.append(ds)
+                    
 
     @classmethod
     def get_sys_term_variation(cls, systematic):
@@ -541,16 +553,13 @@ class SystematicsSample(Sample):
             systerm, variation = systematic[0].rsplit('_', 1)
         return systerm, variation
 
-        
-
 
 ##---------------------------------------------------------------------------------------
 ## 
 class MC(SystematicsSample):
-
-    """ a dedicated Monte Carlo sample class.
-    """
+    ## mix in 
     pass
+
 
 ##---------------------------------------------------------------------------------------
 ## 

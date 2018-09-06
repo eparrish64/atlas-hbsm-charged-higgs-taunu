@@ -61,7 +61,7 @@ class Data(Sample):
                  label='Data',
                  streams=[],
                  blind=True,
-                 blind_regions=[],
+                 blind_regions=["SR_TAUJET", "SR_TAULEP", "SR_TAUEL", "SR_TAUMU"],
                  grls=["data_2015_lumi.csv", "data_2016_lumi.csv", "data_2017_lumi.csv"],
                  **kwargs):
 
@@ -78,8 +78,10 @@ class Data(Sample):
         for st in streams:
             assert st in Data.STREAMS, "{0} stream not found in {1}".format(st, Data.STREAMS) 
         self.streams = streams
-
+        self.data_runs = []
+        self.good_runs = []
         log.info("DATA STREAMS: {}".format(self.streams))
+        
         # - - - - Database 
         self.database = database
 
@@ -89,41 +91,54 @@ class Data(Sample):
             self.datasets = [self.database["DATA207"]]
         else:
             self.datasets = []
-            data_runs = [] 
             for stream in self.streams:
                 dsprefix = "DATA%s_"%stream
                 for dk in self.database.keys():
                     if dk.startswith(dsprefix):
                         self.datasets.append(self.database[dk])
-                        data_runs.append(self.database[dk].id)
-
+                        self.data_runs += [(int(self.database[dk].id))]
+                    
         if len(self.datasets) > 1:
             # - - - - update the data lumi based on the existing data runs
-            data_lumi = 0
-            good_runs = []
+            data_lumi = {}
             # - - - - in CSV:
             # - - - - Run, Good, Bad, LDelivered, LRecorded, LAr Corrected, Prescale Corrected, Live Fraction, LAr Fraction, Prescale Fraction
+            good_run_lines = []
             for grl in self.grls:
+                stream = grl.split("_")[1] #<! keep the name pattern
+                data_lumi[stream] = 0
                 grlf = os.path.join(Data.__HERE, grl)
                 with open(grlf, "r") as grl_file:
-                    good_runs += grl_file.readlines() 
-            good_runs = filter(lambda gl: gl[0].isdigit(), good_runs)
-
-            for grun_line in good_runs:
-                # - - add 00 prefix 
-                grun = "00%s"%grun_line.split(",")[0] #<! ,Run
-                if (grun in data_runs):
-                    glumi = float(grun_line.split(",")[6]) #<! ,Prescale Corrected
-                    data_lumi += glumi
-            if (data_lumi != self.config.data_lumi):
-                log.warning(
-                    "default LUMI is %0.4f and calculated one is %0.4f; updating the default"%(self.config.data_lumi / 1e3, data_lumi / 1e3))
-                self.config.data_lumi = data_lumi
-                
-        self.info = DataInfo(self.config.data_lumi / 1e3, self.config.energy)
+                    good_run_lines = grl_file.readlines()
+                    
+                good_run_lines = filter(lambda gl: gl[0].isdigit(), good_run_lines)
+                for grun_line in good_run_lines:
+                    # - - add 00 prefix 
+                    grun = int(grun_line.split(",")[0]) #<! ,Run
+                    if (grun in self.data_runs):
+                        glumi = float(grun_line.split(",")[6]) #<! ,Prescale Corrected
+                        self.good_runs += [(grun, glumi)]
+                        data_lumi[stream] += glumi
+                if (data_lumi[stream] != self.config.data_lumi[stream]):
+                    log.warning(
+                        "default LUMI for %s is %0.4f and calculated one is %0.4f; updating the default"%(
+                            stream, self.config.data_lumi[stream] / 1e3, data_lumi[stream] / 1e3))
+                    self.config.data_lumi.update(data_lumi)
+                    
+        int_lumi = sum([self.config.data_lumi[st] for st in self.streams])
+        self.info = DataInfo(int_lumi/ 1e3, self.config.energy)
         self.blind = blind
         self.blind_regions = blind_regions
-
+        
+    def get_lumi_block(self, start_run, end_run):
+        """calcualte lumi for the given stram for the runs in a specific range (including both ends).
+        """
+        lumi = 0
+        for grun in self.good_runs:
+            if (start_run <= grun[0] <= end_run):
+                lumi += grun[1]
+        return lumi 
+        
     def triggers(self, categories=[]):
         """ trigger could be different for different selection categories.
         Parameters

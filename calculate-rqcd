@@ -26,7 +26,9 @@ from hpana.categories import FAKE_TAU_SOURCE, FF_CR_MULTIJET, FF_CR_WJETS
 from hpana.config import Configuration
 from hpana.analysis import Analysis
 from hpana.trigger import MULTIJET_TRIGGER
+from hpana.samples.fakes import QCD
 from hpana import log
+
 
 # - - - - time it
 start_time = time.time()
@@ -45,10 +47,12 @@ ROOT.gErrorIgnoreLevel = ROOT.kWarning #<! turn off useless ROOT Info messages (
 ##------------------------------------------------------------------------------------
 ## - - build both taujet and taulep analyses (FF CR s are for different channels)
 ##------------------------------------------------------------------------------------
-taujet_config = Configuration("taujet", data_streams=("2015","2016"), mc_campaign="mc16", db_version="18v04")
+taujet_config = Configuration("taujet",
+                              mc_campaign="mc16", data_streams=FFs_ARGS.data_streams, db_version=FFs_ARGS.db_version)
 taujet_analysis = Analysis(taujet_config, compile_cxx=True)
 
-taulep_config = Configuration("taulep", data_streams=("2015","2016"), mc_campaign="mc16", db_version="18v04")
+taulep_config = Configuration("taulep",
+                              mc_campaign="mc16", data_streams=FFs_ARGS.data_streams, db_version=FFs_ARGS.db_version)
 taulep_analysis = Analysis(taulep_config, compile_cxx=True)
 
 ##------------------------------------------------------------------------------------
@@ -66,6 +70,12 @@ TAULEP_TARGET_REGIONS = taulep_config.categories
 TAUJET_TARGET_REGIONS = taujet_config.categories
 TARGET_REGIONS = TAUJET_TARGET_REGIONS + TAULEP_TARGET_REGIONS
 FFS_CONTROL_REGIONS = taujet_config.ff_cr_regions + taulep_config.ff_cr_regions
+
+## unique indicies for FFs regions (to be passed in cxx macros) 
+FF_INDICIES = {}
+for ch in ["taujet", "taulep"]:
+    for cname, index in QCD.FF_TYPES[ch].iteritems():
+        FF_INDICIES[cname] = index
 
 ## - - - - hist template for rQCD calculation
 FIT_HIST_TEMPLATES = {
@@ -282,7 +292,7 @@ if __name__=="__main__":
                     "float GetFFCombined(float pt, int ntracks, float FF_CR_MULTIJET, float FF_CR_WJETS, int index){\n")
                 for index, cat in enumerate(TARGET_REGIONS):
                     cxx_cache.write("\t //! Combined FFs for ({}) target region\n".format(cat.name))
-                    cxx_cache.write("\t if (index==%i) {\n"%(1000+index))
+                    cxx_cache.write("\t if (index==%i) {\n"%(FF_INDICIES[cat.name]))
                     for itk in N_CHARGED_TRAKCS:
                         tkey = "%i"%itk
                         cxx_cache.write("\t\t if(ntracks==%i){\n"%itk)

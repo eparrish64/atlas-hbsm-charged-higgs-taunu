@@ -14,6 +14,12 @@
 import os, sys, time, array, pickle, yaml 
 import multiprocessing
 
+## parse args (needed before ROOT)
+from hpana.cmd import get_trig_eff_parser
+eff_parser = get_trig_eff_parser()
+TRIG_EFF_ARGS = eff_parser.parse_args()
+
+
 ## local
 from hpana.config import Configuration
 from hpana.analysis import Analysis
@@ -23,11 +29,6 @@ from hpana.trigger import MET_TRIGGERS
 from hpana.dataset_hists import dataset_hists
 from hpana.cluster.parallel import close_pool
 from hpana import log
-
-## parse args (needed before ROOT)
-from hpana.cmd import get_trig_eff_parser
-eff_parser = get_trig_eff_parser()
-TRIG_EFF_ARGS = eff_parser.parse_args()
 
 
 ## set log level
@@ -48,6 +49,18 @@ ROOT.Math.MinimizerOptions.SetDefaultMinimizer("Minuit2")
 ERR_FUNC_STR = "{0}*(1 + TMath::Erf((met_et - {1})/{2}))+{3}"
 MET_ET.bins = range(0, 200, 20) + range(200, 400, 50)
 COLORS = [ROOT.kRed, ROOT.kBlue, ROOT.kGreen, ROOT.kMagenta, ROOT.kOrange, ROOT.kYellow]
+
+## - - update lumi blocks
+config = Configuration("taulep", data_streams=TRIG_EFF_ARGS.data_streams, mc_campaign="mc16", db_version=TRIG_EFF_ARGS.db_version)
+analysis = Analysis(config)
+for y, trig in MET_TRIGGERS.iteritems():
+    for k in trig.keys():
+        runs = MET_TRIGGERS[y][k]["RUNS"]
+        dlumi = MET_TRIGGERS[y][k]["LUMI"]
+        tlumi = analysis.data.get_lumi_block(*runs)/1000
+        if tlumi != dlumi:
+            log.warning("updating lumi block ({0}, {1}); default: {2} | calculated: {3}".format(runs[0], runs[1], dlumi, tlumi))
+            MET_TRIGGERS[y][k]["LUMI"] = tlumi
 
 ##------------------------------------------------------------------------------------
 ## - - build the taulep analysis (run only on relevant streams) 
@@ -169,12 +182,12 @@ def get_trig_hists(triggers=MET_TRIGGERS,
 ## - - fit error function to the histograms
 ##------------------------------------------------------------------------------------
 def fit_eff(eff_hists,
-            eff_cache="metTrigEff.cxx",
+            fit_cache=TRIG_EFF_ARGS.fit_cache,
             num_params=4):
     """
 
     """
-
+    
     ## - - first let's get the total lumi 
     total_lumi = 0
     for y, trgs in eff_hists.iteritems():
@@ -205,8 +218,8 @@ def fit_eff(eff_hists,
                 fit_params[variation] += ["%0.4f * (%s)"%(lumi/total_lumi, ERR_FUNC_STR.format(*params))]
                 fit_funcs[year][trigger][variation] = (hist, fit_func)
 
-    if eff_cache:
-        with open(eff_cache, "w") as cfile:
+    if fit_cache:
+        with open(fit_cache, "w") as cfile:
             istring = "float metTrigEff(float met_et, int variation_index){\n"
             cfile.write(istring)
             index = 1000
@@ -214,8 +227,8 @@ def fit_eff(eff_hists,
                 cfile.write("\t //! variation: %s\n"%variation.name)
                 cfile.write("\t if(variation_index==%i){\n"%(index+n))
                 cfile.write("\t\t return %s;"%(" + ".join(fit_params[variation.name]) ) )
-                cfile.write("\t}\n\n")
-            cfile.write("\telse \n return 1.; \n}")
+                cfile.write("\n\t }\n\n")
+            cfile.write("\t else \n return 1.; \n}")
             
     return fit_funcs, fit_params
 

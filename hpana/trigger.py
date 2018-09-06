@@ -24,8 +24,8 @@ TRIGGERS = {
         },
         "MC":{
             "2015": "(NOMINAL_pileup_random_run_number <= 284484 && HLT_xe70_tc_lcw)", 
-            "2016": ("(NOMINAL_pileup_random_run_number > 284484 && HLT_xe90_mht_L1XE50 && NOMINAL_pileup_random_run_number < 302872)"\
-                     "||(NOMINAL_pileup_random_run_number >= 302872 && HLT_xe110_mht_L1XE50 && NOMINAL_pileup_random_run_number <= 311481)"),
+            "2016": ("(NOMINAL_pileup_random_run_number > 284484 && HLT_xe90_mht_L1XE50 && NOMINAL_pileup_random_run_number <= 302872)"\
+                     "||(NOMINAL_pileup_random_run_number > 302872 && HLT_xe110_mht_L1XE50 && NOMINAL_pileup_random_run_number <= 311481)"),
             "2017":("((NOMINAL_pileup_random_run_number >= 325713 && NOMINAL_pileup_random_run_number <= 328393) && HLT_xe90_pufit_L1XE50)"\
                     "|| ((NOMINAL_pileup_random_run_number >= 329385 && NOMINAL_pileup_random_run_number <= 330470) && HLT_xe100_pufit_L1XE55)"\
                     "|| ((NOMINAL_pileup_random_run_number >= 330857 && NOMINAL_pileup_random_run_number <= 331975) && HLT_xe110_pufit_L1XE55)"\
@@ -55,7 +55,7 @@ TRIGGERS = {
 # - - - - multijet + MET trigger for FFs multijet CR
 MULTIJET_TRIGGER = "(run_number<288000 && (HLT_4j85||HLT_xe70_tc_lcw) )"\
                    "|| (run_number>288000 && HLT_4j100)"\
-                   "|| (run_number > 284484 && HLT_xe90_mht_L1XE50 && run_number < 302872)||(run_number >= 302872 && HLT_xe110_mht_L1XE50)"
+                   "|| (run_number > 284484 && HLT_xe90_mht_L1XE50 && run_number <= 302872)||(run_number > 302872 && HLT_xe110_mht_L1XE50)"
 
 ##------------------------------------------------------------------
 ## - -  MET triggers for trigger efficiency
@@ -66,40 +66,47 @@ MET_TRIGGERS = {
             "TRIGGER": ROOT.TCut("(run_number <= 284484 && HLT_xe70_tc_lcw==1)"),
             "NO_TRIGGER": ROOT.TCut("(run_number <= 284484)"),
             "LUMI": 3.2,
+            "RUNS": (266904, 284484), 
         },
     },
     "2016":{ #<! FIXME: for some reasons HLT_xe90_mht_L1XE50 rate is too low! using a single trigger for all runs for now
         "HLT_xe90_mht_L1XE50":{ #<! 2016(6.11) up to D3 period
-            "TRIGGER": ROOT.TCut("(run_number >= 296939 && (HLT_xe90_mht_L1XE50==1||HLT_xe80_tc_lcw_L1XE50==1) && run_number < 302872)"),
-            "NO_TRIGGER": ROOT.TCut("(run_number >= 296939 && run_number < 302872)"),
+            "TRIGGER": ROOT.TCut("(run_number >= 296939 && (HLT_xe90_mht_L1XE50==1||HLT_xe80_tc_lcw_L1XE50==1) && run_number <= 302872)"),
+            "NO_TRIGGER": ROOT.TCut("(run_number >= 296939 && run_number <= 302872)"),
             "LUMI": 6.11,
+            "RUNS": (296939, 302872)
         },
         "HLT_xe110_mht_L1XE50":{ #<! 2016 (26.75) D4-L periods
             "TRIGGER": ROOT.TCut("(run_number >= 302872 && HLT_xe110_mht_L1XE50==1 && run_number < 311481)"),
             "NO_TRIGGER": ROOT.TCut("(run_number >= 302872 && run_number < 311481)"),
             "LUMI": 26.75,
+            "RUNS": (302873, 311480),
         }, 
     },
     "2017":{
         "HLT_xe90_pufit_L1XE50": { #<! period B
             "TRIGGER": ROOT.TCut("(run_number >= 325713 && run_number <= 328393) && HLT_xe90_pufit_L1XE50"),
             "NO_TRIGGER": ROOT.TCut("(run_number >= 325713 && run_number <= 328393)"),
-            "LUMI": 5.3687
+            "LUMI": 5.3687,
+            "RUNS": (325713, 328393),
         }, 
         "HLT_xe100_pufit_L1XE55":{  #<! priod C
             "TRIGGER": ROOT.TCut("(run_number >= 329385 && run_number <= 330470) && HLT_xe100_pufit_L1XE55"),
             "NO_TRIGGER":ROOT.TCut("(run_number >= 329385 && run_number <= 330470)"),
-            "LUMI": 2.3613
+            "LUMI": 2.3613,
+            "RUNS": (329385, 330470),
         },
         "HLT_xe110_pufit_L1XE55":{ #<! period D1-D5
             "TRIGGER": ROOT.TCut("(run_number >= 330857 && run_number <= 331975) && HLT_xe110_pufit_L1XE55"),
             "NO_TRIGGER": ROOT.TCut("(run_number >= 330857 && run_number <= 331975)"),
             "LUMI": 5.0998,
+            "RUNS": (330857, 331975),
         },
         "HLT_xe110_pufit_L1XE50":{  #<! D6- 
             "TRIGGER": ROOT.TCut("(run_number >= 332303 && run_number <= 340453) && HLT_xe110_pufit_L1XE50"),
             "NO_TRIGGER": ROOT.TCut("(run_number >= 332303 && run_number <= 340453)"),
-            "LUMI": 31.4773
+            "LUMI": 31.4773,
+            "RUNS": (332303, 340453),
         },
     },
 }

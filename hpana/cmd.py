@@ -181,6 +181,9 @@ def get_ffs_parser(base_parser=None):
                         choices=["VERBOSE", "DEBUG", "INFO", "WARNING", "ERROR"], default="INFO")
     ffs_parser.add_argument("--db-version",
                         help="database version; should match the database version you use when creating database")
+
+    ffs_parser.add_argument("--data-streams", nargs="+", choices=["2015","2016", "2017", "2018",],
+                             help="DATA taking yeats", default=["2015", "2016"])
     ffs_parser.add_argument("--fake-sources", action="store_true",
                               help="what is the source of fake tau")
 
@@ -233,9 +236,10 @@ def get_trig_eff_parser(base_parser=None):
     trig_eff_parser.add_argument("--pdir", default="trigeff_plots",
                                  help="where to put the plots")
 
-    trig_eff_parser.add_argument("--hists-cache",
+    trig_eff_parser.add_argument("--hists-cache",default="metTrigEff_HISTS.pkl",
                                  help="read all the histograms from the cache")
-    trig_eff_parser.add_argument("--fit-cache",
+    
+    trig_eff_parser.add_argument("--fit-cache", default="metTrigEff.cxx",
                                  help="cache fit parameters to this")
 
     trig_eff_parser.add_argument("--parallel", action="store_true",

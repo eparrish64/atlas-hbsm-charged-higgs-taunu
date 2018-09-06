@@ -73,7 +73,7 @@ NTUP_PATTERN_2018 = re.compile(
     '\.(?P<id>\d+)'
     '\.(?P<name>\w+)|(?P<derivation>D1|D2)'
     #'\.(?P<derivation>\w+)'
-    '\.(?P<tag>\w+)'
+    '\.(?P<tag>e\d+)'
     '\.(?P<version>\w+)'
     '\_hist$')
 
@@ -340,24 +340,16 @@ class Database(dict):
                 dirname, basename = os.path.split(dir)
                 match  = re.match(NTUP_PATTERN_2018, basename)
                 if match:
-                    try:
-                        if match.group('type') != 'mc':
-                            continue
-                        dsid = match.group('id')
-                        # - - - - get the name from XS file (due to Grid limitations ntuples names are shortend)
-                        name = Dataset.get_name(dsid)
-                        stream = "mc%s"%match.group('stream')
-                        tag = match.group('tag')
-                        version = match.group('version')
-                        tag_match = None
-                        
-                    except: #<! go with the minimal info
-                        dsid = match.group('id')
-                        name = Dataset.get_name(dsid)
-                        stream = None
-                        tag = None
-                        version = None
-                        tag_match = None
+                    if match.group('type') != 'mc':
+                        continue
+                    dsid = match.group('id')
+                    # - - - - get the name from XS file (due to Grid limitations ntuples names are shortend)
+                    name = Dataset.get_name(dsid)
+                    stream = "mc%s"%match.group('stream')
+                    tag = re.search("\.e\w+", basename).group()
+                    rtag = tag.split("_")[-2].replace("r", "")
+                    version = match.group("version")
+                    tag_match = None
 
                     if tag_match:
                         reco_tag = int(tag_match.group('reco'))
@@ -370,26 +362,37 @@ class Database(dict):
                     else:
                         cat = 'mc16'
                     log.debug((dsid,name, tag, version))
+
+                    ## - - make name unique for different MC campaigns
+                    uname = "%s_%s"%(name, rtag)
+
+                    ## - - set stream to data streams based on reco tag
+                    if rtag=="9315":
+                        stream = ["2015", "2016"]
+                    elif rtag=="10210":
+                        stream = ["2017"]
+                    else:
+                        log.warning("can't set stream for ")
+                        
                     # - - - - - - - - update the DB with this dataset
                     dataset = self.get(name, None)
                     if dataset is not None and version == dataset.version:
                         if dir not in dataset.dirs:
                             dataset.dirs.append(dir)
                     else:
-                        self[name] = Dataset(
-                            name=name,
+                        self[uname] = Dataset(
+                            name=uname, 
                             datatype=MC,
                             treename=mc_treename,
                             ds=name,
                             id=int(match.group('id')),
                             version=version,
                             tag_pattern=None,
-                            tag=tag,
+                            tag=rtag,
                             dirs=[dir],
                             file_pattern=mc_pattern,
                             year=year,
                             stream=stream)
-
 
         # - - - - - - - - EMBEDDING
         if embed_path is not None:
@@ -464,8 +467,30 @@ class Database(dict):
                     data.append(ds)
                     continue
         return data
+    
+    def query(self, name=None, did=None, ds=None, streams=[]):
+        """
+        """
+        datasets = []
+        for nkey, info in self.iteritems():
+            keep = True
+            if name:
+                keep &= (name==nkey)
+            if did:
+                keep &= (info.id==did)
+            if ds:
+                keep &= (info.ds==ds)
+            if streams:
+                for st in info.stream:
+                    keep &= (st in streams)
+            if keep:
+                datasets += [self[nkey]]
 
-
+        if not datasets or (len(datasets) < len(streams)-1):
+            log.warning("Missing stream for {}: {}".format(name if name else ds, [k.name for k in datasets]))
+            
+        return datasets
+    
 ##--------------------------------------------------------------------------------
 ## 
 class Dataset(Serializable):

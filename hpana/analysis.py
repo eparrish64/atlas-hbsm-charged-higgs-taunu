@@ -246,7 +246,10 @@ class Analysis(object):
             masses = [masses]
             
         signals = []
-        colors = [ROOT.kRed, ROOT.kGreen, ROOT.kBlue]
+        colors = [ROOT.kRed, ROOT.kGreen, ROOT.kBlue, ROOT.kOrange, ROOT.kMagenta]
+        while len(masses) > len(colors):
+            colors += colors
+            
         for i, mass in enumerate(masses):
             signals.append(samples.Higgs(self.config,
                                          database=self.database,

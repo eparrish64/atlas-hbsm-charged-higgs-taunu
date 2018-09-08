@@ -252,3 +252,39 @@ def get_trig_eff_parser(base_parser=None):
                             help="if you just want to see the scripts that will be submitted to the cluster")
     
     return trig_eff_parser
+
+
+##--------------------------------------------------------------------------------------------------
+## base parser
+def get_clf_parser():
+
+    clf_parser = ArgumentParser("hpana clf parser")
+
+    clf_parser.add_argument("--log", "-l",
+                        choices=["VERBOSE", "DEBUG", "INFO", "WARNING", "ERROR"], default="INFO")
+
+    clf_parser.add_argument("--channel", "-c", choices=("taujet", "taulep"), default="taujet",
+                        help="analysis channel")
+
+    clf_parser.add_argument("--mc-campaign", "-mcc", type=str, default="mc16",choices=("mc15", "mc16"),
+                        help="mc campaign; analysis samples, ntuples branches, etc. might be different among them")
+
+    clf_parser.add_argument("--db-version", "-nv", type=str, 
+                        help="database version; should match the database version you use when creating database")
+
+    clf_parser.add_argument("--data-streams", nargs="+", choices=["2015","2016", "2017", "2018",],
+                             help="DATA taking yeats", default=["2015", "2016"])
+    
+    clf_parser.add_argument("--train-bdt", action="store_true",
+                            help="tarin a Boosted Decision Tree")
+    
+    clf_parser.add_argument("--train-nn", action="store_true",
+                            help="tarin a Neural Network")
+    
+    clf_parser.add_argument("--kfolds", type=int, default=1,
+                            help="number for folds for k-fold training")
+    
+    clf_parser.add_argument("--outdir", type=str, default="clfout",
+                            help="directory to put the training outputs in")
+
+    return clf_parser

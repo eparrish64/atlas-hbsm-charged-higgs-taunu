@@ -5,7 +5,7 @@ import ROOT
 
 __all__ = [
     "VARIABLES",
-    "BDT_FEATURES",
+    "CLF_FEATURES",
     "rQCD_VARS",
     "tau_0_pt",
     "tau_0_n_charged_tracks",
@@ -366,7 +366,7 @@ VARIABLES["taulep"] = VARIABLES_TAUJET
 
 
 # - - - - - - - - BDT input features
-BDT_FEATURES = {
+CLF_FEATURES = {
     "taujet": [
         tau_0_met_dphi,
         tau_0_pt,

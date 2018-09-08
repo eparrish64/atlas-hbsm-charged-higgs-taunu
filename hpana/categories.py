@@ -577,6 +577,40 @@ FAKE_TAU_SOURCE = {
 
 
 ##------------------------------------------------------------------------------------
+## - - Classifier training selections
+##------------------------------------------------------------------------------------
+CLF_TJ = Category("CLF_TAUJET",
+                  label="clf #tau-jet",
+                  cuts_list=[
+                      CLEAN_EVT,
+                      TAU_BASE,
+                      LEP_VETO,
+                      NUM_JETS3,
+                      NUM_BJETS1,
+                      MET100,
+                      TAU_IS_TRUE,]
+                  )
+
+CLF_TL = Category("CLF_TAULEP",
+                  label="clf #tau-lep",
+                  cuts_list=[
+                      CLEAN_EVT,
+                      TAU_BASE,
+                      LEP_BASE,
+                      NUM_JETS1,
+                      NUM_BJETS1,
+                      MET50,
+                      TAU_IS_TRUE,]
+                  )
+
+CLASSIFIER_CATEGORIES = {
+    "taujet": CLF_TJ,
+    "taulep":CLF_TL,
+}
+
+
+
+##------------------------------------------------------------------------------------
 ## - - MET trigger efficency control regions 
 ##------------------------------------------------------------------------------------
 MET_TRIGG_EFF_CUTS_BASE = [

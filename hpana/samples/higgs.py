@@ -82,7 +82,7 @@ class Higgs(MC, Signal):
         self.config = config
         self.name = name
         self.label=label
-                
+        
         if mass <= max(Higgs.MASSES_LOW.keys()):
             mode = "LOW"
         elif mass <= max(Higgs.MASSES_INT.keys()):
@@ -91,11 +91,13 @@ class Higgs(MC, Signal):
             mode = "HIGH"
         else:
             raise ValueError("unknown mass {} for the signal!".format(mass))
-
+        self.mass = mass
+        self.mode = mode
+        
         # - - - - the samples for this signal
         self.samples = [(Higgs.SAMPLE_PATTERN[mode].format(mass)) ]
         log.debug("signal: {}".format(self.samples[0]))
-
+        
         database = kwargs.pop("database", None)
         # - - - - instantiate the base
         super(Higgs, self).__init__(config, label=label, database=database, name=name, **kwargs)

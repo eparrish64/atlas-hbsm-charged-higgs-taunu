@@ -174,7 +174,7 @@ if __name__=="__main__":
         tj_ffs = taujet_analysis.cache_ffs(control_regions=[], trigger=MULTIJET_TRIGGER, **kparams)
 
         # - - - - taulep
-        tl_ffs = {}#taulep_analysis.cache_ffs(control_regions=[], **kparams)
+        tl_ffs = taulep_analysis.cache_ffs(control_regions=[], **kparams)
 
         CR_FFs = tj_ffs.update(tl_ffs)
     else:

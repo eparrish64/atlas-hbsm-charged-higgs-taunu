@@ -273,13 +273,24 @@ def get_clf_parser():
                         help="database version; should match the database version you use when creating database")
 
     clf_parser.add_argument("--data-streams", nargs="+", choices=["2015","2016", "2017", "2018",],
-                             help="DATA taking yeats", default=["2015", "2016"])
+                             help="DATA taking years", default=["2015", "2016"])
     
+    clf_parser.add_argument("--backend", choices=["tmva","sklearn",],
+                             help="ML backend", default="sklearn")
     clf_parser.add_argument("--train-bdt", action="store_true",
                             help="tarin a Boosted Decision Tree")
     
+    clf_parser.add_argument("--train-data", default=None,
+                            help="tarining data ")
+    
     clf_parser.add_argument("--train-nn", action="store_true",
                             help="tarin a Neural Network")
+    
+    clf_parser.add_argument("--parallel", action="store_true",
+                            help="if you want to do parallel processing")
+    
+    clf_parser.add_argument("--validation-plots", action="store_true",
+                            help="plot some roc curves to see the training performance")
     
     clf_parser.add_argument("--kfolds", type=int, default=1,
                             help="number for folds for k-fold training")

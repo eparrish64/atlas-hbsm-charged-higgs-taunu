@@ -1,0 +1,362 @@
+#!/usr/bin/env python2.7
+
+## stdl
+import sys, os, re, gc, glob, argparse, shutil, array
+import cPickle
+from os import environ
+from multiprocessing import Process    
+from collections import OrderedDict
+
+## PyPI
+import numpy as np
+
+## - -  parse ana args (needed before ROOT)
+from hpana.cmd import get_clf_parser 
+clf_parser = get_clf_parser()
+clf_parser.add_argument('--files', nargs='+', 
+                    help='ntuples to append clf score to them')
+clf_parser.add_argument('--models', '-w', nargs="+",
+                        help='path to xml or pickled trained models')
+clf_parser.add_argument("--mtype", choices=["keras", "bdt"], default="bdt",
+                        help="TMVA Method type")
+clf_parser.add_argument("--syst", action="store_true",
+                        help="should you want to append clf scores to the syst Trees")
+CLF_ARGS = clf_parser.parse_args()
+
+
+## local
+from hpana.variables import CLF_FEATURES
+from hpana.cluster.parallel import run_pool
+from hpana.classifier import Classifier
+from hpana import log
+log.setLevel(CLF_ARGS.log)
+ 
+
+## Setup ROOT
+import ROOT
+from ROOT import TMVA
+ROOT.gROOT.SetBatch(True)
+
+if CLF_ARGS.backend=="tmva":
+    ## initialize TMVA
+    ROOT.TMVA.Tools.Instance()
+    ROOT.TMVA.PyMethodBase.PyInitialize()
+
+#-----------------------------------------------
+# consts
+#-----------------------------------------------
+COPY_FILE = True
+USE_FASTBDT = False
+kFOLDS = CLF_ARGS.kfolds
+BDT_FILE_PATTERN = re.compile(
+    '^(?P<name>\w+)'
+    '_(?P<mass>\w+)'
+    '_rem_(?P<rem>\d+)'
+    '_mod_(?P<mod>\d+)'
+    '(?P<prong>\w+)'
+    '\.(?P<suffix>\w+)$')
+
+INPUT_FEATURES = CLF_FEATURES[CLF_ARGS.channel]
+
+## arrays for retrieving input 
+FEATS_DICT = {}
+for feat in INPUT_FEATURES:
+    FEATS_DICT[feat.tformula] = array.array("d", [0.])
+    
+XML_FILE_PATTERN = re.compile(
+    "^(?P<name>\w+)"
+    "_(?P<mass>(\d+to\d+))"
+    "_ntracks_(?P<ntracks>\d)"
+    "_nfolds_(?P<nfolds>\d)"
+    "_fold_(?P<fold>\d)"
+    "(\.weights\.xml)$"
+)
+PKL_FILE_PATTERN = re.compile(
+    "^(model_)"
+    "(?P<name>\w+)"
+    "_channel_(?P<channel>\w+)"
+    "_mass_(?P<mass>\w+)"
+    "_ntracks_(?P<ntracks>\d)"
+    "_nfolds_(?P<nfolds>\d)"
+    "_fold_(?P<fold>\d)"
+    "_nvars_(?P<nvars>\d+)"
+    "(\.pkl)$"
+)
+
+METHOD_TYPE = TMVA.Types.kBDT
+if CLF_ARGS.mtype=="keras":
+    METHOD_TYPE = TMVA.Types.kPyKeras
+    ## - -  Select Theano as backend for Keras
+    os.environ['KERAS_BACKEND'] = 'theano'
+    
+    ## - - Set architecture of system (AVX instruction set is not supported on SWAN)
+    environ['THEANO_FLAGS'] = 'gcc.cxxflags=-march=corei7'
+
+    
+##-----------------------------------------------
+##
+##-----------------------------------------------
+def get_models(model_files, backend=CLF_ARGS.backend):
+    """
+    retrive all trained models from the given path.
+    Parameters
+    ----------
+    models_path: str, path to trained models
+
+    Return
+    models: dict, holding all trained models for different masses and folds.
+    """
+    ## - - loop over trained models and setup weight readers 
+    models = dict()
+    for model_file in model_files:
+        base, wname = os.path.split(model_file)
+        if backend=="tmva":
+            match = re.match(XML_FILE_PATTERN, wname)
+        else:
+            match = re.match(PKL_FILE_PATTERN, wname)
+        if not match:
+            log.warning(' %s not matched'%wname)
+            continue
+
+        log.info("Loading %s"%wname)
+        name = match.group("name")
+        mass = match.group("mass")
+        fold = int(match.group("fold"))
+        ntracks = int(match.group("ntracks"))
+        
+        if mass not in models: 
+            models[mass] = dict()
+        if fold not in models[mass]: 
+            models[mass][fold] = dict()
+                
+        if backend=="tmva":
+            model_name = wname.replace(".models.xml", "")
+
+            ## - - instantiate the classifier and invoke it's reader
+            clf = Classifier(method_type=METHOD_TYPE,
+                             method_name=model_name,
+                             features=CLF_FEATURES[CLF_ARGS.channel],
+                             model_file=model_file)
+
+            models[mass][fold]["%s_mass_%s_ntracks_%i"%(name, mass, ntracks)] = clf
+        else:
+            with open(model_file, "r") as mfile:
+                model = cPickle.load(mfile)
+                models[mass][fold]["%s_mass_%s_ntracks_%i"%(name, mass, ntracks)] = model
+
+    assert models, "no trained model is found!; exiting!"
+    return models
+
+##-----------------------------------------------
+##
+##-----------------------------------------------
+def get_trees(tfile):
+    """=
+    Retrun a list of TTrees in a given root file.
+    """
+    trees = set()
+    trees.add(tfile.Get('NOMINAL'))
+    if CLF_ARGS.syst:
+        keys = [k.GetName() for k in tfile.GetListOfKeys()]
+        keys = filter(lambda k: isinstance(tfile.Get(k), ROOT.TTree), keys)
+        for k in keys:
+            if k=='EventLoop_FileExecuted':
+                continue
+            trees.add(tfile.Get(k))
+        
+    return trees
+
+##-----------------------------------------------
+##
+##-----------------------------------------------
+def setup_score_branches(tree, models):
+    """
+    # Setup MVA score output branches
+    # TODO look up how many mass points there are based on number of trained Models...
+    """
+    
+    scores = dict()
+    score_branches = []
+    for mass in sorted(list(models.keys())):
+        for name in models[mass][0]:
+            # if score branch is already in tree do nothing.
+            if name in [b.GetName() for b in tree.GetListOfBranches()]:
+                log.warning("%s is already in %s (skipping tree)"%(name, tree.GetName()))
+                continue
+            score = array.array('f', [-100.])
+            scores[name] = score
+            sb = tree.Branch(name, score, name+"/F")
+            score_branches.append(sb)
+    
+    return scores, score_branches
+
+##-----------------------------------------------
+##
+##-----------------------------------------------
+def setup_tformulas(tree, features):
+    # Setup a TTreeFormula for each feature
+    forms_tau = []
+    for feat in features:
+        forms_tau.append(ROOT.TTreeFormula(feat.name, feat.tformula, tree) )
+    forms_fake = forms_tau[:]
+    
+    for form in forms_tau: form.SetQuickLoad(True)
+    for form in forms_fake: form.SetQuickLoad(True)
+    
+    return forms_tau, forms_fake
+
+##-----------------------------------------------
+##
+##-----------------------------------------------
+def evaluate_scores(file_name, models):
+    """
+    Update tree with score branches which are
+    evaluated using the available trained models.
+    
+    Parameters
+    ----------
+    tree: ROOT.TTree, tree to evaluate and append bdt scores to it
+    models: dict, holding available trained models
+
+    Return
+    ------
+    None
+    """
+    # retrive trees in the tfile and loop over them
+    tfile = ROOT.TFile.Open(file_name, 'UPDATE')
+    trees = get_trees(tfile)
+    for tree in trees:
+        ## - - setup input features tformulas and score branches
+        tree_name = tree.GetName()
+        tau_0_n_tracks =  ROOT.TTreeFormula("tau_0_n_charged_tracks", "tau_0_n_charged_tracks", tree)
+        tau_0_decay_mode = ROOT.TTreeFormula("tau_0_decay_mode", "tau_0_decay_mode", tree)
+        event_number = ROOT.TTreeFormula("event_number", "event_number", tree)
+        isFake = ROOT.TTreeFormula("tau_0_jet_bdt_loose==0", "tau_0_jet_bdt_loose==0", tree)
+        
+        forms_tau, forms_fake = setup_tformulas(tree, INPUT_FEATURES)
+        scores, score_branches = setup_score_branches(tree, models)
+        ## - - if all branches exist in tree, nothing to do!
+        if len(score_branches)==0:
+            continue
+        print scores, score_branches
+        
+        ## - - cache Tree block by block 
+        tree.SetCacheSize(32*2**20)
+        tree.SetCacheLearnEntries()
+        totalEntries = tree.GetEntries()
+        blockSize = 2**18
+        blocks = totalEntries/blockSize
+        for block in xrange(blocks+1):
+            for entry in xrange(block*blockSize, 
+                                min(totalEntries, (block+1)*blockSize)):
+                if (entry%10000==0): 
+                    log.info("Tree: {0}, Event: {1}/{2}".format(tree_name, entry+1, totalEntries))
+                tree.LoadTree(entry)
+                if False: 
+                    t.GetEntry(entry) # Try with this on a small file, to make sure the output is identical
+                    
+                #--------------------------
+                # Evaluate features vector
+                #--------------------------
+                feats = []
+                for form in forms_tau:
+                    feats.append(float(form.EvalInstance()))
+
+                ## - - event number is used in kfold cut, use proper offset for evaluation
+                event_num = int(event_number.EvalInstance())
+                
+                ## - - get prediction from each classifier
+                for mass, rem_dict in models.iteritems():
+                    for rem, clf_dict in rem_dict.iteritems():
+                        ## - - trained on all with rem!= event_numbr%kFOLDS --> evaluate on the complementary
+                        if int(rem)!= event_num%kFOLDS: 
+                            continue
+                        ## - - set clf's features vector
+                        for name, clf in clf_dict.iteritems():
+                            if CLF_ARGS.backend=="tmva":
+                                features_dict = OrderedDict()
+                                for i, ft in enumerate(CLF_FEATURES[CLF_ARGS.channel]):
+                                    ## - - update features_dict in place, 
+                                    clf.features_dict[ft.tformula] = array.array("f", [feats[i]])
+                                log.debug(clf.features_dict)
+                                scores[name][0] = clf.predict(features_dict)
+                            else:
+                                ifeats = np.array([feats])
+                                log.debug(ifeats)
+                                scores[name][0] = clf.predict_proba(ifeats)[0][1] #<! probability of belonging to class 1 (SIGNAL)
+                log.debug(scores)
+                log.debug("--"*70)
+                for sb in score_branches:
+                    sb.Fill()
+        tree.Write(tree.GetName(), ROOT.TObject.kOverwrite)
+    pass #<! trees loop
+    tfile.Close()
+
+    return 
+
+
+##-----------------------------------------------
+## simple class for parallel processing
+##-----------------------------------------------
+class Job(Process):
+    """
+    simpel worker class for parallel
+    processing. the run method is necessary,
+    which will overload the run method of Procces.
+    """
+    def __init__(self, file_name, models, copy_file=False):
+        super(Job, self).__init__()
+        self.file_name = file_name
+        job_name = file_name
+        if '/' in job_name:
+            job_name = job_name.split('/')[-1]
+        self.job_name = job_name.replace('.root','') 
+        self.models = models
+        self.copy_file = copy_file
+        
+    def run(self):
+        file_name = self.file_name
+        
+        # copy to new file
+        if self.copy_file:
+            output = file_name+'.nn'
+            if os.path.exists(output):
+                log.warning(" {} already exists (will skip copying if file is in good shape)" .format(output))
+                tf = ROOT.TFile.Open(output, 'READ')
+                if not tf:
+                    log.warning("{} exists but it's ZOMBIE, replacing it".format(output))
+                    os.remove(output)
+                    shutil.copy(file_name, output)
+            else:
+                log.info("copying {0} to {1} ...".format(file_name, output))
+                shutil.copy(file_name, output)
+        else:
+            output = file_name
+        
+        # the actual calculation happens here
+        evaluate_scores(output, self.models)
+
+        return 
+
+    
+if __name__=='__main__':
+    import time
+    if not CLF_ARGS.models:
+        raise IOError('Path to trained models pls ?')
+    models = get_models(CLF_ARGS.models)
+    
+    # sort files based on size to start the heavier ones sooner.
+    CLF_ARGS.files.sort(key=lambda f: os.path.getsize(f), reverse=True)
+    jobs = [Job(f, models, copy_file=COPY_FILE) for f in CLF_ARGS.files]
+
+    st = time.time()
+    # run a pool of jobs
+    if CLF_ARGS.parallel or len(jobs)> 1:
+        run_pool(jobs, n_jobs=-1)
+    else:
+        # processing one file only (also for PBS, CONDOR Batch)
+        for job in jobs:
+            job.run()
+            
+    ft = time.time()
+    print "Delta t: ", (ft - st)

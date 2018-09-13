@@ -588,8 +588,8 @@ CLF_TJ = Category("CLF_TAUJET",
                       NUM_JETS3,
                       NUM_BJETS1,
                       MET100,
-                      TAU_IS_TRUE,]
-                  )
+                      #TAU_IS_TRUE,
+                  ])
 
 CLF_TL = Category("CLF_TAULEP",
                   label="clf #tau-lep",
@@ -600,8 +600,8 @@ CLF_TL = Category("CLF_TAULEP",
                       NUM_JETS1,
                       NUM_BJETS1,
                       MET50,
-                      TAU_IS_TRUE,]
-                  )
+                      #TAU_IS_TRUE,
+                  ])
 
 CLASSIFIER_CATEGORIES = {
     "taujet": CLF_TJ,

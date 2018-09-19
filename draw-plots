@@ -82,10 +82,13 @@ for var in fields:
              backgrounds=backgrounds,
              data=data,
              signals=signals,
-             signal_scale=5,
+             signal_scale=1,
              output_dir=PLOTTING_ARGS.pdir,
+             logy=PLOTTING_ARGS.logy,
              show_ratio=True,
              show_pvalue=False,
-             logy=PLOTTING_ARGS.logy,
+             error_bars=True,
+             bin_optimization=True,
+             scale_sig_to_bkg_sum=True,
         )
             

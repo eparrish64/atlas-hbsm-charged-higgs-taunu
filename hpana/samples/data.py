@@ -61,6 +61,7 @@ class Data(Sample):
                  label='Data',
                  streams=[],
                  blind=True,
+                 blind_streams=["2017", "2018"],
                  blind_regions=["SR_TAUJET", "SR_TAULEP", "SR_TAUEL", "SR_TAUMU"],
                  grls=["data_2015_lumi.csv", "data_2016_lumi.csv", "data_2017_lumi.csv"],
                  **kwargs):
@@ -81,6 +82,15 @@ class Data(Sample):
         self.data_runs = []
         self.good_runs = []
         log.info("DATA STREAMS: {}".format(self.streams))
+
+        ## - - - - blind streams and regions 
+        self.blind = blind
+        self.blind_streams = blind_streams
+        for st in self.blind_streams:
+            if st in self.streams:
+                self.blind = True
+        self.blind_regions = blind_regions
+
         
         # - - - - Database 
         self.database = database
@@ -127,8 +137,6 @@ class Data(Sample):
                     
         int_lumi = sum([self.config.data_lumi[st] for st in self.streams])
         self.info = DataInfo(int_lumi/ 1e3, self.config.energy)
-        self.blind = blind
-        self.blind_regions = blind_regions
         
     def get_lumi_block(self, start_run, end_run):
         """calcualte lumi for the given stram for the runs in a specific range (including both ends).
@@ -198,7 +206,8 @@ class Data(Sample):
         weighted = kwargs.pop("weighted", False)
         
         categories = kwargs.pop("categories", [])
-        categories = filter(lambda c: c.name not in self.blind_regions, categories)
+        if self.blind:
+            categories = filter(lambda c: c.name not in self.blind_regions, categories)
         
         _workers = super(Data, self).workers(
             categories=categories,

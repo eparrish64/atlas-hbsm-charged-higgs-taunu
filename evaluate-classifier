@@ -37,34 +37,17 @@ import ROOT
 from ROOT import TMVA
 ROOT.gROOT.SetBatch(True)
 
-## cxx macros to be loaded in ROOT
-HERE = os.path.dirname(os.path.abspath(__file__))
-# - - - - correction factor for tau polarization(only applied to 1 prong taus, upsilon varibale, and QCD sample)
-CXX_MACROS = [
-    "FakeFactors/CorrectUpsilon.C",
-    "FakeFactors/CorrectUpsilon_1D_WCR.C",
-    "FakeFactors/CorrectUpsilon_1D_QCD.C",
-]
-CXX_MACROS = [os.path.join(HERE, "hpana", "cxxmacros", cm) for cm in CXX_MACROS]
-
-log.info("loading cxx macros ...")
-for cm in CXX_MACROS:
-    ROOT.gROOT.ProcessLine(".L %s"%cm)
-    
 if CLF_ARGS.backend=="tmva":
     ## initialize TMVA
     ROOT.TMVA.Tools.Instance()
     ROOT.TMVA.PyMethodBase.PyInitialize()
 
-    
 #-----------------------------------------------
 # consts
 #-----------------------------------------------
 COPY_FILE = True
 USE_FASTBDT = False
 kFOLDS = CLF_ARGS.kfolds
-SKIM_LOW_JBDT = True
-
 BDT_FILE_PATTERN = re.compile(
     '^(?P<name>\w+)'
     '_(?P<mass>\w+)'
@@ -249,14 +232,13 @@ def evaluate_scores(file_name, models):
         tau_0_decay_mode = ROOT.TTreeFormula("tau_0_decay_mode", "tau_0_decay_mode", tree)
         event_number = ROOT.TTreeFormula("event_number", "event_number", tree)
         isFake = ROOT.TTreeFormula("tau_0_jet_bdt_loose==0", "tau_0_jet_bdt_loose==0", tree)
-        if SKIM_LOW_JBDT:
-            jbscore = ROOT.TTreeFormula("tau_0_jet_bdt_score_trans>0.02", "tau_0_jet_bdt_score_trans>0.02", tree)
         
         forms_tau, forms_fake = setup_tformulas(tree, INPUT_FEATURES)
         scores, score_branches = setup_score_branches(tree, models)
         ## - - if all branches exist in tree, nothing to do!
         if len(score_branches)==0:
             continue
+        print scores, score_branches
         
         ## - - cache Tree block by block 
         tree.SetCacheSize(32*2**20)
@@ -272,20 +254,13 @@ def evaluate_scores(file_name, models):
                 tree.LoadTree(entry)
                 if False: 
                     t.GetEntry(entry) # Try with this on a small file, to make sure the output is identical
-
-                if SKIM_LOW_JBDT:
-                    if not (jbscore.EvalInstance()):
-                        continue
+                    
                 #--------------------------
                 # Evaluate features vector
                 #--------------------------
                 feats = []
                 for form in forms_tau:
-                    ## correcting upsilon for QCD fakes 
-                    if (isFake and int(tau_0_n_tracks.EvalInstance())==1 and "upsilon" in form.GetName()):
-                        feats.append(ROOT.CorrectUpsilon_1D_WCR(form.EvalInstance(), 1)) #<! _1D_WCR as a NOMINAL
-                    else:    
-                        feats.append(float(form.EvalInstance()))
+                    feats.append(float(form.EvalInstance()))
 
                 ## - - event number is used in kfold cut, use proper offset for evaluation
                 event_num = int(event_number.EvalInstance())
@@ -313,10 +288,8 @@ def evaluate_scores(file_name, models):
                 log.debug("--"*70)
                 for sb in score_branches:
                     sb.Fill()
-                    
         tree.Write(tree.GetName(), ROOT.TObject.kOverwrite)
     pass #<! trees loop
-
     tfile.Close()
 
     return 

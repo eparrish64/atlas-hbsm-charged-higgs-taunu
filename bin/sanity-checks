@@ -1,0 +1,48 @@
+#! /usr/bin/env python
+
+import os, sys
+
+import ROOT
+
+IFILE = "./inputs/user.hbaluchb.TJ.data16_13TeV.00301932.physics_Main.D1.r9264_p3083_p3372.18v04r02_hist.MERGED.root"
+TAU_PT_BINS = {
+    "1":[30, 35, 40, 45, 50, 60, 75, 90, 105, 120, 140, 160, 200, 300, 3500],
+    "3":[30, 35, 40, 50, 75, 100, 150, 200, 3500],
+}
+
+
+ANTITAU_CUT = "((((((((n_vx > 0)&&(tau_0_p4->Pt() > {0} && tau_0_p4->Pt() < {1}))&&(tau_0_ele_olr_pass==1))&&(n_jets > 2))&&((n_electrons + n_muons)==0))&&(n_bjets==0))&&(met_p4->Et() < 80))&&(tau_0_met_mt > 50))&&(((run_number<288000 && HLT_4j85) || ((run_number>288000 && HLT_4j100)))&&(tau_0_jet_bdt_loose==0&&tau_0_jet_bdt_score_trans>0.03&&tau_0_n_charged_tracks=={2}))"
+
+TAU_CUT = "((((((((n_vx > 0)&&(tau_0_p4->Pt() > {0} && tau_0_p4->Pt() < {1}))&&(tau_0_ele_olr_pass==1))&&(n_jets > 2))&&((n_electrons + n_muons)==0))&&(n_bjets==0))&&(met_p4->Et() < 80))&&(tau_0_met_mt > 50))&&(((run_number<288000 && HLT_4j85) || ((run_number>288000 && HLT_4j100)))&&(tau_0_jet_bdt_medium==1&&tau_0_n_charged_tracks=={2}))"
+
+tfile = ROOT.TFile(IFILE, "READ")
+tree = tfile.NOMINAL
+
+all_taus = tree.GetEntries("((((((((n_vx > 0)&&(tau_0_p4->Pt() > 30 ))&&(tau_0_ele_olr_pass==1))&&(n_jets > 2))&&((n_electrons + n_muons)==0))&&(n_bjets==0))&&(met_p4->Et() < 80))&&(tau_0_met_mt > 50))&&(((run_number<288000 &&HLT_4j85)|| ((run_number>288000 && HLT_4j100)))&&(tau_0_jet_bdt_medium==1&&tau_0_n_charged_tracks==1))")
+
+all_antitaus = tree.GetEntries("((((((((n_vx > 0)&&(tau_0_p4->Pt() > 30 ))&&(tau_0_ele_olr_pass==1))&&(n_jets > 2))&&((n_electrons + n_muons)==0))&&(n_bjets==0))&&(met_p4->Et() < 80))&&(tau_0_met_mt > 50))&&(((run_nu\
+mber<288000 && HLT_4j85) || ((run_number>288000 && HLT_4j100)))&&(tau_0_jet_bdt_loose==0&&tau_0_jet_bdt_score_trans>0.02&&tau_0_n_charged_tracks==1))")
+
+print tree.GetEntries()
+print "TAU", all_taus
+print "ANTITAU", all_antitaus, all_taus/float(all_antitaus)
+
+counts = {}
+for trk, bins in TAU_PT_BINS.iteritems():
+    counts[trk] = {}
+    blenght = len(bins)
+    ib = 0
+    print trk 
+    while ib < len(bins)-1:
+        blow = bins[ib]
+        bhigh = bins[ib+1]
+        tau = tree.GetEntries(TAU_CUT.format(blow, bhigh, trk))
+        atau = float(tree.GetEntries(ANTITAU_CUT.format(blow, bhigh, trk)))
+        ratio = tau/atau
+                     
+        counts[trk]["%i"%bhigh] = ratio
+        print bhigh, tau, atau, ratio
+
+        ib +=1
+        
+print counts

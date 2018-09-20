@@ -1,0 +1,32 @@
+#! /usr/bin/env python
+"""
+simple script for submitting jobs to a cluster.
+KEEP IT IN THE MAIN PACKAGE DIR, UNPICKELING FAILS OTHERWISE! 
+"""
+ 
+if __name__=="__main__":
+        import sys, os
+        import ROOT
+        import dill
+        from hpana.samples.sample import Sample
+        
+        workdir = os.getenv('PBS_O_WORKDIR')
+        jobname = os.getenv("PBS_JOBNAME")
+        job_id = os.getenv('PBS_JOBID')#[0:os.getenv('PBS_JOBID').find('[')]
+        job_array = os.getenv('PBS_ARRAYID')
+
+        with open(sys.argv[1], "rb") as pfile:
+                ana = dill.load(pfile)
+
+        # - - - - load cxx macros
+        ana.compile_cxx()
+        workers = filter(lambda w: w.name==jobname, ana.workers)
+        
+        assert (len(workers) >0) and (len(workers)==1),\
+            "no matching worker or two workers with the same name!!"
+        
+        worker = workers[0]
+        print "WORKER: ", worker
+
+        # - - get the hists 
+        Sample.dataset_hists(worker, write_hists=True, outdir="./")

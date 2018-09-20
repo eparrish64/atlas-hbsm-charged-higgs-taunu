@@ -6,16 +6,18 @@ _[UNDER DEVELOPEMENT]_
 Setup
 ------
 
-#### First time only
+#### first time only
 Setting up Python virtualenv for clean PyPI packages setup. 
+
     - SetupATLAS; lsetup root (this is to make sure you have the right Python 2.7; by default on some lxplus machines we have Python 2.6! )
     - get a stable virtualenv release from here, https://virtualenv.pypa.io/en/stable/installation/
     - somewhere outside the hpana code do: mkdir -p PythonPackags/Venvs; cd PythonPackags  
     - wget https://pypi.python.org/packages/source/v/virtualenv/virtualenv-15.2.0.tar.gz 
     - tar xzvf virtualenv-15.2.0.tar.gz ; cd virtualenv-15.2.0
     - python virtualenv.py ../Venvs hpanaVenv 
-####
-source setup.sh <PATH TO THE VIRTUAL ENV>
+    
+#### hpana package setup
+- ``source setup.sh <PATH TO THE VIRTUAL ENV>``
 
 
 Workflow 

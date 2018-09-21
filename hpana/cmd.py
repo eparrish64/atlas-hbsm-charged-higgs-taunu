@@ -107,6 +107,8 @@ def get_ana_parser(base_parser=None):
     ana_parser.add_argument("--rs-manager", type=str,default="TORQUE", choices=["TORQUE", "SLURM"],
                             help="the resource manager on your cluster")
 
+    ana_parser.add_argument("--rs-project", type=str,default="ctb-stelzer", choices=["ctb-stelzer", "def-doneil"],
+                            help="the resource manager on your cluster")
     # - - - - - - - - - parse analysis args
     #argcomplete.autocomplete(ana_parser)
 

@@ -158,7 +158,7 @@ def main():
             log.info(
                 "**************************************************************")
 
-            os.system("mkdir -p %s %s/jobs/"%(ANA_ARGS.logsdir, ANA_ARGS.outdir))
+            os.system("mkdir -p %s %s/jobs/"%(os.path.join(ANA_ARGS.outdir,ANA_ARGS.logsdir), ANA_ARGS.outdir))
             submitfile_name = "%s/%s.sh"%(ANA_ARGS.outdir, "submitAllJobs")
             submitFile = os.open(submitfile_name, os.O_CREAT|os.O_WRONLY, 0755)
             
@@ -176,11 +176,12 @@ def main():
                 jfile = os.open(jfile_name, os.O_CREAT|os.O_WRONLY, 0755)
                 os.write(jfile, 
                          SLURM_JOB_TEMPLATE.format( 
-                                                    logsdir=ANA_ARGS.logsdir,
+                                                    logsdir=os.path.join(ANA_ARGS.outdir,ANA_ARGS.logsdir),
                                                     outdir=ANA_ARGS.outdir,
                                                     local_scratch=ANA_ARGS.local_scratch,
                                                     jobname=aw.name, ##important - jobname steers which worker used from pickled ana
-                                                    payload=payload
+                                                    payload=payload,
+                                                    project=ANA_ARGS.rs_project
                                                     ) 
                          )
 

@@ -6,10 +6,11 @@ KEEP IT IN THE MAIN PACKAGE DIR, UNPICKELING FAILS OTHERWISE!
  
 if __name__=="__main__":
         import sys, os
+        import socket
+        import time
         import ROOT
         import dill
         from hpana.dataset_hists import dataset_hists
-        import socket
 
         if 'cedar' in socket.gethostname():
             jobname = os.getenv("SLURM_JOB_NAME")
@@ -30,4 +31,8 @@ if __name__=="__main__":
         print "WORKER: ", worker
 
         # - - get the hists 
+        
+        start_time = time.time()
         dataset_hists(worker, write_hists=True, outdir="./")
+        end_time = time.time()
+        print "Execution Time:\t %0.2f"%(end_time - start_time)

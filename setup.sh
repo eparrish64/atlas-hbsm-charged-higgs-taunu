@@ -1,14 +1,19 @@
 #source this file
-if [ $# -lt 1 ]; then
-    echo "Pass the virtual env path plz"
-	return
-fi
+case $USER in 
+	edrechsl)
+		VENVPATH=/home/edrechsl/virtEnvs/venv_hpana
+		;;
+	*)
+		echo "User not found when setting virtual envrionment, adjust setup file."
+esac
 
 case "$(hostname)" in
 	*cedar*)
-#CEDAR setup - assumes setupATLAS has been executed
+		#CEDAR setup - assumes setupATLAS has been executed to setup container (setupATLAS -c slc6)
 		lsetup root --quiet
-		source /home/edrechsl/virtEnvs/venv_hpana/bin/activate
+		#quick fix due to moved scripts
+		export PYTHONPATH=$PWD:$PYTHONPATH
+		source $VENVPATH/bin/activate
 		;;
 	*)
 		## ATLAS

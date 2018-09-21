@@ -168,7 +168,7 @@ def main():
                 # - - payload for container
                 payload="source ${{SLURM_SUBMIT_DIR}}/hpana/cluster/slurmJob.sh {pickled_analysis} {script_path}".format(
                         pickled_analysis=ANA_ARGS.pickled_analysis,
-                        script_path="process-dataset"
+                        script_path="bin/process-dataset"
                         )
 
                 # - - write the job submission script with right permissions
@@ -193,7 +193,7 @@ def main():
             os.close(submitFile)
             log.warning("Submission not supported from within container.")
             log.warning("Please launch outside container via:")
-            log.warning("\t sh {0}".format(os.path.join(os.getcwd(),submitfile_name)))
+            log.warning("\t sh {0}".format(submitfile_name))
     
     # - - - - - - - - @NOTE: if you submitted jobs to the cluster wait till they're all done!
     if ANA_ARGS.merge_hists:

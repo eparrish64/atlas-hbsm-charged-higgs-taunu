@@ -10,6 +10,8 @@ echo "OUTDIR: $OUTDIR"
 echo "PICKLEDANA: $PICKLED_ANALYSIS"
 echo "SCRIPTPATH: $SCRIPT_PATH"
 
+export PYTHONPATH=$SLURM_SUBMIT_DIR:$PYTHONPATH
+
 function fail(){
     echo "$SLURM_JOB_ID failed"
     echo $SLURM_JOB_NAME >>  $OUTDIR/failed/failed-$SLURM_JOB_ID

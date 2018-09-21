@@ -67,6 +67,12 @@ if ANA_ARGS.samples:
 else:
     samples = analysis.samples
 
+analysis.setWorkers(
+                samples=samples,
+                fields=fields,
+                categories=categories,
+                systematics=systematics)
+
 ##-------------------------------------------------------------
 ## main driver 
 ##-------------------------------------------------------------
@@ -138,7 +144,57 @@ def main():
                 if not ANA_ARGS.dry_run:
                     os.system("qsub {0}".format(jfile_name))
 
+        elif ANA_ARGS.rs_manager=="SLURM":
+            # - - write jobs
+            from hpana.cluster.job_template import SLURM_JOB_TEMPLATE
+            
+            #create list of workers for requested jobs
+            pickledAna_workerList=pickled_analysis.getWorkers()
+            
+            # - - setup the submit dir
+            os.system("mkdir -p {0}/jobs {0}/failed {0}/done {0}/submitted {0}/hists".format(ANA_ARGS.outdir))
+            log.info(
+               "************** submitting %i jobs to the cluster ************"%len(pickledAna_workerList))
+            log.info(
+                "**************************************************************")
 
+            os.system("mkdir -p %s %s/jobs/"%(ANA_ARGS.logsdir, ANA_ARGS.outdir))
+            submitfile_name = "%s/%s.sh"%(ANA_ARGS.outdir, "submitAllJobs")
+            submitFile = os.open(submitfile_name, os.O_CREAT|os.O_WRONLY, 0755)
+            
+            # - -  create the job scripts and run them. Returns Analysis workers
+            for aw in pickledAna_workerList:
+
+                # - - payload for container
+                payload="source ${{SLURM_SUBMIT_DIR}}/hpana/cluster/slurmJob.sh {pickled_analysis} {script_path}".format(
+                        pickled_analysis=ANA_ARGS.pickled_analysis,
+                        script_path="process-dataset"
+                        )
+
+                # - - write the job submission script with right permissions
+                jfile_name = "%s/jobs/%s.slurm"%(ANA_ARGS.outdir, aw.name)
+                jfile = os.open(jfile_name, os.O_CREAT|os.O_WRONLY, 0755)
+                os.write(jfile, 
+                         SLURM_JOB_TEMPLATE.format( 
+                                                    logsdir=ANA_ARGS.logsdir,
+                                                    outdir=ANA_ARGS.outdir,
+                                                    local_scratch=ANA_ARGS.local_scratch,
+                                                    jobname=aw.name, ##important - jobname steers which worker used from pickled ana
+                                                    payload=payload
+                                                    ) 
+                         )
+
+                os.close(jfile)
+
+                # - - - - write submission to file to be used outside container
+                log.info("Writing to %s for job %s ..."%(submitfile_name,aw.name))
+                os.write(submitFile, "sbatch %s\n"%jfile_name)
+
+            os.close(submitFile)
+            log.warning("Submission not supported from within container.")
+            log.warning("Please launch outside container via:")
+            log.warning("\t sh {0}".format(os.path.join(os.getcwd(),submitfile_name)))
+    
     # - - - - - - - - @NOTE: if you submitted jobs to the cluster wait till they're all done!
     if ANA_ARGS.merge_hists:
         if ANA_ARGS.cluster:
@@ -162,6 +218,6 @@ if __name__=="__main__":
     main()
     
     end_time = time.time()
-    elapsed_time = (end_time - start_time)/60.
-    log.info("\n****************** elapsed time: %0.1f mins ******************"%elapsed_time)
+    elapsed_time = (end_time - start_time)
+    log.info("\n****************** elapsed time: %0.2f s ******************"%elapsed_time)
     

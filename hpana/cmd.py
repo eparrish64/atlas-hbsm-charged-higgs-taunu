@@ -79,7 +79,7 @@ def get_ana_parser(base_parser=None):
 
     ana_parser.add_argument("--logsdir", type=str, default="logs",
                             help="where to put the log files")
-
+#FIXME for batch sub these two must be present!
     ana_parser.add_argument("--pickle-analysis", type=str,
                             help="give a name to pickle the analysis object and save it to that")
     
@@ -88,7 +88,7 @@ def get_ana_parser(base_parser=None):
 
     ana_parser.add_argument("--cache-ff", action="store_true",
                             help="cache fake factors")
-    
+#FIXME should be exclusive to batch sub    
     ana_parser.add_argument("--parallel", action="store_true",
                             help="if you want to do parallel processing")
 
@@ -104,10 +104,9 @@ def get_ana_parser(base_parser=None):
     ana_parser.add_argument("--dry-run", action="store_true",
                             help="if you just want to see the scripts that will be submitted to the cluster")
     
-    ana_parser.add_argument("--rs-manager", type=str,default="TORQUE", choices=["TORQUE", "SLURUM"],
+    ana_parser.add_argument("--rs-manager", type=str,default="TORQUE", choices=["TORQUE", "SLURM"],
                             help="the resource manager on your cluster")
 
-    
     # - - - - - - - - - parse analysis args
     #argcomplete.autocomplete(ana_parser)
 

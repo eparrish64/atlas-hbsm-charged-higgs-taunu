@@ -1,0 +1,17 @@
+## YMAL DOESN'T ALLOW \t ; USE SPACES !
+"2018":
+  common:
+    grl: ""
+   
+  taujet:
+    mc_path: /project/6024950/sbahrase/SAMPLES/HBSM/nTuples/2018/18v04/taujet/mc16a/
+    mc_prefix: "user."
+    mc_pattern: '*hist-output.root*'
+    mc_treename: 'NOMINAL'
+    mc_sampletype:
+    data_path: /project/6024950/sbahrase/SAMPLES/HBSM/nTuples/2018/18v04/taujet/data
+    data_prefix: "user."
+    data_pattern: '*hist-output.root*'
+    data_treename: 'NOMINAL'
+    data_sampletype:
+            

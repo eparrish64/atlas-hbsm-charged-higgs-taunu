@@ -40,6 +40,7 @@ def draw(var, category,
          poisson_errors=True,
          ylimits=None,
          bin_optimization=True,
+         scale_sig_to_bkg_sum=True, 
          ):
 
     """
@@ -135,7 +136,8 @@ def draw(var, category,
             else:
                 bkg_stack.Add(bkg_hist)
         backgrounds_stack.append(bkg_stack)
-        backgrounds_hists = rebinned_bkg_hists[:]
+        if bin_optimization and opt_bins:
+            backgrounds_hists = rebinned_bkg_hists[:]
         
         # - - - - if you wish to add uncertainty band to the ratio plot
         if error_bars:
@@ -182,11 +184,14 @@ def draw(var, category,
                     continue
                 sig_hist = sig_hist[0].hist
 
-            # - - - - scale signals if needed 
+            # - - - - scale signals if needed
+            if scale_sig_to_bkg_sum:
+                bkg_hsum = reduce(lambda h1, h2: h1+h2, backgrounds_hists)
+                sig_hist.Scale(bkg_hsum.Integral(0, -1)/sig_hist.Integral(0, -1))
             if signal_scale!=1.:
                 sig_hist *= signal_scale
-                init_label = sig.label
-                sig_label = "%i #times %s"%(signal_scale, init_label)
+            init_label = sig.label
+            sig_label = "%i #times %s"%(signal_scale, init_label) if signal_scale!=1. else init_label
                 
             #- - - - fold the overflow bin to the last bin
             if overflow:
@@ -384,7 +389,7 @@ def draw(var, category,
         ratio_pad.cd()
         rhist.SetTitle("")
         rhist.Draw('SAME')
-        if uncertainty_band:
+        if error_bars:
             ratio_error.Draw('SAME E2')
         
     # - - - - - - - - create outputs

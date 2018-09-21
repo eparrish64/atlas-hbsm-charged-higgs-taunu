@@ -38,7 +38,7 @@ class Analysis(object):
      signal strength
 
     suffix: str
-         specific suffix for analysis to be added to the output files name.
+     #FIXME should be exclusive to batch sub    specific suffix for analysis to be added to the output files name.
     
     norm_field: str
              variable used to normalize qcd, ztt
@@ -218,6 +218,10 @@ class Analysis(object):
         self.signals = self.get_signals(masses=[90, 110, 400])
         
         self.samples = [self.qcd, self.lepfakes] + self.mc + self.signals + [self.data]  
+        
+        # ---- stored workers
+        self._workers=[]
+
 
     def compile_cxx(self):
         log.info("loading cxx macros ...")
@@ -320,6 +324,16 @@ class Analysis(object):
         """Derive the normalizations of ttbar and Wjets from a fit of some variable
         """
         raise RuntimeError("not implemented yet")
+    
+    def setWorkers(self, samples=[], categories=[], fields=[], systematics=[], **kwargs):
+        if len(self._workers)<1:
+            self.workers(samples=samples, categories=categories, fields=fields, systematics=systematics, **kwargs)
+        return 
+
+    def getWorkers(self):
+        if len(self._workers)<1:
+            raise Exception("Worker list not defined in pickled analysis object")
+        return self._workers
 
     def workers(self, samples=[], categories=[], fields=[], systematics=[], **kwargs):
         """
@@ -337,11 +351,11 @@ class Analysis(object):
         if not systematics:
             systematics = ["NOMINAL"]
             
-        _workers  = []
+        self._workers  = []
         for sample in samples:
-            _workers += sample.workers(fields=fields, categories=categories, systematics=systematics, **kwargs)
-                
-        return _workers
+            self._workers += sample.workers(fields=fields, categories=categories, systematics=systematics, **kwargs)
+        
+        return self._workers
     
     def hists(self, samples=[], categories=[], fields=[], systematics=[], parallel=True, dry_run=False, **kwargs):
         """

@@ -6,21 +6,23 @@ KEEP IT IN THE MAIN PACKAGE DIR, UNPICKELING FAILS OTHERWISE!
  
 if __name__=="__main__":
         import sys, os
+        import socket
+        import time
         import ROOT
         import dill
-        from hpana.samples.sample import Sample
-        
-        workdir = os.getenv('PBS_O_WORKDIR')
-        jobname = os.getenv("PBS_JOBNAME")
-        job_id = os.getenv('PBS_JOBID')#[0:os.getenv('PBS_JOBID').find('[')]
-        job_array = os.getenv('PBS_ARRAYID')
+        from hpana.dataset_hists import dataset_hists
+
+        if 'cedar' in socket.gethostname():
+            jobname = os.getenv("SLURM_JOB_NAME")
+        else:
+            jobname = os.getenv("PBS_JOBNAME")
 
         with open(sys.argv[1], "rb") as pfile:
                 ana = dill.load(pfile)
 
         # - - - - load cxx macros
         ana.compile_cxx()
-        workers = filter(lambda w: w.name==jobname, ana.workers)
+        workers = filter(lambda w: w.name==jobname, ana.getWorkers())
         
         assert (len(workers) >0) and (len(workers)==1),\
             "no matching worker or two workers with the same name!!"
@@ -29,4 +31,8 @@ if __name__=="__main__":
         print "WORKER: ", worker
 
         # - - get the hists 
-        Sample.dataset_hists(worker, write_hists=True, outdir="./")
+        
+        start_time = time.time()
+        dataset_hists(worker, write_hists=True, outdir="./")
+        end_time = time.time()
+        print "Execution Time:\t %0.2f"%(end_time - start_time)

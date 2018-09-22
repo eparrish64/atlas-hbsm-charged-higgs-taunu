@@ -49,9 +49,10 @@ class QCD(Sample):
 
 
     # - - - - correction factor for tau polarization variable (using Inverse Smirnov transformation)
-    Y_CORRECTIO_WEIGHT = {
+    UPSILON_CORRECTED = {
         "mc15": "CorrectUpsilon({0}, tau_0_n_tracks)", #< Y, ntracks
-        "mc16": "CorrectUpsilon_1D_QCD({0}, tau_0_n_charged_tracks)", #< Y, ntracks
+        "mc16": "CorrectUpsilon_1D_QCD("\
+        "((tau_0_n_charged_tracks==1)*tau_0_upsilon_pt_based+ -111*(tau_0_n_charged_tracks!=1)), tau_0_n_charged_tracks)", #< Y, ntracks
     }
     
     @staticmethod
@@ -61,7 +62,8 @@ class QCD(Sample):
         if not mc:
             raise ValueError("mc must contain at least one MC sample")
     
-    def __init__(self, config, data, mc, name="QCD", label="fakes", correct_upsilon=True, **kwargs):
+    def __init__(self, config, data, mc,
+                 name="QCD", label="fakes", correct_upsilon=True, **kwargs):
         
         # - - - - quick sanity check
         QCD.sample_compatibility(data, mc)
@@ -154,11 +156,9 @@ class QCD(Sample):
             log.debug("correcting upsilon for %s sample"%self.name)
             for field in fields:
                 if field.name=="tau_0_upsilon":
-                    ur_tf = field.tformula
                     mcc = field.mc_camp
-                    field.tformula = "({0}*({1}))".format(
-                        ur_tf, QCD.Y_CORRECTIO_WEIGHT[mcc].format(ur_tf))
-            
+                    field.tformula = QCD.UPSILON_CORRECTED
+        
         if not categories:
             categories = self.config.categories
 

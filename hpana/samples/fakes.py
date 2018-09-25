@@ -411,7 +411,6 @@ class QCD(Sample):
         for systematic in self.systematics:
             for var in fields:
                 for cat in categories:
-                    if cat=="FF_CR_MULTIJET": continue
                     data_hists = filter(lambda hs: (hs.systematic==systematic and hs.variable==var and hs.category==cat), data_hist_set)
                     data_hsum = data_hists[0].hist
                     for hs in data_hists[1:]:

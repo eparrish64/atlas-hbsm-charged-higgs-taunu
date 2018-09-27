@@ -21,6 +21,7 @@ clf_parser.add_argument("--mtype", choices=["keras", "bdt"], default="bdt",
                         help="TMVA Method type")
 clf_parser.add_argument("--syst", action="store_true",
                         help="should you want to append clf scores to the syst Trees")
+
 CLF_ARGS = clf_parser.parse_args()
 
 
@@ -238,7 +239,6 @@ def evaluate_scores(file_name, models):
         ## - - if all branches exist in tree, nothing to do!
         if len(score_branches)==0:
             continue
-        print scores, score_branches
         
         ## - - cache Tree block by block 
         tree.SetCacheSize(32*2**20)
@@ -304,7 +304,7 @@ class Job(Process):
     processing. the run method is necessary,
     which will overload the run method of Procces.
     """
-    def __init__(self, file_name, models, copy_file=False):
+    def __init__(self, file_name, models, copy_file=False, outdir=None):
         super(Job, self).__init__()
         self.file_name = file_name
         job_name = file_name
@@ -313,25 +313,31 @@ class Job(Process):
         self.job_name = job_name.replace('.root','') 
         self.models = models
         self.copy_file = copy_file
+        self.outdir = outdir
         
     def run(self):
-        file_name = self.file_name
-        
         # copy to new file
         if self.copy_file:
-            output = file_name+'.nn'
+            output = self.file_name + '.nn'
             if os.path.exists(output):
                 log.warning(" {} already exists (will skip copying if file is in good shape)" .format(output))
                 tf = ROOT.TFile.Open(output, 'READ')
                 if not tf:
                     log.warning("{} exists but it's ZOMBIE, replacing it".format(output))
                     os.remove(output)
-                    shutil.copy(file_name, output)
+                    shutil.copy(self.file_name, output)
             else:
-                log.info("copying {0} to {1} ...".format(file_name, output))
-                shutil.copy(file_name, output)
+                if self.outdir:
+                    reldir = self.file_name.split("/")[-2]
+                    fname = self.file_name.split("/")[-1]
+                    opath = os.path.join(self.outdir, reldir)
+                    os.system("mkdir -p %s"%opath)
+                    output = os.path.join(opath, fname)
+                    
+                log.info("copying {0} to {1} ...".format(self.file_name, output))
+                shutil.copy(self.file_name, output)
         else:
-            output = file_name
+            output = self.file_name
         
         # the actual calculation happens here
         evaluate_scores(output, self.models)
@@ -339,22 +345,25 @@ class Job(Process):
         return 
 
     
+##-----------------------------------------------
+## main driver
+##-----------------------------------------------
 if __name__=='__main__':
     import time
     if not CLF_ARGS.models:
         raise IOError('Path to trained models pls ?')
     models = get_models(CLF_ARGS.models)
     
-    # sort files based on size to start the heavier ones sooner.
+    ## sort files based on size to start the heavier ones sooner.
     CLF_ARGS.files.sort(key=lambda f: os.path.getsize(f), reverse=True)
-    jobs = [Job(f, models, copy_file=COPY_FILE) for f in CLF_ARGS.files]
+    jobs = [Job(f, models, copy_file=COPY_FILE, outdir=CLF_ARGS.outdir) for f in CLF_ARGS.files]
 
     st = time.time()
-    # run a pool of jobs
+    ## run a pool of jobs
     if CLF_ARGS.parallel or len(jobs)> 1:
         run_pool(jobs, n_jobs=-1)
     else:
-        # processing one file only (also for PBS, CONDOR Batch)
+        ## processing one file only (also for PBS, CONDOR Batch)
         for job in jobs:
             job.run()
             

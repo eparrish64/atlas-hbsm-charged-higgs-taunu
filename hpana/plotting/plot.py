@@ -358,6 +358,7 @@ def label_plot(pad,
     """ to create different labels for the plost
     """
 
+    rlabel, dlabel, alabel = "", "", ""
     # draw the category label
     if category:
         rlabel = ROOT.TLatex(

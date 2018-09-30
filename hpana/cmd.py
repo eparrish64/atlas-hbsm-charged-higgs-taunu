@@ -188,15 +188,6 @@ def get_ffs_parser(base_parser=None):
     ffs_parser.add_argument("--fake-sources", action="store_true",
                               help="what is the source of fake tau")
 
-    ffs_parser.add_argument("--cache-cr-ffs", action="store_true",
-                              help="cache CR fake factors for the FF CRs")
-    
-    ffs_parser.add_argument("--cache-rqcd", action="store_true",
-                              help="cache combined FFs")
-    
-    ffs_parser.add_argument("--cache-ffs-hists", action="store_true",
-                              help="cache histograms used for evaluating FFs")
-    
     ffs_parser.add_argument("--validation-plots", action="store_true",
                               help="get different validation plots")
     
@@ -206,13 +197,13 @@ def get_ffs_parser(base_parser=None):
     ffs_parser.add_argument("--samples", nargs="+",
                             help="list of samples to process")
     
-    ffs_parser.add_argument("--ffs-cr-cache", default="FFs_CR_DEFAULT.yml",
+    ffs_parser.add_argument("--ffs-cr-cache", default="FFs_CR.yml",
                             help="write CR FFs to this file")
     
-    ffs_parser.add_argument("--rqcd-cache", default="FF_rQCD.yml",
+    ffs_parser.add_argument("--rqcd-cache", default="FFs_COMBINED.yml",
                             help="write combined FFs to this file")
     
-    ffs_parser.add_argument("--ffs-hists-cache", default="FF_HISTS.pkl",
+    ffs_parser.add_argument("--ffs-hists-cache", default="FFs_HISTS.pkl",
                               help="cache histograms used for evaluating FFs to this file")
 
     ffs_parser.add_argument('--pdir', '-pd', default="./ffplots",

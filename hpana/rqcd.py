@@ -4,7 +4,7 @@
 """
 
 ## stdlib
-import os, sys
+import os, sys, array, math
 
 ## PyPI
 import numpy as np
@@ -14,10 +14,74 @@ import yaml
 import ROOT
 
 ## local
-from .samples.sample import Histset
-from .categories import Category
+from hpana.samples.sample import Histset
+from hpana.samples.fakes import QCD 
+from hpana.categories import Category
+from hpana.variables import rQCD_VARS
+from hpana.plotting.plot import label_plot
 from . import log 
 
+
+##--------------------------------------------------------------------------
+## - - simple chi2 implementation
+##--------------------------------------------------------------------------
+def calculate_chi2(target_hist, template_hist, min_evts=10):
+    """
+    perform Chi squared test  
+    """
+    chi2 = 0
+    nbins = target_hist.GetNbinsX()
+    for i in range(nbins):
+        tr_cont = target_hist.GetBinContent(i)
+        tr_err  = target_hist.GetBinError(i)
+        tm_cont = template_hist.GetBinContent(i)
+        tm_err  = template_hist.GetBinError(i)
+
+        # n_tr = (tr_cont/tr_err)**2
+        # n_tm = (tm_cont/tm_err)**2
+
+        # if n_tr < min_evts or n_tm < min_evts:
+        #     continue
+        if tr_cont==0 or tm_cont==0:
+            continue
+        chi2 += ((tr_cont-tm_cont)**2)/(tr_err**2 + tm_err**2)
+        
+    return math.sqrt(chi2/nbins)
+
+
+##--------------------------------------------------------------------------
+## - - chi2 fit error 
+##--------------------------------------------------------------------------
+def chi2_error(chi2_graph):
+    """
+
+    """
+    # - - find the min and draw a line there
+    xarr = chi2_graph.GetX()
+    yarr = chi2_graph.GetY()
+    
+    ymin = min(yarr)
+    xmin_index = [i for i, y in enumerate(yarr) if y==ymin][0]
+    xmin = xarr[xmin_index]
+    ymax = max(yarr)
+
+    std = math.sqrt(2./len(xarr))
+    err_up = std
+    for n in range(xmin_index+1, len(xarr)):
+        if err_up < xarr[n]:
+            err_up = xarr[n] - xmin
+            break
+        
+    err_dn = std
+    n = xmin_index-1
+    while n > 0:
+        if err_dn < xarr[n]:
+            err_dn = xmin - xarr[n]
+            break
+        n -= 1
+        
+    return xmin, err_up, err_dn
+        
 ##--------------------------------------------------------------------------
 ## - - Fakes sources
 ##--------------------------------------------------------------------------
@@ -112,7 +176,14 @@ def prep_ff_hists(ffs_hists,
 ##--------------------------------------------------------------------------
 ## - - organize the hists for calcualting FFs 
 ##--------------------------------------------------------------------------
-def fit_alpha(cr_hists, target_hists, ntracks=[1, 3], fitting_bins={}, shape_vars=[],):
+def fit_alpha(cr_hists, target_hists,
+              ntracks=[1, 3],
+              fitting_bins={},
+              shape_vars=[],
+              cache=None,
+              pdir=None,
+              validation_plots=False):
+    
     """ give the template shapes for different FFs dedicated control regions 
     and the the other selection regions. A transformation factor is derived in order 
     to combin FFs taking into account the differences between FFs CR regions and other reiogns. 
@@ -123,18 +194,29 @@ def fit_alpha(cr_hists, target_hists, ntracks=[1, 3], fitting_bins={}, shape_var
         dict; keys corresponding to the anlysis channels/aux var1/aux var2 binning (n_tracks, pt)
         and values list(Histset), which contain different hists for FFs control regions 
 
-    cr_hitsts:
+    target_hists:
         dict; keys corresponding to the anlysis channels/aux var1/aux var2 binning (n_tracks, pt)
-        and values list(Histset), which contain different hists for other control regions/signal regions. 
+        and values list(Histset), which contain different hists for other regions/signal regions. 
 
     Return 
     - - - - 
 
     """
-
+    ## - - - - fit regions 
+    cr_regions = []
+    target_regions = []
+    for hset in cr_hists:
+        if not hset.category in cr_regions:
+            cr_regions.append(hset.category)
+    for hset in target_hists:
+        if not hset.category in (target_regions + cr_regions):
+            target_regions.append(hset.category)
+            
+    regions = cr_regions + target_regions
+    
     # - - - - output containers
     chi2s = {}
-    alphas_min = {}
+    alphas = {}
     cr_hists_dict = {}
     target_hists_dict = {}
     
@@ -142,7 +224,7 @@ def fit_alpha(cr_hists, target_hists, ntracks=[1, 3], fitting_bins={}, shape_var
     for itk in ntracks:
         tkey = "%i"%itk
         chi2s[tkey] = {}
-        alphas_min[tkey] = {}
+        alphas[tkey] = {}
         cr_hists_dict[tkey] = {}
         target_hists_dict[tkey] = {}
         
@@ -155,7 +237,7 @@ def fit_alpha(cr_hists, target_hists, ntracks=[1, 3], fitting_bins={}, shape_var
         for _bin in fitting_sub_bins[1:]:
             pkey = "%i"%_bin
             chi2s[tkey][pkey] = {}
-            alphas_min[tkey][pkey] = {}
+            alphas[tkey][pkey] = {}
             cr_hists_dict[tkey][pkey] = {}
             target_hists_dict[tkey][pkey] = {}
 
@@ -190,7 +272,7 @@ def fit_alpha(cr_hists, target_hists, ntracks=[1, 3], fitting_bins={}, shape_var
                     continue
                 target_hist.Scale(1./target_hist.Integral())
                 target_hists_dict[tkey][pkey][hs.category] = [target_hist]
-                                
+                target_hist.Sumw2()   
                 # - - - - varying the coefficient
                 chi2 = []
                 alpha = np.arange (-4, 4, 0.01)
@@ -199,7 +281,6 @@ def fit_alpha(cr_hists, target_hists, ntracks=[1, 3], fitting_bins={}, shape_var
                 for a in alpha:
                     scaled_mj_hist = mj_hist.Clone()
                     scaled_mj_hist.Scale(a)
-                    
                     scaled_wj_hist = wj_hist.Clone()
 
                     template_hist = scaled_mj_hist.Clone()
@@ -209,7 +290,8 @@ def fit_alpha(cr_hists, target_hists, ntracks=[1, 3], fitting_bins={}, shape_var
                         log.warning("target or template hist is zero, wont fit anything")
                         continue
                     template_hist.Scale(1/template_hist.Integral())
-
+                    template_hist.Sumw2()
+                    
                     # - - - - CHI2 fit; other option: KolmogorovTest(template_hist, "U O") 
                     c2 = target_hist.Chi2Test(template_hist, "WW CHI2/NDF ")
                     chi2.append((a, c2))
@@ -217,32 +299,30 @@ def fit_alpha(cr_hists, target_hists, ntracks=[1, 3], fitting_bins={}, shape_var
                     scaled_mj_hist.Delete()
                     scaled_wj_hist.Delete()
                     template_hist.Delete()
-                    
-                alpha_min = alpha[0]
-                c2min = chi2[0]
-                for c in chi2:
-                    if c[1] < c2min:
-                        c2min = c[1]
-                        alpha_min = c[0]
-                        
-                # - - - - keep alpha corresponding to min Chi2 distribution        
-                if not hs.category in alphas_min[tkey][pkey]:
-                    alphas_min[tkey][pkey][hs.category] = {}
-                alphas_min[tkey][pkey][hs.category] = alpha_min
 
                 # - - - - get chi2 function
-                chi2_func = ROOT.TGraph(len(chi2))
+                chi2_graph = ROOT.TGraph(len(chi2))
                 for i, point in enumerate(chi2):
-                    chi2_func.SetPoint(i, *point)
-                chi2_func.SetName("chi2_func")
-                chi2s[tkey][pkey][hs.category] = chi2_func
+                    chi2_graph.SetPoint(i, *point)
+                chi2_graph.SetName("chi2_graph")
+                chi2s[tkey][pkey][hs.category] = chi2_graph
 
+                alpha, err_up, err_down = chi2_error(chi2_graph)
+                
+                # - - - - keep alpha corresponding to min Chi2 distribution        
+                if not hs.category in alphas[tkey][pkey]:
+                    alphas[tkey][pkey][hs.category] = {"NOMINAL":0, "UP":0, "DOWN":0}
+                    
+                alphas[tkey][pkey][hs.category]["NOMINAL"] = alpha
+                alphas[tkey][pkey][hs.category]["UP"] = alpha + err_up
+                alphas[tkey][pkey][hs.category]["DOWN"] = alpha - err_down
+                
                 # - - - - fit to the target hist (P_target = aP_mj + (1-a)P_wj) 
                 alpha_mj_hist = mj_hist.Clone()
-                alpha_mj_hist.Scale(alpha_min)
+                alpha_mj_hist.Scale(alpha)
 
                 alpha_wj_hist = wj_hist.Clone()
-                alpha_wj_hist.Scale(1 - alpha_min)
+                alpha_wj_hist.Scale(1 - alpha)
 
                 target_fit_hist = alpha_mj_hist.Clone()
                 target_fit_hist.Add(alpha_wj_hist)
@@ -251,46 +331,83 @@ def fit_alpha(cr_hists, target_hists, ntracks=[1, 3], fitting_bins={}, shape_var
                 target_fit_func = ROOT.TGraph(target_fit_hist)
                 target_hists_dict[tkey][pkey][hs.category] += [target_fit_func]
     
+    ## - - - - cache alphas to yml and cxx macros
+    if cache:
+        with open(cache, "w") as cfile:
+            yaml.dump(alphas, cfile, default_flow_style=False)
+
+        cxx_file = cache.replace(".yml", ".cxx")
+        with open(cxx_file, "w") as cxx_cache:
+            cxx_cache.write("#include <iostream>\n")
+            for syst in ["NOMINAL", "UP", "DOWN"]:
+                cxx_cache.write(
+                    "float GetFFCombined_%s(float pt, int ntracks, float FF_CR_MULTIJET, float FF_CR_WJETS, int index){\n"%syst)
+                for index, cat in enumerate(regions):
+                    cxx_cache.write("\t //! Combined FFs for ({}) target region\n".format(cat))
+                    cxx_cache.write("\t if (index==%i) {\n"%(QCD.FF_INDICIES[cat]))
+                    for itk in ntracks:
+                        tkey = "%i"%itk
+                        cxx_cache.write("\t\t if(ntracks==%i){\n"%itk)
+                        for pT in fitting_bins[tkey][2:]:
+                            pkey = "%i"%pT
+                            if not cat in alphas[tkey][pkey]:
+                                log.warning("alpha for %s category is missing; skipping"%cat)
+                                continue
+                            alpha = alphas[tkey][pkey][cat][syst]
+                            cxx_cache.write("\t\t\t if(pt < {0}) return ({1}*FF_CR_MULTIJET) + ({2}*FF_CR_WJETS);\n".format(pT, alpha, 1 - alpha ))
+                        cxx_cache.write("\t\t }\n")
+
+                    # - - - -  close ntracks block
+                    cxx_cache.write("\t\t else return 0;\n")
+                    cxx_cache.write("\t }\n")
+
+                # - - - - close index block
+                cxx_cache.write("\t else return 0;\n")
+                cxx_cache.write("}\n\n\n")
+
+    if validation_plots:
+        log.info("processing validation plots")
+        validate_template_fit(cr_hists_dict, target_hists_dict, chi2s,
+                              ntracks=ntracks, fitting_bins=fitting_bins, target_regions=target_regions, shape_vars=shape_vars, pdir=pdir)
             
-    return cr_hists_dict, target_hists_dict, alphas_min, chi2s
+    return alphas
 
-
-
+        
 ##--------------------------------------------------------------------------
 ## - - control regions Fake Factors plotting funtions 
 ##--------------------------------------------------------------------------
-def cr_ffs_plots(cr_ffs,
-                 cr_labels={},
-                 jet_bdt_key="tauJetBDT_02",
-                 suffix="",
-                 pdir="",
-                 colors=[ROOT.kBlack, ROOT.kGreen, ROOT.kRed, ROOT.kBlue,]):
+def plot_cr_ffs(cr_ffs, cr_labels={},
+                jet_bdt_key="tauJetBDT_02", suffix="", pdir="", pname="FFs_inclusive_tracks_pT.png",
+                logy=True, logx=True,
+                colors=[ROOT.kBlack, ROOT.kGreen, ROOT.kRed, ROOT.kBlue,]):
     """
     
     """
-    canvas = ROOT.TCanvas("c", "c", 800, 600)
+    canvas = ROOT.TCanvas("c", "c", 800, 700)
     cr_ff_legend = ROOT.TLegend(0.6, 0.8, 0.9, 0.9)
-    with open(cr_ffs, "r") as crfile:
-        CR_FFs = yaml.load(crfile)
-        
+    
     # - - - - retrive hists 
     hists = []
-    for cr in CR_FFs.keys():
-        for itk, bins in CR_FFs[cr][jet_bdt_key].iteritems():
+    for cr in cr_ffs.keys():
+        for itk, bins in cr_ffs[cr][jet_bdt_key].iteritems():
             bin_keys = sorted([float(b) for b in bins.keys()])
-            hist = ROOT.TH1F("%s__%i"%(cr, itk), "", len(bins)-1, array.array("d", bins))
-            nbin = 1
-            for pt, ff in bins.iteritems():
-                hist.SetBinContent(nbin, float(ff))
-                hist.SetBinError(nbin, 0.001)
+            hist = ROOT.TH1F("%s__%s"%(cr, itk), "", len(bins)-1, array.array("d", bin_keys))
+            for n, pt in enumerate(bin_keys):
+                ff = cr_ffs[cr][jet_bdt_key][itk]["%i"%pt]
+                hist.SetBinContent(n, float(ff))
+                hist.SetBinError(n, 0.001)
             hists += [hist]
             label = cr_labels[cr] if cr_labels else cr 
             cr_ff_legend.AddEntry(hist, "%s (nprongs=%s)"%(itk, label), "L")
-            h.SetMarkerColor(colors[len(hists)-1])
-            h.SetLineColor(cl[len(hists)-1])
 
     # - - - - plot them
-    for n, h in enumerate(hists):
+    while len(hists) > len(colors):
+        colors += [c+2 for c in colors]
+        
+    n = 0
+    for h, cl in zip(hists, colors):
+        h.SetMarkerColor(cl)
+        h.SetLineColor(cl)
         if n==0:
             h.SetMaximum(10)
             h.SetMinimum(0.01)
@@ -299,13 +416,18 @@ def cr_ffs_plots(cr_ffs,
             h.GetXaxis().SetTitle("#tau p_{T} GeV")
         else:
             h.Draw("SAME")
+        n += 1
+        
     cr_ff_legend.Draw("SAME")
 
-    canvas.SetLogx()
-    canvas.SetLogy()
+    if logx:
+        canvas.SetLogx()
+    if logy:    
+        canvas.SetLogy()
 
     os.system("mkdir -p %s"%pdir)
-    canvas.Print(os.path.join(pdir, "FFs_inclusive_tracks_pT.png"))
+    log.info(os.path.join(pdir, pname))
+    canvas.Print(os.path.join(pdir, pname))
     canvas.Close()
 
     return canvas 
@@ -313,172 +435,268 @@ def cr_ffs_plots(cr_ffs,
 ##--------------------------------------------------------------------------
 ## - - template fit validation plots
 ##--------------------------------------------------------------------------
-def validate_template_fit(target_hists_dict, alpha_qcd, target_regions=[], colors=[]):
+def validate_template_fit(cr_hists_dict, target_hists_dict, chi2s,
+                          ntracks=[1, 3], fitting_bins=[], target_regions=[], shape_vars=[], pdir="ffplots"):
     """
     """
-    ntracks = target_hists_dict.keys()
-    pt_bins = target_hists_dict[ntracks[0]].keys()
-    for cat in target_regions:
-        if not pkey in target_hists_dict[tkey]:
-            log.warning("missing TARGET %s %s "%(tkey, pkey))
-            continue
-        if not cat.name in target_hists_dict[tkey][pkey]:
-            log.warning("missing TARGET %s %s  %s"%(cat.name, tkey, pkey))
-            continue
 
-        tr_legend = ROOT.TLegend(0.6, 0.8, 0.9, 0.9) 
-        target_hist, target_fit = target_hists_dict[tkey][pkey][cat.name]
+    # - - - - prep out dir for the plots
+    os.system("mkdir -p %s"%pdir)
+    
+    canvas = ROOT.TCanvas("c","c", 1800, 600)
+    canvas.Divide(3,1)
 
-        target_fit.SetMarkerColor(ROOT.kRed)
-        target_fit.SetLineColor(ROOT.kRed)
-        target_fit.Draw("PAC")
+    for itk in ntracks:
+        tkey = "%i"%(itk)
+        # - - - - different vars for 1p and 3p taus
+        var = rQCD_VARS[tkey]
+        pt_bins = fitting_bins[tkey]   
+        for n in range(1, len(pt_bins)):
+            pkey = "%i"%pt_bins[n]
 
-        target_hist.SetMarkerColor(ROOT.kBlack)
-        target_hist.SetLineColor(ROOT.kBlack)
-        target_fit.GetXaxis().SetTitle(var.title)
-        target_fit.GetYaxis().SetTitle("fraction of events")
-        target_hist.Draw("SAME")
-
-        tr_legend.AddEntry(target_hist, "%s region"%cat.name, "P")
-
-        tr_legend.AddEntry(target_fit, "fit", "L")
-
-        # - - add legends, labels and save canvas
-        tr_legend.Draw("SAME")
-        tlabel.Draw("SAME")
-        canvas.Print(os.path.join(FFs_ARGS.pdir, "TARGET_%s_%s_%s.png"%(cat.name, tkey, pkey) ) )
-        canvas.Clear()
-
-        ##--------------------------------------------------------
-        # - - plot chi2
-        ##--------------------------------------------------------
-        chi2_graph = chi2s[tkey][pkey][cat.name]
-        chi2_graph.SetLineWidth(3)
-        chi2_graph.SetLineColor(ROOT.kBlue)
-        chi2_graph.Draw("AL")
-        chi2_graph.GetXaxis().SetTitle("#alpha_{MJ}")
-        chi2_graph.GetYaxis().SetTitle("#chi^{2}/ndf")
-        tlabel.Draw("SAME")
-        tr_legend.Draw("SAME")
-
-        # - - find the min and draw a line there
-        xarr = chi2_graph.GetX()
-        yarr = chi2_graph.GetY()
-
-        ymin = min(yarr)
-        xmin_index = [i for i, y in enumerate(yarr) if y==ymin][0]
-        xmin = xarr[xmin_index]
-        ymax = max(yarr)
-
-        chi2_graph.SetMinimum(0)
-        chi2_graph.SetMaximum(1.2*ymax)
-        tline = ROOT.TLine(xmin, 0, xmin , ymax)
-        tline.SetLineColor(ROOT.kRed)
-        tline.SetLineWidth(2)
-        tline.Draw("SAME")
-
-        tline_up = ROOT.TLine(1.2*xmin, 0, 1.2*xmin , ymax)
-        tline_up.SetLineColor(ROOT.kRed)
-        tline_up.SetLineWidth(2)
-        tline_up.SetLineStyle(10)
-        tline_up.Draw("SAME")
-
-        tline_dn = ROOT.TLine(0.8*xmin, 0, 0.8*xmin , ymax)
-        tline_dn.SetLineColor(ROOT.kRed)
-        tline_dn.SetLineWidth(2)
-        tline_dn.SetLineStyle(10)
-        tline_dn.Draw("SAME")
-
-        canvas.Print(os.path.join(FFs_ARGS.pdir, "CHI2_%s_%s_%s.png"%(cat.name, tkey, pkey) ) )
-        canvas.Clear()
-
-    ##--------------------------------------------------------
-    # - -  plot ALPHA as a function of pT for 1p/3p taus
-    ##--------------------------------------------------------
-
-    # - - n tracks lable for the plots
-    alabel = ROOT.TLatex(
-        canvas.GetLeftMargin() + 0.6, canvas.GetBottomMargin() + 0.5,"n-prongs = %i"%itk)
-    alabel.SetNDC()
-    alabel.SetTextFont(43)
-    alabel.SetTextSize(15)
-    alabel.SetTextAlign(11)
-
-    alphas = alphas_min[tkey]
-    pt_bins = sorted([int(k) for k in alphas.keys()])
-
-    alpha_hists = []
-    comb_ff_hists = []
-    a_legend = ROOT.TLegend(0.7, 0.7, 0.9, 0.9)
-    for ic, cat in enumerate(target_regions):
-        log.info("\n****************** rQCD estimation (category:{0}, nTracks={1}) ******************".format(cat.name, itk))
-        alpha_h = ROOT.TH1F(
-            "alpha_%s_%s"%(cat, itk), "#alpha_{MJ}",len(pt_bins) - 1, array.array("d", pt_bins))
-
-        comb_ff_h = ROOT.TH1F(
-            "comb_ff_%s_%s"%(cat, itk), "#COM_{FF}",len(pt_bins) - 1, array.array("d", pt_bins))
-        for nbin, pt in enumerate(pt_bins[1:]):
-            pkey = "%i"%pt
-            if not pkey in alphas:
-                log.warning(" no alpha is fitted for %i bin! setting it to 0"%pt)
-                alpha_h.SetBinContent(nbin+1, 0) 
-                alpha_h.SetBinError(nbin+1, 0.0001) #<! dummy error for plotting purpose only
-
-                comb_ff_h.SetBinContent(nbin+1, 0) 
-                comb_ff_h.SetBinError(nbin+1, 0.0001) #<! dummy error for plotting purpose only
+            ## - - prep labels for the plots
+            pad = canvas.GetPad(1)
+            dinfo = " #sqrt{#font[52]{s}} = 13 TeV"
+            _, data_lable, atlas_lable, = label_plot(pad,
+                                data_info=dinfo,
+                                atlas_label="ATLAS Internal",
+                                textsize=15,)
+            binning_label = ROOT.TLatex(pad.GetLeftMargin() + 0.02, 1 - pad.GetTopMargin() - 0.15,
+                                       "%ip; %i GeV < p^{T}_{#tau} < %i GeV"%(itk, int(pt_bins[n-1]), int(pt_bins[n])))
+            binning_label.SetNDC()
+            binning_label.SetTextFont(43)
+            binning_label.SetTextSize(15)
+            labels = [data_lable, atlas_lable, binning_label]
+            
+            ##--------------------------------------------------------
+            # - - plot FF CR hists
+            ##--------------------------------------------------------
+            canvas.cd(1)
+            cr_legend = ROOT.TLegend(0.6, 0.8, 0.9, 0.9)
+            if not cr_hists_dict[tkey][pkey]:
+                log.warning("Missing (%s, %s) bin in CR hists"%(tkey, pkey))
                 continue
-            if not cat.name in alphas[pkey]:
-                continue
-            alpha = alphas[pkey][cat.name]
-            log.info("(pT, alpha): {}, {}".format(pkey, alpha))
 
-            alpha_h.SetBinContent(nbin+1, alpha) 
-            alpha_h.SetBinError(nbin+1, 0.001) #<! dummy error for plotting purpose only
+            wj_hist, mj_hist = cr_hists_dict[tkey][pkey]
+            mj_hist.Sumw2()
+            wj_hist.Sumw2()
 
-            ff = alpha*float(CR_FFs["FF_CR_MULTIJET"]["tauJetBDT_02"][tkey][pkey]) + (1-alpha)*float(CR_FFs["FF_CR_WJETS"]["tauJetBDT_02"][tkey][pkey])
-            comb_ff_h.SetBinContent(nbin+1, ff) 
-            comb_ff_h.SetBinError(nbin+1, 0.0001) #<! dummy error for plotting purpose only
+            ymax = 2.* max(mj_hist.GetMaximum(), wj_hist.GetMaximum())
+            mj_hist.GetYaxis().SetRangeUser(0, ymax)
+            wj_hist.GetYaxis().SetRangeUser(0, ymax)
+            
+            wj_hist.SetMarkerColor(ROOT.kRed)
+            wj_hist.SetLineColor(ROOT.kRed)
+            wj_hist.GetXaxis().SetTitle(var.title)
+            wj_hist.GetYaxis().SetTitle("fraction of events")
+            cr_legend.AddEntry(wj_hist, "W-jets CR", "P")
 
-        alpha_h.SetLineColor(COLORS[ic])
-        alpha_h.SetLineWidth(2)
-        alpha_h.GetYaxis().SetTitle("#alpha_{MJ}")
-        alpha_h.GetXaxis().SetTitle("p^{T}_{#tau} GeV")
-        alpha_hists.append(alpha_h)
+            mj_hist.SetMarkerColor(ROOT.kBlack)
+            mj_hist.SetLineColor(ROOT.kBlack)
+            cr_legend.AddEntry(mj_hist, "Multi-jets CR", "P")
 
-        alpha_h.Draw("E1")
-        alpha_h.GetYaxis().SetRangeUser(-2., 5)
-        a_legend.AddEntry(alpha_h, "%s"%cat.label, "L")
+            wj_hist.Draw("")
+            mj_hist.Draw("SAME")
 
-        comb_ff_h.SetLineColor(COLORS[ic])
-        comb_ff_h.SetLineWidth(2)
-        comb_ff_h.GetYaxis().SetTitle("FF_{COM}")
-        comb_ff_h.GetXaxis().SetTitle("p^{T}_{#tau} GeV")
+            ## - - draw all the labels
+            for label in labels:
+                label.Draw("SAME")
+            cr_legend.Draw("SAME")
 
-        comb_ff_h.GetYaxis().SetRangeUser(0.001, 10)
-        comb_ff_hists.append(comb_ff_h)
+            ##--------------------------------------------------------
+            # - - plot target regions hists and fitted functions
+            ##--------------------------------------------------------
+            for cat in target_regions:
+                canvas.cd(2)
+                if not pkey in target_hists_dict[tkey]:
+                    log.warning("missing TARGET %s %s "%(tkey, pkey))
+                    continue
+                if not cat in target_hists_dict[tkey][pkey]:
+                    log.warning("missing TARGET %s %s  %s"%(cat, tkey, pkey))
+                    continue
 
-    for i, ah in enumerate(alpha_hists):
-        if i==0:
-            ah.Draw("E1")
-        else:
-            ah.Draw("E1 SAME")
-    alabel.Draw("SAME")
-    a_legend.Draw("SAME")
-    canvas.SetLogx()
-    canvas.Print(os.path.join(FFs_ARGS.pdir, "ALPHA_inclusive_%s.png"%(tkey)) )
-    canvas.Clear()
+                tr_legend = ROOT.TLegend(0.6, 0.8, 0.9, 0.9) 
+                target_hist, target_fit = target_hists_dict[tkey][pkey][cat]
 
-    for i, fh in enumerate(comb_ff_hists):
-        if i==0:
-            fh.Draw("E1")
-        else:
-            fh.Draw("E1 SAME")
-    canvas.SetLogy()
-    canvas.SetLogx()
-    alabel.Draw("SAME")
-    a_legend.Draw("SAME")
-    canvas.Print(os.path.join(FFs_ARGS.pdir, "FFs_COM_inclusive_%s.png"%(tkey)) )
-    canvas.Clear()
+                tr_ymax = 2.* target_hist.GetMaximum()
+                target_fit.GetYaxis().SetRangeUser(0, tr_ymax)
+                target_fit.SetMarkerColor(ROOT.kRed)
+                target_fit.SetLineColor(ROOT.kRed)
+                target_fit.Draw("APC")
 
-    canvas.Close()
+                target_hist.SetMarkerColor(ROOT.kBlack)
+                target_hist.SetLineColor(ROOT.kBlack)
+                target_fit.GetXaxis().SetTitle(var.title)
+                target_fit.GetYaxis().SetTitle("fraction of events")
+                target_hist.Draw("SAME")
 
+                tr_legend.AddEntry(target_hist, "%s region"%cat, "P")
+                tr_legend.AddEntry(target_fit, "fit", "L")
+
+                # - - add legends, labels and save canvas
+                tr_legend.Draw("SAME")
+                for label in labels: 
+                    label.Draw("SAME")
+                
+                ##--------------------------------------------------------
+                # - - plot chi2
+                ##--------------------------------------------------------
+                canvas.cd(3)
+                chi2_graph = chi2s[tkey][pkey][cat]
+                ci_ymax = 2 * max(chi2_graph.GetY())
+                chi2_graph.SetLineWidth(3)
+                chi2_graph.SetLineColor(ROOT.kBlack)
+                chi2_graph.GetYaxis().SetRangeUser(0, ci_ymax)
+                chi2_graph.Draw("AL")
+                chi2_graph.GetXaxis().SetTitle("#alpha_{MJ}")
+                chi2_graph.GetYaxis().SetTitle("#chi^{2}/ndf")
+
+                for label in labels:
+                    label.Draw("SAME")
+                tr_legend.Draw("SAME")
+
+                # - - find the min and draw a line there
+                xmin, err_up, err_dn =  chi2_error(chi2_graph)
+
+                ymax = 0.6*ci_ymax
+                tline = ROOT.TLine(xmin, 0, xmin , ymax)
+                tline.SetLineColor(ROOT.kRed)
+                tline.SetLineWidth(4)
+                tline.Draw("SAME")
+
+                tline_up = ROOT.TLine(xmin+err_up, 0, xmin+err_up, ymax)
+                tline_up.SetLineColor(ROOT.kRed)
+                tline_up.SetLineWidth(2)
+                tline_up.SetLineStyle(10)
+                tline_up.Draw("SAME")
+                
+                tline_dn = ROOT.TLine(xmin-err_dn, 0, xmin-err_dn, ymax)
+                tline_dn.SetLineColor(ROOT.kRed)
+                tline_dn.SetLineWidth(2)
+                tline_dn.SetLineStyle(10)
+                tline_dn.Draw("SAME")
+
+                canvas.Print(os.path.join(pdir, "FFs_FIT_%s_%s_%i_%s.png"%(cat, tkey, pt_bins[n-1], pkey) ) )
+                
+    return canvas 
+
+
+##--------------------------------------------------------------------------
+## - - plot alpha
+##--------------------------------------------------------------------------
+def plot_alpha(alphas, cr_ffs,
+               regions=[], pdir="ffplots",
+               colors=[ROOT.kRed, ROOT.kGreen, ROOT.kBlue, ROOT.kOrange, ROOT.kMagenta]):
+    """plot alpha as a function of pT for 1p/3p taus
+    """
+    
+    ## - - prep outdir 
+    os.system("mkdir -p %s"%pdir)
+
+    ## - - make sure enough color is registered :D
+    while len(regions) > len(colors):
+        colors += [c+4 for c in colors]
+    
+    tkeys = alphas.keys()
+    for itk in tkeys: 
+        pt_bins = sorted([int(k) for k in alphas[itk].keys()])
+                
+        alpha_hists = []
+        comb_ff_hists = []
+        a_legend = ROOT.TLegend(0.7, 0.7, 0.9, 0.9)
+        for ic, cat in enumerate(regions):
+            log.info("\n****************** rQCD estimation (category:{0}, nTracks={1}) ******************".format(cat.name, itk))
+            alpha_h = ROOT.TH1F(
+                "alpha_%s_%s"%(cat, itk), "#alpha_{MJ}",len(pt_bins) - 1, array.array("d", pt_bins))
+
+            comb_ff_h = ROOT.TH1F(
+                "comb_ff_%s_%s"%(cat, itk), "#COM_{FF}",len(pt_bins) - 1, array.array("d", pt_bins))
+            for nbin, pt in enumerate(pt_bins[1:]):
+                pkey = "%i"%pt
+                if not pkey in alphas[itk]:
+                    log.warning(" no alpha is fitted for %i bin! setting it to 0"%pt)
+                    alpha = 0.001
+                    alpha_err = 0.0001
+                    ff = 0.001
+                    ff_err = 0.0001
+                    continue
+                if not cat.name in alphas[itk][pkey]:
+                    continue
+                
+                alpha = alphas[itk][pkey][cat.name]["NOMINAL"]
+                alpha_up = alphas[itk][pkey][cat.name]["UP"]
+                alpha_down = alphas[itk][pkey][cat.name]["DOWN"]
+                alpha_h.SetBinContent(nbin+1, alpha)
+                alpha_h.SetBinError(nbin+1, alpha_up - alpha_down)
+                log.info("(pT, alpha): {}, {}".format(pkey, alpha))
+
+                ## - - ff_com = alpha * ff_mj + (1-alpha)ff_wj
+                ff = alpha*float(cr_ffs["FF_CR_MULTIJET"]["tauJetBDT_02"][itk][pkey]) +\
+                     (1-alpha)*float(cr_ffs["FF_CR_WJETS"]["tauJetBDT_02"][itk][pkey])
+                ff_up = alpha_up*float(cr_ffs["FF_CR_MULTIJET"]["tauJetBDT_02"][itk][pkey]) +\
+                     (1-alpha_up)*float(cr_ffs["FF_CR_WJETS"]["tauJetBDT_02"][itk][pkey])
+                ff_down = alpha_down*float(cr_ffs["FF_CR_MULTIJET"]["tauJetBDT_02"][itk][pkey]) +\
+                     (1-alpha_down)*float(cr_ffs["FF_CR_WJETS"]["tauJetBDT_02"][itk][pkey])
+                comb_ff_h.SetBinContent(nbin+1, ff)
+                comb_ff_h.SetBinError(nbin+1, ff_up-ff_down)
+            
+            alpha_h.SetLineColor(colors[ic])
+            alpha_h.SetMarkerColor(colors[ic])
+            alpha_h.SetLineWidth(3)
+            alpha_h.GetYaxis().SetTitle("#alpha_{MJ}")
+            alpha_h.GetXaxis().SetTitle("p^{T}_{#tau} GeV")
+            alpha_hists.append(alpha_h)
+
+            alpha_h.GetYaxis().SetRangeUser(-2., 5)
+            a_legend.AddEntry(alpha_h, "%s"%cat.label, "L")
+
+            comb_ff_h.SetLineColor(colors[ic])
+            comb_ff_h.SetMarkerColor(colors[ic])
+            comb_ff_h.SetLineWidth(3)
+            comb_ff_h.GetYaxis().SetTitle("Fake-Factors")
+            comb_ff_h.GetYaxis().SetTitleOffset(0.95)
+            comb_ff_h.GetXaxis().SetTitle("p^{T}_{#tau} GeV")
+
+            comb_ff_h.GetYaxis().SetRangeUser(0.01, 1)
+            comb_ff_hists.append(comb_ff_h)
+
+        canvas = ROOT.TCanvas("c", "c", 800, 700)
+        ## - - prep labels for the plots
+        dinfo = " #sqrt{#font[52]{s}} = 13 TeV"
+        _, data_lable, atlas_lable, = label_plot(canvas,
+                                                 data_info=dinfo,
+                                                 atlas_label="ATLAS Internal",
+                                                 textsize=18,)
+        binning_label = ROOT.TLatex(canvas.GetLeftMargin() + 0.06, 1 - canvas.GetTopMargin() - 0.15,
+                                       "# of charged #tau-tracks = %s"%itk)
+        binning_label.SetNDC()
+        binning_label.SetTextFont(43)
+        binning_label.SetTextSize(18)
+        labels = [data_lable, atlas_lable, binning_label]
+
+        for i, ah in enumerate(alpha_hists):
+            if i==0:
+                ah.Draw("E1")
+            else:
+                ah.Draw("SAME")
+        for label in labels:
+            label.Draw("SAME")
+        a_legend.Draw("SAME")
+        canvas.SetLogx()
+        canvas.Print(os.path.join(pdir, "ALPHA_inclusive_%s.png"%(itk)) )
+        canvas.Close()
+
+        ## - - another canvas with different y scale !
+        tcanvas = ROOT.TCanvas("c", "c", 800, 700)
+        for i, fh in enumerate(comb_ff_hists):
+            if i==0:
+                fh.Draw("E1")
+            else:
+                fh.Draw("E1 SAME")
+        tcanvas.SetLogy()
+        tcanvas.SetLogx()
+        for label in labels:
+            label.Draw("SAME")
+        a_legend.Draw("SAME")
+        tcanvas.Print(os.path.join(pdir, "FFs_COM_inclusive_%s.png"%(itk)) )
+        tcanvas.Close()

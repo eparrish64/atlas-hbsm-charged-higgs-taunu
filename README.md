@@ -51,12 +51,12 @@ After you have the histograms ready you can produce various plots
 
 
 #### calculating Fake-Factors
-After you have the database for the two channels ready 
+After you have the database for the two channels ready (if the caches are already available please make sure they're healthy)
 - to see all the cmdline flags ``calculate-rqcd --help``
-- to get the FFs for the FFs CRs: ``calculate-rqcd --db-version 18v01 --data-streams 2015 2016 --cache-cr-ffs --ffs-cr-cache FFs_CR.yml``
-- producing all the histograms for target-regions in order to find the combined Fake-Factors: ``calculate-rqcd --db-version 18v01 --data-streams 2015 2016 --cache-ffs-hists --ffs-hists-cache FFs_HISTS.pkl ``
+- to get the FFs for the FFs CRs: ``calculate-rqcd --db-version 18v01 --data-streams 2015 2016 --ffs-cr-cache FFs_CR.yml``
+- producing all the histograms for target-regions in order to find the combined Fake-Factors: ``calculate-rqcd --db-version 18v01 --data-streams 2015 2016  --ffs-hists-cache FFs_HISTS.pkl ``
 - once you have all the histograms  and FFs in the control regions ready (pickled) in order to calcualte the rQCD and produce the validation plots do:
- ``calculate-rqcd --db-version 18v01 --data-streams 2015 2016 --ffs-cr-cache FFs_CR.yml --ffs-hists-cache FFs_HISTS.pkl --cache-rqcd --rqcd-cache FFs_COMBINED.yml  --eval-rqcd --validation-plots --pdir ffsplots ``
+ ``calculate-rqcd --db-version 18v01 --data-streams 2015 2016 --ffs-cr-cache FFs_CR.yml --ffs-hists-cache FFs_HISTS.pkl --rqcd-cache FFs_COMBINED.yml  --eval-rqcd --validation-plots --pdir ffsplots ``
 
 
 #### MVA

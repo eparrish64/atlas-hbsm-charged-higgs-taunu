@@ -292,19 +292,15 @@ def draw(var, category,
             # - - background uncertainty band
             total_backgrounds, high_band_backgrounds, low_band_backgrounds = uncertainty_band(
                 backgrounds_hists, systematics, overflow=overflow)
-            ratio_hist_high = total_backgrounds + high_band_backgrounds
-            ratio_hist_high.Divide(total_backgrounds)
-
-            ratio_hist_low = total_backgrounds - low_band_backgrounds
-            ratio_hist_low.Divide(total_backgrounds)
+            ratio_hist_high = ratio_hist(data_hist, total_backgrounds + high_band_backgrounds)
+            ratio_hist_low = ratio_hist(data_hist, total_backgrounds - low_band_backgrounds)
 
             ratio_error = ROOT.TGraphAsymmErrors()
             for i in range(0, rhist.GetNbinsX()):
-                ratio_error.SetPoint(i, rhist.GetXaxis().GetBinCenter(i), 
-                                     rhist.GetBinContent(i))
+                ratio_error.SetPoint(i, rhist.GetXaxis().GetBinCenter(i), 1)
 
-                eyh = abs(ratio_hist_high.GetBinContent(i) - rhist.GetBinContent(i))
-                eyl = abs(rhist.GetBinContent(i) - ratio_hist_low.GetBinContent(i))
+                eyh = abs(1 - ratio_hist_high.GetBinContent(i))
+                eyl = abs(1 - ratio_hist_low.GetBinContent(i))
                 # - - dummy x error for plotting
                 exh = rhist.GetXaxis().GetBinWidth(i)/2.
                 exl = exh

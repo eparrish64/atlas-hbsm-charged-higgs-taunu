@@ -1,6 +1,6 @@
 # numpy imports
 import numpy as np
-import glob, os, random, string  
+import glob, os, random, string, copy  
 
 # ROOT
 import ROOT
@@ -208,9 +208,13 @@ class Data(Sample):
         categories = kwargs.pop("categories", [])
         if self.blind:
             categories = filter(lambda c: c.name not in self.blind_regions, categories)
-        
+            
+        data_categories = copy.deepcopy(categories)
+        for ct in data_categories:
+            ct.truth_tau = None
+            
         _workers = super(Data, self).workers(
-            categories=categories,
+            categories=data_categories,
             systematics=["NOMINAL"],
             weighted=False,
             **kwargs)

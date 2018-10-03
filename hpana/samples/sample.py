@@ -214,11 +214,13 @@ class Sample(object):
                 extra_cuts=None,
                 extra_weight=None,
                 weighted=True,
-                tauid=None,
-                truth_match_tau=None,
                 hist_templates=None,
                 **kwargs):
         """ list of workers to to submit jobs.
+        each worker is basically assigned a histogram to fill, one hist per systematic pre dataset.
+        please note that additional selections like trigger are applied here and 
+        selection string is passed to the worker. Furtheremore for each selection category a weight is also 
+        assiegned.
         """
         if not fields:
             fields = self.config.variables
@@ -232,11 +234,9 @@ class Sample(object):
         # - - - - defensive copy 
         categories_cp = copy.deepcopy(categories)
         for category in categories_cp:
-            # - - additional filters like trigger, tauid, truth-match, etc. beside the selection category cuts.
-            # - - keep in the mind that the trigger might be different for different selection categories.
-            # - - and for DATA and MC
-            category.cuts += self.cuts(trigger=trigger if trigger else triggers[category.name],
-                                       tauid=tauid, extra_cuts=extra_cuts, truth_match_tau=truth_match_tau)
+            category.cuts += trigger if trigger else triggers[category.name]
+            if extra_cuts:
+                category.cuts += extra_cuts
             
         # - - - - one worker per dataset per systematic
         workers = set()

@@ -73,8 +73,12 @@ class Configuration(object):
     
     @property
     def categories(self):
-        return Category.factory(channel=self.channel, mc_camp=self.mc_camp) + self.ff_cr_regions
-
+        cats = CATEGORIES[self.channel] + self.ff_cr_regions
+        for c in cats:
+            c.mc_camp = self.mc_camp
+            
+        return cats
+    
     @property
     def systematics(self):
         """common systematics components

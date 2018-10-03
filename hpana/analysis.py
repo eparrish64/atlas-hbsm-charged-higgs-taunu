@@ -57,13 +57,13 @@ class Analysis(object):
     # "FakeFactors/GetElFakeSF.C",
         
     #"TriggerEfficiency/ApplyEff.C",
-    "metTrigEff.cxx",
+    "metTrigEff1516.cxx",
         
     # "GetTopPtWeight.C",
 
     # - - - - new (derived within the hpana and from r21 ntuples)
-    "FakeFactors/FFs_COMBINED.cxx",
-    "FakeFactors/FFs_CR.cxx",    
+    "FakeFactors/FFs_COMBINED151617.cxx",
+    "FakeFactors/FFs_CR151617.cxx",    
 
     # - - - - correction factor for tau polarization(only applied to 1 prong taus, upsilon varibale, and QCD sample)    
     "FakeFactors/CorrectUpsilon.C",
@@ -208,11 +208,11 @@ class Analysis(object):
         self.backgrounds = [
             self.lepfakes,
             self.qcd,
-            self.ttbar,
             self.single_top,
             self.wtaunu,
             self.ztautau,
-            self.diboson,] 
+            self.diboson,
+            self.ttbar,] 
         
         # - - - - - - - - signals 
         self.signals = self.get_signals(masses=[90, 110, 400])
@@ -488,18 +488,27 @@ class Analysis(object):
             else:
                 raise ValueError("template_hist or fields arg is needed")
             
-        if not control_regions:
-            control_regions = self.config.ff_cr_regions
-
-        # - - - -  deep copy control_regions as we want to update the cuts attribute on them
-        control_regions = copy.deepcopy(control_regions)
-        
         if not tauid:
             tauid = self.config.tauid
             
         if not antitau:
             # - - - - PLEASE NOTE THAT tau_0_jet_bdt_score_sig cut is included in the template hist
             antitau = ROOT.TCut("tau_0_jet_bdt_loose==0")
+            
+        if not control_regions:
+            control_regions = self.config.ff_cr_regions
+
+        # - - - -  deep copy control_regions as we want to update the cuts attribute on them
+        tau_control_regions = copy.deepcopy(control_regions)
+        antitau_control_regions = copy.deepcopy(control_regions)
+        for cr in tau_control_regions:
+            cr.tauid = tauid
+            cr.truth_tau = TAU_IS_LEP_OR_HAD
+        
+        for acr in antitau_control_regions:
+            acr.tauid = antitau
+            acr.truth_tau = TAU_IS_TRUE #<! a true tau that's failing tau ID
+
             
         # - - - - parallel processing
         workers = []
@@ -508,7 +517,7 @@ class Analysis(object):
         # - - - - DATA workers
         data_tau_workers = self.data.workers(
             fields=template_fields[:1], hist_templates=template_hist,
-            categories=control_regions, tauid=tauid, trigger=trigger,)
+            categories=tau_control_regions, trigger=trigger,)
         # - - make worker names unique 
         for w in data_tau_workers:
             w.name += "_TAU"
@@ -516,7 +525,7 @@ class Analysis(object):
             
         data_antitau_workers = self.data.workers(
             fields=template_fields[:1], hist_templates=template_hist,
-            categories=control_regions, tauid=antitau, trigger=trigger,)
+            categories=antitau_control_regions, trigger=trigger,)
         for w in data_antitau_workers:
             w.name += "_ANTITAU"
         workers += data_antitau_workers
@@ -528,13 +537,13 @@ class Analysis(object):
             for mc in self.mc:
                 mc_tau_workers += mc.workers(
                     fields=template_fields[:1], hist_templates=template_hist,
-                    categories=control_regions, tauid=tauid, trigger=trigger, truth_match_tau=TAU_IS_LEP_OR_HAD)
+                    categories=tau_control_regions, trigger=trigger)
 
                 # - - taus not passing nominal tau ID (medium)
                 not_tau = ROOT.TCut("!%s"%self.config.tauid.GetTitle())
                 mc_antitau_workers += mc.workers(
                     fields=template_fields[:1], hist_templates=template_hist,
-                    categories=control_regions, tauid=antitau, trigger=trigger, truth_match_tau=TAU_IS_TRUE)
+                    categories=antitau_control_regions, trigger=trigger,)
 
             # add mc tau/antitau  workers to the list of all workers
             for w in mc_tau_workers:

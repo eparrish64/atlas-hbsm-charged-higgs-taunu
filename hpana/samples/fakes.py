@@ -13,7 +13,7 @@ from ..dataset_hists import dataset_hists
 from ..cluster.parallel import close_pool
 from .. import log
 from ..categories import (
-    ANTI_TAU, TAU_IS_LEP, TAU_IS_TRUE, TAU_IS_LEP_OR_HAD, FF_CR_REGIONS, Category)
+    ANTI_TAU, TAU_IS_LEP, TAU_IS_TRUE, TAU_IS_LEP_OR_HAD, FF_CR_REGIONS, CATEGORIES)
 
 
 ##---------------------------------------------------------------------------------------
@@ -25,17 +25,20 @@ class QCD(Sample):
     
     # - - - -  Fake-Factor weights are different for different selection categories
     FF_TYPES = OrderedDict()
+    FF_INDICIES = OrderedDict()
     ff_index = 999
     ff_cr_index = 9000
     for ch in ["taujet", "taulep"]:
         FF_TYPES[ch] = {}
-        for ct in Category.TYPES[ch].keys():
+        for ct in CATEGORIES[ch]:
             ff_index += 1 
-            FF_TYPES[ch][ct] = ff_index
+            FF_TYPES[ch][ct.name] = ff_index
+            FF_INDICIES[ct.name] = ff_index
         for cr in FF_CR_REGIONS[ch]:
             ff_cr_index +=1
             FF_TYPES[ch][cr.name] = ff_cr_index
-            
+            FF_INDICIES[cr.name] = ff_cr_index
+        
     # - - - - control region FFs are calcualted with a the following funtions, loaded in the global ROOT scope. 
     FF_WCR = "GetFF02_FF_CR_WJETS({0}, {1})"
     FF_MJCR = "GetFF02_FF_CR_MULTIJET({0}, {1})"
@@ -74,7 +77,7 @@ class QCD(Sample):
         self.config = config
         self.data = data
         self.mc = mc
-        self.tauid = ANTI_TAU[self.config.mc_camp]
+        self.tauid = self.config.antitau #<! set antitau for TAUID 
         self.correct_upsilon = correct_upsilon
         
     def cuts(self, **kwargs):
@@ -178,15 +181,22 @@ class QCD(Sample):
         """
 
         # - - - - make sure to truth match taus to lep or hadronic tau in MC
+        # - - - - drop default tau ID and Truth Match cuts
         mc_categories = copy.deepcopy(categories)
         for mc_category in mc_categories:
-            mc_category.cuts += self.cuts(trigger=trigger if trigger else mc_triggers[mc_category.name],
-                                           extra_cuts=extra_cuts, tauid=tauid, truth_match_tau=TAU_IS_LEP_OR_HAD)
+            mc_category.tauid = tauid
+            mc_category.truth_tau = TAU_IS_LEP_OR_HAD
+            mc_category.cuts += trigger if trigger else mc_triggers[mc_category.name]
+            if extra_cuts:
+                mc_category.cuts += extra_cuts
 
         data_categories = copy.deepcopy(categories)
         for data_category in data_categories:
-            data_category.cuts += self.cuts(trigger=trigger if trigger else data_triggers[data_category.name],
-                                            extra_cuts=extra_cuts, tauid=tauid)
+            data_category.tauid = tauid
+            data_category.truth_tau = None
+            data_category.cuts += trigger if trigger else data_triggers[data_category.name]
+            if extra_cuts:
+                data_category.cuts += extra_cuts
 
         # - - - - prepare MC and FF weights
         mc_weights = self.weights(categories=categories)
@@ -495,15 +505,17 @@ class LepFake(Sample):
             
         # - - - - prepare categories; deep copy since we don't want change categories
         mc_categories = copy.deepcopy(categories)
-            
-        truth_match_tau = kwargs.pop("truth_match_tau", None)
+
+        ## - - - - get leps faking tau
+        for mc_cat in mc_categories:
+            mc_cat.truth_tau = self.leptau
         
         # - - - - MC workers
         lepfake_workers = []
         for mc in self.mc:
             # - - - - turn off truth matching 
             lepfake_workers += mc.workers(categories=mc_categories, fields=fields,systematics=systematics,
-                                          weighted=weighted,truth_match_tau=self.leptau, channel=self.config.channel, **kwargs)
+                                          weighted=weighted,channel=self.config.channel, **kwargs)
 
         # - - - - add LepFake prefix to the workers names
         # - - - - so that are no mistaken with DATA/MC workers.
@@ -540,13 +552,9 @@ class LepFake(Sample):
             raise RuntimeError("no category is selected to produce hists for it")
 
         systematics = filter(lambda syst: syst in self.systematics, systematics)
-
-        truth_match_tau = kwargs.pop("truth_match_tau", None)
-
         
         # - - - - prepare the workers
-        workers = self.workers(categories=categories, fields=fields, systematics=systematics,
-                               truth_match_tau=self.leptau, **kwargs)
+        workers = self.workers(categories=categories, fields=fields, systematics=systematics, **kwargs)
 
         log.info(
             "************** processing %s sample hists in parallel, njobs=%i ************"%(self.name, len(workers) ) )

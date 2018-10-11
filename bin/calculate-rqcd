@@ -7,12 +7,14 @@
 """
 
 ## stdlib
-import os, sys, time, array, pickle, yaml 
+import os, sys, time, array, pickle, copy
 import multiprocessing
+
 
 ## PyPI
 import numpy as np
 from tabulate import tabulate
+import yaml
 
 # - - - - - - - -  parse ana args (needed before ROOT)
 from hpana.cmd import get_ffs_parser 
@@ -22,7 +24,16 @@ FFs_ARGS = ffs_parser.parse_args()
 ## local
 from hpana.rqcd import fit_alpha, prep_ff_hists, fake_sources, plot_cr_ffs, plot_alpha 
 from hpana.variables import rQCD_VARS, FFS_TEMPLATE_VARS, tau_0_jet_width, tau_0_jet_bdt_score_trans
-from hpana.categories import FAKE_TAU_SOURCE, FF_CR_MULTIJET, FF_CR_WJETS
+from hpana.categories import (
+    FAKE_TAU_SOURCE,
+    FF_CR_MULTIJET,
+    FF_CR_WJETS,
+    Category_BVETO,
+    Category_SR_TAUJET,
+    Category_SR_TAULEP,
+    Category_TAUEL_BVETO,
+    Category_TAUMU_BVETO)
+    
 from hpana.config import Configuration
 from hpana.analysis import Analysis
 from hpana.trigger import MULTIJET_TRIGGER
@@ -138,6 +149,7 @@ if __name__=="__main__":
     ##------------------------------------------------------------------------------------
     ## - - Fake Factors for the corresponding control regions
     ##------------------------------------------------------------------------------------
+    cr_ffs = {}
     try:
         log.info("loading FFs from %s"%FFs_ARGS.ffs_cr_cache)
         with open(FFs_ARGS.ffs_cr_cache, "r") as ffs_cr_cache:
@@ -156,11 +168,11 @@ if __name__=="__main__":
 
         ## taujet 
         tj_ffs = taujet_analysis.cache_ffs(control_regions=[], trigger=MULTIJET_TRIGGER, **kparams)
-
+        cr_ffs.update(tj_ffs)
+        
         ## taulep
         tl_ffs = taulep_analysis.cache_ffs(control_regions=[], **kparams)
-
-        cr_ffs = tj_ffs.update(tl_ffs)
+        cr_ffs.update(tl_ffs)
         
         with open(FFs_ARGS.ffs_cr_cache, "w") as ffs_cr_cache:
             yaml.dump(cr_ffs, ffs_cr_cache)
@@ -181,18 +193,27 @@ if __name__=="__main__":
     except Exception, err:
         log.warning("failed to load FFs histograms from %s; calculating them on the fly"%FFs_ARGS.ffs_hists_cache)
         combined_ffs_hists = {"taulep": {}, "taujet": {}}
-        
+
+        ## - - set tauID to loose tau 
+        tj_cats = copy.deepcopy(TAUJET_TARGET_REGIONS)
+        for cat in tj_cats:
+            cat.tauid = LOOSE_TAU
+            
         taujet_hists = taujet_analysis.hists(
-            fields=rQCD_VARS.values(), categories=TAUJET_TARGET_REGIONS, samples=TAUJET_SAMPLES,
-            parallel=True, tauid=LOOSE_TAU, hist_templates=FIT_HIST_TEMPLATES,)
+            fields=rQCD_VARS.values(), categories=tj_cats, samples=TAUJET_SAMPLES,
+            parallel=True, hist_templates=FIT_HIST_TEMPLATES,)
         combined_ffs_hists["taujet"] = taujet_hists
 
+        ## - - set tauID to loose tau 
+        tl_cats = copy.deepcopy(TAULEP_TARGET_REGIONS)
+        for cat in tl_cats:
+            cat.tauid = LOOSE_TAU
+            
         taulep_hists = taulep_analysis.hists(
-            fields=rQCD_VARS.values(), categories=TAULEP_TARGET_REGIONS, samples=TAULEP_SAMPLES,
-            parallel=True, tauid=LOOSE_TAU, hist_templates=FIT_HIST_TEMPLATES,)
+            fields=rQCD_VARS.values(), categories=tl_cats, samples=TAULEP_SAMPLES,
+            parallel=True, hist_templates=FIT_HIST_TEMPLATES,)
         combined_ffs_hists["taulep"] = taulep_hists
         
-
         ## write the histograms to disk
         with open(FFs_ARGS.ffs_hists_cache, "w") as pfile:
             pickle.dump(combined_ffs_hists, pfile)
@@ -225,7 +246,9 @@ if __name__=="__main__":
                                pdir=FFs_ARGS.pdir,
                                validation_plots=FFs_ARGS.validation_plots)
         if FFs_ARGS.validation_plots:
-            plot_alpha(alphas, cr_ffs, regions=TARGET_REGIONS, pdir=FFs_ARGS.pdir)
+            tj_regions = [FF_CR_MULTIJET, Category_BVETO, Category_SR_TAUJET]
+            tl_regions = [FF_CR_WJETS, Category_TAUEL_BVETO, Category_TAUMU_BVETO, Category_SR_TAULEP]
+            plot_alpha(alphas, cr_ffs, regions=tl_regions+tj_regions, pdir=FFs_ARGS.pdir, colors=COLORS)
     
 end_time = time.time()
 elapsed_time = (end_time - start_time)/60.

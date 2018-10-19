@@ -14,7 +14,7 @@ parser.add_argument('--reset', action='store_true', default=False)
 parser.add_argument('--versioned', action='store_true', default=False)
 parser.add_argument('--validate', action='store_true', default=False)
 parser.add_argument('--validate-pattern', default=None)
-parser.add_argument('--validate-type', default=None)
+parser.add_argument('--validate-type', type=int, default=None, choices=[0, 1])
 parser.add_argument('--validate-year', type=int, default=None)
 parser.add_argument('--info', action='store_true', default=False)
 parser.add_argument('--name', default='DB')
@@ -28,22 +28,20 @@ args = parser.parse_args()
 
 ## ROOT stuff after cmd setup 
 from hpana.db.datasets import Database
+from hpana import log
 
 # - - - - - - - - create a database 
 db = Database(name="%s_%s%s"%(args.name, args.channel, args.version),
               verbose=args.verbose)
 
 # - - - - - - - - validate the database 
-if args.validate or args.validate_pattern is not None:
-    # check for missing events etc...
-    validate_type = args.validate_type
-    if validate_type is not None:
-        validate_type = args.validate_type.upper()
-        validate_type = eval(validate_type)
-    db.validate(pattern=args.validate_pattern,
-                datatype=validate_type,
-                year=args.validate_year)
-
+if args.validate:
+    if db:
+        db.validate(pattern=args.validate_pattern,
+                    datatype=args.validate_type,
+                    year=args.validate_year)
+    else:
+        log.error("Can't validate database as it's empty! update it first and then rerun the validation")
 # - - - - - - - - just print db 
 elif args.info:
     print "%i datasets in database" % len(db)
@@ -51,7 +49,6 @@ elif args.info:
         if len(db[name].files) == 0:
             print "EMPTY DATASET"
             sys.exit(1)
-
 
 # - - - - - - - - updated the datebase                     
 else:
@@ -72,3 +69,4 @@ else:
             versioned=args.versioned,
             **params)
     db.write()
+    

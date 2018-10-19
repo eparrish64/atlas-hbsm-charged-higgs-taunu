@@ -10,6 +10,7 @@ import cPickle as pickle
 import atexit
 import fnmatch
 from collections import namedtuple
+from  multiprocessing import Pool, cpu_count
 
 # ROOT
 import ROOT
@@ -23,23 +24,29 @@ from .decorators import cached_property
 from .yaml_utils import Serializable
 from . import xsec
 from .. import EVENTS_CUTFLOW_HIST, EVENTS_CUTFLOW_BIN, MC_CAMPAIGN 
+from hpana.cluster.parallel import close_pool
 
 # ATLAS 
-USE_PYAMI = False
+USE_PYAMI = True
 try:
-    from pyAMI.client import AMIClient
-    from pyAMI.query import get_dataset_xsec_effic, \
-                            get_dataset_info, \
-                            get_datasets, \
-                            get_provenance, \
-                            get_periods, \
-                            get_runs
-    from pyAMI import query
-    from pyAMI.auth import AMI_CONFIG, create_auth_config
-except ImportError:
+    import pyAMI
+    import pyAMI.client 
+    import pyAMI.atlas.api as AtlasAPI
+
+    amiclient = pyAMI.client.Client('atlas')
+    AtlasAPI.init()
+    
+    from pyAMI.atlas.api import get_dataset_info, get_dataset_prov, get_file
+except ImportError, err:
     USE_PYAMI = False
-    log.debug("pyAMI is not installed. "
+    log.error(err)
+    log.warning("pyAMI is not installed. "
               "Cross section retrieval will be disabled.")
+# if USE_PYAMI:
+#     if not os.path.exists(AMI_CONFIG):
+#         create_auth_config()
+#     amiclient.read_config(AMI_CONFIG)
+
 
 ##--------------------------------------------------------------------------------
 ## consts
@@ -142,18 +149,18 @@ if os.path.isfile(XSEC_CACHE_FILE):
         log.info("Loading cross section cache in %s ..." % XSEC_CACHE_FILE)
         XSEC_CACHE = pickle.load(cache)
 
-if USE_PYAMI:
-    amiclient = AMIClient()
-    if not os.path.exists(AMI_CONFIG):
-        create_auth_config()
-    amiclient.read_config(AMI_CONFIG)
 
 # some named ntuples 
 Namedset = namedtuple('Namedset','name tags meta properties')
 Dataset = namedtuple('Dataset',Namedset._fields + ('datatype',))
 Fileset = namedtuple('Fileset',Dataset._fields + ('files', 'treename'))
 ATLASFileset = namedtuple('ATLASFileset',Fileset._fields + ('year', 'grl',))
-    
+
+##--------------------------------------------------------------------------------
+## 
+class DoesNotExist(Exception):
+    pass
+
 ##--------------------------------------------------------------------------------
 ## 
 class Fileset(Fileset):
@@ -265,32 +272,29 @@ class Database(dict):
         """
         ds = {}
         for name, info in self.items():
-            if year is not None and info.year != year:
-                continue
             if datatype is not None and info.datatype != datatype:
                 continue
+            if year:
+                if datatype==0 and int(info.stream) != int(year):
+                    continue
+                if datatype==1 and (not int(year) in [int(s) for s in info.stream]):
+                    continue
+                
             if info.datatype == DATA and info.id < 0:
                 # only validate data run datasets
                 continue
             if pattern is None or fnmatch.fnmatch(name, pattern):
                 ds[name] = info
-                
         incomplete = []
-        for name, info in sorted(ds.items(), key=lambda item: item[0]):
-            log.info("Validating %s ..." % name)
-            complete = validate_single((name, info), child=False)
-            log.info("Complete: %s" % complete)
-            log.info('-' * 50)
-            if not complete:
-                incomplete.append(info.ds)
-        #pool = Pool(processes=cpu_count())
-        #for result, complete in pool.map(
-        #        validate_single, sorted(ds.items(), key=itemgetter(0))):
-        #    print result
-        #    print "Complete: %s" % complete
-        #    print '-'*50
-        #    if not complete:
-        #        all_complete = False
+        pool = Pool(processes=cpu_count())
+        for result, complete in pool.map_async(
+                validate_single, sorted(ds.items(), key=itemgetter(0))).get(36000):
+           print result
+           print "Complete: %s" % complete
+           print '-'*50
+           if not complete:
+               all_complete = False
+               incomplete.append(result)
         if not incomplete:
             log.info("ALL DATASETS ARE COMPLETE")
         else:
@@ -385,6 +389,7 @@ class Database(dict):
                             datatype=MC,
                             treename=mc_treename,
                             ds=name,
+                            ntup_name=basename,
                             id=int(match.group('id')),
                             version=version,
                             tag_pattern=None,
@@ -437,6 +442,7 @@ class Database(dict):
                         datatype=DATA,
                         treename=data_treename,
                         ds=name,
+                        ntup_name=basename,
                         id=run,
                         grl=None,#data_grl,
                         dirs=[dir],
@@ -515,6 +521,7 @@ class Dataset(Serializable):
         return name 
     
     def __init__(self, name, datatype, treename, ds, dirs,
+                 ntup_name="",
                  file_pattern='*.root*',
                  id=None,
                  category=None,
@@ -525,6 +532,7 @@ class Dataset(Serializable):
                  year=None,
                  stream=None):
         self.name = name
+        self.ntup_name = ntup_name
         self.datatype = datatype
         self.treename = treename
         self.id = id
@@ -622,13 +630,13 @@ class Dataset(Serializable):
         return _files
     
     def __repr__(self):
-        return ("%s(name=%r, datatype=%r, treename=%r, "
+        return ("%s(name=%r, ntup_name=%r, datatype=%r, treename=%r, "
                 "id=%r, ds=%r, category=%r, version=%r, "
                 "tag_pattern=%r, tag=%r, dirs=%r, "
                 "file_pattern=%r, grl=%r, year=%r, " 
                 "stream=%r, files=%r, events=%r, xsec_kfact_effic=%r)") % (
                     self.__class__.__name__,
-                    self.name, self.datatype, self.treename,
+                    self.name, self.ntup_name, self.datatype, self.treename,
                     self.id, self.ds, self.category, self.version,
                     self.tag_pattern, self.tag, self.dirs,
                     self.file_pattern, self.grl, self.year,
@@ -666,7 +674,12 @@ def write_cache():
 
 ##--------------------------------------------------------------------------------
 ## 
-def validate_single(args, child=True):
+def validate_single(args, child=False):
+    """
+
+    """
+    
+    
     if child:
         from cStringIO import StringIO
         sys.stdout = out = StringIO()
@@ -674,52 +687,68 @@ def validate_single(args, child=True):
     name = args[0]
     info = args[1]
     complete = True
+    log.info("Validating %s . . ."%name )
+    
     try:
         dirs = info.dirs
         root_files = []
         for dir in dirs:
             root_files += glob.glob(os.path.join(dir, info.file_pattern))
         events = 0
+        AOD_events = 0
+        parent_dAOD = None
         for fname in root_files:
             try:
-                with root_open(fname) as rfile:
-                    try: # skimmed dataset
-                        events += int(rfile.cutflow_event[0])
-                    except DoesNotExist: # unskimmed dataset
-                        tree = rfile.tau
-                        events += tree.GetEntries()
+                rfile = ROOT.TFile(fname, "READ")
+                if not parent_dAOD:
+                    EL_tree = rfile.Get("EventLoop_FileExecuted")
+                    for n, evt, in enumerate(EL_tree):
+                        parent_dAOD = str(evt.file) 
+                    
+                try: # skimmed dataset
+                    events += int(rfile.Get(EVENTS_CUTFLOW_HIST[MC_CAMPAIGN]).GetBinContent(2) )
+                    AOD_events += int(rfile.Get(EVENTS_CUTFLOW_HIST[MC_CAMPAIGN]).GetBinContent(7) )
+                except DoesNotExist: # unskimmed dataset
+                    tree = rfile.NOMINAL
+                    events += tree.GetEntries()
+                rfile.Close()
             except IOError:
                 log.warning("Currupt file: %s" % fname)
                 pass
-        # determine events in original ntuples
-        # use first dir
-        ds_name = info.ds
-        log.info('NTUP: ' + ds_name)
-        ds_info = get_dataset_info(amiclient, ds_name)
-        ntuple_events = int(ds_info.info['totalEvents'])
+            
+        ## determine events in original ntuples
+        ds_name = info.name
+        ds_logical_name  = get_file(amiclient, parent_dAOD)[0]["logicalDatasetName"]
+        
+        ds_info = get_dataset_info(amiclient, ds_logical_name)[0]
+        dAOD_events = int(ds_info['totalEvents'])
+
+        ## quick check to see if all dAODs were fully processed 
+        # if ds_info["taskStatus_0"]!="DONE":
+        #     log.warning("INCOMPLETE dAOD!")
         try:
-            # determine events in AODs
-            prov = get_provenance(amiclient, ds_name, type='AOD')
-            AOD_ds = prov.values()[0][0].replace('recon', 'merge')
-            log.info('AOD: ' + AOD_ds)
-            AOD_events = int(get_datasets(amiclient, AOD_ds, fields='events',
-                    flatten=True)[0][0])
+            ## determine events in AODs
+            prov = get_dataset_prov(amiclient, ds_logical_name)
+            log.info('AOD: ' + prov["node"][1]["logicalDatasetName"])
+            original_AOD_events = int(prov["node"][1]["events"])
         except IndexError:
             log.info('AOD: UNKNOWN')
-            AOD_events = ntuple_events
-        log.info(name)
-        log.info("\tevts\tNTUP\tAOD")
-        log.info("\t%i\t%i\t%i" % (events, ntuple_events, AOD_events))
-        if events != ntuple_events:
-            log.warning("NTUP MISMATCH")
-        if events != AOD_events:
-            log.warning("AOD MISMATCH")
-        if events != ntuple_events and (events != AOD_events or AOD_events == 0):
+            AOD_events = dAOD_events
+        log.info('dAOD: ' + ds_logical_name)
+        log.info("NTUP: " + info.ntup_name)
+        log.info("\tNTUP\tdAOD\tAOD")
+        log.info("\t%i\t%i\t%i" % (events, dAOD_events, original_AOD_events))
+        if events != dAOD_events:
+            log.warning("NTUP MISMATCH! (AMI dAOD, NTUP metadata): (%i, %i)"%(dAOD_events, events))
+        if original_AOD_events != AOD_events:
+            log.warning("AOD MISMATCH! (AMI AOD, NTUP metadata): (%i, %i)"%(original_AOD_events, AOD_events))
+        if events != dAOD_events and (original_AOD_events != AOD_events or AOD_events == 0):
             log.warning("MISSING EVENTS")
             complete = False
+        log.info("-"*50)
         if child:
             return out.getvalue(), complete
-        return complete
+        return ds_name, complete
     except Exception, e:
         import traceback
         log.warning("dataset %s exception" % name)

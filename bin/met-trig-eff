@@ -46,7 +46,7 @@ ROOT.Math.MinimizerOptions.SetDefaultMinimizer("Minuit2")
 ##------------------------------------------------------------------------------------
 ## - - consts
 ##------------------------------------------------------------------------------------
-ERR_FUNC_STR = "{0}*(1 + TMath::Erf((met_et - {1})/{2}))+{3}"
+ERR_FUNC_STR = "{0}*(1 + TMath::Erf((x - {1})/{2}))+{3}" #<! KEEP x ; ROOT CAN"T HANDLE ANYTHING ELSE FOR DIREC PLOTTING
 MET_ET.bins = range(0, 200, 20) + range(200, 400, 50)
 COLORS = [ROOT.kRed, ROOT.kBlue, ROOT.kGreen, ROOT.kMagenta, ROOT.kOrange, ROOT.kYellow]
 
@@ -137,8 +137,7 @@ def get_trig_hists(triggers=MET_TRIGGERS,
                 hists += res.get(36000) #<! without the timeout this blocking call ignores all signals.
         else:
             for w in workers:
-                hists += [dataset_hists(w)]
-
+                hists += dataset_hists(w)
         ## - - now get the selection+trig/selection histogram
         for year, trig_dict in triggers.iteritems():
             if not year in data_streams:
@@ -235,7 +234,7 @@ def fit_eff(eff_hists,
 ##------------------------------------------------------------------------------------
 ## - - plot fit functions 
 ##------------------------------------------------------------------------------------
-def draw_fits(fit_funcs, pdir=TRIG_EFF_ARGS.pdir, overlay=True):
+def draw_fits(fit_funcs, fit_params, pdir=TRIG_EFF_ARGS.pdir, overlay=True, combined_fit=True):
     """ Given a dict of hists, fit funcs draw them 
     """
     canvas = ROOT.TCanvas()
@@ -293,6 +292,39 @@ def draw_fits(fit_funcs, pdir=TRIG_EFF_ARGS.pdir, overlay=True):
                 canvas.Print("%s/MET_trig_eff%s_%s.png"%(pdir, year, trigger))
                 legend.Clear()
                 canvas.Clear()
+
+        if combined_fit:
+            lumi_total = sum([MET_TRIGGERS[year][trg]["LUMI"] for trg in triggers])
+            legend = ROOT.TLegend(0.6, 0.6, 0.9, 0.85)
+            rlabel = ROOT.TLatex(
+                canvas.GetLeftMargin() + 0.15,
+                1 - canvas.GetTopMargin() - 0.055,
+                '#bf{%s} (%0.2f fb^{-1})'%(year, lumi_total))
+            rlabel.SetNDC()
+            rlabel.SetTextFont(43)
+            rlabel.SetTextSize(15)
+            rlabel.SetTextAlign(31)
+            
+            cnt = 0
+            for var in variations:
+                fit_com = fit_params[var.name]
+                fit_com_func = ROOT.TF1("fit_com", " + ".join(fit_com), 0, 500) 
+                legend.AddEntry(fit_com_func, var.label, "L")
+                fit_com_func.SetLineColor(COLORS[2])
+                if cnt==0:
+                    fit_com_func.Draw("L")
+                    fit_com_func.GetXaxis().SetTitle(MET_ET.title)
+                    fit_com_func.GetYaxis().SetTitle("efficiency")
+                else:
+                    fit_com_func.Draw("P SAME")
+                cnt += 1
+                    
+                legend.Draw("SAME")
+                rlabel.Draw("SAME")
+                os.system("mkdir -p %s"%pdir)
+                canvas.Print("%s/MET_trig_eff%s_COMBINED.png"%(pdir, year))
+                legend.Clear()
+                canvas.Clear()
             
     canvas.Close()
                     
@@ -304,7 +336,7 @@ if __name__=="__main__":
     
     trigger_hists = get_trig_hists()
     fit_funcs, fit_params = fit_eff(trigger_hists)
-    draw_fits(fit_funcs, overlay=True)
+    draw_fits(fit_funcs, fit_params, overlay=True)
     
     end_time = time.time()
     elapsed_time = (end_time - start_time)/60.

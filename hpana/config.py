@@ -55,8 +55,7 @@ class Configuration(object):
         if category:
             if ("MULTIJET" in category.name or "QCD" in category.name):
                 log.debug("applying multijet trigger for %s category"%category.name)
-                return ROOT.TCut(MULTIJET_TRIGGER)
-            
+                return get_mj_met_trigger(self.data_streams, dtype=dtype)
         return get_trigger(self.channel, data_streams=self.data_streams, dtype=dtype)
     
     @property

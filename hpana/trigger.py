@@ -1,7 +1,7 @@
 import ROOT
 
 """
-* trigger info.
+* trigger info; REFERENCE: https://twiki.cern.ch/twiki/bin/view/Atlas/LowestUnprescaled
 * up to 302956 this was ICHEP dataset, in the runs 302872 -302956 the
 * xe90 trigger became prescaled (~98% or something) so we are using xe90
 * until period D4 (302872) and later the xe110; the corresponding
@@ -22,11 +22,11 @@ TRIGGERS = {
                     "|| ((run_number >= 330857 && run_number <= 331975) && HLT_xe110_pufit_L1XE55)"\
                     "|| ((run_number >= 332303 && run_number <= 340453) && HLT_xe110_pufit_L1XE50)")
         },
-        "MC":{
+        "MC":{ #<! MAKE SURE THAT TRIGGER AND TRIGGER EFFICIENCY ARE NOT APPLIED ON TOP OF EACH OTHER!
             "2015": "(NOMINAL_pileup_random_run_number <= 284484 && HLT_xe70_tc_lcw)", 
             "2016": ("(NOMINAL_pileup_random_run_number > 284484 && HLT_xe90_mht_L1XE50 && NOMINAL_pileup_random_run_number <= 302872)"\
                      "||(NOMINAL_pileup_random_run_number > 302872 && HLT_xe110_mht_L1XE50 && NOMINAL_pileup_random_run_number <= 311481)"),
-            "2017":("((NOMINAL_pileup_random_run_number >= 325713 && NOMINAL_pileup_random_run_number <= 328393) && HLT_xe90_pufit_L1XE50)"\
+            "2017": ("((NOMINAL_pileup_random_run_number >= 325713 && NOMINAL_pileup_random_run_number <= 328393) && HLT_xe90_pufit_L1XE50)"\
                     "|| ((NOMINAL_pileup_random_run_number >= 329385 && NOMINAL_pileup_random_run_number <= 330470) && HLT_xe100_pufit_L1XE55)"\
                     "|| ((NOMINAL_pileup_random_run_number >= 330857 && NOMINAL_pileup_random_run_number <= 331975) && HLT_xe110_pufit_L1XE55)"\
                     "|| ((NOMINAL_pileup_random_run_number >= 332303 && NOMINAL_pileup_random_run_number <= 340453) && HLT_xe110_pufit_L1XE50)")
@@ -53,9 +53,11 @@ TRIGGERS = {
 }
 
 # - - - - multijet + MET trigger for FFs multijet CR
-MULTIJET_TRIGGER = "(run_number<288000 && (HLT_4j85||HLT_xe70_tc_lcw) )"\
-                   "|| (run_number>288000 && HLT_4j100)"\
-                   "|| (run_number > 284484 && HLT_xe90_mht_L1XE50 && run_number <= 302872)||(run_number > 302872 && HLT_xe110_mht_L1XE50)"
+MULTIJET_TRIGGER = {
+    "2015": "run_number<288000 && HLT_4j85",
+    "2016": "run_number > 288000 && HLT_4j100 && run_number <= 302872",
+    "2017": "run_number > 325713 && HLT_4j100"
+}
 
 ##------------------------------------------------------------------
 ## - -  MET triggers for trigger efficiency
@@ -124,14 +126,35 @@ TRIGGER_EFFICIENCIES["taujet"] = {
 
     
 ##-------------------------------------------------------------------------------------------
-## - - helper to reterive the overall trigger selectio
+## - - helper to reterive the overall trigger selection
 ##-------------------------------------------------------------------------------------------
 def get_trigger(channel, dtype="MC", data_streams=("2015", "2016")):
     """trigger should be unique per data taking year (stream),
     it could lso different for DATA and MC.
     """
     assert dtype in ("MC", "DATA"), "choose from (DATA, MC)"
-    
-    trigger_string = "||".join((TRIGGERS[channel][dtype][st] for st in data_streams))
+
+    ## do not apply trigger on MC for taujet as the trig efficiency is applied!
+    if channel=="taujet" and dtype=="MC":
+        trigger_string = ""
+    else:
+        trigger_string = "||".join((TRIGGERS[channel][dtype][st] for st in data_streams))
+        
     return ROOT.TCut(trigger_string)
                                                     
+##-------------------------------------------------------------------------------------------
+## - - 
+##-------------------------------------------------------------------------------------------
+def get_mj_met_trigger(streams, dtype="DATA"):
+    """
+    combined MJ + MET trigger used in taujet CR for FFs extraction to avoid bias from MET trigger low efficiency.
+    """
+    if dtype=="MC":
+        return ROOT.TCut("")
+    
+    trig_string = []
+    for st in streams:
+        trig_string.append("( ({0}) || ({1}) )".format(MULTIJET_TRIGGER[st], TRIGGERS["taujet"]["DATA"][st]) )
+        
+    trig_string = "||".join(trig_string)
+    return ROOT.TCut(trig_string)

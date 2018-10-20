@@ -36,7 +36,7 @@ from hpana.categories import (
     
 from hpana.config import Configuration
 from hpana.analysis import Analysis
-from hpana.trigger import MULTIJET_TRIGGER
+from hpana.trigger import get_mj_met_trigger
 from hpana.samples.fakes import QCD
 from hpana import log
 
@@ -166,8 +166,9 @@ if __name__=="__main__":
             "antitau": LOOSE_TAU,
             "validation_plots":FFs_ARGS.validation_plots,}
 
-        ## taujet 
-        tj_ffs = taujet_analysis.cache_ffs(control_regions=[], trigger=MULTIJET_TRIGGER, **kparams)
+        ## taujet
+        mj_met_trig = get_mj_met_trigger(FFs_ARGS.data_streams)
+        tj_ffs = taujet_analysis.cache_ffs(control_regions=[], trigger=mj_met_trig, **kparams)
         cr_ffs.update(tj_ffs)
         
         ## taulep

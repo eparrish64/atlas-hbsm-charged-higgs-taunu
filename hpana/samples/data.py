@@ -90,7 +90,6 @@ class Data(Sample):
             if st in self.streams:
                 self.blind = True
         self.blind_regions = blind_regions
-
         
         # - - - - Database 
         self.database = database
@@ -147,7 +146,7 @@ class Data(Sample):
                 lumi += grun[1]
         return lumi 
         
-    def triggers(self, categories=[]):
+    def triggers(self, categories=[], dtype="DATA"):
         """ trigger could be different for different selection categories.
         Parameters
         -----------
@@ -157,7 +156,7 @@ class Data(Sample):
         
         trigger_dict = {} 
         for cat in categories:
-            trigger_dict[cat.name] = self.config.trigger(dtype="DATA", category=cat)
+            trigger_dict[cat.name] = self.config.trigger(dtype=dtype, category=cat)
             
         return trigger_dict
 
@@ -208,7 +207,7 @@ class Data(Sample):
         categories = kwargs.pop("categories", [])
         if self.blind:
             categories = filter(lambda c: c.name not in self.blind_regions, categories)
-            
+
         data_categories = copy.deepcopy(categories)
         for ct in data_categories:
             ct.truth_tau = None

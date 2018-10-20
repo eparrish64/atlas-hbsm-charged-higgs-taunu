@@ -52,7 +52,7 @@ def calculate_chi2(target_hist, template_hist, min_evts=10):
 ##--------------------------------------------------------------------------
 ## - - chi2 fit error 
 ##--------------------------------------------------------------------------
-def chi2_error(chi2_graph):
+def chi2_error(chi2_graph, template_bins=20):
     """
 
     """
@@ -65,17 +65,17 @@ def chi2_error(chi2_graph):
     xmin = xarr[xmin_index]
     ymax = max(yarr)
 
-    std = math.sqrt(2./len(xarr))
+    std = math.sqrt(2./template_bins)
     err_up = std
     for n in range(xmin_index+1, len(xarr)):
-        if err_up < xarr[n]:
+        if err_up < (xarr[n]- xmin):
             err_up = xarr[n] - xmin
             break
         
     err_dn = std
     n = xmin_index-1
     while n > 0:
-        if err_dn < xarr[n]:
+        if err_dn < (xmin - xarr[n]):
             err_dn = xmin - xarr[n]
             break
         n -= 1
@@ -275,7 +275,7 @@ def fit_alpha(cr_hists, target_hists,
                 target_hist.Sumw2()   
                 # - - - - varying the coefficient
                 chi2 = []
-                alpha = np.arange (-4, 4, 0.01)
+                alpha = np.arange (-5, 5, 0.01)
 
                 # - - - - fit to aP_mj + (1-a)P_wj
                 for a in alpha:
@@ -295,7 +295,7 @@ def fit_alpha(cr_hists, target_hists,
                     # - - - - CHI2 fit; other option: KolmogorovTest(template_hist, "U O") 
                     c2 = target_hist.Chi2Test(template_hist, "WW CHI2/NDF ")
                     chi2.append((a, c2))
-
+                    
                     scaled_mj_hist.Delete()
                     scaled_wj_hist.Delete()
                     template_hist.Delete()
@@ -307,7 +307,7 @@ def fit_alpha(cr_hists, target_hists,
                 chi2_graph.SetName("chi2_graph")
                 chi2s[tkey][pkey][hs.category] = chi2_graph
 
-                alpha, err_up, err_down = chi2_error(chi2_graph)
+                alpha, err_up, err_down = chi2_error(chi2_graph, template_bins=len(fitting_sub_bins))
                 
                 # - - - - keep alpha corresponding to min Chi2 distribution        
                 if not hs.category in alphas[tkey][pkey]:
@@ -555,9 +555,9 @@ def validate_template_fit(cr_hists_dict, target_hists_dict, chi2s,
                     label.Draw("SAME")
                 tr_legend.Draw("SAME")
 
-                # - - find the min and draw a line there
+                # - - find up/dn error on the Chi2 min and draw a line there
                 xmin, err_up, err_dn =  chi2_error(chi2_graph)
-
+                
                 ymax = 0.6*ci_ymax
                 tline = ROOT.TLine(xmin, 0, xmin , ymax)
                 tline.SetLineColor(ROOT.kRed)

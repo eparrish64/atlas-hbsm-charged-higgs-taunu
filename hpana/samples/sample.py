@@ -73,7 +73,7 @@ class Sample(object):
             self.hist_decor.update(hist_decor)
         return self
 
-    def triggers(self, categories=[]):
+    def triggers(self, categories=[], dtype="MC"):
         """ trigger could be different for different selection categories, 
         and also it could be different for DATA and MC.
         Parameters
@@ -84,7 +84,7 @@ class Sample(object):
         """
         trigger_dict = {} 
         for cat in categories:
-            trigger_dict[cat.name] = self.config.trigger(dtype="MC", category=cat)
+            trigger_dict[cat.name] = self.config.trigger(dtype=dtype, category=cat)
         return trigger_dict
     
     def cuts(self,

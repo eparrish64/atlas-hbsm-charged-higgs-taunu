@@ -159,6 +159,14 @@ tau_0_eta = Variable(
         "mc15": "tau_0_eta"},
     binning=(60, -3., 3.))
 
+tau_0_phi = Variable(
+    "tau_0_phi" , 
+    title='#phi(#tau)',
+    tformula={
+        "mc16": "tau_0_p4->Phi()",
+        "mc15": "tau_0_phi"},
+    binning=(10, -3., 3.))
+
 tau_0_n_charged_tracks = Variable(
     "tau_0_n_charged_tracks",
     title='#font[152]{#tau}_{1} #font[52]{Tracks}',
@@ -239,13 +247,17 @@ met_phi = Variable(
     tformula={
         "mc16":"met_p4->Phi()",
         "mc15": "met_phi"},
-    binning=(5, -math.pi, math.pi))
-
+    binning=(10, -math.pi, math.pi))
+ 
 # - - - - - - - - tau + MET
 tau_0_met_dphi = Variable(
     "tau_0_met_dphi",
     title='#Delta#phi(#tau, E^{miss}_{T})',
-    binning=(20, 0, math.pi))
+    # tformula={
+    #     "mc15": "TMath::Pi() - fabs( fabs( tau_0_p4->Phi() - met_p4->Phi() ) - TMath::Pi() )",
+    #     "mc16": "TMath::Pi() - fabs( fabs( tau_0_p4->Phi() - met_p4->Phi() ) - TMath::Pi() )",
+    #     },
+    binning=(10, -math.pi, math.pi))
 
 tau_0_met_mt = Variable(
     "tau_0_met_mt",
@@ -253,6 +265,25 @@ tau_0_met_mt = Variable(
     binning=(20, 0, 500), 
     scale=1.,
     unit='GeV')
+
+met_jet_dphi_ratio = Variable(
+    "met_jet_dphi_ratio",
+    title="#Delta#phi(#tau, E^{miss}_{T})/#Delta#phi(jet, E^{miss}_{T})",
+    tformula="(TMath::Pi() - fabs( fabs( tau_0_p4->Phi() - met_p4->Phi() ) - TMath::Pi() ))/ "\
+    "(1 + TMath::Pi() - fabs( fabs( jet_0_p4->Phi() - met_p4->Phi() ) - TMath::Pi() )"\
+    "+ TMath::Pi() - fabs( fabs( jet_1_p4->Phi() - met_p4->Phi() ) - TMath::Pi() ))",
+    binning = (20, 0, 1),   
+)
+
+tau_met_jet_dphi_min = Variable(
+    "tau_met_jet_dphi_min",
+    title="min #Delta#phi(#tau, E^{miss}_{T}, jet)",
+    tformula="min(min((TMath::Pi() - fabs(tau_0_p4->Phi() - met_p4->Phi()) )**2 + ( jet_0_p4->Phi() - met_p4->Phi())**2"\
+    ", (TMath::Pi() - fabs(tau_0_p4->Phi() - met_p4->Phi()) )**2 + ( jet_0_p4->Phi() - met_p4->Phi())**2)"\
+    ", (TMath::Pi() - fabs( tau_0_p4->Phi() - met_p4->Phi()) )**2 + ( jet_1_p4->Phi() - met_p4->Phi())**2) ",
+    binning=(20, 0, 10),
+)
+
 
 #WIP - - - - - - - muon
 
@@ -336,12 +367,17 @@ bjet_0_tau_0_dr = Variable(
 # - - - - - - - - taujet channel variables list
 VARIABLES_TAUJET = [
     tau_0_pt,
-    tau_0_eta, 
+    tau_0_eta,
+    tau_0_phi, 
     tau_0_n_charged_tracks,
     tau_0_q, 
     tau_0_upsilon,
     
-    met_et, 
+    met_et,
+    met_etx,
+    met_ety,
+    met_phi,
+    
     tau_0_met_mt,
     tau_0_met_dphi,
     
@@ -354,6 +390,8 @@ VARIABLES_TAUJET = [
     
     bjet_0_met_dphi,
     bjet_0_tau_0_dr,
+    met_jet_dphi_ratio,
+    tau_met_jet_dphi_min,
 ]
 
 
@@ -362,7 +400,6 @@ VARIABLES = {}
 VARIABLES["taujet"] = VARIABLES_TAUJET
 
 VARIABLES["taulep"] = VARIABLES_TAUJET
-
 
 
 # - - - - - - - - BDT input features
@@ -375,6 +412,8 @@ CLF_FEATURES = {
         bjet_0_met_dphi,
         bjet_0_tau_0_dr,
         tau_0_upsilon,
+        met_jet_dphi_ratio,
+        tau_met_jet_dphi_min,
     ],
     "taulep": [],
 }
@@ -390,71 +429,29 @@ Y_CORRECTED = "(tau_0_n_charged_tracks==1)*CorrectUpsilon_1D_WCR((2.0*tau_0_allT
 BDT_SELECTION_1P = "(tau_0_n_charged_tracks + ({0}>0.95)*({0}<1.05)*(tau_0_jet_bdt_loose == 1)"\
                    "+ ({1}>0.95)*({1}<1.05)*(tau_0_jet_bdt_loose != 1))".format(Y, Y_CORRECTED)
 
-FastBDT_sig_90to120_1p3p = Variable(
-    "FastBDT_sig_90to120_1p3p",    
+clf_score_GB100_mass_90to120 = Variable(
+    "clf_score_GB100_mass_90to120",    
     title='BDT score, 90 to 120 [GeV]',
     tformula= {
-        "mc16": "({0}==1)*FastBDT_sig_7V_met150_Opt_90to120_1p"\
-        "+ ({0}!=1)*FastBDT_sig_6V_met150_Opt_90to120_3p".format(BDT_SELECTION_1P),
+        "mc16": "({0}==1)*GB100_mass_90to120_ntracks_1"\
+        "+ ({0}!=1)*GB100_mass_90to120_ntracks_3".format("tau_0_n_charged_tracks"),
         },
-    binning=(10, 0, 1), 
-    blind_cut="(tau_0_n_charged_tracks == 1)*FastBDT_sig_7V_met150_Opt_90to120_1p"\
-    "+ (tau_0_n_charged_tracks == 3)*FastBDT_sig_6V_met150_Opt_90to120_3p < 0.50",
+    binning=(20, 0, 1), 
 )
-
-FastBDT_sig_130to160_1p3p = Variable(
-    "FastBDT_sig_130to160_1p3p",
-    title="BDT score, 130 to 160 [GeV]",
-    tformula={
-        "mc16": "({0}==1)*FastBDT_sig_7V_met150_Opt_130to160_1p"\
-        "+ ({0}!=1)*FastBDT_sig_6V_met150_Opt_130to160_3p".format(BDT_SELECTION_1P)
-    },
-    binning=(10, 0, 1),
-    blind_cut="(tau_0_n_charged_tracks == 1)*FastBDT_sig_7V_met150_Opt_130to160_1p"\
-    "+ (tau_0_n_charged_tracks == 3)*FastBDT_sig_6V_met150_Opt_130to160_3p < 0.50",
+clf_score_GB100_mass_400to400 = Variable(
+    "clf_score_GB100_mass_400to400",    
+    title='BDT score, 400 [GeV]',
+    tformula= {
+        "mc16": "({0}==1)*GB100_mass_400to400_ntracks_1"\
+        "+ ({0}!=1)*GB100_mass_400to400_ntracks_3".format("tau_0_n_charged_tracks"),
+        },
+    binning=(20, 0, 1), 
 )
-
-FastBDT_sig_160to180_1p3p = Variable(
-    "FastBDT_sig_160to180_1p3p",
-    title="BDT score, 160 to 180 [GeV]",
-    tformula={
-        "mc16":"({0}==1)*FastBDT_sig_7V_met150_Opt_160to180_1p"\
-        "+ ({0}!=1)*FastBDT_sig_6V_met150_Opt_160to180_3p".format(BDT_SELECTION_1P)
-    },
-    binning=(10, 0, 1),
-    blind_cut="(tau_0_n_charged_tracks == 1)*FastBDT_sig_7V_met150_Opt_160to180_1p"\
-    "+ (tau_0_n_charged_tracks == 3)*FastBDT_sig_6V_met150_Opt_160to180_3p < 0.50",
-)
-
-FastBDT_sig_200to400_1p3p = Variable(
-    "FastBDT_sig_200to400_1p3p",
-    title="BDT score, 200 to 400 [GeV]",
-    tformula={
-        "mc16": "({0}==1)*FastBDT_sig_7V_met150_Opt_200to400_1p"\
-        "+ ({0}!=1)*FastBDT_sig_6V_met150_Opt_200to400_3p".format(BDT_SELECTION_1P)
-    },
-    binning=(10, 0, 1),
-    blind_cut="(tau_0_n_charged_tracks == 1)*FastBDT_sig_7V_met150_Opt_200to400_1p"\
-    "+ (tau_0_n_charged_tracks == 3)*FastBDT_sig_6V_met150_Opt_200to400_3p < 0.50",
-)
-FastBDT_sig_500to2000_1p3p = Variable(
-    "FastBDT_sig_500to2000_1p3p", 
-    title='BDT score, 500 to 2000 [GeV]',
-    tformula={
-        "mc16": "FastBDT_sig_6V_2dFF_met150_Opt_500to2000_1p3p",
-    },
-    binning=(10, 0, 1),
-    blind_cut='FastBDT_sig_6V_2dFF_met150_Opt_500to2000_1p3p < 0.50',
-)
-
 
 BDT_SCORES = {
     "taujet":[
-        FastBDT_sig_90to120_1p3p,
-        FastBDT_sig_130to160_1p3p,
-        FastBDT_sig_160to180_1p3p,
-        FastBDT_sig_200to400_1p3p,
-        FastBDT_sig_500to2000_1p3p
+        clf_score_GB100_mass_90to120,
+        clf_score_GB100_mass_400to400,
     ],
     "taulep":[],
 }

@@ -48,14 +48,13 @@ class QCD(Sample):
         "mc15": ("tau_0_pt/1000.", "tau_0_n_tracks"),}
 
     # - - - - combinined FFs are calcualted with a the following fucntion, loaded in the global ROOT scope. 
-    rQCD = "GetFFCombined({0}, {1}, {2}, {3}, {4})"
-
+    rQCD = "GetFFCombined_NOMINAL({0}, {1}, {2}, {3}, {4})"
 
     # - - - - correction factor for tau polarization variable (using Inverse Smirnov transformation)
     UPSILON_CORRECTED = {
         "mc15": "CorrectUpsilon({0}, tau_0_n_tracks)", #< Y, ntracks
-        "mc16": "CorrectUpsilon_1D_QCD("\
-        "((tau_0_n_charged_tracks==1)*tau_0_upsilon_pt_based+ -111*(tau_0_n_charged_tracks!=1)), tau_0_n_charged_tracks)", #< Y, ntracks
+        "mc16": "CorrectUpsilon("\
+        "((tau_0_n_charged_tracks==1)*tau_0_upsilon_pt_based+ 999*(tau_0_n_charged_tracks!=1)), tau_0_n_charged_tracks)", #< Y, ntracks
     }
     
     @staticmethod
@@ -166,8 +165,8 @@ class QCD(Sample):
             categories = self.config.categories
 
         if not trigger:
-            data_triggers = self.data.triggers(categories)
-            mc_triggers = self.mc[0].triggers(categories)
+            data_triggers = self.data.triggers(categories, dtype="DATA")
+            mc_triggers = self.mc[0].triggers(categories, dtype="MC")
             
         # - - - - tauID = ANTITAU * FF
         tauid = kwargs.pop("tauid", self.tauid)

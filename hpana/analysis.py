@@ -17,7 +17,6 @@ from .dataset_hists import dataset_hists
 
 from .samples import Higgs
 from .categories import TAUID_MEDIUM, ANTI_TAU, TAU_IS_TRUE, TAU_IS_LEP_OR_HAD, Category
-from .cluster.parallel import close_pool
 from .config import Configuration
 import ROOT
 
@@ -27,56 +26,23 @@ import ROOT
 ##---------------------------------------------------------------------------------
 class Analysis(object):
     """ main analysis class.
-    Attributes
-    ----------
-    use_embedding : bool(default=True)
-                if True will use the tau-embedded ztautau for z-background,
-
-    random_mu: bool(default=False)
-            whether to set signal strength randomly or not, 
-    mu:float(default=1.) 
-     signal strength
-
-    suffix: str
-     #FIXME should be exclusive to batch sub    specific suffix for analysis to be added to the output files name.
-    
-    norm_field: str
-             variable used to normalize qcd, ztt
     """
     __HERE = os.path.dirname(os.path.abspath(__file__))
     CXX_MACROS = [
-    # "FakeFactors/QCD/GetFF02_QCD.C",
-    # "FakeFactors/QCD/GetFF01_QCD.C",
-    # "FakeFactors/QCD/GetFF03_QCD.C",
-    # "FakeFactors/WCR/GetFF02_WCR.C",
-    # "FakeFactors/WCR/GetFF01_WCR.C",
-    # "FakeFactors/WCR/GetFF03_WCR.C",
-    # #"FakeFactors/GetFFCombined.C",
-    # "FakeFactors/GetFFCombined_up.C",
-    # "FakeFactors/GetFFCombined_dn.C",
-    # "FakeFactors/GetElFakeSF.C",
-        
-    #"TriggerEfficiency/ApplyEff.C",
-    "metTrigEff1516.cxx",
-        
-    # "GetTopPtWeight.C",
+    "metTrigEff.cxx",
 
     # - - - - new (derived within the hpana and from r21 ntuples)
-    "FakeFactors/FFs_COMBINED151617.cxx",
-    "FakeFactors/FFs_CR151617.cxx",    
-
+    "FFs_COMBINEDC151617.cxx",
+    "FFs_CR151617.cxx",
+        
     # - - - - correction factor for tau polarization(only applied to 1 prong taus, upsilon varibale, and QCD sample)    
-    "FakeFactors/CorrectUpsilon.C",
-    "FakeFactors/CorrectUpsilon_1D_WCR.C",
-    "FakeFactors/CorrectUpsilon_1D_QCD.C",
+    "CorrectUpsilon.cxx",
+    "CorrectUpsilon_WCR.cxx",
+    "CorrectUpsilon_QCD.cxx",
     ]
     CXX_MACROS = [os.path.join(__HERE, "cxxmacros", cm) for cm in CXX_MACROS]
 
-    ROOT_CONF_FILES = [
-        "TriggerEfficiency/met_efficiencies_lcw70.root",
-        "TriggerEfficiency/met_efficiencies_mht110.root",
-        "TriggerEfficiency/met_efficiencies_mht90.root",
-    ]
+    ROOT_CONF_FILES = []
     ROOT_CONF_FILES = [os.path.join(__HERE, "cxxmacros", cm) for cm in ROOT_CONF_FILES]
     
     def __init__(self, config,
@@ -202,9 +168,9 @@ class Analysis(object):
             self.config, self.data, self.mc,
             name='QCD',
             label='jet #rightarrow #tau',
-            color=ROOT.kAzure-9)
+            color=ROOT.kAzure-9,
+            correct_upsilon=True)
 
-        
         self.backgrounds = [
             self.lepfakes,
             self.qcd,
@@ -221,7 +187,6 @@ class Analysis(object):
         
         # ---- stored workers
         self._workers=[]
-
 
     def compile_cxx(self):
         log.info("loading cxx macros ...")
@@ -267,7 +232,7 @@ class Analysis(object):
         """ normalize qcd, ztautau.
         Parameters:
         -----------
-        category : Category object, for more see ../catgories/__init__.py
+        category : Category object, for more see catgories.py
 
         Returns
         -------
@@ -504,11 +469,16 @@ class Analysis(object):
         for cr in tau_control_regions:
             cr.tauid = tauid
             cr.truth_tau = TAU_IS_LEP_OR_HAD
-        
+
+            ## - - not MET trigger for FF_CR_MULTIJET (trigger efficiency is applied)
+            if "MULTIJET" in cr.name.upper():
+                mc_trigger = ROOT.TCut("")
+            else:
+                mc_trigger = trigger
+                
         for acr in antitau_control_regions:
             acr.tauid = antitau
-            acr.truth_tau = TAU_IS_TRUE #<! a true tau that's failing tau ID
-
+            acr.truth_tau = TAU_IS_LEP_OR_HAD
             
         # - - - - parallel processing
         workers = []
@@ -537,13 +507,13 @@ class Analysis(object):
             for mc in self.mc:
                 mc_tau_workers += mc.workers(
                     fields=template_fields[:1], hist_templates=template_hist,
-                    categories=tau_control_regions, trigger=trigger)
+                    categories=tau_control_regions, trigger=mc_trigger)
 
                 # - - taus not passing nominal tau ID (medium)
                 not_tau = ROOT.TCut("!%s"%self.config.tauid.GetTitle())
                 mc_antitau_workers += mc.workers(
                     fields=template_fields[:1], hist_templates=template_hist,
-                    categories=antitau_control_regions, trigger=trigger,)
+                    categories=antitau_control_regions, trigger=mc_trigger)
 
             # add mc tau/antitau  workers to the list of all workers
             for w in mc_tau_workers:
@@ -561,13 +531,12 @@ class Analysis(object):
             "***********************************************")
         rand_workers = [ workers[i] for i in sorted(random.sample(xrange(len(workers)), min(20, len(workers) ) ) ) ]
         log.debug(rand_workers)
+        log.debug("*"*80)
         results = [pool.apply_async(dataset_hists, args=(w,)) for w in workers]
         
         hist_sets = []
         for res in results:
             hist_sets += res.get(36000)
-        # - - - - close the pool
-        close_pool(pool)
 
         # - - - -  organize the output
         data_tau_hists = filter(lambda hs: hs.name.startswith(self.data.name) and hs.name.endswith("_TAU"), hist_sets)

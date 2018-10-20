@@ -566,7 +566,6 @@ CATEGORIES["taulep"] = [
 FF_CR_MULTIJET = Category(
     "FF_CR_MULTIJET",
     label="ff multijet CR",
-    tauid=None,
     cuts_list=[
         CLEAN_EVT,
         TAU_PT30,
@@ -581,7 +580,6 @@ FF_CR_MULTIJET = Category(
 
 FF_CR_WJETS = Category(
     "FF_CR_WJETS", label="ff Wjets CR",
-    tauid=None,
     cuts_list=[
         CLEAN_EVT,
         TAU_EL_OLR_PASS,

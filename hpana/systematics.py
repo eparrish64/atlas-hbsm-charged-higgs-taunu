@@ -10,100 +10,338 @@ class SYSTEMATICS_CATEGORIES:
 
 # WIP:
 class Systematic(object):
-
-    def __init__(self, name, variations=None):
-
-        if variations is None:
-            self.variations = ('UP', 'DOWN')
-        else:
-            if not isinstance(variations, (list, tuple)):
+    TYPES = ["TREE", "WEIGHT", "THEORY"]
+    def __init__(self, name, stype="TREE", variations=None, channel="taujet"):
+        assert stype in Systematic.TYPES, "systematics of type %s is not supported"%stype
+        self.stype = stype
+        self.channel = channel
+        
+        if not isinstance(variations, (list, tuple, dict)):
                 variations = (variations,)
-            self.variations = variations
+        elif isinstance(variations, dict):
+            variations = (variations["UP"], variations["DOWN"])
+        self.variations = variations
+            
         self.name = name
-
+        
     def __iter__(self):
-
         for var in self.variations:
             yield '%s_%s' % (self.name, var)
 
-
-COMMON_SYSTEMATICS = {
-    "taujet":
-    {
-    "2017":
-        {'MET_RESOSOFTTERMS': (('MET_RESOSOFTTERMS_UP',), ('MET_RESOSOFTTERMS_DOWN',)),
-         'MET_SCALESOFTTERMS': (('MET_SCALESOFTTERMS_UP',), ('MET_SCALESOFTTERMS_DOWN',)),
-         
-         'JES_Modelling': (('JES_Modelling_UP',), ('JES_Modelling_DOWN',)),
-         'JES_Detector': (('JES_Detector_UP',), ('JES_Detector_DOWN',)),
-         'JES_EtaModelling': (('JES_EtaModelling_UP',), ('JES_EtaModelling_DOWN',)),
-         'JES_EtaMethod': (('JES_EtaMethod_UP',), ('JES_EtaMethod_DOWN',)),
-         'JES_PURho': (('JES_PURho_UP',), ('JES_PURho_DOWN',)),
-         'JES_FlavComp': (('JES_FlavComp_UP',), ('JES_FlavComp_DOWN',)),
-         'JES_FlavResp': (('JES_FlavResp_UP',), ('JES_FlavResp_DOWN',)),
-         
-         'JER': (('JER_UP',),),
-         
-         'MFS': (('MFS_UP',), ('MFS_DOWN',)),
-         'ISOL': (('ISOL_UP',), ('ISOL_DOWN',)),
-        
-         'PU_RESCALE': (('PU_RESCALE_UP',), ('PU_RESCALE_DOWN',)),
-         
-         'TRIGGER': (('TRIGGER_UP',), ('TRIGGER_DOWN',)),
-         'FAKERATE': (('FAKERATE_UP',), ('FAKERATE_DOWN',)),
-         'TAU_ID': (('TAU_ID_UP',), ('TAU_ID_DOWN',)),
-         
-         'QCD_FIT': (('QCDFIT_UP',), ('QCDFIT_DOWN',)),
-         'Z_FIT': (('ZFIT_UP',), ('ZFIT_DOWN',)),
-
-         'QCD_SHAPE': (('QCDSHAPE_UP',), ('QCDSHAPE_DOWN',)),
-        }
-    }
-}
-WEIGHT_SYSTEMATICS = {
-    "taujet":
-    {
-        "2017":
-        {"TRIGGER": ("TRIGGER_UP", "TRIGGER_DOWN"),
-         "FAKERATE": ('FAKERATE_UP','FAKERATE_DOWN'),
-         "TAU_ID": ('TAU_ID_UP', 'TAU_ID_DOWN'),
-         "TAU_ID_STAT": ('TAU_ID_STAT_UP','TAU_ID_STAT_DOWN'),
-        }
-    }
-}
-
-def iter_systematics(include_nominal=False, year=2012, components=None):
-    syst = get_systematics(year)
-    if include_nominal:
-        yield 'NOMINAL'
-    terms = components if components is not None else syst.keys()
-    for term in terms:
-        try:
-            variations = syst[term]
-        except KeyError:
-            raise ValueError("systematic term {0} is not defined".format(term))
-        for var in variations:
-            yield var
+    def __str__(self):
+        return "systematic=%r, type=%r, variations=%r"%(self.name, self.stype, self.variations)
 
 
-def get_systematics(year=2012):
-    if year == 2012:
-        return SYSTEMATICS_2012
-    elif year == 2011:
-        return SYSTEMATICS_2011
-    elif year == 2015:
-        log.warning('Need to update the list of systematics for 2015')
-        return SYSTEMATICS_2012
-    else:
-        raise ValueError("No systematics defined for year %d" % year)
-
-def systematic_name(systematic):
-    if isinstance(systematic, basestring):
-        return systematic
-    return '_'.join(systematic)
 
 
-def parse_systematics(string):
-    if not string:
-        return None
-    return [tuple(token.split('+')) for token in string.split(',')]
+    
+
+# MUON_ID_1down
+# MUON_ID_1up
+# MUON_MS_1down
+# MUON_MS_1up
+# MUON_SAGITTA_RESBIAS_1down
+# MUON_SAGITTA_RESBIAS_1up
+# MUON_SAGITTA_RHO_1down
+# MUON_SAGITTA_RHO_1up
+# MUON_SCALE_1down
+# MUON_SCALE_1up
+
+# PH_SCALE_CONVFAKERATE_1down
+# PH_SCALE_CONVFAKERATE_1up
+# PH_SCALE_CONVRADIUS_1down
+# PH_SCALE_CONVRADIUS_1up
+# PH_SCALE_LEAKAGECONV_1down
+# PH_SCALE_LEAKAGECONV_1up
+# PH_SCALE_LEAKAGEUNCONV_1down
+# PH_SCALE_LEAKAGEUNCONV_1up
+
+# EG_RESOLUTION_ALL_1down
+# EG_RESOLUTION_ALL_1up
+# EG_RESOLUTION_MATERIALCALO_1down
+# EG_RESOLUTION_MATERIALCALO_1up
+# EG_RESOLUTION_MATERIALCRYO_1down
+# EG_RESOLUTION_MATERIALCRYO_1up
+# EG_RESOLUTION_MATERIALGAP_1down
+# EG_RESOLUTION_MATERIALGAP_1up
+# EG_RESOLUTION_MATERIALIBL_1down
+# EG_RESOLUTION_MATERIALIBL_1up
+# EG_RESOLUTION_MATERIALID_1down
+# EG_RESOLUTION_MATERIALID_1up
+# EG_RESOLUTION_MATERIALPP0_1down
+# EG_RESOLUTION_MATERIALPP0_1up
+# EG_RESOLUTION_PILEUP_1down
+# EG_RESOLUTION_PILEUP_1up
+# EG_RESOLUTION_SAMPLINGTERM_1down
+# EG_RESOLUTION_SAMPLINGTERM_1up
+# EG_RESOLUTION_ZSMEARING_1down
+# EG_RESOLUTION_ZSMEARING_1up
+# EG_SCALE_AF2_1down
+# EG_SCALE_AF2_1up
+# EG_SCALE_ALL_1down
+# EG_SCALE_ALL_1up
+# EG_SCALE_E4SCINTILLATOR_ETABIN0_1down
+# EG_SCALE_E4SCINTILLATOR_ETABIN0_1up
+# EG_SCALE_E4SCINTILLATOR_ETABIN1_1down
+# EG_SCALE_E4SCINTILLATOR_ETABIN1_1up
+# EG_SCALE_E4SCINTILLATOR_ETABIN2_1down
+# EG_SCALE_E4SCINTILLATOR_ETABIN2_1up
+# EG_SCALE_G4_1down
+# EG_SCALE_G4_1up
+# EG_SCALE_L1GAIN_1down
+# EG_SCALE_L1GAIN_1up
+# EG_SCALE_L2GAIN_1down
+# EG_SCALE_L2GAIN_1up
+# EG_SCALE_LARCALIB_ETABIN0_1down
+# EG_SCALE_LARCALIB_ETABIN0_1up
+# EG_SCALE_LARCALIB_ETABIN1_1down
+# EG_SCALE_LARCALIB_ETABIN1_1up
+# EG_SCALE_LARELECCALIB_1down
+# EG_SCALE_LARELECCALIB_1up
+# EG_SCALE_LARELECUNCONV_ETABIN0_1down
+# EG_SCALE_LARELECUNCONV_ETABIN0_1up
+# EG_SCALE_LARELECUNCONV_ETABIN1_1down
+# EG_SCALE_LARELECUNCONV_ETABIN1_1up
+# EG_SCALE_LARUNCONVCALIB_ETABIN0_1down
+# EG_SCALE_LARUNCONVCALIB_ETABIN0_1up
+# EG_SCALE_LARUNCONVCALIB_ETABIN1_1down
+# EG_SCALE_LARUNCONVCALIB_ETABIN1_1up
+# EG_SCALE_MATCALO_ETABIN0_1down
+# EG_SCALE_MATCALO_ETABIN0_1up
+# EG_SCALE_MATCALO_ETABIN1_1down
+# EG_SCALE_MATCALO_ETABIN1_1up
+# EG_SCALE_MATCALO_ETABIN10_1down
+# EG_SCALE_MATCALO_ETABIN10_1up
+# EG_SCALE_MATCALO_ETABIN11_1down
+# EG_SCALE_MATCALO_ETABIN11_1up
+# EG_SCALE_MATCALO_ETABIN2_1down
+# EG_SCALE_MATCALO_ETABIN2_1up
+# EG_SCALE_MATCALO_ETABIN3_1down
+# EG_SCALE_MATCALO_ETABIN3_1up
+# EG_SCALE_MATCALO_ETABIN4_1down
+# EG_SCALE_MATCALO_ETABIN4_1up
+# EG_SCALE_MATCALO_ETABIN5_1down
+# EG_SCALE_MATCALO_ETABIN5_1up
+# EG_SCALE_MATCALO_ETABIN6_1down
+# EG_SCALE_MATCALO_ETABIN6_1up
+# EG_SCALE_MATCALO_ETABIN7_1down
+# EG_SCALE_MATCALO_ETABIN7_1up
+# EG_SCALE_MATCALO_ETABIN8_1down
+# EG_SCALE_MATCALO_ETABIN8_1up
+# EG_SCALE_MATCALO_ETABIN9_1down
+# EG_SCALE_MATCALO_ETABIN9_1up
+# EG_SCALE_MATCRYO_ETABIN0_1down
+# EG_SCALE_MATCRYO_ETABIN0_1up
+# EG_SCALE_MATCRYO_ETABIN1_1down
+# EG_SCALE_MATCRYO_ETABIN1_1up
+# EG_SCALE_MATCRYO_ETABIN10_1down
+# EG_SCALE_MATCRYO_ETABIN10_1up
+# EG_SCALE_MATCRYO_ETABIN11_1down
+# EG_SCALE_MATCRYO_ETABIN11_1up
+# EG_SCALE_MATCRYO_ETABIN2_1down
+# EG_SCALE_MATCRYO_ETABIN2_1up
+# EG_SCALE_MATCRYO_ETABIN3_1down
+# EG_SCALE_MATCRYO_ETABIN3_1up
+# EG_SCALE_MATCRYO_ETABIN4_1down
+# EG_SCALE_MATCRYO_ETABIN4_1up
+# EG_SCALE_MATCRYO_ETABIN5_1down
+# EG_SCALE_MATCRYO_ETABIN5_1up
+# EG_SCALE_MATCRYO_ETABIN6_1down
+# EG_SCALE_MATCRYO_ETABIN6_1up
+# EG_SCALE_MATCRYO_ETABIN7_1down
+# EG_SCALE_MATCRYO_ETABIN7_1up
+# EG_SCALE_MATCRYO_ETABIN8_1down
+# EG_SCALE_MATCRYO_ETABIN8_1up
+# EG_SCALE_MATCRYO_ETABIN9_1down
+# EG_SCALE_MATCRYO_ETABIN9_1up
+# EG_SCALE_MATID_ETABIN0_1down
+# EG_SCALE_MATID_ETABIN0_1up
+# EG_SCALE_MATID_ETABIN1_1down
+# EG_SCALE_MATID_ETABIN1_1up
+# EG_SCALE_MATID_ETABIN2_1down
+# EG_SCALE_MATID_ETABIN2_1up
+# EG_SCALE_MATID_ETABIN3_1down
+# EG_SCALE_MATID_ETABIN3_1up
+# EG_SCALE_MATPP0_ETABIN0_1down
+# EG_SCALE_MATPP0_ETABIN0_1up
+# EG_SCALE_MATPP0_ETABIN1_1down
+# EG_SCALE_MATPP0_ETABIN1_1up
+# EG_SCALE_PEDESTAL_1down
+# EG_SCALE_PEDESTAL_1up
+# EG_SCALE_PS_BARREL_B12_1down
+# EG_SCALE_PS_BARREL_B12_1up
+# EG_SCALE_PS_ETABIN0_1down
+# EG_SCALE_PS_ETABIN0_1up
+# EG_SCALE_PS_ETABIN1_1down
+# EG_SCALE_PS_ETABIN1_1up
+# EG_SCALE_PS_ETABIN2_1down
+# EG_SCALE_PS_ETABIN2_1up
+# EG_SCALE_PS_ETABIN3_1down
+# EG_SCALE_PS_ETABIN3_1up
+# EG_SCALE_PS_ETABIN4_1down
+# EG_SCALE_PS_ETABIN4_1up
+# EG_SCALE_PS_ETABIN5_1down
+# EG_SCALE_PS_ETABIN5_1up
+# EG_SCALE_PS_ETABIN6_1down
+# EG_SCALE_PS_ETABIN6_1up
+# EG_SCALE_PS_ETABIN7_1down
+# EG_SCALE_PS_ETABIN7_1up
+# EG_SCALE_PS_ETABIN8_1down
+# EG_SCALE_PS_ETABIN8_1up
+# EG_SCALE_S12_ETABIN0_1down
+# EG_SCALE_S12_ETABIN0_1up
+# EG_SCALE_S12_ETABIN1_1down
+# EG_SCALE_S12_ETABIN1_1up
+# EG_SCALE_S12_ETABIN2_1down
+# EG_SCALE_S12_ETABIN2_1up
+# EG_SCALE_S12_ETABIN3_1down
+# EG_SCALE_S12_ETABIN3_1up
+# EG_SCALE_S12_ETABIN4_1down
+# EG_SCALE_S12_ETABIN4_1up
+# EG_SCALE_TOPOCLUSTER_THRES_1down
+# EG_SCALE_TOPOCLUSTER_THRES_1up
+# EG_SCALE_WTOTS1_1down
+# EG_SCALE_WTOTS1_1up
+# EG_SCALE_ZEESTAT_1down
+# EG_SCALE_ZEESTAT_1up
+# EG_SCALE_ZEESYST_1down
+# EG_SCALE_ZEESYST_1up
+
+# TAUS_TRUEHADTAU_SME_TES_DETECTOR_1down
+# TAUS_TRUEHADTAU_SME_TES_DETECTOR_1up
+# TAUS_TRUEHADTAU_SME_TES_INSITU_1down
+# TAUS_TRUEHADTAU_SME_TES_INSITU_1up
+# TAUS_TRUEHADTAU_SME_TES_MODEL_1down
+# TAUS_TRUEHADTAU_SME_TES_MODEL_1up
+
+
+# #### WEIGHTS 
+# jet_sf_FT_EFF_Eigen_B_0_1down_global_effSF_MV2c10
+# jet_sf_FT_EFF_Eigen_B_0_1down_global_ineffSF_MV2c10
+# jet_sf_FT_EFF_Eigen_B_0_1up_global_effSF_MV2c10
+# jet_sf_FT_EFF_Eigen_B_0_1up_global_ineffSF_MV2c10
+# jet_sf_FT_EFF_Eigen_B_1_1down_global_effSF_MV2c10
+# jet_sf_FT_EFF_Eigen_B_1_1down_global_ineffSF_MV2c10
+# jet_sf_FT_EFF_Eigen_B_1_1up_global_effSF_MV2c10
+# jet_sf_FT_EFF_Eigen_B_1_1up_global_ineffSF_MV2c10
+# jet_sf_FT_EFF_Eigen_B_2_1down_global_effSF_MV2c10
+# jet_sf_FT_EFF_Eigen_B_2_1down_global_ineffSF_MV2c10
+# jet_sf_FT_EFF_Eigen_B_2_1up_global_effSF_MV2c10
+# jet_sf_FT_EFF_Eigen_B_2_1up_global_ineffSF_MV2c10
+# jet_sf_FT_EFF_Eigen_C_0_1down_global_effSF_MV2c10
+# jet_sf_FT_EFF_Eigen_C_0_1down_global_ineffSF_MV2c10
+# jet_sf_FT_EFF_Eigen_C_0_1up_global_effSF_MV2c10
+# jet_sf_FT_EFF_Eigen_C_0_1up_global_ineffSF_MV2c10
+# jet_sf_FT_EFF_Eigen_C_1_1down_global_effSF_MV2c10
+# jet_sf_FT_EFF_Eigen_C_1_1down_global_ineffSF_MV2c10
+# jet_sf_FT_EFF_Eigen_C_1_1up_global_effSF_MV2c10
+# jet_sf_FT_EFF_Eigen_C_1_1up_global_ineffSF_MV2c10
+# jet_sf_FT_EFF_Eigen_C_2_1down_global_effSF_MV2c10
+# jet_sf_FT_EFF_Eigen_C_2_1down_global_ineffSF_MV2c10
+# jet_sf_FT_EFF_Eigen_C_2_1up_global_effSF_MV2c10
+# jet_sf_FT_EFF_Eigen_C_2_1up_global_ineffSF_MV2c10
+# jet_sf_FT_EFF_Eigen_Light_0_1down_global_effSF_MV2c10
+# jet_sf_FT_EFF_Eigen_Light_0_1down_global_ineffSF_MV2c10
+# jet_sf_FT_EFF_Eigen_Light_0_1up_global_effSF_MV2c10
+# jet_sf_FT_EFF_Eigen_Light_0_1up_global_ineffSF_MV2c10
+# jet_sf_FT_EFF_Eigen_Light_1_1down_global_effSF_MV2c10
+# jet_sf_FT_EFF_Eigen_Light_1_1down_global_ineffSF_MV2c10
+# jet_sf_FT_EFF_Eigen_Light_1_1up_global_effSF_MV2c10
+# jet_sf_FT_EFF_Eigen_Light_1_1up_global_ineffSF_MV2c10
+# jet_sf_FT_EFF_Eigen_Light_2_1down_global_effSF_MV2c10
+# jet_sf_FT_EFF_Eigen_Light_2_1down_global_ineffSF_MV2c10
+# jet_sf_FT_EFF_Eigen_Light_2_1up_global_effSF_MV2c10
+# jet_sf_FT_EFF_Eigen_Light_2_1up_global_ineffSF_MV2c10
+# jet_sf_FT_EFF_Eigen_Light_3_1down_global_effSF_MV2c10
+# jet_sf_FT_EFF_Eigen_Light_3_1down_global_ineffSF_MV2c10
+# jet_sf_FT_EFF_Eigen_Light_3_1up_global_effSF_MV2c10
+# jet_sf_FT_EFF_Eigen_Light_3_1up_global_effSF_MV2c10
+# jet_sf_FT_EFF_Eigen_Light_4_1down_global_effSF_MV2c10
+# jet_sf_FT_EFF_Eigen_Light_4_1down_global_ineffSF_MV2c10
+# jet_sf_FT_EFF_Eigen_Light_4_1up_global_effSF_MV2c10
+# jet_sf_FT_EFF_Eigen_Light_4_1up_global_ineffSF_MV2c10
+# jet_sf_FT_EFF_extrapolation_1down_global_effSF_MV2c10
+# jet_sf_FT_EFF_extrapolation_1down_global_ineffSF_MV2c10
+# jet_sf_FT_EFF_extrapolation_1up_global_effSF_MV2c10
+# jet_sf_FT_EFF_extrapolation_1up_global_ineffSF_MV2c10
+# jet_sf_FT_EFF_extrapolation_from_charm_1down_global_effSF_MV2c10
+# jet_sf_FT_EFF_extrapolation_from_charm_1down_global_ineffSF_MV2c10
+# jet_sf_FT_EFF_extrapolation_from_charm_1up_global_effSF_MV2c10
+# jet_sf_FT_EFF_extrapolation_from_charm_1up_global_ineffSF_MV2c10
+# jet_sf_NOMINAL_central_jets_global_effSF_JVT
+# jet_sf_NOMINAL_central_jets_global_ineffSF_JVT
+# jet_sf_NOMINAL_forward_jets_global_effSF_JVT
+# jet_sf_NOMINAL_forward_jets_global_ineffSF_JVT
+# jet_sf_NOMINAL_global_effSF_MV2c10
+# jet_sf_NOMINAL_global_ineffSF_MV2c10
+
+
+# tau_0_sf_TAUS_TRUEELECTRON_EFF_ELEOLR_TOTAL_1down_TauEffSF_LooseEleBDTPlusVeto_electron
+# tau_0_sf_TAUS_TRUEELECTRON_EFF_ELEOLR_TOTAL_1down_TauEffSF_LooseEleBDT_electron
+# tau_0_sf_TAUS_TRUEELECTRON_EFF_ELEOLR_TOTAL_1down_TauEffSF_MediumEleBDTPlusVeto_electron
+# tau_0_sf_TAUS_TRUEELECTRON_EFF_ELEOLR_TOTAL_1down_TauEffSF_MediumEleBDT_electron
+# tau_0_sf_TAUS_TRUEELECTRON_EFF_ELEOLR_TOTAL_1down_TauEffSF_VeryLooseLlhEleOLR_electron
+# tau_0_sf_TAUS_TRUEELECTRON_EFF_ELEOLR_TOTAL_1up_TauEffSF_LooseEleBDTPlusVeto_electron
+# tau_0_sf_TAUS_TRUEELECTRON_EFF_ELEOLR_TOTAL_1up_TauEffSF_LooseEleBDT_electron
+# tau_0_sf_TAUS_TRUEELECTRON_EFF_ELEOLR_TOTAL_1up_TauEffSF_MediumEleBDTPlusVeto_electron
+# tau_0_sf_TAUS_TRUEELECTRON_EFF_ELEOLR_TOTAL_1up_TauEffSF_MediumEleBDT_electron
+# tau_0_sf_TAUS_TRUEELECTRON_EFF_ELEOLR_TOTAL_1up_TauEffSF_VeryLooseLlhEleOLR_electron
+# tau_0_sf_TAUS_TRUEHADTAU_EFF_ELEOLR_TOTAL_1down_TauEffSF_HadTauEleOLR_tauhad
+# tau_0_sf_TAUS_TRUEHADTAU_EFF_ELEOLR_TOTAL_1up_TauEffSF_HadTauEleOLR_tauhad
+# tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_1PRONGSTATSYSTUNCORR2025_1down_TauEffSF_JetBDTloose
+# tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_1PRONGSTATSYSTUNCORR2025_1down_TauEffSF_JetBDTmedium
+# tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_1PRONGSTATSYSTUNCORR2025_1down_TauEffSF_JetBDTtight
+# tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_1PRONGSTATSYSTUNCORR2025_1up_TauEffSF_JetBDTloose
+# tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_1PRONGSTATSYSTUNCORR2025_1up_TauEffSF_JetBDTmedium
+# tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_1PRONGSTATSYSTUNCORR2025_1up_TauEffSF_JetBDTtight
+# tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_1PRONGSTATSYSTUNCORR2530_1down_TauEffSF_JetBDTloose
+# tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_1PRONGSTATSYSTUNCORR2530_1down_TauEffSF_JetBDTmedium
+# tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_1PRONGSTATSYSTUNCORR2530_1down_TauEffSF_JetBDTtight
+# tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_1PRONGSTATSYSTUNCORR2530_1up_TauEffSF_JetBDTloose
+# tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_1PRONGSTATSYSTUNCORR2530_1up_TauEffSF_JetBDTmedium
+# tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_1PRONGSTATSYSTUNCORR2530_1up_TauEffSF_JetBDTtight
+# tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_1PRONGSTATSYSTUNCORR3040_1down_TauEffSF_JetBDTloose
+# tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_1PRONGSTATSYSTUNCORR3040_1down_TauEffSF_JetBDTmedium
+# tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_1PRONGSTATSYSTUNCORR3040_1down_TauEffSF_JetBDTtight
+# tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_1PRONGSTATSYSTUNCORR3040_1up_TauEffSF_JetBDTloose
+# tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_1PRONGSTATSYSTUNCORR3040_1up_TauEffSF_JetBDTmedium
+# tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_1PRONGSTATSYSTUNCORR3040_1up_TauEffSF_JetBDTtight
+# tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_1PRONGSTATSYSTUNCORRGE40_1down_TauEffSF_JetBDTloose
+# tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_1PRONGSTATSYSTUNCORRGE40_1down_TauEffSF_JetBDTmedium
+# tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_1PRONGSTATSYSTUNCORRGE40_1down_TauEffSF_JetBDTtight
+# tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_1PRONGSTATSYSTUNCORRGE40_1up_TauEffSF_JetBDTloose
+# tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_1PRONGSTATSYSTUNCORRGE40_1up_TauEffSF_JetBDTmedium
+# tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_1PRONGSTATSYSTUNCORRGE40_1up_TauEffSF_JetBDTtight
+# tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_3PRONGSTATSYSTUNCORR2030_1down_TauEffSF_JetBDTloose
+# tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_3PRONGSTATSYSTUNCORR2030_1down_TauEffSF_JetBDTmedium
+# tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_3PRONGSTATSYSTUNCORR2030_1down_TauEffSF_JetBDTtight
+# tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_3PRONGSTATSYSTUNCORR2030_1up_TauEffSF_JetBDTloose
+# tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_3PRONGSTATSYSTUNCORR2030_1up_TauEffSF_JetBDTmedium
+# tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_3PRONGSTATSYSTUNCORR2030_1up_TauEffSF_JetBDTtight
+# tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_3PRONGSTATSYSTUNCORRGE30_1down_TauEffSF_JetBDTloose
+# tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_3PRONGSTATSYSTUNCORRGE30_1down_TauEffSF_JetBDTmedium
+# tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_3PRONGSTATSYSTUNCORRGE30_1down_TauEffSF_JetBDTtight
+# tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_3PRONGSTATSYSTUNCORRGE30_1up_TauEffSF_JetBDTloose
+# tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_3PRONGSTATSYSTUNCORRGE30_1up_TauEffSF_JetBDTmedium
+# tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_3PRONGSTATSYSTUNCORRGE30_1up_TauEffSF_JetBDTtight
+# tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_HIGHPT_1down_TauEffSF_JetBDTloose
+# tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_HIGHPT_1down_TauEffSF_JetBDTmedium
+# tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_HIGHPT_1down_TauEffSF_JetBDTtight
+# tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_HIGHPT_1up_TauEffSF_JetBDTloose
+# tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_HIGHPT_1up_TauEffSF_JetBDTmedium
+# tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_HIGHPT_1up_TauEffSF_JetBDTtight
+# tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_SYST_1down_TauEffSF_JetBDTloose
+# tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_SYST_1down_TauEffSF_JetBDTmedium
+# tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_SYST_1down_TauEffSF_JetBDTtight
+# tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_SYST_1up_TauEffSF_JetBDTloose
+# tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_SYST_1up_TauEffSF_JetBDTmedium
+# tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_SYST_1up_TauEffSF_JetBDTtight
+# tau_0_sf_TAUS_TRUEHADTAU_EFF_RECO_HIGHPT_1down_TauEffSF_reco
+# tau_0_sf_TAUS_TRUEHADTAU_EFF_RECO_HIGHPT_1down_TauEffSF_selection
+# tau_0_sf_TAUS_TRUEHADTAU_EFF_RECO_HIGHPT_1up_TauEffSF_reco
+# tau_0_sf_TAUS_TRUEHADTAU_EFF_RECO_HIGHPT_1up_TauEffSF_selection
+# tau_0_sf_TAUS_TRUEHADTAU_EFF_RECO_TOTAL_1down_TauEffSF_reco
+# tau_0_sf_TAUS_TRUEHADTAU_EFF_RECO_TOTAL_1down_TauEffSF_selection
+# tau_0_sf_TAUS_TRUEHADTAU_EFF_RECO_TOTAL_1up_TauEffSF_reco
+# tau_0_sf_TAUS_TRUEHADTAU_EFF_RECO_TOTAL_1up_TauEffSF_selection
+

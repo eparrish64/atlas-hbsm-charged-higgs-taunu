@@ -140,7 +140,7 @@ class Sample(object):
         return cuts
 
 
-    def weights(self, categories=[]):
+    def weights(self, categories=[], systematic=None):
         """ MC scale factors.
         The weights could in general be dependent on the category selection.
         """
@@ -153,13 +153,7 @@ class Sample(object):
             categories = self.config.categories
         weights_dict = {}
         for category in categories:
-            # # - - - - if MJ trigger is applied for a regio,then we don't need MET trigger efficiency applied.
-            # if category.name == self.config.ff_cr_regions[0].name:
-            #     for wf in weight_fields:
-            #         if wf.wtype =="TRIGGER":
-            #             weight_fields.remove(wf)
-                        
-            weights_dict[category.name] = [wf.name for wf in weight_fields]
+            weights_dict[category.name] = [wf.name[systematic] for wf in weight_fields]
         
         return weights_dict
     @property
@@ -216,7 +210,7 @@ class Sample(object):
                 weighted=True,
                 hist_templates=None,
                 **kwargs):
-        """ list of workers to to submit jobs.
+        """ list of workers to submit jobs.
         each worker is basically assigned a histogram to fill, one hist per systematic pre dataset.
         please note that additional selections like trigger are applied here and 
         selection string is passed to the worker. Furtheremore for each selection category a weight is also 
@@ -246,46 +240,52 @@ class Sample(object):
                 sts = set(ds.stream) - set(self.config.data_streams)
                 if len(sts)>0:
                     continue
-            # - - selections and weights 
-            weights = self.weights(categories=categories)
-            for category in categories:
-                # - - - - lumi, MC and extra weights  
-                if weighted:
-                    # - - lumi weight
-                    if ds.events !=0:
-                        lumi_weight = self.lumi(ds.stream) * reduce(
-                            lambda x,y:x*y, ds.xsec_kfact_effic) / ds.events
-                    else:
-                        log.warning(" 0 lumi weight for %s"%ds.name)
-                        lumi_weight = 0
-                    weights[category.name] += [str(lumi_weight)]
-
-                    if extra_weight:
-                        weights[category.name] += [extra_weight]
-                else:
-                    weights[category.name] = ["1."]
-                    if extra_weight:
-                        weights[category.name] += [extra_weight]
-
+                
             # - - - - one worker per systematic per dataset
             for systematic in systematics:
-                sname = self.name
-                wname = "%s.%s_%s.%s"%(
-                    sname, ds.name,
-                    ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(10))
-                    , systematic)
-                worker = HistWorker(
-                    name=wname,
-                    sample=self.name,
-                    dataset=ds,
-                    fields=fields,
-                    categories=categories_cp,
-                    weights=weights,
-                    systematic=systematic,
-                    hist_templates=hist_templates,
-                    channel=self.config.channel) 
-                
-                workers.add(worker)
+                for variation in systematic.variations:
+                    if systematic.stype=="WEIGHT":
+                        # - - selections and weights
+                        weights = self.weights(categories=categories_cp, variation=variation)
+                    else:
+                        weights = self.weights(categories=categories_cp, variation=variation)
+                        
+                    for category in categories_cp:
+                        # - - - - lumi, MC and extra weights  
+                        if weighted:
+                            # - - lumi weight
+                            if ds.events !=0:
+                                lumi_weight = self.lumi(ds.stream) * reduce(
+                                    lambda x,y:x*y, ds.xsec_kfact_effic) / ds.events
+                            else:
+                                log.warning(" 0 lumi weight for %s"%ds.name)
+                                lumi_weight = 0
+                            weights[category.name] += [str(lumi_weight)]
+
+                            if extra_weight:
+                                weights[category.name] += [extra_weight]
+                        else:
+                            weights[category.name] = ["1."]
+                            if extra_weight:
+                                weights[category.name] += [extra_weight]
+
+                        sname = self.name
+                        wname = "%s.%s_%s.%s"%(
+                            sname, ds.name,
+                            ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(10))
+                            , systematic)
+                        worker = HistWorker(
+                            name=wname,
+                            sample=self.name,
+                            dataset=ds,
+                            fields=fields,
+                            categories=categories_cp,
+                            weights=weights,
+                            systematic=systematic,
+                            hist_templates=hist_templates,
+                            channel=self.config.channel) 
+
+                        workers.add(worker)
 
         return list(workers)
 

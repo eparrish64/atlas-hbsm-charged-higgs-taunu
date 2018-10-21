@@ -39,7 +39,23 @@ class QCD(Sample):
             FF_TYPES[ch][cr.name] = ff_cr_index
             FF_INDICIES[cr.name] = ff_cr_index
         
-    # - - - - control region FFs are calcualted with a the following funtions, loaded in the global ROOT scope. 
+    # - - - - control region FFs are calcualted with a the following funtions, loaded in the global ROOT scope.
+    FFs = {
+        "NOMINAL": {#<! variations based on tau BDT score for the anti-tau definition (tau_0_jet_bdt_score_trans>)
+            "WCR": "GetFF02_FF_CR_WJETS({0}, {1})" , #<! 0.02
+            "MJCR": "GetFF02_FF_CR_MULTIJET({0}, {1})"
+        },
+        "UP": {
+            "WCR": "GetFF03_FF_CR_WJETS({0}, {1})" , #<! 0.03
+            "MJCR": "GetFF03_FF_CR_MULTIJET({0}, {1})"
+        },
+        
+        "DOWN":{
+            "WCR": "GetFF01_FF_CR_WJETS({0}, {1})" , #<! 0.01
+            "MJCR": "GetFF01_FF_CR_MULTIJET({0}, {1})"
+        },
+    }
+    
     FF_WCR = "GetFF02_FF_CR_WJETS({0}, {1})"
     FF_MJCR = "GetFF02_FF_CR_MULTIJET({0}, {1})"
     
@@ -48,7 +64,11 @@ class QCD(Sample):
         "mc15": ("tau_0_pt/1000.", "tau_0_n_tracks"),}
 
     # - - - - combinined FFs are calcualted with a the following fucntion, loaded in the global ROOT scope. 
-    rQCD = "GetFFCombined_NOMINAL({0}, {1}, {2}, {3}, {4})"
+    rQCD = {
+        "NOMINAL": "GetFFCombined_NOMINAL({0}, {1}, {2}, {3}, {4})",
+        "UP": "GetFFCombined_NOMINAL({0}, {1}, {2}, {3}, {4})",
+        "DOWN": "GetFFCombined_NOMINAL({0}, {1}, {2}, {3}, {4})",
+        }
 
     # - - - - correction factor for tau polarization variable (using Inverse Smirnov transformation)
     UPSILON_CORRECTED = {
@@ -90,7 +110,7 @@ class QCD(Sample):
         log.debug(selection)
         return selection
     
-    def ff_weights(self, categories=[], **kwargs):
+    def ff_weights(self, categories=[], variation="NOMINAL", **kwargs):
         """ FF weights for QCD need special treatment.
         """
         if not categories:
@@ -98,11 +118,11 @@ class QCD(Sample):
             
         ff_weights = {}
         v0, v1 = QCD.TEMPLATE_VARS[self.config.mc_camp]
-        ff_wcr = QCD.FF_WCR.format(v0, v1)
+        ff_wcr = QCD.FFs_CR[]FF_WCR.format(v0, v1)
         ff_qcd = QCD.FF_MJCR.format(v0, v1)
         for category in categories:
             if not category.name.upper() in QCD.FF_TYPES[self.config.channel]:
-                log.warning("no dedicated FFs for %s region; using the PRESEL one"%category.name)
+                log.warning("no dedicated FFs for %s region; using the SR one"%category.name)
                 if self.config.channel=="taujet":
                     ff_weight_index = 1000 #< TAUJET SR
                 else:
@@ -117,6 +137,19 @@ class QCD(Sample):
                 ff_weights[category.name] = ["1."]
             
         return ff_weights
+
+    def systematics(self):
+        """
+        FF_CRs: anti-tau definition
+        FF_COM: fit 
+        """
+        systematics = [
+            Systematic("FF_BDT", stype="WEIGHT", variations=QCD.FFs)),
+            Systematic("rQCD", stype="WEIGHT", variations=QCD.rQCD)),
+        ]
+        
+        
+
     
     def cutflow(self, cuts, **kwargs):
         """
@@ -255,9 +288,6 @@ class QCD(Sample):
         qcd_workers = mc_workers + data_workers
         return qcd_workers
 
-    @property
-    def systematics(self):
-        return ["NOMINAL"]
         
     def hists(self,
               fields=[],

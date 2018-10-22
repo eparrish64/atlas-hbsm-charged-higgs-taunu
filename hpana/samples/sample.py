@@ -140,7 +140,7 @@ class Sample(object):
         return cuts
 
 
-    def weights(self, categories=[], systematic=None):
+    def weights(self, categories=[]):
         """ MC scale factors.
         The weights could in general be dependent on the category selection.
         """
@@ -243,49 +243,42 @@ class Sample(object):
                 
             # - - - - one worker per systematic per dataset
             for systematic in systematics:
-                for variation in systematic.variations:
-                    if systematic.stype=="WEIGHT":
-                        # - - selections and weights
-                        weights = self.weights(categories=categories_cp, variation=variation)
-                    else:
-                        weights = self.weights(categories=categories_cp, variation=variation)
-                        
-                    for category in categories_cp:
-                        # - - - - lumi, MC and extra weights  
-                        if weighted:
-                            # - - lumi weight
-                            if ds.events !=0:
-                                lumi_weight = self.lumi(ds.stream) * reduce(
-                                    lambda x,y:x*y, ds.xsec_kfact_effic) / ds.events
-                            else:
-                                log.warning(" 0 lumi weight for %s"%ds.name)
-                                lumi_weight = 0
-                            weights[category.name] += [str(lumi_weight)]
-
-                            if extra_weight:
-                                weights[category.name] += [extra_weight]
+                for category in categories_cp:
+                    # - - - - lumi, MC and extra weights  
+                    if weighted:
+                        # - - lumi weight
+                        if ds.events !=0:
+                            lumi_weight = self.lumi(ds.stream) * reduce(
+                                lambda x,y:x*y, ds.xsec_kfact_effic) / ds.events
                         else:
-                            weights[category.name] = ["1."]
-                            if extra_weight:
-                                weights[category.name] += [extra_weight]
+                            log.warning(" 0 lumi weight for %s"%ds.name)
+                            lumi_weight = 0
+                        weights[category.name] += [str(lumi_weight)]
 
-                        sname = self.name
-                        wname = "%s.%s_%s.%s"%(
-                            sname, ds.name,
-                            ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(10))
-                            , systematic)
-                        worker = HistWorker(
-                            name=wname,
-                            sample=self.name,
-                            dataset=ds,
-                            fields=fields,
-                            categories=categories_cp,
-                            weights=weights,
-                            systematic=systematic,
-                            hist_templates=hist_templates,
-                            channel=self.config.channel) 
+                        if extra_weight:
+                            weights[category.name] += [extra_weight]
+                    else:
+                        weights[category.name] = ["1."]
+                        if extra_weight:
+                            weights[category.name] += [extra_weight]
 
-                        workers.add(worker)
+                    sname = self.name
+                    wname = "%s.%s_%s.%s"%(
+                        sname, ds.name,
+                        ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(10))
+                        , systematic)
+                    worker = HistWorker(
+                        name=wname,
+                        sample=self.name,
+                        dataset=ds,
+                        fields=fields,
+                        categories=categories_cp,
+                        weights=weights,
+                        systematic=systematic,
+                        hist_templates=hist_templates,
+                        channel=self.config.channel) 
+
+                    workers.add(worker)
 
         return list(workers)
 

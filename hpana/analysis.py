@@ -340,8 +340,6 @@ class Analysis(object):
 
             pool = multiprocessing.Pool(multiprocessing.cpu_count())
             results = [pool.apply_async(dataset_hists, (wk,)) for wk in workers]
-            # - - close the pool
-            close_pool(pool)
             for res in results:
                 hists += res.get(36000) #<! without the timeout this blocking call ignores all signals.
         else:

@@ -13,7 +13,7 @@ from ..dataset_hists import dataset_hists
 from ..cluster.parallel import close_pool
 from .. import log
 from ..categories import (
-    ANTI_TAU, TAU_IS_LEP, TAU_IS_TRUE, TAU_IS_LEP_OR_HAD, FF_CR_REGIONS, CATEGORIES)
+    ANTI_TAU, TAU_IS_LEP, TAU_IS_TRUE, TAU_IS_LEP_OR_HAD, FF_CR_REGIONS, CATEGORIES, Category)
 
 
 ##---------------------------------------------------------------------------------------

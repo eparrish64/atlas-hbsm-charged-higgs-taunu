@@ -24,7 +24,6 @@ from .decorators import cached_property
 from .yaml_utils import Serializable
 from . import xsec
 from .. import EVENTS_CUTFLOW_HIST, EVENTS_CUTFLOW_BIN, MC_CAMPAIGN 
-from hpana.cluster.parallel import close_pool
 
 # ATLAS 
 USE_PYAMI = True
@@ -39,13 +38,9 @@ try:
     from pyAMI.atlas.api import get_dataset_info, get_dataset_prov, get_file
 except ImportError, err:
     USE_PYAMI = False
-    log.error(err)
+    log.warning(err)
     log.warning("pyAMI is not installed. "
-              "Cross section retrieval will be disabled.")
-# if USE_PYAMI:
-#     if not os.path.exists(AMI_CONFIG):
-#         create_auth_config()
-#     amiclient.read_config(AMI_CONFIG)
+              "Cross section retrieval will be disabled and ntuples' validation wont work!")
 
 
 ##--------------------------------------------------------------------------------

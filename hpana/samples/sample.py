@@ -16,7 +16,7 @@ from . import log
 from ..dataset_hists import dataset_hists
 from ..db import samples as samples_db, datasets
 from ..db.decorators import cached_property
-from ..systematics import get_systematics, iter_systematics, systematic_name
+#from ..systematics import get_systematics, iter_systematics, systematic_name
 from ..categories import TAU_IS_TRUE, Category
 from ..cluster.parallel import close_pool
 from ..containers import Histset, HistWorker    
@@ -153,7 +153,7 @@ class Sample(object):
             categories = self.config.categories
         weights_dict = {}
         for category in categories:
-            weights_dict[category.name] = [wf.name[systematic] for wf in weight_fields]
+            weights_dict[category.name] = [w.name for w in weight_fields] #[wf.name[systematic] for wf in weight_fields]
         
         return weights_dict
     @property
@@ -224,7 +224,7 @@ class Sample(object):
         # - - - - same trigger for all selection categories ?
         if not trigger:
             triggers = self.triggers(categories)
-            
+
         # - - - - defensive copy 
         categories_cp = copy.deepcopy(categories)
         for category in categories_cp:
@@ -243,6 +243,9 @@ class Sample(object):
                 
             # - - - - one worker per systematic per dataset
             for systematic in systematics:
+                # weights list per category
+                weights = self.weights(categories=categories)
+
                 for category in categories_cp:
                     # - - - - lumi, MC and extra weights  
                     if weighted:

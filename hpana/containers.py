@@ -61,7 +61,7 @@ class HistWorker:
         self.hist_templates = hist_templates
         
     def __repr__(self):
-        return "<<< \n name=%r, sample=%r, channel=%r, systematic=%r\n"\
+        return "<<< \n name=%r, sample=%r, channel=%r\n<systematic>=%r\n"\
             "<variables>=%r\n<categories>=%r\n<weights>=%r\n<hist templates>=%r\n>>>\n"%(
                 self.name, self.sample, self.channel, self.systematic,
                 self.fields, self.categories, self.weights, self.hist_templates)

@@ -66,8 +66,8 @@ class QCD(Sample):
     # - - - - combinined FFs are calcualted with a the following fucntion, loaded in the global ROOT scope. 
     rQCD = {
         "NOMINAL": "GetFFCombined_NOMINAL({0}, {1}, {2}, {3}, {4})",
-        "UP": "GetFFCombined_NOMINAL({0}, {1}, {2}, {3}, {4})",
-        "DOWN": "GetFFCombined_NOMINAL({0}, {1}, {2}, {3}, {4})",
+        "UP": "GetFFCombined_1up({0}, {1}, {2}, {3}, {4})",
+        "DOWN": "GetFFCombined_1down({0}, {1}, {2}, {3}, {4})",
         }
 
     # - - - - correction factor for tau polarization variable (using Inverse Smirnov transformation)
@@ -118,7 +118,7 @@ class QCD(Sample):
             
         ff_weights = {}
         v0, v1 = QCD.TEMPLATE_VARS[self.config.mc_camp]
-        ff_wcr = QCD.FFs_CR[]FF_WCR.format(v0, v1)
+        ff_wcr = QCD.FF_WCR.format(v0, v1)
         ff_qcd = QCD.FF_MJCR.format(v0, v1)
         for category in categories:
             if not category.name.upper() in QCD.FF_TYPES[self.config.channel]:
@@ -129,7 +129,7 @@ class QCD(Sample):
                     ff_weight_index
             else:
                 ff_weight_index = QCD.FF_TYPES[self.config.channel][category.name.upper()]
-            ff_weight = QCD.rQCD.format(v0, v1, ff_qcd, ff_wcr, ff_weight_index)
+            ff_weight = QCD.rQCD["NOMINAL"].format(v0, v1, ff_qcd, ff_wcr, ff_weight_index)
             ff_weights[category.name] = [ff_weight]
 
             #!TMPFIX for cutflow 
@@ -144,11 +144,11 @@ class QCD(Sample):
         FF_COM: fit 
         """
         systematics = [
-            Systematic("FF_BDT", stype="WEIGHT", variations=QCD.FFs)),
-            Systematic("rQCD", stype="WEIGHT", variations=QCD.rQCD)),
+            Systematic("FF_BDT", _type="WEIGHT", variations=QCD.FFs),
+            Systematic("rQCD", _type="WEIGHT", variations=QCD.rQCD),
         ]
         
-        
+        return []
 
     
     def cutflow(self, cuts, **kwargs):

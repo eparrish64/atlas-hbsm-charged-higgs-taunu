@@ -25,28 +25,28 @@ class Weight(object):
             W_STR_FMT.format("n_taus", "tau_0_sf_NOMINAL_TauEffSF_JetBDTmedium"), #<! NOMINAL 
 
             W_STR_FMT.format("n_taus", "tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_1PRONGSTATSYSTUNCORR2025_1up_TauEffSF_JetBDTmedium"),
-            W_STR_FMT.format("tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_1PRONGSTATSYSTUNCORR2025_1down_TauEffSF_JetBDTmedium"),
+            W_STR_FMT.format("n_taus", "tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_1PRONGSTATSYSTUNCORR2025_1down_TauEffSF_JetBDTmedium"),
             
-            W_STR_FMT.format("tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_1PRONGSTATSYSTUNCORR2530_1up_TauEffSF_JetBDTmedium"),
-            W_STR_FMT.format("tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_1PRONGSTATSYSTUNCORR2530_1down_TauEffSF_JetBDTmedium"),
+            W_STR_FMT.format("n_taus", "tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_1PRONGSTATSYSTUNCORR2530_1up_TauEffSF_JetBDTmedium"),
+            W_STR_FMT.format("n_taus", "tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_1PRONGSTATSYSTUNCORR2530_1down_TauEffSF_JetBDTmedium"),
             
-            W_STR_FMT.format("tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_1PRONGSTATSYSTUNCORR3040_1up_TauEffSF_JetBDTmedium"),
-            W_STR_FMT.format("tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_1PRONGSTATSYSTUNCORR3040_1down_TauEffSF_JetBDTmedium"),
+            W_STR_FMT.format("n_taus", "tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_1PRONGSTATSYSTUNCORR3040_1up_TauEffSF_JetBDTmedium"),
+            W_STR_FMT.format("n_taus", "tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_1PRONGSTATSYSTUNCORR3040_1down_TauEffSF_JetBDTmedium"),
             
-            W_STR_FMT.format("tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_1PRONGSTATSYSTUNCORR40_1up_TauEffSF_JetBDTmedium"),
-            W_STR_FMT.format("tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_1PRONGSTATSYSTUNCORR40_1down_TauEffSF_JetBDTmedium"),
+            W_STR_FMT.format("n_taus", "tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_1PRONGSTATSYSTUNCORR40_1up_TauEffSF_JetBDTmedium"),
+            W_STR_FMT.format("n_taus", "tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_1PRONGSTATSYSTUNCORR40_1down_TauEffSF_JetBDTmedium"),
             
-            W_STR_FMT.format("tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_3PRONGSTATSYSTUNCORR2030_1up_TauEffSF_JetBDTmedium"),
-            W_STR_FMT.format("tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_3PRONGSTATSYSTUNCORR2030_1down_TauEffSF_JetBDTmedium"),
+            W_STR_FMT.format("n_taus", "tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_3PRONGSTATSYSTUNCORR2030_1up_TauEffSF_JetBDTmedium"),
+            W_STR_FMT.format("n_taus", "tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_3PRONGSTATSYSTUNCORR2030_1down_TauEffSF_JetBDTmedium"),
             
-            W_STR_FMT.format("tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_3PRONGSTATSYSTUNCORRGE30_1up_TauEffSF_JetBDTmedium"),
-            W_STR_FMT.format("tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_3PRONGSTATSYSTUNCORRGE30_1down_TauEffSF_JetBDTmedium"),
+            W_STR_FMT.format("n_taus", "tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_3PRONGSTATSYSTUNCORRGE30_1up_TauEffSF_JetBDTmedium"),
+            W_STR_FMT.format("n_taus", "tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_3PRONGSTATSYSTUNCORRGE30_1down_TauEffSF_JetBDTmedium"),
             
-            W_STR_FMT.format("tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_HIGHPT_1up_TauEffSF_JetBDTmedium"),
-            W_STR_FMT.format("tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_HIGHPT_1down_TauEffSF_JetBDTmedium"),
+            W_STR_FMT.format("n_taus", "tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_HIGHPT_1up_TauEffSF_JetBDTmedium"),
+            W_STR_FMT.format("n_taus", "tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_HIGHPT_1down_TauEffSF_JetBDTmedium"),
 
-            W_STR_FMT.format("tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_SYST_1up_TauEffSF_JetBDTmedium"),
-            W_STR_FMT.format("tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_SYST_1down_TauEffSF_JetBDTmedium"),
+            W_STR_FMT.format("n_taus", "tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_SYST_1up_TauEffSF_JetBDTmedium"),
+            W_STR_FMT.format("n_taus", "tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_SYST_1down_TauEffSF_JetBDTmedium"),
         ),
         
         "tau_0_sf_NOMINAL_TauEffSF_VeryLooseLlhEleOLR_electron": (
@@ -62,11 +62,11 @@ class Weight(object):
         "tau_0_sf_NOMINAL_TauEffSF_reco": (
                 W_STR_FMT.format("n_taus", "tau_0_sf_NOMINAL_TauEffSF_reco"),
             
-                W_STR_FMT.format("tau_0_sf_TAUS_TRUEHADTAU_EFF_RECO_TOTAL_1up_TauEffSF_reco"),
-                W_STR_FMT.format("tau_0_sf_TAUS_TRUEHADTAU_EFF_RECO_TOTAL_1down_TauEffSF_reco"),
+                W_STR_FMT.format("n_taus", "tau_0_sf_TAUS_TRUEHADTAU_EFF_RECO_TOTAL_1up_TauEffSF_reco"),
+                W_STR_FMT.format("n_taus", "tau_0_sf_TAUS_TRUEHADTAU_EFF_RECO_TOTAL_1down_TauEffSF_reco"),
                 
-                W_STR_FMT.format("tau_0_sf_TAUS_TRUEHADTAU_EFF_RECO_HIGHPT_1up_TauEffSF_reco"),
-                W_STR_FMT.format("tau_0_sf_TAUS_TRUEHADTAU_EFF_RECO_HIGHPT_1down_TauEffSF_reco"),
+                W_STR_FMT.format("n_taus", "tau_0_sf_TAUS_TRUEHADTAU_EFF_RECO_HIGHPT_1up_TauEffSF_reco"),
+                W_STR_FMT.format("n_taus", "tau_0_sf_TAUS_TRUEHADTAU_EFF_RECO_HIGHPT_1down_TauEffSF_reco"),
             ),
     } #<! W_TAU
     
@@ -76,7 +76,7 @@ class Weight(object):
         ),
         
         "jet_sf_NOMINAL_central_jets_global_ineffSF_JVT": (
-            "NOMINAL": "jet_sf_NOMINAL_central_jets_global_ineffSF_JVT",
+            "jet_sf_NOMINAL_central_jets_global_ineffSF_JVT",
         ),
     } #<! W_JET
     
@@ -114,7 +114,7 @@ class Weight(object):
             W_STR_FMT.format("n_electrons", "el_0_sf_NOMINAL_EleEffSF_SINGLE_E_2015_e24_lhmedium_L1EM20VH_OR"\
                              "_e60_lhmedium_OR_e120_lhloose_2016_2017_e26_lhtight_nod0_ivarloose_"\
                              "OR_e60_lhmedium_nod0_OR_e140_lhloose_nod0_MediumLLH_d0z0_v13_isolFixedCutTight"),),
-    )
+    }
 
     W_TRIGGER_TAUJET = {
         "mc15": ("nominal_trig_eff({})".format("met_et/1000."), ),
@@ -125,12 +125,12 @@ class Weight(object):
     
     TYPES = {
         "taujet":{
-            "BASE": W_BASE,
-            "PILEUP": W_PILEUP,
+            # "BASE": W_BASE,
+            # "PILEUP": W_PILEUP,
             "TAU": W_TAU,
-            "JET": W_JET,
-            "BJET": W_BJET,
-            "TRIGGER": W_TRIGGER_TAUJET
+            # "JET": W_JET,
+            # "BJET": W_BJET,
+            # "TRIGGER": W_TRIGGER_TAUJET
         },
          
         "taulep":{
@@ -152,21 +152,15 @@ class Weight(object):
     def factory(cls, channel="taujet", mc_camp=MC_CAMPAIGN):
         """ 
         """
+        ## container for all wights and possible variations
         weights = []
-        for wtype, wo in cls.TYPES[channel].iteritems():
-            if isinstance(wo, (tuple, list)):
-                for w in wo:
-                    weight = cls(w, wtype=wtype, channel=channel, mc_camp=mc_camp)
-                    weights.append(weight)
-            elif isinstance(wo, dict):
-                for w in wo[mc_camp]:
-                    weight = cls(w, wtype=wtype, channel=channel, mc_camp=mc_camp)
-                    weights.append(weight)
-            else:
-                raise TypeError("{} must be either a tuple, list or dict type".format(w))
+        for wtype, wd in cls.TYPES[channel].iteritems():
+            for w, variations in wd.iteritems():
+                weight = cls(w, variations=variations[:],  wtype=wtype, channel=channel, mc_camp=mc_camp)
+                weights.append(weight)
         return weights
     
-    def __init__(self, name, wtype="", channel="taujet", mc_camp=MC_CAMPAIGN):
+    def __init__(self, name, wtype="", variations=[], channel="taujet", mc_camp=MC_CAMPAIGN):
         self.channel = channel
         
         assert wtype.upper() in self.TYPES[self.channel].keys(),\
@@ -174,14 +168,14 @@ class Weight(object):
         self.name = name
         self.wtype = wtype
         self.mc_camp = mc_camp
-        
-    def variations(self):
-        """WIP: get the variations 
-        """
-        return
+        self.variations = variations 
     
     def __repr__(self):
         return "WEIGHT:: name=%r, type=%r, channel=%r, mc_camp=%r"%(
             self.name, self.wtype, self.channel, self.mc_camp)
 
     
+## prep weight classes
+WEIGHTS = {}
+WEIGHTS["taujet"] = Weight.factory(channel="taujet")
+WEIGHTS["taulep"] = Weight.factory(channel="taulep")

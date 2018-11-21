@@ -18,6 +18,7 @@ from hpana.analysis import Analysis
 from hpana.samples.sample  import Sample
 from hpana.cluster.parallel import FuncWorker, run_pool, Job
 from hpana.dataset_hists import dataset_hists
+from hpana.systematics import SYSTEMATICS
 from hpana import log
 
 # - - - - - - - -  set log level
@@ -51,12 +52,13 @@ if ANA_ARGS.categories:
     categories = filter(lambda c: c.name in ANA_ARGS.categories, config.categories)
 else:
     categories = config.categories
-    
+
+## systematics    
+systematics = SYSTEMATICS[ANA_ARGS.channel]
 if ANA_ARGS.systematics:
     #WIP: filter based on the list of systematics available
-    systematics = ANA_ARGS.systematics
-else:
-    systematics = ["NOMINAL"]
+    systematics = filter(lambda s: s.name in ANA_ARGS.systematics, systematics) 
+
     
 # - - - - instantiate the analysis
 analysis = Analysis(config, compile_cxx=not ANA_ARGS.no_cxx)

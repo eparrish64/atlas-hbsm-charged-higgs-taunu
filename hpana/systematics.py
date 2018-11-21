@@ -1,6 +1,7 @@
 
 # local imports
-from . import log
+from hpana import log
+from hpana.weights import WEIGHTS
 
 class SYSTEMATICS_CATEGORIES:
     TAUS, \
@@ -11,9 +12,28 @@ class SYSTEMATICS_CATEGORIES:
 # WIP:
 class Systematic(object):
     TYPES = ["TREE", "WEIGHT", "THEORY"]
-    def __init__(self, name, stype="TREE", variations=None, channel="taujet"):
-        assert stype in Systematic.TYPES, "systematics of type %s is not supported"%stype
-        self.stype = stype
+
+    # systematics with dedicated TTree
+    SOURCES = {
+        "TAU": 
+        (
+            "TAUS_TRUEHADTAU_SME_TES_DETECTOR_1up",
+            "TAUS_TRUEHADTAU_SME_TES_DETECTOR_1down",
+            "TAUS_TRUEHADTAU_SME_TES_INSITU_1up",
+            "TAUS_TRUEHADTAU_SME_TES_INSITU_1down",
+            "TAUS_TRUEHADTAU_SME_TES_MODEL_1up",
+            "TAUS_TRUEHADTAU_SME_TES_MODEL_1down",            
+        ),
+       "MUON":(),
+       "ELECTRON":(),
+       "JET":(),
+       "MET":(),
+    
+    }
+
+    def __init__(self, name, title=None, _type="TREE", variations=None, channel="taujet"):
+        assert _type in Systematic.TYPES, "systematics of type %s is not supported"%_type
+        self._type = _type
         self.channel = channel
         
         if not isinstance(variations, (list, tuple, dict)):
@@ -23,18 +43,52 @@ class Systematic(object):
         self.variations = variations
             
         self.name = name
-        
+        if not title:
+            title = name
+        self.title = title
+
+
     def __iter__(self):
         for var in self.variations:
             yield '%s_%s' % (self.name, var)
 
-    def __str__(self):
-        return "systematic=%r, type=%r, variations=%r"%(self.name, self.stype, self.variations)
+    def __repr__(self):
+        return "name=%r, title=%r, type=%r"%(self.name, self.title, self._type)
+
+    @classmethod
+    def factory(cls, channel="taujet"):
+        # fist systematic TTrees
+        systematics = []
+        for source, ws in cls.SOURCES.iteritems():
+            assert isinstance(ws, (tuple, list)), "must be a tuple or list"
+            for w in ws:
+                syst = Systematic(w, _type="TREE", channel=channel)
+                systematics += [syst]
+
+        # # weight systematics
+        # nom_weights = [nw.name for nw in WEIGHTS[channel]]
+        # nom_weight = "*".join(nom_weights)
+        # for weight in WEIGHTS[channel]:
+        #     nom_w = weight.variations[0]
+        #     var_weights = weight.variations[1:]
+        #     for vw in var_weights:
+        #         syst = Systematic(vw, title="(%s)/(%s)"%(vw, nom_w), channel=channel, _type="WEIGHT")
+        #         systematics += [syst]
+                
+        # theory systematics: WIP
+
+        return systematics 
+
+## prep systematics objects 
+SYSTEMATICS = {}
+SYSTEMATICS["taujet"] = Systematic.factory(channel="taujet")
+#SYSTEMATICS["taulep"] = Systematic.factory(channel="taulep")
 
 
 
 
-    
+
+
 
 # MUON_ID_1down
 # MUON_ID_1up
@@ -47,172 +101,8 @@ class Systematic(object):
 # MUON_SCALE_1down
 # MUON_SCALE_1up
 
-# PH_SCALE_CONVFAKERATE_1down
-# PH_SCALE_CONVFAKERATE_1up
-# PH_SCALE_CONVRADIUS_1down
-# PH_SCALE_CONVRADIUS_1up
-# PH_SCALE_LEAKAGECONV_1down
-# PH_SCALE_LEAKAGECONV_1up
-# PH_SCALE_LEAKAGEUNCONV_1down
-# PH_SCALE_LEAKAGEUNCONV_1up
+ 
 
-# EG_RESOLUTION_ALL_1down
-# EG_RESOLUTION_ALL_1up
-# EG_RESOLUTION_MATERIALCALO_1down
-# EG_RESOLUTION_MATERIALCALO_1up
-# EG_RESOLUTION_MATERIALCRYO_1down
-# EG_RESOLUTION_MATERIALCRYO_1up
-# EG_RESOLUTION_MATERIALGAP_1down
-# EG_RESOLUTION_MATERIALGAP_1up
-# EG_RESOLUTION_MATERIALIBL_1down
-# EG_RESOLUTION_MATERIALIBL_1up
-# EG_RESOLUTION_MATERIALID_1down
-# EG_RESOLUTION_MATERIALID_1up
-# EG_RESOLUTION_MATERIALPP0_1down
-# EG_RESOLUTION_MATERIALPP0_1up
-# EG_RESOLUTION_PILEUP_1down
-# EG_RESOLUTION_PILEUP_1up
-# EG_RESOLUTION_SAMPLINGTERM_1down
-# EG_RESOLUTION_SAMPLINGTERM_1up
-# EG_RESOLUTION_ZSMEARING_1down
-# EG_RESOLUTION_ZSMEARING_1up
-# EG_SCALE_AF2_1down
-# EG_SCALE_AF2_1up
-# EG_SCALE_ALL_1down
-# EG_SCALE_ALL_1up
-# EG_SCALE_E4SCINTILLATOR_ETABIN0_1down
-# EG_SCALE_E4SCINTILLATOR_ETABIN0_1up
-# EG_SCALE_E4SCINTILLATOR_ETABIN1_1down
-# EG_SCALE_E4SCINTILLATOR_ETABIN1_1up
-# EG_SCALE_E4SCINTILLATOR_ETABIN2_1down
-# EG_SCALE_E4SCINTILLATOR_ETABIN2_1up
-# EG_SCALE_G4_1down
-# EG_SCALE_G4_1up
-# EG_SCALE_L1GAIN_1down
-# EG_SCALE_L1GAIN_1up
-# EG_SCALE_L2GAIN_1down
-# EG_SCALE_L2GAIN_1up
-# EG_SCALE_LARCALIB_ETABIN0_1down
-# EG_SCALE_LARCALIB_ETABIN0_1up
-# EG_SCALE_LARCALIB_ETABIN1_1down
-# EG_SCALE_LARCALIB_ETABIN1_1up
-# EG_SCALE_LARELECCALIB_1down
-# EG_SCALE_LARELECCALIB_1up
-# EG_SCALE_LARELECUNCONV_ETABIN0_1down
-# EG_SCALE_LARELECUNCONV_ETABIN0_1up
-# EG_SCALE_LARELECUNCONV_ETABIN1_1down
-# EG_SCALE_LARELECUNCONV_ETABIN1_1up
-# EG_SCALE_LARUNCONVCALIB_ETABIN0_1down
-# EG_SCALE_LARUNCONVCALIB_ETABIN0_1up
-# EG_SCALE_LARUNCONVCALIB_ETABIN1_1down
-# EG_SCALE_LARUNCONVCALIB_ETABIN1_1up
-# EG_SCALE_MATCALO_ETABIN0_1down
-# EG_SCALE_MATCALO_ETABIN0_1up
-# EG_SCALE_MATCALO_ETABIN1_1down
-# EG_SCALE_MATCALO_ETABIN1_1up
-# EG_SCALE_MATCALO_ETABIN10_1down
-# EG_SCALE_MATCALO_ETABIN10_1up
-# EG_SCALE_MATCALO_ETABIN11_1down
-# EG_SCALE_MATCALO_ETABIN11_1up
-# EG_SCALE_MATCALO_ETABIN2_1down
-# EG_SCALE_MATCALO_ETABIN2_1up
-# EG_SCALE_MATCALO_ETABIN3_1down
-# EG_SCALE_MATCALO_ETABIN3_1up
-# EG_SCALE_MATCALO_ETABIN4_1down
-# EG_SCALE_MATCALO_ETABIN4_1up
-# EG_SCALE_MATCALO_ETABIN5_1down
-# EG_SCALE_MATCALO_ETABIN5_1up
-# EG_SCALE_MATCALO_ETABIN6_1down
-# EG_SCALE_MATCALO_ETABIN6_1up
-# EG_SCALE_MATCALO_ETABIN7_1down
-# EG_SCALE_MATCALO_ETABIN7_1up
-# EG_SCALE_MATCALO_ETABIN8_1down
-# EG_SCALE_MATCALO_ETABIN8_1up
-# EG_SCALE_MATCALO_ETABIN9_1down
-# EG_SCALE_MATCALO_ETABIN9_1up
-# EG_SCALE_MATCRYO_ETABIN0_1down
-# EG_SCALE_MATCRYO_ETABIN0_1up
-# EG_SCALE_MATCRYO_ETABIN1_1down
-# EG_SCALE_MATCRYO_ETABIN1_1up
-# EG_SCALE_MATCRYO_ETABIN10_1down
-# EG_SCALE_MATCRYO_ETABIN10_1up
-# EG_SCALE_MATCRYO_ETABIN11_1down
-# EG_SCALE_MATCRYO_ETABIN11_1up
-# EG_SCALE_MATCRYO_ETABIN2_1down
-# EG_SCALE_MATCRYO_ETABIN2_1up
-# EG_SCALE_MATCRYO_ETABIN3_1down
-# EG_SCALE_MATCRYO_ETABIN3_1up
-# EG_SCALE_MATCRYO_ETABIN4_1down
-# EG_SCALE_MATCRYO_ETABIN4_1up
-# EG_SCALE_MATCRYO_ETABIN5_1down
-# EG_SCALE_MATCRYO_ETABIN5_1up
-# EG_SCALE_MATCRYO_ETABIN6_1down
-# EG_SCALE_MATCRYO_ETABIN6_1up
-# EG_SCALE_MATCRYO_ETABIN7_1down
-# EG_SCALE_MATCRYO_ETABIN7_1up
-# EG_SCALE_MATCRYO_ETABIN8_1down
-# EG_SCALE_MATCRYO_ETABIN8_1up
-# EG_SCALE_MATCRYO_ETABIN9_1down
-# EG_SCALE_MATCRYO_ETABIN9_1up
-# EG_SCALE_MATID_ETABIN0_1down
-# EG_SCALE_MATID_ETABIN0_1up
-# EG_SCALE_MATID_ETABIN1_1down
-# EG_SCALE_MATID_ETABIN1_1up
-# EG_SCALE_MATID_ETABIN2_1down
-# EG_SCALE_MATID_ETABIN2_1up
-# EG_SCALE_MATID_ETABIN3_1down
-# EG_SCALE_MATID_ETABIN3_1up
-# EG_SCALE_MATPP0_ETABIN0_1down
-# EG_SCALE_MATPP0_ETABIN0_1up
-# EG_SCALE_MATPP0_ETABIN1_1down
-# EG_SCALE_MATPP0_ETABIN1_1up
-# EG_SCALE_PEDESTAL_1down
-# EG_SCALE_PEDESTAL_1up
-# EG_SCALE_PS_BARREL_B12_1down
-# EG_SCALE_PS_BARREL_B12_1up
-# EG_SCALE_PS_ETABIN0_1down
-# EG_SCALE_PS_ETABIN0_1up
-# EG_SCALE_PS_ETABIN1_1down
-# EG_SCALE_PS_ETABIN1_1up
-# EG_SCALE_PS_ETABIN2_1down
-# EG_SCALE_PS_ETABIN2_1up
-# EG_SCALE_PS_ETABIN3_1down
-# EG_SCALE_PS_ETABIN3_1up
-# EG_SCALE_PS_ETABIN4_1down
-# EG_SCALE_PS_ETABIN4_1up
-# EG_SCALE_PS_ETABIN5_1down
-# EG_SCALE_PS_ETABIN5_1up
-# EG_SCALE_PS_ETABIN6_1down
-# EG_SCALE_PS_ETABIN6_1up
-# EG_SCALE_PS_ETABIN7_1down
-# EG_SCALE_PS_ETABIN7_1up
-# EG_SCALE_PS_ETABIN8_1down
-# EG_SCALE_PS_ETABIN8_1up
-# EG_SCALE_S12_ETABIN0_1down
-# EG_SCALE_S12_ETABIN0_1up
-# EG_SCALE_S12_ETABIN1_1down
-# EG_SCALE_S12_ETABIN1_1up
-# EG_SCALE_S12_ETABIN2_1down
-# EG_SCALE_S12_ETABIN2_1up
-# EG_SCALE_S12_ETABIN3_1down
-# EG_SCALE_S12_ETABIN3_1up
-# EG_SCALE_S12_ETABIN4_1down
-# EG_SCALE_S12_ETABIN4_1up
-# EG_SCALE_TOPOCLUSTER_THRES_1down
-# EG_SCALE_TOPOCLUSTER_THRES_1up
-# EG_SCALE_WTOTS1_1down
-# EG_SCALE_WTOTS1_1up
-# EG_SCALE_ZEESTAT_1down
-# EG_SCALE_ZEESTAT_1up
-# EG_SCALE_ZEESYST_1down
-# EG_SCALE_ZEESYST_1up
-
-# TAUS_TRUEHADTAU_SME_TES_DETECTOR_1down
-# TAUS_TRUEHADTAU_SME_TES_DETECTOR_1up
-# TAUS_TRUEHADTAU_SME_TES_INSITU_1down
-# TAUS_TRUEHADTAU_SME_TES_INSITU_1up
-# TAUS_TRUEHADTAU_SME_TES_MODEL_1down
-# TAUS_TRUEHADTAU_SME_TES_MODEL_1up
 
 
 # #### WEIGHTS 

@@ -269,7 +269,7 @@ class Sample(object):
                     wname = "%s.%s_%s.%s"%(
                         sname, ds.name,
                         ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(10))
-                        , systematic)
+                        , systematic.name)
                     worker = HistWorker(
                         name=wname,
                         sample=self.name,

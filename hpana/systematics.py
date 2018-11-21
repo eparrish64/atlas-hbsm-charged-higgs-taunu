@@ -3,57 +3,59 @@
 from hpana import log
 from hpana.weights import WEIGHTS
 
+
 class SYSTEMATICS_CATEGORIES:
     TAUS, \
-    JETS, \
-    WEIGHTS, \
-    NORMALIZATION = range(4)
+        JETS, \
+        WEIGHTS, \
+        NORMALIZATION = range(4)
 
 # WIP:
+
+
 class Systematic(object):
     TYPES = ["TREE", "WEIGHT", "THEORY"]
 
     # systematics with dedicated TTree
     SOURCES = {
-        "TAU": 
+        "TAU":
         (
             "TAUS_TRUEHADTAU_SME_TES_DETECTOR_1up",
             "TAUS_TRUEHADTAU_SME_TES_DETECTOR_1down",
             "TAUS_TRUEHADTAU_SME_TES_INSITU_1up",
             "TAUS_TRUEHADTAU_SME_TES_INSITU_1down",
             "TAUS_TRUEHADTAU_SME_TES_MODEL_1up",
-            "TAUS_TRUEHADTAU_SME_TES_MODEL_1down",            
+            "TAUS_TRUEHADTAU_SME_TES_MODEL_1down",
         ),
-       "MUON":(),
-       "ELECTRON":(),
-       "JET":(),
-       "MET":(),
-    
+        "MUON": (),
+        "ELECTRON": (),
+        "JET": (),
+        "MET": (),
+
     }
 
     def __init__(self, name, title=None, _type="TREE", variations=None, channel="taujet"):
-        assert _type in Systematic.TYPES, "systematics of type %s is not supported"%_type
+        assert _type in Systematic.TYPES, "systematics of type %s is not supported" % _type
         self._type = _type
         self.channel = channel
-        
+
         if not isinstance(variations, (list, tuple, dict)):
-                variations = (variations,)
+            variations = (variations,)
         elif isinstance(variations, dict):
             variations = (variations["UP"], variations["DOWN"])
         self.variations = variations
-            
+
         self.name = name
         if not title:
             title = name
         self.title = title
-
 
     def __iter__(self):
         for var in self.variations:
             yield '%s_%s' % (self.name, var)
 
     def __repr__(self):
-        return "name=%r, title=%r, type=%r"%(self.name, self.title, self._type)
+        return "name=%r, title=%r, type=%r" % (self.name, self.title, self._type)
 
     @classmethod
     def factory(cls, channel="taujet"):
@@ -65,29 +67,28 @@ class Systematic(object):
                 syst = Systematic(w, _type="TREE", channel=channel)
                 systematics += [syst]
 
-        # # weight systematics
-        # nom_weights = [nw.name for nw in WEIGHTS[channel]]
-        # nom_weight = "*".join(nom_weights)
-        # for weight in WEIGHTS[channel]:
-        #     nom_w = weight.variations[0]
-        #     var_weights = weight.variations[1:]
-        #     for vw in var_weights:
-        #         syst = Systematic(vw, title="(%s)/(%s)"%(vw, nom_w), channel=channel, _type="WEIGHT")
-        #         systematics += [syst]
-                
+        # weight systematics
+        nom_weights = [nw.name for nw in WEIGHTS[channel]]
+        nom_weight = "*".join(nom_weights)
+        for weight in WEIGHTS[channel]:
+            nom_w = weight.variations[0]
+            var_weights = weight.variations[1:]
+            for vw in var_weights:
+                # FIX ME: better solution ?
+                sname = vw.split("*")[-1].replace(")", "")
+                syst = Systematic(sname, title="(%s)/(%s)" %
+                                  (vw, nom_w), channel=channel, _type="WEIGHT")
+                systematics += [syst]
+
         # theory systematics: WIP
 
-        return systematics 
+        return systematics
 
-## prep systematics objects 
+
+# prep systematics objects
 SYSTEMATICS = {}
 SYSTEMATICS["taujet"] = Systematic.factory(channel="taujet")
 #SYSTEMATICS["taulep"] = Systematic.factory(channel="taulep")
-
-
-
-
-
 
 
 # MUON_ID_1down
@@ -101,11 +102,8 @@ SYSTEMATICS["taujet"] = Systematic.factory(channel="taujet")
 # MUON_SCALE_1down
 # MUON_SCALE_1up
 
- 
 
-
-
-# #### WEIGHTS 
+# #### WEIGHTS
 # jet_sf_FT_EFF_Eigen_B_0_1down_global_effSF_MV2c10
 # jet_sf_FT_EFF_Eigen_B_0_1down_global_ineffSF_MV2c10
 # jet_sf_FT_EFF_Eigen_B_0_1up_global_effSF_MV2c10
@@ -234,4 +232,3 @@ SYSTEMATICS["taujet"] = Systematic.factory(channel="taujet")
 # tau_0_sf_TAUS_TRUEHADTAU_EFF_RECO_TOTAL_1down_TauEffSF_selection
 # tau_0_sf_TAUS_TRUEHADTAU_EFF_RECO_TOTAL_1up_TauEffSF_reco
 # tau_0_sf_TAUS_TRUEHADTAU_EFF_RECO_TOTAL_1up_TauEffSF_selection
-

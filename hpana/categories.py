@@ -304,8 +304,7 @@ Category_TAUJET_PRESEL = Category(
         TAU_BASE,
         LEP_VETO,
         MET100, 
-        NUM_JETS3,
-        BJET_PT25,
+        NUM_JETS3,    
         MT50],
 )
 
@@ -322,7 +321,7 @@ Category_SR_TAUJET = Category(
         MET150,
         MT50,
         NUM_BJETS1,
-        BJET_PT25,
+        
     ],
 )
 
@@ -335,8 +334,7 @@ Category_TTBAR = Category(
         LEP_VETO,
         TAU_PT40,
         NUM_JETS3,
-        NUM_BJETS2,
-        BJET_PT25,
+        NUM_BJETS2,     
         MET150,
         MT_MAX100],
 )
@@ -397,8 +395,7 @@ Category_SR_TAULEP = Category(
         OS_TAU_LEP,
         NUM_JETS1,
         JET_PT25,
-        NUM_BJETS1,
-        BJET_PT25,
+        NUM_BJETS1,  
         MET50,
     ],
 )
@@ -414,8 +411,7 @@ Category_SR_TAUEL = Category(
         VETO_MU,
         NUM_JETS1,
         JET_PT25,
-        NUM_BJETS1,
-        BJET_PT25,
+        NUM_BJETS1,     
         MET50,
     ],
 )
@@ -432,7 +428,6 @@ Category_SR_TAUMU = Category(
         NUM_JETS1,
         JET_PT25,
         NUM_BJETS1,
-        BJET_PT25,
         MET50,
     ],
 )
@@ -482,8 +477,7 @@ Category_DILEP_BTAG = Category(
         VETO_TAU,
         NUM_JETS1,
         JET_PT25,
-        NUM_BJETS1,
-        BJET_PT25,
+        NUM_BJETS1,        
         MET50,
     ],
 )

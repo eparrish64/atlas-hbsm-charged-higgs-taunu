@@ -288,8 +288,7 @@ class QCD(Sample):
                         categories=mc_categories,
                         weights=total_weights,
                         channel=self.config.channel)
-                    
-                mc_workers.append(worker)
+                    mc_workers.append(worker)
 
         # - - - - DATA workers
         data_workers = []
@@ -306,7 +305,6 @@ class QCD(Sample):
                     categories=data_categories,
                     weights=ff_weights["NOMINAL"],
                     channel=self.config.channel)
-
                 data_workers.append(worker)
 
         qcd_workers = mc_workers + data_workers
@@ -388,7 +386,7 @@ class QCD(Sample):
             
             # - - - - retrieve the samples hists
             data_hfiles = glob.glob("%s/%s.DATA*"%(histsdir, self.name) ) 
-            assert len(data_hfiles)==len(self.data.datasets), "not fully processed!"
+            assert len(data_hfiles)==len(self.data.datasets)*len(self.systematics), "not fully processed!"
             
             mc_hfiles = list(set(glob.glob("%s/%s.*"%(histsdir, self.name) ) ) - set(data_hfiles) )
             
@@ -399,56 +397,60 @@ class QCD(Sample):
             # - - - - extract the hists 
             fields = set()
             categories = set()
+            systematics = set()
             mc_hist_set = []
             # - - - - get QCD MC component hists (to be subtracted)
             for hf in mc_hfiles:
                 htf = ROOT.TFile(hf, "READ")
-                for systematic in self.systematics:
-                    systdir = htf.Get(systematic)
-                    for hname in [k.GetName() for k in systdir.GetListOfKeys()]:
-                        # - - regex match the hist name
-                        match = re.match(self.config.hist_name_regex, hname)
-                        if match:
-                            sample = match.group("sample")
-                            category = match.group("category")
-                            variable = match.group("variable")
+                # tokenize
+                systematic = hf.split("/")[-1].split(".")[-2]
+                systematics.add(systematic)
+                systdir = htf.Get(systematic)
+                for hname in [k.GetName() for k in systdir.GetListOfKeys()]:
+                    # - - regex match the hist name
+                    match = re.match(self.config.hist_name_regex, hname)
+                    if match:
+                        sample = match.group("sample")
+                        category = match.group("category")
+                        variable = match.group("variable")
 
-                            fields.add(variable)
-                            categories.add(category)
+                        fields.add(variable)
+                        categories.add(category)
 
-                            hist = htf.Get("%s/%s"%(systematic, hname))
-                            hist.SetDirectory(0) #<! detach
-                            hset = Histset(sample=sample, category=category, variable=variable,
-                                           systematic=systematic, hist=hist)
-                            mc_hist_set.append(hset)
+                        hist = htf.Get("%s/%s"%(systematic, hname))
+                        hist.SetDirectory(0) #<! detach
+                        hset = Histset(sample=sample, category=category, variable=variable,
+                                        systematic=systematic, hist=hist)
+                        mc_hist_set.append(hset)
                 htf.Close()
-                
+
             # - - - - get QCD data component hists
             data_hist_set = []
             for hf in data_hfiles:
                 htf = ROOT.TFile(hf, "READ")
-                for systematic in self.systematics:
-                    systdir = htf.Get(systematic)
-                    for hname in [k.GetName() for k in systdir.GetListOfKeys()]:
-                        # - - regex match the hist name
-                        match = re.match(self.config.hist_name_regex, hname)
-                        if match:
-                            sample = match.group("sample")
-                            category = match.group("category")
-                            variable = match.group("variable")
+                systematic = hf.split("/")[-1].split(".")[-2]
+                systdir = htf.Get(systematic)
+                for hname in [k.GetName() for k in systdir.GetListOfKeys()]:
+                    # - - regex match the hist name
+                    match = re.match(self.config.hist_name_regex, hname)
+                    if match:
+                        sample = match.group("sample")
+                        category = match.group("category")
+                        variable = match.group("variable")
 
-                            assert (variable in fields and category in categories), "sth missing!"
+                        assert (variable in fields and category in categories), "sth missing!"
 
-                            hist = htf.Get("%s/%s"%(systematic, hname))
-                            hist.SetDirectory(0) #<! detach from the htf
-                            hset = Histset(sample=sample, category=category, variable=variable,
-                                           systematic=systematic, hist=hist)
-                            data_hist_set.append(hset)
+                        hist = htf.Get("%s/%s"%(systematic, hname))
+                        hist.SetDirectory(0) #<! detach from the htf
+                        hset = Histset(sample=sample, category=category, variable=variable,
+                                        systematic=systematic, hist=hist)
+                        data_hist_set.append(hset)
                 htf.Close()
         else:
             # - - - - get list of categories and fields available in hist_set
             fields = list(set([hs.variable for hs in hist_set] ) )
             categories = list(set([hs.category for hs in hist_set] ) )
+            systematics = list(set([hs.systematic for hs in hist_set] ) )
 
             # - - - - gather hists for this sample
             hist_set = filter(lambda hs: hs.sample.startswith(self.name), hist_set)
@@ -468,7 +470,7 @@ class QCD(Sample):
 
         # - - - - add them up
         merged_hist_set = []
-        for systematic in self.systematics:
+        for systematic in systematics:
             for var in fields:
                 for cat in categories:
                     data_hists = filter(lambda hs: (hs.systematic==systematic and hs.variable==var and hs.category==cat), data_hist_set)
@@ -632,3 +634,4 @@ class LepFake(Sample):
                     
         return merged_hist_set
         
+    

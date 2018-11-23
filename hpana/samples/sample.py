@@ -147,15 +147,16 @@ class Sample(object):
 
         # - - - - defensive copy
         weight_fields = self.config.weight_fields[:]
-        
         # - - - - MC common weights
         if not categories:
             categories = self.config.categories
         weights_dict = {}
+
         for category in categories:
-            weights_dict[category.name] = [w.name for w in weight_fields] #[wf.name[systematic] for wf in weight_fields]
+            weights_dict[category.name] = [w.title for w in weight_fields]
         
         return weights_dict
+
     @property
     def systematics(self):
         return ["NOMINAL"]
@@ -265,23 +266,23 @@ class Sample(object):
                         if extra_weight:
                             weights[category.name] += [extra_weight]
 
-                    sname = self.name
-                    wname = "%s.%s_%s.%s"%(
-                        sname, ds.name,
-                        ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(10))
-                        , systematic.name)
-                    worker = HistWorker(
-                        name=wname,
-                        sample=self.name,
-                        dataset=ds,
-                        fields=fields,
-                        categories=categories_cp,
-                        weights=weights,
-                        systematic=systematic,
-                        hist_templates=hist_templates,
-                        channel=self.config.channel) 
+                sname = self.name
+                wname = "%s.%s_%s.%s"%(
+                    sname, ds.name,
+                    ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(10))
+                    , systematic.name)
+                worker = HistWorker(
+                    name=wname,
+                    sample=self.name,
+                    dataset=ds,
+                    fields=fields,
+                    categories=categories_cp,
+                    weights=weights,
+                    systematic=systematic,
+                    hist_templates=hist_templates,
+                    channel=self.config.channel) 
 
-                    workers.add(worker)
+                workers.add(worker)
 
         return list(workers)
 
@@ -388,31 +389,35 @@ class Sample(object):
             # - - - - extract the hists 
             fields = set()
             categories = set()
+            systematics = set()
             hist_set = []
             for hf in hfiles:
                 htf = ROOT.TFile(hf, "READ")
-                for systematic in self.systematics:
-                    systdir = htf.Get(systematic)
-                    for hname in [k.GetName() for k in systdir.GetListOfKeys()]:
-                        # - - regex match the hist name
-                        match = re.match(self.config.hist_name_regex, hname)
-                        if match:
-                            sample = match.group("sample")
-                            category = match.group("category")
-                            variable = match.group("variable")
-                            fields.add(variable)
-                            categories.add(category)
-                            hist = htf.Get("%s/%s"%(systematic, hname))
-                            hist.SetDirectory(0) #<! detach from htf
-                            hset = Histset(sample=sample, category=category, variable=variable,
-                                           systematic=systematic, hist=hist)
-                            hist_set.append(hset)
+                # tokenize 
+                systematic = hf.split("/")[-1].split(".")[-2]
+                systematics.add(systematic)
+                systdir = htf.Get(systematic)
+                for hname in [k.GetName() for k in systdir.GetListOfKeys()]:
+                    # - - regex match the hist name
+                    match = re.match(self.config.hist_name_regex, hname)
+                    if match:
+                        sample = match.group("sample")
+                        category = match.group("category")
+                        variable = match.group("variable")
+                        fields.add(variable)
+                        categories.add(category)
+                        hist = htf.Get("%s/%s"%(systematic, hname))
+                        hist.SetDirectory(0) #<! detach from htf
+                        hset = Histset(sample=sample, category=category, variable=variable,
+                                        systematic=systematic, hist=hist)
+                        hist_set.append(hset)
                 htf.Close()
         else:
             # - - - - get list of categories and fields available in hist_set
             fields = list(set([hs.variable for hs in hist_set] ) )
             categories = list(set([hs.category for hs in hist_set] ) )
-            
+            systematics = list(set([hs.systematic for hs in hist_set]))
+
         if write:
             # - - - - output file
             if not hists_file:
@@ -424,10 +429,10 @@ class Sample(object):
         if not hist_set:
             log.warning("no hist is found for %s; skipping the merge!"%self.name)
             return []
-        
+
         # - - - - add them up
         merged_hist_set = []
-        for systematic in self.systematics:
+        for systematic in systematics:
             for var in fields:
                 for cat in categories:
                     hists = filter(

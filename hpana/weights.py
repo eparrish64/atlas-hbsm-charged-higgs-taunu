@@ -1,5 +1,6 @@
 """
-* Different scale factor weights are put together here.
+* Different scale factor applied as weights to events.
+* Class Weight provieds methods for getting event weight for different channel
 * for each weight obj
 """
 
@@ -11,8 +12,9 @@ from . import MC_CAMPAIGN
 class Weight(object):
     """
     """
-    # FIXME : do nparts==0 & nparts>0*SF returns 0 sometimes!
-    W_STR_FMT = "({0}!=1+({0}==1)*{1})"
+    # CAREFUL! must separate booleans via parantheses
+    W_STR_FMT = "(({0}!=1)+({0}==1)*{1})"
+
     W_PILEUP = {
         # <! TRAILING COMMA IS NECESSARY FOR ONE ELEMENT TUPLES!
         "weight_pileup": ("weight_total/weight_mc",)
@@ -21,7 +23,6 @@ class Weight(object):
     W_BASE = {
         "weight_total": ("weight_total", )
     }
-
     W_TAU = {
         "tau_0_sf_NOMINAL_TauEffSF_JetBDTmedium": (
             W_STR_FMT.format(
@@ -112,19 +113,77 @@ class Weight(object):
     W_BJET = {
         "jet_sf_NOMINAL_global_ineffSF_MV2c10": (
             "jet_sf_NOMINAL_global_ineffSF_MV2c10",
+            "jet_sf_FT_EFF_Eigen_B_0_1down_global_effSF_MV2c10",
+            "jet_sf_FT_EFF_Eigen_B_0_1down_global_ineffSF_MV2c10",
+            "jet_sf_FT_EFF_Eigen_B_0_1up_global_effSF_MV2c10",
+            "jet_sf_FT_EFF_Eigen_B_0_1up_global_ineffSF_MV2c10",
+            "jet_sf_FT_EFF_Eigen_B_1_1down_global_effSF_MV2c10",
+            "jet_sf_FT_EFF_Eigen_B_1_1down_global_ineffSF_MV2c10",
+            "jet_sf_FT_EFF_Eigen_B_1_1up_global_effSF_MV2c10",
+            "jet_sf_FT_EFF_Eigen_B_1_1up_global_ineffSF_MV2c10",
+            "jet_sf_FT_EFF_Eigen_B_2_1down_global_effSF_MV2c10",
+            "jet_sf_FT_EFF_Eigen_B_2_1down_global_ineffSF_MV2c10",
+            "jet_sf_FT_EFF_Eigen_B_2_1up_global_effSF_MV2c10",
+            "jet_sf_FT_EFF_Eigen_B_2_1up_global_ineffSF_MV2c10",
+            "jet_sf_FT_EFF_Eigen_C_0_1down_global_effSF_MV2c10",
+            "jet_sf_FT_EFF_Eigen_C_0_1down_global_ineffSF_MV2c10",
+            "jet_sf_FT_EFF_Eigen_C_0_1up_global_effSF_MV2c10",
+            "jet_sf_FT_EFF_Eigen_C_0_1up_global_ineffSF_MV2c10",
+            "jet_sf_FT_EFF_Eigen_C_1_1down_global_effSF_MV2c10",
+            "jet_sf_FT_EFF_Eigen_C_1_1down_global_ineffSF_MV2c10",
+            "jet_sf_FT_EFF_Eigen_C_1_1up_global_effSF_MV2c10",
+            "jet_sf_FT_EFF_Eigen_C_1_1up_global_ineffSF_MV2c10",
+            "jet_sf_FT_EFF_Eigen_C_2_1down_global_effSF_MV2c10",
+            "jet_sf_FT_EFF_Eigen_C_2_1down_global_ineffSF_MV2c10",
+            "jet_sf_FT_EFF_Eigen_C_2_1up_global_effSF_MV2c10",
+            "jet_sf_FT_EFF_Eigen_C_2_1up_global_ineffSF_MV2c10",
+            "jet_sf_FT_EFF_Eigen_Light_0_1down_global_effSF_MV2c10",
+            "jet_sf_FT_EFF_Eigen_Light_0_1down_global_ineffSF_MV2c10",
+            "jet_sf_FT_EFF_Eigen_Light_0_1up_global_effSF_MV2c10",
+            "jet_sf_FT_EFF_Eigen_Light_0_1up_global_ineffSF_MV2c10",
+            "jet_sf_FT_EFF_Eigen_Light_1_1down_global_effSF_MV2c10",
+            "jet_sf_FT_EFF_Eigen_Light_1_1down_global_ineffSF_MV2c10",
+            "jet_sf_FT_EFF_Eigen_Light_1_1up_global_effSF_MV2c10",
+            "jet_sf_FT_EFF_Eigen_Light_1_1up_global_ineffSF_MV2c10",
+            "jet_sf_FT_EFF_Eigen_Light_2_1down_global_effSF_MV2c10",
+            "jet_sf_FT_EFF_Eigen_Light_2_1down_global_ineffSF_MV2c10",
+            "jet_sf_FT_EFF_Eigen_Light_2_1up_global_effSF_MV2c10",
+            "jet_sf_FT_EFF_Eigen_Light_2_1up_global_ineffSF_MV2c10",
+            "jet_sf_FT_EFF_Eigen_Light_3_1down_global_effSF_MV2c10",
+            "jet_sf_FT_EFF_Eigen_Light_3_1down_global_ineffSF_MV2c10",
+            "jet_sf_FT_EFF_Eigen_Light_3_1up_global_effSF_MV2c10",
+            "jet_sf_FT_EFF_Eigen_Light_3_1up_global_effSF_MV2c10",
+            "jet_sf_FT_EFF_Eigen_Light_4_1down_global_effSF_MV2c10",
+            "jet_sf_FT_EFF_Eigen_Light_4_1down_global_ineffSF_MV2c10",
+            "jet_sf_FT_EFF_Eigen_Light_4_1up_global_effSF_MV2c10",
+            "jet_sf_FT_EFF_Eigen_Light_4_1up_global_ineffSF_MV2c10",
+            "jet_sf_FT_EFF_extrapolation_1down_global_effSF_MV2c10",
+            "jet_sf_FT_EFF_extrapolation_1down_global_ineffSF_MV2c10",
+            "jet_sf_FT_EFF_extrapolation_1up_global_effSF_MV2c10",
+            "jet_sf_FT_EFF_extrapolation_1up_global_ineffSF_MV2c10",
+            "jet_sf_FT_EFF_extrapolation_from_charm_1down_global_effSF_MV2c10",
+            "jet_sf_FT_EFF_extrapolation_from_charm_1down_global_ineffSF_MV2c10",
+            "jet_sf_FT_EFF_extrapolation_from_charm_1up_global_effSF_MV2c10",
+            "jet_sf_FT_EFF_extrapolation_from_charm_1up_global_ineffSF_MV2c10",
+
         ),
     }  # <! W_BJET
 
     W_MU = {
         "mu_0_sf_NOMINAL_MuEffSF_TTVA": (
             W_STR_FMT.format("n_muons", "mu_0_sf_NOMINAL_MuEffSF_TTVA"),
+
         ),
 
         "mu_0_sf_NOMINAL_MuEffSF_IsoFixedCutTight": (
-            W_STR_FMT.format("n_muons", "mu_0_sf_NOMINAL_MuEffSF_IsoFixedCutTight"),),
+            W_STR_FMT.format(
+                "n_muons", "mu_0_sf_NOMINAL_MuEffSF_IsoFixedCutTight"),
+        ),
 
         "mu_0_sf_NOMINAL_MuEffSF_Reco_QualTight": (
-            W_STR_FMT.format("n_muons", "mu_0_sf_NOMINAL_MuEffSF_Reco_QualTight"),),
+            W_STR_FMT.format(
+                "n_muons", "mu_0_sf_NOMINAL_MuEffSF_Reco_QualTight"),
+        ),
 
     }  # <! W_MU
 
@@ -133,15 +192,21 @@ class Weight(object):
             W_STR_FMT.format("n_electrons", "el_0_sf_NOMINAL_EleEffSF_offline_RecoTrk"),),
 
         "el_0_sf_NOMINAL_EleEffSF_Isolation_TightLLH_d0z0_v13_isolFixedCutTight": (
-            W_STR_FMT.format("n_electrons", "el_0_sf_NOMINAL_EleEffSF_Isolation_TightLLH_d0z0_v13_isolFixedCutTight"),),
+            W_STR_FMT.format(
+                "n_electrons", "el_0_sf_NOMINAL_EleEffSF_Isolation_TightLLH_d0z0_v13_isolFixedCutTight"),
+        ),
 
         "el_0_sf_NOMINAL_EleEffSF_offline_MediumLLH_d0z0_v13": (
-            W_STR_FMT.format("n_electrons", "el_0_sf_NOMINAL_EleEffSF_offline_MediumLLH_d0z0_v13"),),
+            W_STR_FMT.format(
+                "n_electrons", "el_0_sf_NOMINAL_EleEffSF_offline_MediumLLH_d0z0_v13"),
+        ),
 
         "el_0_sf_NOMINAL_EleEffSF_SINGLE_E_2015_e24_lhmedium_L1EM20VH": (
             W_STR_FMT.format("n_electrons", "el_0_sf_NOMINAL_EleEffSF_SINGLE_E_2015_e24_lhmedium_L1EM20VH_OR"
                              "_e60_lhmedium_OR_e120_lhloose_2016_2017_e26_lhtight_nod0_ivarloose_"
-                             "OR_e60_lhmedium_nod0_OR_e140_lhloose_nod0_MediumLLH_d0z0_v13_isolFixedCutTight"),),
+                             "OR_e60_lhmedium_nod0_OR_e140_lhloose_nod0_MediumLLH_d0z0_v13_isolFixedCutTight"),
+
+        ),
     }
 
     W_TRIGGER_TAUJET = {
@@ -162,12 +227,12 @@ class Weight(object):
         },
 
         "taulep": {
-            "BASE": W_BASE,
-            "PILEUP": W_PILEUP,
-            "TAU": W_TAU,
-            "JET": W_JET,
-            "BJET": W_BJET,
-            "MU": W_MU,
+            # "BASE": W_BASE,
+            # "PILEUP": W_PILEUP,
+            # "TAU": W_TAU,
+            # "JET": W_JET,
+            # "BJET": W_BJET,
+            # "MU": W_MU,
             "EL": W_EL,
             # "TRIGGER": W_TRIGGER_TAULEP
         },
@@ -177,34 +242,38 @@ class Weight(object):
     YEARS = ["2015", "2016", "2017", "2018"]
 
     @classmethod
-    def factory(cls, channel="taujet", mc_camp=MC_CAMPAIGN):
+    def factory(cls):
         """
         """
         # container for all wights and possible variations
-        weights = []
-        for wtype, wd in cls.TYPES[channel].iteritems():
-            for w, variations in wd.iteritems():
-                weight = cls(
-                    w, variations=variations[:],  wtype=wtype, channel=channel, mc_camp=mc_camp)
-                weights.append(weight)
-        return weights
+        ws_dict = {}
+        for channel in cls.CHANNELS:
+            weights = []
+            for wtype, wd in cls.TYPES[channel].iteritems():
+                for w, variations in wd.iteritems():
+                    weight = cls(
+                        w, title=variations[0], variations=variations[:],  wtype=wtype, channel=channel)
+                    weights.append(weight)
+            ws_dict[channel] = weights
 
-    def __init__(self, name, wtype="", variations=[], channel="taujet", mc_camp=MC_CAMPAIGN):
+        return ws_dict
+
+    def __init__(self, name, title=None, wtype="", variations=[], channel="taujet",):
         self.channel = channel
 
-        assert wtype.upper() in self.TYPES[self.channel].keys(),\
-            "%s weight is not supported; see weights.Weight" % wtype.upper()
+        assert wtype.upper() in self.TYPES[self.channel].keys(
+        ), "%s weight is not supported; see weights.Weight" % wtype.upper()
         self.name = name
         self.wtype = wtype
-        self.mc_camp = mc_camp
         self.variations = variations
+        if not title:
+            title = name
+        self.title = title
 
     def __repr__(self):
-        return "WEIGHT:: name=%r, type=%r, channel=%r, mc_camp=%r" % (
-            self.name, self.wtype, self.channel, self.mc_camp)
+        return "WEIGHT:: name=%r, title=%r, type=%r, channel=%r," % (
+            self.name, self.title, self.wtype, self.channel)
 
 
 # prep weight classes
-WEIGHTS = {}
-WEIGHTS["taujet"] = Weight.factory(channel="taujet")
-WEIGHTS["taulep"] = Weight.factory(channel="taulep")
+WEIGHTS = Weight.factory()

@@ -1,4 +1,5 @@
 #source this file
+export ALRB_rootVersion=6.14.04-x86_64-slc6-gcc62-opt
 case $USER in 
 	edrechsl)
 		VENVPATH=/home/edrechsl/virtEnvs/venv_hpana

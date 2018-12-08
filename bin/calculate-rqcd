@@ -74,7 +74,7 @@ taulep_analysis.data.blind = False
 ##------------------------------------------------------------------------------------
 COLORS = [ROOT.kRed, ROOT.kBlue, ROOT.kBlack, ROOT.kMagenta, ROOT.kOrange, ROOT.kGreen]
 LOOSE_TAU = ROOT.TCut("tau_0_jet_bdt_loose==0")
-N_CHARGED_TRAKCS = [1, 3] 
+N_CHARGED_TRACKS = [1, 3] 
 TAU_PT_BINS = {
     "1":[30, 35, 40, 45, 50, 60, 75, 90, 105, 120, 140, 160, 200, 300, 3500],
     "3":[30, 35, 40, 50, 75, 100, 150, 200, 3500],
@@ -160,7 +160,7 @@ if __name__=="__main__":
             "template_fields": FFS_TEMPLATE_VARS,
             "template_hist_bins":TAU_PT_BINS,
             "tau_jet_bdt_score_trans_wps": [0.01, 0.02, 0.03],
-            "n_charged_tracks": N_CHARGED_TRAKCS,
+            "n_charged_tracks": N_CHARGED_TRACKS,
             "cache_file": FFs_ARGS.ffs_cr_cache,
             "subtract_mc": True,
             "antitau": LOOSE_TAU,
@@ -183,44 +183,44 @@ if __name__=="__main__":
         plot_cr_ffs(cr_ffs,
                     pdir=FFs_ARGS.pdir, pname="FFs_inclusive_tracks_pT_%s.png"%FFs_ARGS.ffs_cr_cache.replace(".yml", ""))
         
-    ##------------------------------------------------------------------------------------
-    ## - - calcualte rQCD 
-    ## - - we need the histograms per pT and nTracks bin (benefiting from 3D histograms)
-    ##------------------------------------------------------------------------------------
-    try:
-        log.info("loading FFs histograms from %s"%FFs_ARGS.ffs_hists_cache)
-        with open(FFs_ARGS.ffs_hists_cache, "r") as ifile:
-            combined_ffs_hists = pickle.load(ifile)
-    except Exception, err:
-        log.warning("failed to load FFs histograms from %s; calculating them on the fly"%FFs_ARGS.ffs_hists_cache)
-        combined_ffs_hists = {"taulep": {}, "taujet": {}}
-
-        ## - - set tauID to loose tau 
-        tj_cats = copy.deepcopy(TAUJET_TARGET_REGIONS)
-        for cat in tj_cats:
-            cat.tauid = LOOSE_TAU
-            
-        taujet_hists = taujet_analysis.hists(
-            fields=rQCD_VARS.values(), categories=tj_cats, samples=TAUJET_SAMPLES,
-            parallel=True, hist_templates=FIT_HIST_TEMPLATES,)
-        combined_ffs_hists["taujet"] = taujet_hists
-
-        ## - - set tauID to loose tau 
-        tl_cats = copy.deepcopy(TAULEP_TARGET_REGIONS)
-        for cat in tl_cats:
-            cat.tauid = LOOSE_TAU
-            
-        taulep_hists = taulep_analysis.hists(
-            fields=rQCD_VARS.values(), categories=tl_cats, samples=TAULEP_SAMPLES,
-            parallel=True, hist_templates=FIT_HIST_TEMPLATES,)
-        combined_ffs_hists["taulep"] = taulep_hists
-        
-        ## write the histograms to disk
-        with open(FFs_ARGS.ffs_hists_cache, "w") as pfile:
-            pickle.dump(combined_ffs_hists, pfile)
     
     ## fit alpha (aka rQCD)
     if FFs_ARGS.eval_rqcd:
+        ##------------------------------------------------------------------------------------
+        ## - - calcualte rQCD 
+        ## - - we need the histograms per pT and nTracks bin (benefiting from 3D histograms)
+        ##------------------------------------------------------------------------------------
+        try:
+            log.info("loading FFs histograms from %s"%FFs_ARGS.ffs_hists_cache)
+            with open(FFs_ARGS.ffs_hists_cache, "r") as ifile:
+                combined_ffs_hists = pickle.load(ifile)
+        except Exception, err:
+            log.warning("failed to load FFs histograms from %s; calculating them on the fly"%FFs_ARGS.ffs_hists_cache)
+            combined_ffs_hists = {"taulep": {}, "taujet": {}}
+
+            ## - - set tauID to loose tau 
+            tj_cats = copy.deepcopy(TAUJET_TARGET_REGIONS)
+            for cat in tj_cats:
+                cat.tauid = LOOSE_TAU
+                
+            taujet_hists = taujet_analysis.hists(
+                fields=rQCD_VARS.values(), categories=tj_cats, samples=TAUJET_SAMPLES,
+                parallel=True, hist_templates=FIT_HIST_TEMPLATES,)
+            combined_ffs_hists["taujet"] = taujet_hists
+
+            ## - - set tauID to loose tau 
+            tl_cats = copy.deepcopy(TAULEP_TARGET_REGIONS)
+            for cat in tl_cats:
+                cat.tauid = LOOSE_TAU
+                
+            taulep_hists = taulep_analysis.hists(
+                fields=rQCD_VARS.values(), categories=tl_cats, samples=TAULEP_SAMPLES,
+                parallel=True, hist_templates=FIT_HIST_TEMPLATES,)
+            combined_ffs_hists["taulep"] = taulep_hists
+            
+            ## write the histograms to disk
+            with open(FFs_ARGS.ffs_hists_cache, "w") as pfile:
+                pickle.dump(combined_ffs_hists, pfile)
         try:
             log.info("loading alphas from %s"%FFs_ARGS.rqcd_cache)
             with open(FFs_ARGS.rqcd_cache, "r") as cfile:

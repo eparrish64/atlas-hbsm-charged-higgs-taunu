@@ -2,6 +2,12 @@
 
 # stdlib
 import ROOT
+import os
+import sys
+import time
+import pickle
+
+# local
 from hpana import log
 from hpana.systematics import SYSTEMATICS
 from hpana.dataset_hists import dataset_hists
@@ -9,10 +15,6 @@ from hpana.cluster.parallel import FuncWorker, run_pool, Job
 from hpana.samples.sample import Sample
 from hpana.analysis import Analysis
 from hpana.config import Configuration
-import os
-import sys
-import time
-import pickle
 
 # PyPI
 import dill
@@ -22,8 +24,6 @@ from tabulate import tabulate
 from hpana.cmd import get_ana_parser
 ana_parser = get_ana_parser()
 ANA_ARGS = ana_parser.parse_args()
-
-# local
 
 # - - - - - - - -  set log level
 log.setLevel(ANA_ARGS.log)
@@ -36,7 +36,6 @@ log.info("ROOT is in batch mode")
 # -------------------------------------------------------------
 # consts
 # -------------------------------------------------------------
-
 # - - - - build analysis main configuration object
 config = Configuration(
     ANA_ARGS.channel,
@@ -61,12 +60,16 @@ if ANA_ARGS.categories:
 else:
     categories = config.categories
 
-# systematics
-systematics = config.systematics  # <! common systematics
-systematics += analysis.qcd.systematics  # <! QCD fakes only
+## systematics
+all_systematics = config.systematics[:]  # <! common systematics
+all_systematics += analysis.qcd.systematics  # <! QCD fakes only
 if ANA_ARGS.systematics:
-    # WIP: filter based on the list of systematics available
-    systematics = filter(lambda s: s.name in ANA_ARGS.systematics, systematics)
+    systematics = filter(
+        lambda s: s.name in ANA_ARGS.systematics, all_systematics)
+elif ANA_ARGS.systs:
+    systematics = all_systematics
+else:
+    systematics = config.systematics[:1] #<! NOMINAL
 
 # - - - - if you wish to look at specific samples
 if ANA_ARGS.samples:

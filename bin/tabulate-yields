@@ -62,19 +62,21 @@ categories = config.categories
 if YIELDS_ARGS.categories:
     categories = filter(lambda c: c.name in YIELDS_ARGS.categories, categories)
 
-# systematics
-systematics = config.systematics  # <! common systematics
-systematics += analysis.qcd.systematics  # <! QCD fakes only
-
+## systematics
+all_systematics = config.systematics[:]  # <! common systematics
+all_systematics += analysis.qcd.systematics  # <! QCD fakes only
 if YIELDS_ARGS.systematics:
-    # WIP: filter based on the list of systematics available
     systematics = filter(
-        lambda s: s.name in YIELDS_ARGS.systematics, systematics)
+        lambda s: s.name in YIELDS_ARGS.systematics, all_systematics)
+elif YIELDS_ARGS.systs:
+    systematics = all_systematics
+else:
+    systematics = config.systematics[:1] #<! NOMINAL
 
 fields = config.variables[:1]  # <! tau_0_pt
 
 # - - - - - - - - samples
-samples = analysis.backgrounds + [analysis.data]  # + analysis.signals
+samples = analysis.backgrounds + [analysis.data] + analysis.signals
 backgrounds = analysis.backgrounds
 if YIELDS_ARGS.samples:
     samples = filter(lambda s: s.name in YIELDS_ARGS.samples, samples)

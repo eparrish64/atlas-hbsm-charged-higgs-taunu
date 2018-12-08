@@ -1,5 +1,10 @@
 #!/usr/bin/env python
 
+import ROOT
+from hpana import log
+from hpana.plotting import draw
+from hpana.analysis import Analysis
+from hpana.config import Configuration
 """
 * This script is for producing final analysis plots.
 * input is a ROOT TFile containing all the kinemtatics
@@ -7,26 +12,22 @@
 * output is a dir containig all the plots.
 """
 
-## stdl-lib
-import sys, os
+# stdl-lib
+import sys
+import os
 from collections import OrderedDict
 
 # - - - - - - - - - parse plot args (needed before ROOT)
-from hpana.cmd import get_plotting_parser 
+from hpana.cmd import get_plotting_parser
 plotting_parser = get_plotting_parser()
 PLOTTING_ARGS = plotting_parser.parse_args()
 
-## local
-from hpana.config import Configuration
-from hpana.analysis import Analysis
-from hpana.plotting  import draw
-from hpana import log
+# local
 
 # - - - - - - - -  set log level
 log.setLevel(PLOTTING_ARGS.log)
 
 # - - - - - - - - Speed things up a bit
-import ROOT
 ROOT.SetSignalPolicy(ROOT.kSignalFast)
 ROOT.gROOT.SetBatch(True)
 log.info("ROOT is in batch mode")
@@ -51,44 +52,60 @@ if PLOTTING_ARGS.fields:
     fields = filter(lambda v: v.name in PLOTTING_ARGS.fields, config.variables)
 else:
     fields = config.variables
-    
+
 if PLOTTING_ARGS.categories:
-    categories = filter(lambda c: c.name in PLOTTING_ARGS.categories, config.categories)
+    categories = filter(
+        lambda c: c.name in PLOTTING_ARGS.categories, config.categories)
 else:
     categories = config.categories
-    
+
+# systematics
+systematics = config.systematics  # <! common systematics
+systematics += analysis.qcd.systematics  # <! QCD fakes only
 if PLOTTING_ARGS.systematics:
-    #WIP: filter based on the list of systematics available
-    systematics = PLOTTING_ARGS.systematics
+    # WIP: filter based on the list of systematics available
+    systematics = filter(
+        lambda s: s.name in PLOTTING_ARGS.systematics, systematics)
+
+## systematics
+all_systematics = config.systematics[:]  # <! common systematics
+all_systematics += analysis.qcd.systematics  # <! QCD fakes only
+if PLOTTING_ARGS.systematics:
+    systematics = filter(
+        lambda s: s.name in PLOTTING_ARGS.systematics, all_systematics)
+elif PLOTTING_ARGS.systs:
+    systematics = all_systematics
 else:
-    systematics = ["NOMINAL"]
+    systematics = config.systematics[:1] #<! NOMINAL
 
 # - - - - if you wish to look at specific samples
 if PLOTTING_ARGS.backgrounds:
-     backgrounds = filter(lambda s: s.name in PLOTTING_ARGS.backgrounds, analysis.backgrounds)
+    backgrounds = filter(
+        lambda s: s.name in PLOTTING_ARGS.backgrounds, analysis.backgrounds)
 
 # - - - - if you wish to look at the signals
 if PLOTTING_ARGS.signals:
-     signals = filter(lambda s: s.name in PLOTTING_ARGS.signals, analysis.signals)
+    signals = filter(
+        lambda s: s.name in PLOTTING_ARGS.signals, analysis.signals)
 
 if PLOTTING_ARGS.no_data:
-   data = None
-   
+    data = None
+
 # - - - - - - - - do the plots
 for var in fields:
     for cat in categories:
         draw(var, cat,
-             hists_file=PLOTTING_ARGS.hists_file, 
+             hists_file=PLOTTING_ARGS.hists_file,
              backgrounds=backgrounds,
              data=data,
              signals=signals,
              signal_scale=1,
+             systematics=systematics,
              output_dir=PLOTTING_ARGS.pdir,
              logy=PLOTTING_ARGS.logy,
              show_ratio=True,
              show_pvalue=False,
              error_bars=True,
-             bin_optimization=True,
+             bin_optimization=False,
              scale_sig_to_bkg_sum=True,
-        )
-            
+             )

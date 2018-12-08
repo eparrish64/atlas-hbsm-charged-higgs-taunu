@@ -12,14 +12,13 @@ import multiprocessing
 import ROOT
 
 ## local imports
-from . import log
-from ..dataset_hists import dataset_hists
-from ..db import samples as samples_db, datasets
-from ..db.decorators import cached_property
-#from ..systematics import get_systematics, iter_systematics, systematic_name
-from ..categories import TAU_IS_TRUE, Category
-from ..cluster.parallel import close_pool
-from ..containers import Histset, HistWorker    
+from hpana import log
+from hpana.dataset_hists import dataset_hists
+from hpana.db import samples as samples_db
+from hpana.db import datasets
+from hpana.db.decorators import cached_property
+from hpana.categories import TAU_IS_TRUE, Category
+from hpana.containers import Histset, HistWorker    
 
 ##---------------------------------------------------------------------------------------
 ## - - base analysis sample class
@@ -38,21 +37,11 @@ class Sample(object):
         string; sample's lable (used for plotting, etc.) 
     """
 
-    def __init__(self, config,
-                 name='Sample',
-                 label='Sample',
-                 database=None,
-                 **kwargs):
-        # - - - - - - - - passing main configurations to the sample
+    def __init__(self, config, name='Sample', label='Sample', **kwargs):
+        ## the main configuration object check ../config.py
         self.config = config
-
-        # - - - - - - - - database
-        self.database = database
-        
-        # - - - - - - - - minimal flags
         self.name = name
         self.label = label
-        
         self.color = kwargs.get("color", 1)
         self.hist_decor = kwargs
         
@@ -159,23 +148,20 @@ class Sample(object):
 
     @property
     def systematics(self):
-        return ["NOMINAL"]
+        return self.config.systematics
 
-    def lumi(self, data_streams):
+    def data_lumi(self, data_streams):
         """
         lumi for the given data streams
         """
         return sum([self.config.data_lumi[ds] for ds in data_streams])
         
-    def events(self, categories,
-               systematic="NOMINAL",
-               **kwargs):
+    def events(self, categories, **kwargs):
         """ get event counts using hists method
         """
         nevents = {}
         field = self.config.variables[0]
-        hist_set =  self.hists(categories=categories,fields=[field],
-                               systematic=systematic,**kwargs)
+        hist_set =  self.hists(categories=categories,fields=[field], **kwargs)
 
         hist = hist_set[0].hist
         for cat in categories:
@@ -199,12 +185,12 @@ class Sample(object):
             cuts_list += [cut]
             categories.append(Category(name, cuts_list=cuts_list, mc_camp=self.config.mc_camp))
         field = kwargs.pop("field", self.config.variables[0])
-        hists = self.hists(categories=categories, fields=[field], systematic="NOMINAL", **kwargs)
+        hists = self.hists(categories=categories, fields=[field], **kwargs)
         return hists
     
     def workers(self, categories=[],
                 fields=[],
-                systematics=["NOMINAL"],
+                systematics=[],
                 trigger=None,
                 extra_cuts=None,
                 extra_weight=None,
@@ -215,8 +201,13 @@ class Sample(object):
         each worker is basically assigned a histogram to fill, one hist per systematic pre dataset.
         please note that additional selections like trigger are applied here and 
         selection string is passed to the worker. Furtheremore for each selection category a weight is also 
-        assiegned.
+        assigned.
         """
+        if not systematics:
+            systematics = self.config.systematics[:1] #<! NOMINAL
+        else: #<! sanity check 
+            systematics = filter(lambda s: s.name in [st.name for st in self.systematics], systematics)
+
         if not fields:
             fields = self.config.variables
         if not categories:
@@ -242,47 +233,41 @@ class Sample(object):
                 if len(sts)>0:
                     continue
                 
-            # - - - - one worker per systematic per dataset
-            for systematic in systematics:
-                # weights list per category
-                weights = self.weights(categories=categories)
+            # - - - - one worker per dataset
+            # weights list per category
+            weights = self.weights(categories=categories)
 
-                for category in categories_cp:
-                    # - - - - lumi, MC and extra weights  
-                    if weighted:
-                        # - - lumi weight
-                        if ds.events !=0:
-                            lumi_weight = self.lumi(ds.stream) * reduce(
-                                lambda x,y:x*y, ds.xsec_kfact_effic) / ds.events
-                        else:
-                            log.warning(" 0 lumi weight for %s"%ds.name)
-                            lumi_weight = 0
-                        weights[category.name] += [str(lumi_weight)]
-
-                        if extra_weight:
-                            weights[category.name] += [extra_weight]
+            for category in categories_cp:
+                # - - - - lumi, MC and extra weights  
+                if weighted:
+                    # - - lumi weight
+                    if ds.events !=0:
+                        lumi_weight = self.data_lumi(ds.stream) * reduce(
+                            lambda x,y:x*y, ds.xsec_kfact_effic) / ds.events
                     else:
-                        weights[category.name] = ["1."]
-                        if extra_weight:
-                            weights[category.name] += [extra_weight]
+                        log.warning(" 0 lumi weight for %s"%ds.name)
+                        lumi_weight = 0
+                    weights[category.name] += [str(lumi_weight)]
 
-                sname = self.name
-                wname = "%s.%s_%s.%s"%(
-                    sname, ds.name,
-                    ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(10))
-                    , systematic.name)
-                worker = HistWorker(
-                    name=wname,
-                    sample=self.name,
-                    dataset=ds,
-                    fields=fields,
-                    categories=categories_cp,
-                    weights=weights,
-                    systematic=systematic,
-                    hist_templates=hist_templates,
-                    channel=self.config.channel) 
+                    if extra_weight:
+                        weights[category.name] += [extra_weight]
+                else:
+                    weights[category.name] = ["1."]
+                    if extra_weight:
+                        weights[category.name] += [extra_weight]
 
-                workers.add(worker)
+            worker = HistWorker(
+                name="%s.%s"%(self.name, ds.name),
+                sample=self.name,
+                dataset=ds,
+                fields=fields,
+                categories=categories_cp,
+                weights=weights,
+                systematics=systematics,
+                hist_templates=hist_templates,
+                channel=self.config.channel) 
+
+            workers.add(worker)
 
         return list(workers)
 
@@ -329,9 +314,6 @@ class Sample(object):
         results = [pool.apply_async(dataset_hists, (wk,)) for wk in workers]
         for res in results:
             hist_sets += res.get(3600) #<! without the timeout this blocking call ignores all signals.
-            
-        # - - close the pool 
-        close_pool(pool)
 
         # - - - - merge all the hists for this sample
         merged_hist_set = []
@@ -389,28 +371,27 @@ class Sample(object):
             # - - - - extract the hists 
             fields = set()
             categories = set()
-            systematics = set()
+            systematics = []
             hist_set = []
             for hf in hfiles:
                 htf = ROOT.TFile(hf, "READ")
-                # tokenize 
-                systematic = hf.split("/")[-1].split(".")[-2]
-                systematics.add(systematic)
-                systdir = htf.Get(systematic)
-                for hname in [k.GetName() for k in systdir.GetListOfKeys()]:
-                    # - - regex match the hist name
-                    match = re.match(self.config.hist_name_regex, hname)
-                    if match:
-                        sample = match.group("sample")
-                        category = match.group("category")
-                        variable = match.group("variable")
-                        fields.add(variable)
-                        categories.add(category)
-                        hist = htf.Get("%s/%s"%(systematic, hname))
-                        hist.SetDirectory(0) #<! detach from htf
-                        hset = Histset(sample=sample, category=category, variable=variable,
-                                        systematic=systematic, hist=hist)
-                        hist_set.append(hset)
+                systematics = [k.GetName() for k in htf.GetListOfKeys()]
+                for systematic in systematics:
+                    systdir = htf.Get(systematic)
+                    for hname in [k.GetName() for k in systdir.GetListOfKeys()]:
+                        # - - regex match the hist name
+                        match = re.match(self.config.hist_name_regex, hname)
+                        if match:
+                            sample = match.group("sample")
+                            category = match.group("category")
+                            variable = match.group("variable")
+                            fields.add(variable)
+                            categories.add(category)
+                            hist = htf.Get("%s/%s"%(systematic, hname))
+                            hist.SetDirectory(0) #<! detach from htf
+                            hset = Histset(sample=sample, category=category, variable=variable,
+                                            systematic=systematic, hist=hist)
+                            hist_set.append(hset)
                 htf.Close()
         else:
             # - - - - get list of categories and fields available in hist_set
@@ -486,7 +467,6 @@ class SystematicsSample(Sample):
         
         # - - - - - - - - instantiate the base class
         super(SystematicsSample, self).__init__(*args, database=database, **kwargs)
-        self.database = database
         
         # - - - - - - - - backgrounds
         if isinstance(self, Background):
@@ -515,10 +495,9 @@ class SystematicsSample(Sample):
                 'MC sample %s does not inherit from Signal or Background' %
                 self.__class__.__name__)
 
-        self.datasets = []
-        self.components = kwargs.pop("components", [])
-        self.norms = {}
-        
+    @cached_property
+    def datasets(self):
+        datasets = []
         # - - - - - - - loop over samples and get datasets for each
         for i, name in enumerate(self.samples):
             log.debug("--"*60)
@@ -526,7 +505,7 @@ class SystematicsSample(Sample):
 
             if isinstance(self, MC):
                 ## - - query on database with dataset ds property which is the same as sample's name
-                dss = self.database.query(ds=name, streams=self.config.data_streams)
+                dss = self.config.database.query(ds=name, streams=self.config.data_streams)
                 for ds in dss:
                     xsec, kfact, effic = ds.xsec_kfact_effic
                     log.debug(
@@ -535,8 +514,9 @@ class SystematicsSample(Sample):
                         "filtering efficiency: {3}\n"
                         "events {4}".format(
                             ds.name, xsec, kfact, effic, ds.events))
-                    self.datasets.append(ds)
-                    
+                    datasets.append(ds)
+
+        return datasets
 
     @classmethod
     def get_sys_term_variation(cls, systematic):

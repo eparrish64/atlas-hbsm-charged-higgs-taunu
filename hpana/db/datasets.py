@@ -39,14 +39,8 @@ try:
     from pyAMI.atlas.api import get_dataset_info, get_dataset_prov, get_file
 except ImportError, err:
     USE_PYAMI = False
-    log.error(err)
-    log.warning("pyAMI is not installed. "
-              "Cross section retrieval will be disabled.")
-# if USE_PYAMI:
-#     if not os.path.exists(AMI_CONFIG):
-#         create_auth_config()
-#     amiclient.read_config(AMI_CONFIG)
-
+    log.warning(err)
+    log.warning("pyAMI is not installed! <lsetup pyAMI> fist ")
 
 ##--------------------------------------------------------------------------------
 ## consts
@@ -491,6 +485,8 @@ class Database(dict):
                     keep &= (st in streams)
             if keep:
                 datasets += [self[nkey]]
+                if len(datasets)==len(streams):
+                    break 
 
         if not datasets or (len(datasets) < len(streams)-1):
             log.warning("Missing stream for {}: {}".format(name if name else ds, [k.name for k in datasets]))

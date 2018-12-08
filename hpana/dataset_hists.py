@@ -28,7 +28,7 @@ def dataset_hists(hist_worker,
     fields = hist_worker.fields
     categories = hist_worker.categories
     weights = hist_worker.weights
-    systematic = hist_worker.systematic
+    systematics = hist_worker.systematics
     outname = kwargs.pop("outname", hist_worker.name)
     hist_templates = hist_worker.hist_templates
 
@@ -43,32 +43,34 @@ def dataset_hists(hist_worker,
     hist_set = []
     # <! since we have to update hists name, keep tformulas untouched
     hist_templates_tformuals = {}
-    for var in fields:
-        if hist_templates and var.name in hist_templates:
-            hist_templates_tformuals[var.name] = hist_templates[var.name].GetName(
-            )
-        for category in categories:
+    for systematic in systematics:
+        for var in fields:
             if hist_templates and var.name in hist_templates:
-                hist = hist_templates[var.name]
-            else:
-                if var.bins:
-                    hist = ROOT.TH1F(
-                        "syst_%s_category_%s_var_%s" % (systematic.name, category.name, var.name), var.name, len(var.bins)-1, array.array("d", var.bins))
+                if not var.name in hist_templates_tformuals:
+                    hist_templates_tformuals[var.name] = hist_templates[var.name].GetName(
+                    )
+            for category in categories:
+                if hist_templates and var.name in hist_templates:
+                    hist = hist_templates[var.name]
                 else:
-                    hist = ROOT.TH1F(
-                        "syst_%scategory_%s_var_%s" % (systematic.name, category.name, var.name), var.name, *var.binning)
+                    if var.bins:
+                        hist = ROOT.TH1F(
+                            "syst_%s_category_%s_var_%s" % (systematic.name, category.name, var.name), var.name, len(var.bins)-1, array.array("d", var.bins))
+                    else:
+                        hist = ROOT.TH1F(
+                            "syst_%s_category_%s_var_%s" % (systematic.name, category.name, var.name), var.name, *var.binning)
 
-            hset = Histset(
-                name=outname,
-                sample=outname,
-                variable=var.name,
-                category=category.name,
-                hist=hist.Clone(),  # <! a copy per category
-                systematic=systematic.name)
+                hset = Histset(
+                    name=outname,
+                    sample=outname,
+                    variable=var.name,
+                    category=category.name,
+                    hist=hist.Clone(),  # <! a copy per category
+                    systematic=systematic.name)
 
-            # - - make sure the newly created hist has no dummy value
-            hset.hist.Reset()
-            hist_set.append(hset)
+                # - - make sure the newly created hist has no dummy value
+                hset.hist.Reset()
+                hist_set.append(hset)
 
     # - - loop over dataset's files
     nevents = 0
@@ -76,122 +78,128 @@ def dataset_hists(hist_worker,
         fname = fn.split("/")[-1]
         tfile = ROOT.TFile(fn)
 
-        # - - check type of systematics
-        if systematic._type == "TREE":
-            tree_name = systematic.name
-        else:
-            tree_name = "NOMINAL"
+        for systematic in systematics:
+            # - - get hists for the current systematic
+            syst_hists = filter(lambda hs: hs.systematic ==
+                                systematic.name, hist_set)
 
-        # - - check if the file is healthy
-        try:
-            entries = tfile.Get(tree_name).GetEntries()
-            nevents += entries
-            if entries == 0:
-                log.warning("%s tree in %s is empty, skipping!" %
-                            (tree_name, fn))
+            # - - check type of systematics
+            if systematic._type == "TREE":
+                tree_name = systematic.name
+            else:
+                tree_name = "NOMINAL"
+
+            # - - check if the file is healthy
+            try:
+                entries = tfile.Get(tree_name).GetEntries()
+                nevents += entries
+                if entries == 0:
+                    log.warning("%s tree in %s is empty, skipping!" %
+                                (tree_name, fn))
+                    continue
+            except:
+                log.warning("%s has no %s tree!" % (fn, systematic))
                 continue
-        except:
-            log.warning("%s has no %s tree!" % (fn, systematic))
-            continue
 
-        # - - prepares selection categories
-        keep_branches = ["*"]
-        for n, category in enumerate(categories):
-            # - - hists for the current category
-            cat_hists = filter(lambda hs: hs.category ==
-                               category.name, hist_set)
+            # - - prepares selection categories
+            keep_branches = ["*"]
+            for n, category in enumerate(categories):
+                # - - get hists for the current category
+                cat_hists = filter(lambda hs: hs.category ==
+                                   category.name, syst_hists)
 
-            # - - get the tree
-            tree = tfile.Get(tree_name)
+                # - - get the tree
+                tree = tfile.Get(tree_name)
 
-            # # - - speed up by reading to memory only the branches that are required
-            # if n==0:
-            #     branches = [br.GetName() for br in tree.GetListOfBranches()]
-            #     keep_branches = filter(lambda b: b in branches, MEM_BRANCHES[channel])
-            # tree.SetBranchStatus("*", 0)
-            # for br in keep_branches:
-            #     tree.SetBranchStatus(br, 1)
+                # # - - speed up by reading to memory only the branches that are required
+                # if n==0:
+                #     branches = [br.GetName() for br in tree.GetListOfBranches()]
+                #     keep_branches = filter(lambda b: b in branches, MEM_BRANCHES[channel])
+                # tree.SetBranchStatus("*", 0)
+                # for br in keep_branches:
+                #     tree.SetBranchStatus(br, 1)
 
-            # - - cache only the events that pass the selections
-            selection = category.cuts.GetTitle()
-            tree.Draw(">>eventlist_%s" % category.name, selection)
-            eventlist = ROOT.gDirectory.Get("eventlist_%s" % category.name)
-            tree.SetEventList(eventlist)
+                # - - cache only the events that pass the selections
+                selection = category.cuts.GetTitle()
+                tree.Draw(">>eventlist_%s" % category.name, selection)
+                eventlist = ROOT.gDirectory.Get("eventlist_%s" % category.name)
+                tree.SetEventList(eventlist)
 
-            # - - event weight
-            eventweight = "*".join(weights[category.name])
-            if systematic._type == "WEIGHT":
-                if isinstance(systematic.title, dict):
-                    sw = systematic.title[category.name][0]
-                else:
-                    sw = systematic.title
-                eventweight = "(%s)*(%s)" % (eventweight, sw)
-
-            # - - draw all the vars
-            for var in fields:
-                histname = "category_%s_%s_%s" % (
-                    category.name, var.name, fname)
-                if hist_templates and var.name in hist_templates:
-                    ht = hist_templates[var.name]
-                    var_formula = hist_templates_tformuals[var.name]
-                    if isinstance(ht, ROOT.TH1F):
-                        nbins = ht.GetNbinsX()
-                        ht_bins = (nbins, ht.GetBinLowEdge(
-                            1), ht.GetBinLowEdge(nbins) + ht.GetBinWidth(1))
-                    elif isinstance(ht, ROOT.TH2F):
-                        nbins_x = ht.GetNbinsX()
-                        ht_x = ht.GetXaxis()
-                        ht_bins_x = (nbins_x, ht_x.GetBinLowEdge(
-                            1), ht_x.GetBinLowEdge(nbins_x) + ht_x.GetBinWidth(1))
-
-                        nbins_y = ht.GetNbinsY()
-                        ht_y = ht.GetYaxis()
-                        ht_bins_y = (nbins_y, ht_y.GetBinLowEdge(
-                            1), ht_y.GetBinLowEdge(nbins_y) + ht_y.GetBinWidth(1))
-                        ht_bins = ht_bins_x + ht_bins_y
-
-                    elif isinstance(ht, ROOT.TH3F):
-                        nbins_x = ht.GetNbinsX()
-                        ht_x = ht.GetXaxis()
-                        ht_bins_x = (nbins_x, ht_x.GetBinLowEdge(
-                            1), ht_x.GetBinLowEdge(nbins_x) + ht_x.GetBinWidth(1))
-
-                        nbins_y = ht.GetNbinsY()
-                        ht_y = ht.GetYaxis()
-                        ht_bins_y = (nbins_y, ht_y.GetBinLowEdge(
-                            1), ht_y.GetBinLowEdge(nbins_y) + ht_y.GetBinWidth(1))
-
-                        nbins_z = ht.GetNbinsZ()
-                        ht_z = ht.GetZaxis()
-                        ht_bins_z = (nbins_z, ht_z.GetBinLowEdge(
-                            1), ht_z.GetBinLowEdge(nbins_z) + ht_z.GetBinWidth(nbins_z))
-
-                        ht_bins = ht_bins_x + ht_bins_y + ht_bins_z
+                # - - event weight
+                eventweight = "*".join(weights[category.name])
+                if systematic._type == "WEIGHT":
+                    if isinstance(systematic.title, dict):
+                        sw = systematic.title[category.name][0]
                     else:
-                        raise TypeError("ROOT.TH type is required")
-                    tree.Draw("{0} >> {1}{2}".format(
-                        var_formula, histname, ht_bins), eventweight)
-                else:
-                    tree.Draw("{0} >> {1}{2}".format(var.tformula,
-                                                     histname, var.binning), eventweight)
-                log.debug("{0} >> {1}{2}".format(var.tformula,
-                                                 histname, var.bins if var.bins else var.binning))
-                log.debug("({0}) * ({1})".format(selection, eventweight))
+                        sw = systematic.title
+                    eventweight = "(%s)*(%s)" % (eventweight, sw)
 
-                htmp = ROOT.gDirectory.Get(histname)
-                htmp.SetDirectory(0)
-                if var.bins:
-                    htmp = htmp.Rebin(len(var.bins)-1, "hn",
-                                      array.array("d", var.bins))
+                # - - draw all the vars
+                for var in fields:
+                    histname = "category_%s_%s_%s" % (
+                        category.name, var.name, fname)
+                    if hist_templates and var.name in hist_templates:
+                        ht = hist_templates[var.name]
+                        var_formula = hist_templates_tformuals[var.name]
+                        if isinstance(ht, ROOT.TH1F):
+                            nbins = ht.GetNbinsX()
+                            ht_bins = (nbins, ht.GetBinLowEdge(
+                                1), ht.GetBinLowEdge(nbins) + ht.GetBinWidth(1))
+                        elif isinstance(ht, ROOT.TH2F):
+                            nbins_x = ht.GetNbinsX()
+                            ht_x = ht.GetXaxis()
+                            ht_bins_x = (nbins_x, ht_x.GetBinLowEdge(
+                                1), ht_x.GetBinLowEdge(nbins_x) + ht_x.GetBinWidth(1))
 
-                hset = filter(lambda hs: hs.variable == var.name, cat_hists)[0]
-                hset.hist.Add(htmp)
-                # ! - - - - need to make the name unique to avoid stupid ROOT.TAppend Warnings
-                hset.hist.SetName("%s_category_%s_var_%s" %
-                                  (outname, category.name, var.name))
+                            nbins_y = ht.GetNbinsY()
+                            ht_y = ht.GetYaxis()
+                            ht_bins_y = (nbins_y, ht_y.GetBinLowEdge(
+                                1), ht_y.GetBinLowEdge(nbins_y) + ht_y.GetBinWidth(1))
+                            ht_bins = ht_bins_x + ht_bins_y
 
-                htmp.Delete()
-            tree.Delete()
+                        elif isinstance(ht, ROOT.TH3F):
+                            nbins_x = ht.GetNbinsX()
+                            ht_x = ht.GetXaxis()
+                            ht_bins_x = (nbins_x, ht_x.GetBinLowEdge(
+                                1), ht_x.GetBinLowEdge(nbins_x) + ht_x.GetBinWidth(1))
+
+                            nbins_y = ht.GetNbinsY()
+                            ht_y = ht.GetYaxis()
+                            ht_bins_y = (nbins_y, ht_y.GetBinLowEdge(
+                                1), ht_y.GetBinLowEdge(nbins_y) + ht_y.GetBinWidth(1))
+
+                            nbins_z = ht.GetNbinsZ()
+                            ht_z = ht.GetZaxis()
+                            ht_bins_z = (nbins_z, ht_z.GetBinLowEdge(
+                                1), ht_z.GetBinLowEdge(nbins_z) + ht_z.GetBinWidth(nbins_z))
+
+                            ht_bins = ht_bins_x + ht_bins_y + ht_bins_z
+                        else:
+                            raise TypeError("ROOT.TH type is required")
+                        tree.Draw("{0} >> {1}{2}".format(
+                            var_formula, histname, ht_bins), eventweight)
+                    else:
+                        tree.Draw("{0} >> {1}{2}".format(var.tformula,
+                                                         histname, var.binning), eventweight)
+                    log.debug("{0} >> {1}{2}".format(var.tformula,
+                                                     histname, var.bins if var.bins else var.binning))
+                    log.debug("({0}) * ({1})".format(selection, eventweight))
+
+                    htmp = ROOT.gDirectory.Get(histname)
+                    htmp.SetDirectory(0)
+                    if var.bins:
+                        htmp = htmp.Rebin(len(var.bins)-1, "hn",
+                                          array.array("d", var.bins))
+
+                    hset = filter(lambda hs: hs.variable ==
+                                  var.name, cat_hists)[0]
+                    hset.hist.Add(htmp)
+                    # ! - - - - need to make the name unique to avoid stupid ROOT.TAppend Warnings
+                    hset.hist.SetName("%s_category_%s_var_%s" %
+                                      (outname, category.name, var.name))
+
+                    htmp.Delete()
+                tree.Delete()
         tfile.Close()
 
     write_hists = kwargs.pop("write_hists", False)
@@ -205,20 +213,21 @@ def dataset_hists(hist_worker,
         hpath = os.path.join(outdir, hname)
         hfile = ROOT.TFile(hpath, "UPDATE")
 
-        rdir = "%s" % (systematic.name)
-        if not hfile.GetDirectory(rdir):
-            hfile.mkdir(rdir)
-        hfile.cd(rdir)
+        for systematic in systematics:
+            rdir = "%s" % (systematic.name)
+            if not hfile.GetDirectory(rdir):
+                hfile.mkdir(rdir)
+            hfile.cd(rdir)
 
-        for hset in hist_set:
-            hist = hset.hist
-            hist.SetTitle(hist.GetName())
-            hist.Write("%s" % (hist.GetName().replace(
-                outname, prefix)), ROOT.TObject.kOverwrite)
+            for hset in filter(lambda hs: hs.systematic == systematic.name, hist_set):
+                hist = hset.hist
+                hist.SetTitle(hist.GetName())
+                hist.Write("%s" % (hist.GetName().replace(
+                    outname, prefix)), ROOT.TObject.kOverwrite)
         hfile.Close()
 
     canvas.Close()
     log.debug(hist_set)
-    log.info("processed %s from %s dataset with %i events" %
-             (systematic.name, dataset.name, nevents))
+    log.info("processed %s dataset with %i events" %
+             (dataset.name, nevents))
     return hist_set

@@ -13,15 +13,12 @@ import ROOT
 from hpana import log
 from hpana.samples.sample import Sample, SystematicsSample, Histset
 from hpana.lumi import LUMI
-from hpana.cluster.parallel import map_pool
 from hpana.categories import Category
 from hpana.systematics import Systematic
 
 # ----------------------------------------------------------------------------------
 ##
 # ----------------------------------------------------------------------------------
-
-
 class DataInfo():
     """
     Class to hold lumi and collision energy info for plot labels
@@ -81,8 +78,7 @@ class Data(Sample):
         database = kwargs.pop("database", None)
 
         # - - - - intantiate the base class
-        super(Data, self).__init__(config, name=name,
-                                   label=label, database=database, **kwargs)
+        super(Data, self).__init__(config, name=name, label=label, **kwargs)
 
         self.config = config
         self.grls = grls
@@ -105,21 +101,19 @@ class Data(Sample):
                 self.blind = True
         self.blind_regions = blind_regions
 
-        # - - - - Database
-        self.database = database
 
         # - - - - get datasets for the streams(TP FIX: KEEP 207 for r20.7)
         if "207" in name:
             # - - r20.7 ntuples are merged!
-            self.datasets = [self.database["DATA207"]]
+            self.datasets = [self.config.database["DATA207"]]
         else:
             self.datasets = []
             for stream in self.streams:
                 dsprefix = "DATA%s_" % stream
-                for dk in self.database.keys():
+                for dk in self.config.database.keys():
                     if dk.startswith(dsprefix):
-                        self.datasets.append(self.database[dk])
-                        self.data_runs += [(int(self.database[dk].id))]
+                        self.datasets.append(self.config.database[dk])
+                        self.data_runs += [(int(self.config.database[dk].id))]
 
         if len(self.datasets) > 1:
             # - - - - update the data lumi based on the existing data runs

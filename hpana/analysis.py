@@ -29,13 +29,13 @@ class Analysis(object):
     """
     __HERE = os.path.dirname(os.path.abspath(__file__))
     CXX_MACROS = [
-    "metTrigEff.cxx",
+    "metTrigEff1516.cxx",
 
     # - - - - new (derived within the hpana and from r21 ntuples)
-    "FFs_COMBINEDC151617.cxx",
-    "FFs_CR151617.cxx",
+    "FFs_COMBINED1516.cxx",
+    "FFs_CR1516.cxx",
         
-    # - - - - correction factor for tau polarization(only applied to 1 prong taus, upsilon varibale, and QCD sample)    
+    # - - - - correction factor for tau polarization(only applied to 1 prong taus, upsilon variable, and QCD sample)    
     "CorrectUpsilon.cxx",
     "CorrectUpsilon_WCR.cxx",
     "CorrectUpsilon_QCD.cxx",
@@ -48,14 +48,15 @@ class Analysis(object):
     def __init__(self, config,
                  suffix=None,
                  use_embedding=False,
-                 compile_cxx=False,):
+                 compile_cxx=False,
+                 ):
         # - - - - - - - - main configurer 
         self.config = config 
 
-        # - - - - - - - - database
-        self.database = Database(
-            name="DB_%s"%self.config.channel, version=self.config.db_version, verbose=False)
-            
+        # # - - - - - - - - database
+        # self.database = Database(
+        #     name="DB_%s"%self.config.channel, version=self.config.db_version, verbose=False)
+        self.database = None     
         # - - - - - - - - loading and compiling cxx macros
         if compile_cxx:
             self.compile_cxx()
@@ -74,53 +75,45 @@ class Analysis(object):
             log.info("Using embedded W --> taunu")
             self.wtaunu = samples.Embedded_Wtaunu(
                 self.config,
-                database=self.database,
                 name='Wtaunu',
                 label='W#rightarrow#tau#nu',
                 color=16)
         else:
             self.wtaunu = samples.Sh_Wtaunu(
                 self.config,
-                database=self.database,
                 name='Wtaunu',
                 label='W#rightarrow#tau#nu',
                 color=16)
         self.wlnu = samples.Sh_Wlnu(
             self.config,
-            database=self.database,
             name='Wlnu',
             label='W#rightarrow l#nu',
             color=14)
         
         self.ztautau = samples.Sh_Ztautau(
             self.config, 
-            database=self.database,
             name='Ztautau',
             label='Z#rightarrow#tau#tau',
             color=ROOT.kYellow-1)
         self.zll = samples.Sh_Zll(
             self.config,
-            database=self.database,
             name='Zll',
             label='Z#rightarrow ll',
             color=ROOT.kYellow-3)
 
         self.others = samples.Others(
             self.config, 
-            database=self.database,
             name='Others',
             label='Others',
             color=ROOT.kViolet-2)
         self.diboson = samples.Diboson(
             self.config,
-            database=self.database,
             name='DiBoson',
             label='DiBoson',
             color=ROOT.kViolet)
         
         self.ttbar = samples.TTbar(
             self.config,
-            database=self.database,
             name='TTbar',
             label='t#bar{t}',
             pt_weighted=False,
@@ -128,7 +121,6 @@ class Analysis(object):
 
         self.single_top = samples.Single_Top(
             self.config,
-            database=self.database,
             name='SingleTop',
             label='single top',
             pt_weighted=False,
@@ -149,7 +141,6 @@ class Analysis(object):
         # - - - - - - - - DATA 
         self.data = samples.Data(
             self.config,
-            database=self.database,
             name='Data',
             label='Data',
             markersize=1.2,
@@ -172,13 +163,14 @@ class Analysis(object):
             correct_upsilon=True)
 
         self.backgrounds = [
-            self.lepfakes,
-            self.qcd,
+            self.ttbar,
             self.single_top,
+            self.qcd,
             self.wtaunu,
+            self.lepfakes,
             self.ztautau,
             self.diboson,
-            self.ttbar,] 
+            ] 
         
         # - - - - - - - - signals 
         self.signals = self.get_signals(masses=[90, 110, 400])
@@ -314,7 +306,7 @@ class Analysis(object):
             categories = self.config.categories
             
         if not systematics:
-            systematics = ["NOMINAL"]
+            systematics = self.config.systematics[:1] #<! NOMINAL 
             
         self._workers  = []
         for sample in samples:
@@ -389,7 +381,7 @@ class Analysis(object):
 
         if sim_samples:    
             cutflow_hist_sets += self.hists(
-                samples=sim_samples, categories=categories, fields=[field], systematics=["NOMINAL"], **kwargs)
+                samples=sim_samples, categories=categories, fields=[field], **kwargs)
         
         # - - - - treat QCD seperatly (due to different TAU ID)
         if self.qcd.name in [s.name for s in samples]:
@@ -499,18 +491,22 @@ class Analysis(object):
         workers += data_antitau_workers
         
         if subtract_mc:
+            # - - - - NOMINAL only 
+            systematics = self.config.systematics[:1]
+            assert systematics[0].name=="NOMINAL", "FFs should only be evaluated on NOMINAL" 
+
             # - - - - MC workers
             mc_tau_workers = []
             mc_antitau_workers = []
             for mc in self.mc:
                 mc_tau_workers += mc.workers(
-                    fields=template_fields[:1], hist_templates=template_hist,
+                    fields=template_fields[:1], hist_templates=template_hist, systematics=systematics,
                     categories=tau_control_regions, trigger=mc_trigger)
 
                 # - - taus not passing nominal tau ID (medium)
                 not_tau = ROOT.TCut("!%s"%self.config.tauid.GetTitle())
                 mc_antitau_workers += mc.workers(
-                    fields=template_fields[:1], hist_templates=template_hist,
+                    fields=template_fields[:1], hist_templates=template_hist, systematics=systematics,
                     categories=antitau_control_regions, trigger=mc_trigger)
 
             # add mc tau/antitau  workers to the list of all workers

@@ -17,11 +17,12 @@ from hpana.trigger import *
 from hpana.weights import *
 from hpana.variables import *
 from hpana.systematics import SYSTEMATICS
+from hpana.db import cached_property
+from hpana.db.datasets import Database
 
-# --------------------------------------------------------------------------------------------------
+# ------------------------------------------------------------
 ##
-
-
+# ------------------------------------------------------------
 class Configuration(object):
     """ simple class for wrapping different analysis configurations.
     assuming variables/categories/weights are all the same for all years.
@@ -44,6 +45,10 @@ class Configuration(object):
 
         # - - - - DATA luminosity dictionary (keys are data streams)
         self.data_lumi = LUMI
+
+    @cached_property
+    def database(self):
+        return Database(name="DB_%s"%self.channel, version=self.db_version, verbose=False)
 
     @property
     def variables(self):
@@ -81,7 +86,6 @@ class Configuration(object):
         cats = CATEGORIES[self.channel] + self.ff_cr_regions
         for c in cats:
             c.mc_camp = self.mc_camp
-
         return cats
 
     @property

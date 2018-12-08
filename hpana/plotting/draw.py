@@ -1,17 +1,21 @@
 """ draw histograms from a histo file
 """
-## ROOT
+# ROOT
 import ROOT
 
-## local
+# stdlib
+import re
+
+# local
 from .plot import *
 from .. import log
 
-## consts 
-HIST_NAME_TEMPLATE = "{0}_category_{1}_var_{2}" #<! sample, category, variable
+## consts
+HIST_NAME_TEMPLATE = re.compile(
+    "^(?P<sample>\w+)_category_(?P<category>\w+)_var_(?P<var>\w+)$")
 
-##----------------------------------------------------------------------------
-##
+# ----------------------------------------------------------------------------
+#
 def draw(var, category,
          hists_file=None,
          hists_set=[],
@@ -40,95 +44,108 @@ def draw(var, category,
          poisson_errors=True,
          ylimits=None,
          bin_optimization=True,
-         scale_sig_to_bkg_sum=True, 
+         scale_sig_to_bkg_sum=True,
          ):
-
     """
     Parameters
     ----------
     hists_file:
         str; path of the file containing histograms
-    data: 
-        Analysis.data type; see ../analysis.py  
+    data:
+        Analysis.data type; see ../analysis.py
     backgrounds:
         Analysis.backgrounds; see ../analysis.py
     signals:
         Analysis.signals; see ../analysis.py
     ...
 
-    Returns 
+    Returns
     -------
     fig: TCanvas, containing the plots.
     """
     if not (hists_set or hists_file):
         raise RuntimeError("either hists file or hists list is required")
-    
+
     if show_ratio and blind:
         show_ratio = False
     if not (data and backgrounds):
         show_ratio = False
-        
+
     if not (backgrounds or data or signals):
         raise ValueError(
             "at least one of backgrounds, data or signal must be specified")
-    
+
     # - - - - - - - - open hists file
     if hists_file:
         hfile = ROOT.TFile(hists_file, "READ")
 
-    # - - - - - - - - insantiate the legend 
+    # - - - - - - - - insantiate the legend
     legend = ROOT.TLegend(0.6, 0.75, 0.9, 0.9)
     legend.SetNColumns(2)
     legend.SetBorderSize(1)
     legend.SetFillColor(0)
     legend.SetTextSize(0.025)
-    
+
     # - - - - - - - - list of all objects to be drawn
     extra_info = []
-    backgrounds_stack = []
     main_errors = []
 
     # - - - - - - - - binning
     opt_bins = []
-    
-    # - - - - - - - - prepare the canvas and pads 
+
+    # - - - - - - - - prepare the canvas and pads
     fig, main_pad, ratio_pad = create_canvas(show_ratio=show_ratio)
-    
-    # - - - - - - - - backgrounds 
+
+    # gather histograms
+    samples = backgrounds + signals + [data]
+    hists_dict = {}
+    for sample in samples:
+        hists_dict[sample.name] = {}
+        for systematic in systematics:
+            hists_dict[sample.name][systematic.name] = None
+            s_hist = None
+            if hists_file:
+                systdir = hfile.Get(systematic.name)
+                keys = [k.GetName() for k in systdir.GetListOfKeys()]
+                for k in keys:
+                    match = re.match(HIST_NAME_TEMPLATE, k)
+                    if match:
+                        if match.group("sample")==sample.name:
+                            if match.group("category")==category.name and match.group("var")==var.name:
+                                s_hist = hfile.Get("%s/%s"%(systematic.name,k))
+            else:
+                for hs in hists_sets:
+                    if hs.sample==sample.name:
+                        if hs.category==category.name:
+                            if hs.variable==var.name:
+                                s_hist =  hs
+            hists_dict[sample.name][systematic.name] = s_hist
+
+    # backgrounds 
     if backgrounds:
         if not isinstance(backgrounds, (list, tuple)):
             backgrounds = [backgrounds]
-        backgrounds_hists   = []
+        # retrieve NOMINAL hists and decorate them
+        backgrounds_hists_nom = []
         for bkg in reversed(backgrounds):
-            hname = "{0}/{1}".format(tree_name, HIST_NAME_TEMPLATE.format(bkg.name, category.name, var.name))
-            if hists_file:
-                bkg_hist = hfile.Get(hname)
-                if not bkg_hist:
-                    log.warning("can't find %s hist; skipping!"%hname)
-                    continue
-            else:
-                bkg_hist = filter(
-                    lambda hs: hs.sample==bkg.name and hs.category==category.name and hs.variable==var.name, hists_set)
-                if not bkg_hist:
-                    log.warning("can't find %s hist; skipping!"%hname)
-                    continue
-                bkg_hist = bkg_hist[0].hist
-            # - - - -  fold the overflow bin 
-            if overflow:
-                fold_overflow(bkg_hist)
-            # - - - - hists should already be decorated when they're produced !
-            bkg_hist.SetFillColor(bkg.color) 
-            legend.AddEntry(bkg_hist, "%s(%i)"%(bkg.label, bkg_hist.Integral(0, -1)), 'F')
-            backgrounds_hists.append(bkg_hist)
-            
-        # - - - - optimize binning
-        hsum = reduce(lambda h1, h2: h1+h2, backgrounds_hists)
-        opt_bins = optimize_binning(hsum)
-        
+            bkg_hist = hists_dict[bkg.name]["NOMINAL"]
+            if bkg_hist:
+                bkg_hist.SetFillColor(bkg.color) 
+                legend.AddEntry(bkg_hist, bkg.label, "F")#, bkg_hist.Integral(0, -1)), 'F')
+                backgrounds_hists_nom.append(bkg_hist)
+
+        # all bkg hist (for systematic variations)
+        backgrounds_hists_dict = dict((k, hists_dict[k]) for k in [b.name for b in backgrounds])
+
+        # # - - - - optimize binning
+        # hsum = reduce(lambda h1, h2: h1+h2, backgrounds_hists_nom)
+        # opt_bins = optimize_binning(hsum)
+
+        ## build the bkg stack 
         bkg_stack = ROOT.THStack("bkgs", "bkgs")
         backgrounds_stack = []
         rebinned_bkg_hists = []
-        for bkg_hist in backgrounds_hists:
+        for bkg_hist in backgrounds_hists_nom:
             if opt_bins and bin_optimization:
                 hnew = rebin(bkg_hist, opt_bins)
                 bkg_stack.Add(hnew)
@@ -138,11 +155,11 @@ def draw(var, category,
         backgrounds_stack.append(bkg_stack)
         if bin_optimization and opt_bins:
             backgrounds_hists = rebinned_bkg_hists[:]
-        
+
         # - - - - if you wish to add uncertainty band to the ratio plot
         if error_bars:
             total_backgrounds, high_band_backgrounds, low_band_backgrounds = uncertainty_band(
-                backgrounds_hists, systematics, overflow=overflow)
+            backgrounds_hists_dict, overflow=overflow)
         
             backgrounds_error = ROOT.TGraphAsymmErrors()
             for i in range(0, total_backgrounds.GetNbinsX()):
@@ -156,13 +173,15 @@ def draw(var, category,
                 exl = exh
                 backgrounds_error.SetPointError(i, exl, exh, eyl, eyh)
 
-            backgrounds_error.SetFillColor(ROOT.kYellow-1)
+            #backgrounds_error.SetFillColor(ROOT.kYellow-1)
             backgrounds_error.SetFillStyle(3004)
+            backgrounds_error.SetFillColor(ROOT.kRed)
+
             main_errors.append(backgrounds_error)
 
-            eleg = 'Stat+Syst' 
-            if not systematics:
-                eleg = 'Stat'
+            # eleg = 'Stat+Syst' 
+            # if not systematics:
+            eleg = 'Stat'
             legend.AddEntry(backgrounds_error, eleg ,'F')
     # - - - - - - - - signals
     if signals:
@@ -186,14 +205,14 @@ def draw(var, category,
 
             # - - - - scale signals if needed
             if scale_sig_to_bkg_sum:
-                bkg_hsum = reduce(lambda h1, h2: h1+h2, backgrounds_hists)
+                bkg_hsum = reduce(lambda h1, h2: h1+h2, backgrounds_hists_nom)
                 sig_hist.Scale(bkg_hsum.Integral(0, -1)/sig_hist.Integral(0, -1))
             if signal_scale!=1.:
                 sig_hist *= signal_scale
             init_label = sig.label
             sig_label = "%i #times %s"%(signal_scale, init_label) if signal_scale!=1. else init_label
                 
-            #- - - - fold the overflow bin to the last bin
+            # - - - - fold the overflow bin to the last bin
             if overflow:
                 fold_overflow(sig_hist)
             if bin_optimization and opt_bins:
@@ -204,8 +223,7 @@ def draw(var, category,
 
         # - - - - if you want to have signal errors on your plots
         if show_signal_error:
-            total_signal, high_band_signal, low_band_signal = uncertainty_band(
-                signal, systematics) 
+            total_signal, high_band_signal, low_band_signal = uncertainty_band(signals) 
             high = (total_signal + high_band_signal) * signal_scale
             low = (total_signal - low_band_signal) * signal_scale
             
@@ -221,65 +239,62 @@ def draw(var, category,
                 
     # - - - - - - - - data
     if data:
-        hname = "{0}/{1}".format(tree_name, HIST_NAME_TEMPLATE.format(data.name, category.name, var.name))
-        if hists_file:
-            data_hist = hfile.Get(
-                "{0}/{1}".format(tree_name, HIST_NAME_TEMPLATE.format(data.name, category.name, var.name)))
-        else:
-            data_hist = filter(
-                lambda hs: hs.sample==data.name and hs.category==category.name and hs.variable==var.name, hists_set)
-            if data_hist:
-                data_hist = data_hist[0].hist 
-        if not data_hist:
-            log.warning("can't find %s hist; skipping! "%hname)
-            return
-        data_hist.SetXTitle(var.title)
-        data_hist.SetYTitle("# events")
-        if overflow:
-            fold_overflow(data_hist)
-        legend.AddEntry(data_hist, "%s(%i)"%(data.label, data_hist.Integral(0, -1)), "P")
-        if bin_optimization and opt_bins:
-            data_hist = rebin(data_hist, opt_bins)
-        
-        # - - - - - - - - blind the data in a specific range
-        if isinstance(blind, tuple):
-            low, high = blind
-            # - - - - zero out bins in blind category
-            for i in range(0, data_hist.GetNbinsX()):
-                bin_low  = data_hist.GetBinLowEdge(i)
-                bin_high = bin_low + data_hist.GetBinWidth(i) 
-                if (low < bin_low <= high or low <= bin_high < high):
-                    data_hist.SetBinContent(i, -100)
+        if not category.name in data.blind_regions:
+            try:
+                data_hist = hists_dict[data.name]["NOMINAL"]
+            except KeyError:
+                raise RuntimeError("DATA histograms are not available!")
+
+            data_hist.SetXTitle(var.title)
+            data_hist.SetYTitle("# events")
+            if overflow:
+                fold_overflow(data_hist)
+            legend.AddEntry(data_hist, data.label, "P")
+            if bin_optimization and opt_bins:
+                data_hist = rebin(data_hist, opt_bins)
+            
+            # - - - - - - - - blind the data in a specific range
+            if isinstance(blind, tuple):
+                low, high = blind
+                # - - - - zero out bins in blind category
+                for i in range(0, data_hist.GetNbinsX()):
+                    bin_low  = data_hist.GetBinLowEdge(i)
+                    bin_high = bin_low + data_hist.GetBinWidth(i) 
+                    if (low < bin_low <= high or low <= bin_high < high):
+                        data_hist.SetBinContent(i, -100)
         
         # - - -  - chi2 test info on plots
         if not blind:
             if backgrounds:
-                total_backgrounds = reduce(lambda h1, h2: h1+h2, backgrounds_hists)
-                if show_pvalue:
-                    # show p-value and chi^2
-                    pvalue = total_backgrounds.Chi2Test(data_hist, 'WW')
-                    pvalue_label = ROOT.TLatex(
-                        fig.GetLeftMargin() + 0.01,
-                        1 - fig.GetTopMargin(),
-                        "p-value={0:.2f}".format(pvalue))
-                    pvalue_label.SetNDC(True)
-                    pvalue_label.SetTextFont(43)
-                    pvalue_label.SetTextSize(16)
-                    extra_info.append(pvalue_label)
+                if backgrounds_hists_nom:
+                    total_backgrounds = reduce(lambda h1, h2: h1+h2, backgrounds_hists_nom)
+                    if show_pvalue:
+                        # show p-value and chi^2
+                        pvalue = total_backgrounds.Chi2Test(data_hist, 'WW')
+                        pvalue_label = ROOT.TLatex(
+                            fig.GetLeftMargin() + 0.01,
+                            1 - fig.GetTopMargin(),
+                            "p-value={0:.2f}".format(pvalue))
+                        pvalue_label.SetNDC(True)
+                        pvalue_label.SetTextFont(43)
+                        pvalue_label.SetTextSize(16)
+                        extra_info.append(pvalue_label)
 
-                    chi2 = total_backgrounds.Chi2Test(data_hist, 'WW CHI2/NDF')
-                    chi2_label = ROOT.TLatex(
-                        fig.GetLeftMargin() + 0.15,
-                        1 - fig.GetTopMargin(),
-                        "#chi^{{2}}/ndf={0:.2f}".format(chi2))
-                    chi2_label.SetNDC(True)
-                    chi2_label.SetTextFont(43)
-                    chi2_label.SetTextSize(16)
-                    extra_info.append(chi2_label)
+                        chi2 = total_backgrounds.Chi2Test(data_hist, 'WW CHI2/NDF')
+                        chi2_label = ROOT.TLatex(
+                            fig.GetLeftMargin() + 0.15,
+                            1 - fig.GetTopMargin(),
+                            "#chi^{{2}}/ndf={0:.2f}".format(chi2))
+                        chi2_label.SetNDC(True)
+                        chi2_label.SetTextFont(43)
+                        chi2_label.SetTextSize(16)
+                        extra_info.append(chi2_label)
 
     # - - - - - - - - the ratio plot
+    if category.name in data.blind_regions:
+        show_ratio = False
     if show_ratio:
-        sum_bkgs = reduce(lambda h1, h2: h1+h2, backgrounds_hists)
+        sum_bkgs = reduce(lambda h1, h2: h1+h2, backgrounds_hists_nom)
         if bin_optimization:
             sum_bkgs = rebin(sum_bkgs, opt_bins) 
         
@@ -291,7 +306,7 @@ def draw(var, category,
         if error_bars:
             # - - background uncertainty band
             total_backgrounds, high_band_backgrounds, low_band_backgrounds = uncertainty_band(
-                backgrounds_hists, systematics, overflow=overflow)
+                backgrounds_hists_dict, overflow=overflow)
             ratio_hist_high = ratio_hist(data_hist, total_backgrounds + high_band_backgrounds)
             ratio_hist_low = ratio_hist(data_hist, total_backgrounds - low_band_backgrounds)
 
@@ -308,6 +323,7 @@ def draw(var, category,
 
             ratio_error.SetLineColor(ROOT.kYellow)
             ratio_error.SetMarkerColor(ROOT.kRed)
+            ratio_error.SetFillColor(ROOT.kRed)
             ratio_error.SetFillStyle(3004)
             
     # - - - - - - - - add lumi, category , ... labels 
@@ -368,12 +384,13 @@ def draw(var, category,
 
     # - - - - - - - - draw data
     if data:
-        if backgrounds or signals:
-            data_hist.Draw('SAME E1')
-        else:
-            data_hist.GetYaxis().SetTitle("# of events")
-            data_hist.GetXaxis().SetTitle(var.title)
-            data_hist.Draw('HIST')
+        if not category.name in data.blind_regions:
+            if backgrounds or signals:
+                data_hist.Draw('SAME E1')
+            else:
+                data_hist.GetYaxis().SetTitle("# of events")
+                data_hist.GetXaxis().SetTitle(var.title)
+                data_hist.Draw('HIST')
             
     # - - - - - - - - draw extra info
     legend.Draw("SAME")
@@ -403,7 +420,7 @@ def draw(var, category,
 
     save_canvas(fig, output_dir, output_name, formats=output_formats)
 
-    #- - - - - - - - release the memory
+    # - - - - - - - - release the memory
     if hists_file:
         hfile.Close()
 

@@ -402,7 +402,7 @@ def label_plot(pad,
 
 ##----------------------------------------------------------------------------
 ##
-def uncertainty_band(hists, systematics, overflow=True):
+def uncertainty_band(hists_dict, overflow=True):
     
     """
     add separate variations in quadrature,
@@ -419,45 +419,33 @@ def uncertainty_band(hists, systematics, overflow=True):
     corrsponding to total nom, low band and high band error
     """
 
-    if not isinstance(hists, (list, tuple)):
-        hists = [hists]
-    total_nom = reduce(lambda h1, h2: h1+h2, hists) 
+    samples = hists_dict.keys()
+    total_nom = hists_dict[samples[0]]["NOMINAL"].Clone()
+    for s in samples[:]:
+        total_nom.Add(hists_dict[s]["NOMINAL"])
     
     var_high = []
     var_low = []
-
-    # include stat errors too
+    # include stat errors 
     total_model_stat_high = total_nom.Clone()
     total_model_stat_low = total_nom.Clone()
     for i in range(0, total_nom.GetNbinsX()):
         total_model_stat_high.SetBinContent(
             i, total_model_stat_high.GetBinContent(i) + total_nom.GetBinErrorUp(i))
         total_model_stat_low.SetBinContent(
-            i, total_model_stat_low.GetBinContent(i) + total_nom.GetBinErrorLow(i))
+            i, total_model_stat_low.GetBinContent(i) - total_nom.GetBinErrorLow(i))
 
     var_high.append(total_model_stat_high)
     var_low.append(total_model_stat_low)
 
-    if systematics is not None:
-        for syst, variations in systematics.items():
-            if len(variations) == 2:
-                high, low = variations
-            elif len(variations) == 1:
-                high = variations[0]
-                low = 'NOMINAL'
-            else:
-                raise ValueError(
-                    "only one or two variations "
-                    "per term are allowed: {0}".format(syst))
-
-            if high == 'NOMINAL' and low == 'NOMINAL':
-                continue
-
-            total_high = total_nom.Clone()
-            total_high.Reset()
-            total_low = total_high.Clone()
-            total_max = total_high.Clone()
-            total_min = total_high.Clone()
+    systematics = None
+    if systematics:
+        total_high = total_nom.Clone()
+        total_high.Reset()
+        total_low = total_high.Clone()
+        total_max = total_high.Clone()
+        total_min = total_high.Clone()
+        for syst in systematics:
             for model in hists:
                 mname = model.keys()[0]
                 m_obj = model[mname]['INFO']
@@ -469,13 +457,13 @@ def uncertainty_band(hists, systematics, overflow=True):
                 if high == 'NOMINAL':
                     total_high += nom_hist
                 else:
-                    ## retrieve the high syst componet hist
+                    ## retrieve the high syst component hist
                     total_high += syst_hists[0]
 
                 if low == 'NOMINAL':
                     total_low += nom_hist
                 else:
-                    ## retrieve the low syst componet hist
+                    ## retrieve the low syst component hist
                     total_low += syst_hists[1]
                 
             if total_low.Integral() <= 0:

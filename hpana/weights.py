@@ -16,8 +16,8 @@ class Weight(object):
     W_STR_FMT = "(({0}!=1)+({0}==1)*{1})"
 
     W_PILEUP = {
-        # <! TRAILING COMMA IS NECESSARY FOR ONE ELEMENT TUPLES!
-        "weight_pileup": ("weight_total/weight_mc",)
+        # TRAILING COMMA IS NECESSARY FOR ONE ELEMENT TUPLES!
+        "weight_pileup": ("weight_total/weight_mc", )
     }
 
     W_BASE = {
@@ -26,7 +26,7 @@ class Weight(object):
     W_TAU = {
         "tau_0_sf_NOMINAL_TauEffSF_JetBDTmedium": (
             W_STR_FMT.format(
-                "n_taus", "tau_0_sf_NOMINAL_TauEffSF_JetBDTmedium"),  # <! NOMINAL
+                "n_taus", "tau_0_sf_NOMINAL_TauEffSF_JetBDTmedium"),  # NOMINAL
 
             W_STR_FMT.format(
                 "n_taus", "tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_1PRONGSTATSYSTUNCORR2025_1up_TauEffSF_JetBDTmedium"),
@@ -98,7 +98,7 @@ class Weight(object):
             W_STR_FMT.format(
                 "n_taus", "tau_0_sf_TAUS_TRUEHADTAU_EFF_RECO_HIGHPT_1down_TauEffSF_reco"),
         ),
-    }  # <! W_TAU
+    }  # W_TAU
 
     W_JET = {
         "jet_sf_NOMINAL_central_jets_global_effSF_JVT": (
@@ -108,7 +108,7 @@ class Weight(object):
         "jet_sf_NOMINAL_central_jets_global_ineffSF_JVT": (
             "jet_sf_NOMINAL_central_jets_global_ineffSF_JVT",
         ),
-    }  # <! W_JET
+    }  # W_JET
 
     W_BJET = {
         "jet_sf_NOMINAL_global_ineffSF_MV2c10": (
@@ -152,7 +152,7 @@ class Weight(object):
             "jet_sf_FT_EFF_Eigen_Light_3_1down_global_effSF_MV2c10",
             "jet_sf_FT_EFF_Eigen_Light_3_1down_global_ineffSF_MV2c10",
             "jet_sf_FT_EFF_Eigen_Light_3_1up_global_effSF_MV2c10",
-            "jet_sf_FT_EFF_Eigen_Light_3_1up_global_effSF_MV2c10",
+            "jet_sf_FT_EFF_Eigen_Light_3_1up_global_ineffSF_MV2c10",
             "jet_sf_FT_EFF_Eigen_Light_4_1down_global_effSF_MV2c10",
             "jet_sf_FT_EFF_Eigen_Light_4_1down_global_ineffSF_MV2c10",
             "jet_sf_FT_EFF_Eigen_Light_4_1up_global_effSF_MV2c10",
@@ -167,7 +167,7 @@ class Weight(object):
             "jet_sf_FT_EFF_extrapolation_from_charm_1up_global_ineffSF_MV2c10",
 
         ),
-    }  # <! W_BJET
+    }  # W_BJET
 
     W_MU = {
         "mu_0_sf_NOMINAL_MuEffSF_TTVA": (
@@ -185,7 +185,7 @@ class Weight(object):
                 "n_muons", "mu_0_sf_NOMINAL_MuEffSF_Reco_QualTight"),
         ),
 
-    }  # <! W_MU
+    }  # W_MU
 
     W_EL = {
         "el_0_sf_NOMINAL_EleEffSF_offline_RecoTrk": (
@@ -209,32 +209,32 @@ class Weight(object):
         ),
     }
 
+    # met trigger efficiency
     W_TRIGGER_TAUJET = {
-        "mc15": ("nominal_trig_eff({})".format("met_et/1000."), ),
-        "mc16": ("metTrigEff({}, 1000)".format("met_p4->Et()"), ),
+        "metTrigEff": (
+            "metTrigEff({}, 1000)".format("met_p4->Et()"),
+        ),
     }
 
-    W_TRIGGER_TAULEP = ("1",)
-
+    # different scale factor components
     TYPES = {
         "taujet": {
-            # "BASE": W_BASE,
-            # "PILEUP": W_PILEUP,
+            "BASE": W_BASE,
+            "PILEUP": W_PILEUP,
             "TAU": W_TAU,
-            # "JET": W_JET,
-            # "BJET": W_BJET,
-            # "TRIGGER": W_TRIGGER_TAUJET
+            "JET": W_JET,
+            "BJET": W_BJET,
+            "TRIGGER": W_TRIGGER_TAUJET
         },
 
         "taulep": {
-            # "BASE": W_BASE,
-            # "PILEUP": W_PILEUP,
-            # "TAU": W_TAU,
-            # "JET": W_JET,
-            # "BJET": W_BJET,
-            # "MU": W_MU,
+            "BASE": W_BASE,
+            "PILEUP": W_PILEUP,
+            "TAU": W_TAU,
+            "JET": W_JET,
+            "BJET": W_BJET,
+            "MU": W_MU,
             "EL": W_EL,
-            # "TRIGGER": W_TRIGGER_TAULEP
         },
     }
 

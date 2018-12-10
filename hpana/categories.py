@@ -6,9 +6,9 @@ from collections import OrderedDict
 import ROOT
 from ROOT import TCut
 
-from db.decorators import cached_property
-from . import log, MC_CAMPAIGN
-from .trigger import get_trigger
+from hpana.db.decorators import cached_property
+from hpana import log, MC_CAMPAIGN
+from hpana.trigger import get_trigger
 
 """
 This module provides all selections needed for the analysis.
@@ -22,7 +22,7 @@ PLEASE NOTE THAT THE UNIT IS CHANGED FROM MeV to GeV as of version 18v04 of the 
 # - - - - - - - - event 
 CLEAN_EVT = {
     "mc15": TCut("(event_clean==1) && (n_vx>=1) && (bsm_tj_dirty_jet==0)"),
-    "mc16": TCut("n_vx > 0"),
+    "mc16": TCut("n_pvx > 0"),
 }
 
 ##------------------------------------------------------------------------------------
@@ -434,7 +434,7 @@ Category_SR_TAUMU = Category(
 
 Category_TAUEL_BVETO = Category(
     name="TAUEL_BVETO",
-    label="#tau-lep b-veto CR",
+    label="#tau-e b-veto CR",
     cuts_list = [
         CLEAN_EVT,
         EL_BASE,
@@ -735,9 +735,9 @@ CUTFLOW = {
         [
             ("cleanEvent",  CLEAN_EVT),
             ("trigger", {"mc16": ROOT.TCut("1>0"), "mc15": ROOT.TCut("1>0")}), #<! trigger is applied globally (just a place holder here)
-            ("ElOLR", TAU_EL_OLR_PASS),
             ("tauPt40", TAU_PT40),
             ("tauID", TAUID_MEDIUM),
+            ("ElOLR", TAU_EL_OLR_PASS),
             ("lepVeto", LEP_VETO),
             ("3jets", NUM_JETS3),
             ("jetPt25", JET_PT25),
@@ -751,11 +751,10 @@ CUTFLOW = {
          ("trigger", {"mc16": ROOT.TCut("1>0"), "mc15": ROOT.TCut("1>0")}), #<! trigger is applied globally (just a place holder here)
          ("tauPt40", TAU_PT40),
          ("tauID", TAUID_MEDIUM),
-         ("eBase", LEP_BASE),
-         ("3jets", NUM_JETS3),
+         ("elBase", EL_BASE),
+         ("1jets", NUM_JETS1),
          ("jetPt25", JET_PT25),
          ("1bjets", NUM_BJETS1),
-         ("MET50", MET150),
-         ("mT50", MT50),
+         ("MET50", MET50),
         ]),
 }

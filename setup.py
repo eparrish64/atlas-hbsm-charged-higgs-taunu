@@ -1,6 +1,7 @@
 import os
 from setuptools import setup
 
+
 def readme():
     with open('README.md') as f:
         return f.read()
@@ -11,13 +12,14 @@ setup(name='hpana',
       description='HplusTauNu run II analysis software',
       long_description=readme(),
       classifiers=[
-        'Development Status :: 1 - Alpha',
-        'Programming Language :: Python :: 2.7',
-        'Topic :: Analysis :: Machine Learning :: Big Data',
+          'Development Status :: 1 - Alpha',
+          'Programming Language :: Python :: 2.7',
+          'Topic :: Analysis :: Machine Learning :: Big Data',
       ],
       keywords='analysis Hplus tau ',
       url='ssh://git@gitlab.cern.ch:7999/atlas-hbsm-charged-higgs-taunu/hpana.git',
-      dependency_links=['ssh://git@gitlab.cern.ch:7999/atlas-hbsm-charged-higgs-taunu/hpana.git'],
+      dependency_links=[
+          'ssh://git@gitlab.cern.ch:7999/atlas-hbsm-charged-higgs-taunu/hpana.git'],
       author='Sina Bahrasemani',
       author_email='Sina.Bahrasemani@cern.ch',
       license='CERN',
@@ -50,9 +52,6 @@ setup(name='hpana',
           "bin/decorate-trees",
           "bin/check-objs-cutflow",
       ],
-      
-      test_suite='nose.collector',
-      tests_require=['nose', 'nose-cover3'],
       entry_points={
           'console_scripts': [""],
       },

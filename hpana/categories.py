@@ -42,6 +42,11 @@ MET150 = {
     "mc16": TCut("met_p4->Et() > 150"),
 }
 
+MET200 = {
+    "mc15": TCut("met_et > 200000"),
+    "mc16": TCut("met_p4->Et() > 200"),
+}
+
 MET_MAX150 = {
     "mc15": TCut("met_et < 150000"),
     "mc16": TCut("met_p4->Et() < 150"),
@@ -739,9 +744,12 @@ CUTFLOW = {
             ("tauID", TAUID_MEDIUM),
             ("ElOLR", TAU_EL_OLR_PASS),
             ("lepVeto", LEP_VETO),
-            ("3jets", NUM_JETS3),
-            ("jetPt25", JET_PT25),
             ("1bjets", NUM_BJETS1),
+            ("tauID", TAUID_MEDIUM),
+            ("ElOLR", TAU_EL_OLR_PASS),
+            ("tauPt40", TAU_PT40),
+            # ("3jets", NUM_JETS3),
+            # ("jetPt25", JET_PT25),
             ("MET150", MET150),
             ("mT50", MT50),
         ]),

@@ -24,7 +24,6 @@ from .decorators import cached_property
 from .yaml_utils import Serializable
 from . import xsec
 from .. import EVENTS_CUTFLOW_HIST, EVENTS_CUTFLOW_BIN, MC_CAMPAIGN 
-from hpana.cluster.parallel import close_pool
 
 # ATLAS 
 USE_PYAMI = True
@@ -40,7 +39,9 @@ try:
 except ImportError, err:
     USE_PYAMI = False
     log.warning(err)
-    log.warning("pyAMI is not installed! <lsetup pyAMI> fist ")
+    log.warning("pyAMI is not installed. "
+              "Cross section retrieval will be disabled and ntuples' validation wont work!")
+
 
 ##--------------------------------------------------------------------------------
 ## consts

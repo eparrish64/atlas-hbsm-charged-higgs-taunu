@@ -21,10 +21,8 @@ parser.add_argument('--name', default='DB')
 parser.add_argument('--config', default='hpana/db/datasets_config.yml')
 parser.add_argument('-v', '--verbose', action='store_true', default=False)
 parser.add_argument('--version', type=str)
-
 parser.add_argument('channel', choices=("taujet", "taulep"))
 args = parser.parse_args()
-
 
 ## ROOT stuff after cmd setup 
 from hpana.db.datasets import Database
@@ -36,6 +34,10 @@ db = Database(name="%s_%s%s"%(args.name, args.channel, args.version),
 
 # - - - - - - - - validate the database 
 if args.validate:
+    try:
+        import pyAMI
+    except ImportError:
+        raise RuntimeError("pyAMI is not found; make sure you do <lsetup pyAMI> first")
     if db:
         db.validate(pattern=args.validate_pattern,
                     datatype=args.validate_type,

@@ -12,9 +12,6 @@ import fnmatch
 from collections import namedtuple
 from  multiprocessing import Pool, cpu_count
 
-# ROOT
-import ROOT
-
 # PyPI
 import yaml
 
@@ -25,8 +22,9 @@ from .yaml_utils import Serializable
 from . import xsec
 from .. import EVENTS_CUTFLOW_HIST, EVENTS_CUTFLOW_BIN, MC_CAMPAIGN 
 
-# ATLAS 
-USE_PYAMI = True
+# ROOT
+import ROOT
+
 try:
     import pyAMI
     import pyAMI.client 
@@ -36,15 +34,13 @@ try:
     AtlasAPI.init()
     
     from pyAMI.atlas.api import get_dataset_info, get_dataset_prov, get_file
-except ImportError, err:
-    USE_PYAMI = False
-    log.warning(err)
-    log.warning("pyAMI is not installed. "
-              "Cross section retrieval will be disabled and ntuples' validation wont work!")
-
+except ImportError:
+    pass
 
 ##--------------------------------------------------------------------------------
 ## consts
+
+METADATA_TTREE_MERGED = False
 DATA, MC, EMBED, MCEMBED = range(4)
 TYPES = {
     'DATA':    DATA,
@@ -66,18 +62,18 @@ MC16_NTUP_PATTERN = re.compile(
     '\.(?P<tag>\w+)'
     '\.(?P<suffix>\w+)$'
 )
-NTUP_PATTERN_2018 = re.compile(
+NTUP_PATTERN = re.compile(
     '^(?P<prefix>(group.phys-higgs)|(user\.\w+))'
-    #'\.(?P<uname>\w+)'
     '((\.\w+)|)'
     '\.(?P<type>mc|data)'
     '(?P<stream>15|16|17|18)_13TeV'
     '\.(?P<id>\d+)'
-    '\.(?P<name>\w+)|(?P<derivation>D1|D2)'
-    #'\.(?P<derivation>\w+)'
-    '\.(?P<tag>e\d+)'
+    '\.(?P<name>\w+)'
+    '\.(?P<derivation>D1|D2)'
+    '\.(?P<tag>\w+)'
     '\.(?P<version>\w+)'
-    '\_hist$')
+    '_(BS)$'
+    )
 
 
 AOD_TAG_PATTERN = re.compile(
@@ -337,7 +333,7 @@ class Database(dict):
             for dir in mc_dirs:
                 log.debug(dir)
                 dirname, basename = os.path.split(dir)
-                match  = re.match(NTUP_PATTERN_2018, basename)
+                match  = re.match(NTUP_PATTERN, basename)                
                 if match:
                     if match.group('type') != 'mc':
                         continue
@@ -345,7 +341,7 @@ class Database(dict):
                     # - - - - get the name from XS file (due to Grid limitations ntuples names are shortend)
                     name = Dataset.get_name(dsid)
                     stream = "mc%s"%match.group('stream')
-                    tag = re.search("\.e\w+", basename).group()
+                    tag = match.group("tag")#re.search("\.e\w+", basename).group()
                     rtag = tag.split("_")[-2].replace("r", "")
                     version = match.group("version")
                     tag_match = None
@@ -366,12 +362,12 @@ class Database(dict):
                     uname = "%s_%s"%(name, rtag)
 
                     ## - - set stream to data streams based on reco tag
-                    if rtag=="9315":
+                    if rtag=="9315" or rtag=="9364":
                         stream = ["2015", "2016"]
-                    elif rtag=="10210":
+                    elif rtag=="10210" or rtag=="10201":
                         stream = ["2017"]
                     else:
-                        log.warning("can't set stream for ")
+                        log.warning("can't set stream for %s"%rtag)
                         
                     # - - - - - - - - update the DB with this dataset
                     dataset = self.get(name, None)
@@ -405,7 +401,7 @@ class Database(dict):
                 data_dirs = get_all_dirs_under(data_path, prefix=data_prefix)
             else:
                 if data_prefix:
-                    data_dirs = glob.glob(os.path.join(data_path, data_prefix) + '*')
+                    data_dirs = glob.glob(os.path.join(data_path, data_prefix) + '*_BS')
                 else:
                     data_dirs = glob.glob(os.path.join(data_path, '*'))
 
@@ -414,7 +410,7 @@ class Database(dict):
             for dir in data_dirs:
                 log.debug(dir)
                 dirname, basename = os.path.split(dir)
-                match = re.match(NTUP_PATTERN_2018, basename)
+                match = re.match(NTUP_PATTERN, basename)
                 if match:
                     if match.group('type') != 'data':
                         continue
@@ -559,6 +555,13 @@ class Dataset(Serializable):
         nevents = 0
         assert (events_cutflow_hist and events_cutflow_bin), "metadata hist info is not provided!"
         for f in self.files:
+            if not METADATA_TTREE_MERGED:
+                sdir, fname = os.path.split(f)
+                if sdir.endswith("_BS"):
+                    f = os.path.join(sdir.replace("_BS", "_hist"), fname.replace(".BSM_Hptaunu.", ".hist-output."))
+                if not os.path.isfile(f):
+                    log.warning("can't retrieve hmetadata (skipping!); missing %s"%f)
+                    continue
             rf = ROOT.TFile(f, "READ")
             hmetadata = rf.Get(events_cutflow_hist)
             num = hmetadata.GetBinContent(events_cutflow_bin)
@@ -690,7 +693,12 @@ def validate_single(args, child=False):
         dirs = info.dirs
         root_files = []
         for dir in dirs:
-            root_files += glob.glob(os.path.join(dir, info.file_pattern))
+            if not METADATA_TTREE_MERGED:
+                if dir.endswith("_BS"):
+                    root_files += glob.glob(os.path.join(dir.replace("_BS", "_hist"), "*.hist-output.*"))
+            else:    
+                root_files += glob.glob(os.path.join(dir, info.file_pattern))
+
         events = 0
         AOD_events = 0
         parent_dAOD = None

@@ -1,45 +1,38 @@
 # source this file
 
 # ROOT version should be set manually 
-export ALRB_rootVersion=6.14.04-x86_64-slc6-gcc62-opt
+export ALRB_rootVersion=6.14.08-x86_64-slc6-gcc62-opt
 
 case $USER in 
 	edrechsl)
 		VENVPATH=/home/edrechsl/virtEnvs/venv_hpana
 		;;
     sbahrase)
-        VENVPATH=/home/sbahrase/WorkDesk/PythonPackages/VirtualEnvs/hpana_Venv
+        VENVPATH=/project/6024950/sbahrase/PythonPackages/VirtualEnvs/hpana_venv/
         ;;
 	*)
+		VENVPATH=""
 		echo "User not found when setting virtual envrionment, adjust setup file."
 esac
 
 case "$(hostname)" in
 	*cedar*)
         # source /project/atlas/Tier3/AtlasUserSiteSetup.sh
-		#CEDAR setup - assumes setupATLAS has been executed to setup container (setupATLAS -c slc6)
-		lsetup root  #--quiet
-        
-		#quick fix due to moved scripts
-		#export PYTHONPATH=$PWD:$PYTHONPATH
-		source $VENVPATH/bin/activate
-
-		## setup hpana
-		#$VENVPATH//bin/pip install -e .
+		# assumes setupATLAS has been executed to setup container (setupATLAS -c slc6)
+		lsetup root        
 		;;
 	*)
-		
-		## ROOT
 		echo "Installing ROOT ..."
         source $ATLAS_LOCAL_ROOT_BASE/user/atlasLocalSetup.sh
-		source $ATLAS_LOCAL_ROOT_BASE/packageSetups/atlasLocalROOTSetup.sh 
-		
-		## activate the virtual env
-		echo "Activating the virtual env"
-		source "$1"/bin/activate
-		
-		## setup hpana
-		echo "If it is the first time install do: <VIRTUAL ENV PATH>/bin/pip install -e . "
-		# "$1"/bin/pip install -e .
+		source $ATLAS_LOCAL_ROOT_BASE/packageSetups/atlasLocalROOTSetup.sh 		
 		;;
 esac
+
+## activate the virtual env
+echo "Activating the virtual env"
+source $VENVPATH/bin/activate
+echo "If this is the first time install do: pip install -r requirements.txt"
+
+export PYTHONPATH=$PWD:$PYTHONPATH
+export PATH=$PWD/bin:$PATH
+

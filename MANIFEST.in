@@ -1,5 +1,0 @@
-include hpana/db/xsec/13TeV.txt
-include hpana/cxxmacros/
-include hpana/samples/*.csv
-include hpana/db/DataBase/.gitkeep
-include hpana/db/datasets_config.yml

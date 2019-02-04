@@ -41,6 +41,9 @@ except ImportError:
 ## consts
 
 METADATA_TTREE_MERGED = False
+if not METADATA_TTREE_MERGED:
+    log.info("Assuming that metadata and TTrees are written to different TFiles (v06 ntuples); see hpana.db.dataset.py!")
+
 DATA, MC, EMBED, MCEMBED = range(4)
 TYPES = {
     'DATA':    DATA,

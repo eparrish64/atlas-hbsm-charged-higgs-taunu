@@ -12,51 +12,72 @@ import ROOT
 # ------------------------------------------------------------------
 ## - -  triggers
 # ------------------------------------------------------------------
+## REFERENCE: https://atlas-tagservices.cern.ch/tagservices/RunBrowser/runBrowserReport/rBR_Period_Report.php
+## https://twiki.cern.ch/twiki/bin/viewauth/Atlas/LowestUnprescaled
 TRIGGERS = {
     "taujet": {
         "DATA": {
-            "2015": "(run_number <= 284484 && HLT_xe70_tc_lcw)",
-            "2016": "(run_number > 284484 && HLT_xe90_mht_L1XE50 && run_number <= 302872)||(run_number > 302872 && HLT_xe110_mht_L1XE50)",
-            "2017": ("((run_number >= 325713 && run_number <= 328393) && HLT_xe90_pufit_L1XE50)"
-                     "|| ((run_number >= 329385 && run_number <= 330470) && HLT_xe100_pufit_L1XE55)"
-                     "|| ((run_number >= 330857 && run_number <= 331975) && HLT_xe110_pufit_L1XE55)"
-                     "|| ((run_number >= 332303 && run_number <= 340453) && HLT_xe110_pufit_L1XE50)")
+            "2015": "(run_number <= 284484 && (HLT_xe70_tc_lcw || HLT_xe70_mht))",
+
+            "2016": "(run_number >= 296939 && (HLT_xe90_mht_L1XE50 || HLT_xe80_tc_lcw_L1XE50) && run_number <= 302872)" #<! period A-C
+                        "||(run_number > 302872 && HLT_xe110_mht_L1XE50)", #<! period D-
+
+            "2017": ("((run_number >= 325713 && run_number <= 328393) && HLT_xe90_pufit_L1XE50)" #<! period B (prescaled!)
+                     "|| ((run_number >= 329385 && run_number <= 330470) && HLT_xe100_pufit_L1XE55)" #<! period C (prescaled!)
+                     "|| ((run_number >= 330857 && run_number <= 331975) && HLT_xe110_pufit_L1XE50)" #<! period D1-5 (prescaled!)
+                     "|| ((run_number >= 332303 && run_number <= 340453) && HLT_xe110_pufit_L1XE55)"), #<! D6-K
+
+            "2018": ("( run_number >= 348885 && run_number <= 355468  && HLT_xe110_pufit_xe70_L1XE50)" #<! period B-J
+                    "|| ( run_number >= 355529  && run_number <=364485  && (HLT_xe110_pufit_xe65_L1XE50 || HLT_xe110_pufit_xe70_L1XE50))") #<! period K- 
         },
+
         "MC": {  # MAKE SURE THAT TRIGGER AND TRIGGER EFFICIENCY ARE NOT APPLIED ON TOP OF EACH OTHER!
             "2015": "(NOMINAL_pileup_random_run_number <= 284484 && HLT_xe70_tc_lcw)",
-            "2016": ("(NOMINAL_pileup_random_run_number > 284484 && HLT_xe90_mht_L1XE50 && NOMINAL_pileup_random_run_number <= 302872)"\
+            "2016": ("(NOMINAL_pileup_random_run_number >= 296939 && HLT_xe90_mht_L1XE50 && NOMINAL_pileup_random_run_number <= 302872)"\
                      "||(NOMINAL_pileup_random_run_number > 302872 && HLT_xe110_mht_L1XE50 && NOMINAL_pileup_random_run_number <= 311481)"),
             "2017": ("((NOMINAL_pileup_random_run_number >= 325713 && NOMINAL_pileup_random_run_number <= 328393) && HLT_xe90_pufit_L1XE50)"\
                      "|| ((NOMINAL_pileup_random_run_number >= 329385 && NOMINAL_pileup_random_run_number <= 330470) && HLT_xe100_pufit_L1XE55)"\
                      "|| ((NOMINAL_pileup_random_run_number >= 330857 && NOMINAL_pileup_random_run_number <= 331975) && HLT_xe110_pufit_L1XE55)"\
-                     "|| ((NOMINAL_pileup_random_run_number >= 332303 && NOMINAL_pileup_random_run_number <= 340453) && HLT_xe110_pufit_L1XE50)")
+                     "|| ((NOMINAL_pileup_random_run_number >= 332303 && NOMINAL_pileup_random_run_number <= 340453) && HLT_xe110_pufit_L1XE50)"),
+
+            "2018": ("( NOMINAL_pileup_random_run_number >= 348885 && NOMINAL_pileup_random_run_number <= 355468  && HLT_xe110_pufit_xe70_L1XE50)" #<! period B-J
+                    "|| ( NOMINAL_pileup_random_run_number >= 355529  && NOMINAL_pileup_random_run_number <=364485  && (HLT_xe110_pufit_xe65_L1XE50 || HLT_xe110_pufit_xe70_L1XE50))") #<! period K- 
         },
     },
+
     "taulep": {
         "DATA": {
             "2015": ("((run_number <= 288000)&&"\
                      "(HLT_e24_lhmedium_L1EM20VH || HLT_e60_lhmedium || HLT_e120_lhloose || HLT_mu20_iloose_L1MU15 || HLT_mu50))"),
+        
             "2016": ("((run_number > 288000)"\
                      "&&(HLT_e26_lhtight_nod0_ivarloose || HLT_e60_lhmedium_nod0 || HLT_e140_lhloose_nod0 ||HLT_mu24_ivarloose||HLT_mu24_ivarmedium || HLT_mu26_ivarmedium || HLT_mu50))"),
-            "2017": ("(HLT_e26_lhtight_nod0_ivarloose || HLT_e60_lhmedium_nod0 || HLT_e140_lhloose_nod0 || HLT_mu26_ivarmedium || HLT_mu50)"),
-            "2018": ""
+        
+            "2017": (" run_number >= 324320 && run_number <= 341649 && (HLT_e26_lhtight_nod0_ivarloose || HLT_e140_lhloose_nod0 || HLT_e60_lhmedium_nod0 ||HLT_mu26_ivarmedium || HLT_mu50)"),
+        
+            "2018": (" run_number >= 348197 && run_number <=364485 && (HLT_e26_lhtight_nod0_ivarloose || HLT_e140_lhloose_nod0 || HLT_e60_lhmedium_nod0 ||HLT_mu26_ivarmedium || HLT_mu50)")
         },
+
         "MC": {
-            "2015": ("((run_number <= 288000)"\
+            "2015": ("((NOMINAL_pileup_random_run_number <= 288000)"\
                      "&&(HLT_e24_lhmedium_L1EM20VH || HLT_e60_lhmedium || HLT_e120_lhloose || HLT_mu20_iloose_L1MU15 || HLT_mu50))"),
-            "2016": ("((run_number > 288000)"\
+
+            "2016": ("((NOMINAL_pileup_random_run_number > 288000)"\
                      "&&(HLT_e26_lhtight_nod0_ivarloose || HLT_e60_lhmedium_nod0 || HLT_e140_lhloose_nod0 || HLT_mu26_ivarmedium || HLT_mu50))"),
-            "2017": ("(HLT_e26_lhtight_nod0_ivarloose || HLT_e60_lhmedium_nod0 || HLT_e140_lhloose_nod0 || HLT_mu26_ivarmedium || HLT_mu50)"),
-            "2018": ("")
+
+            "2017": (" NOMINAL_pileup_random_run_number >= 324320 && NOMINAL_pileup_random_run_number <= 341649 && (HLT_e26_lhtight_nod0_ivarloose || HLT_e140_lhloose_nod0 || HLT_e60_lhmedium_nod0 ||HLT_mu26_ivarmedium || HLT_mu50)"),
+        
+            "2018": (" NOMINAL_pileup_random_run_number >= 348197 && NOMINAL_pileup_random_run_number <=364485 && (HLT_e26_lhtight_nod0_ivarloose || HLT_e140_lhloose_nod0 || HLT_e60_lhmedium_nod0 ||HLT_mu26_ivarmedium || HLT_mu50)")
         },
     },
 }
 
 # - - - - multijet + MET trigger for FFs multijet CR
 MULTIJET_TRIGGER = {
-    "2015": "run_number<288000 && HLT_4j85",
-    "2016": "run_number > 288000 && HLT_4j100 && run_number <= 302872",
-    "2017": "run_number > 325713 && HLT_4j100"
+    "2015": "run_number <= 284484 && (HLT_4j85 || HLT_xe70_tc_lcw || HLT_xe70_mht)",
+    "2016": "(run_number >= 296939 && run_number <= 300287 && HLT_4j85) || (HLT_4j100 && (run_number > 300287 && run_number <= 311481))",
+    "2017": "(run_number >= 324320 && HLT_4j120 && run_number <=341649)",
+    "2018": "(run_number >= 348197 && HLT_4j120 && run_number <= 364485)",
 }
 
 # ------------------------------------------------------------------
@@ -109,6 +130,15 @@ MET_TRIGGERS = {
             "NO_TRIGGER": ROOT.TCut("(run_number >= 332303 && run_number <= 340453)"),
             "LUMI": 31.4773,
             "RUNS": (332303, 340453),
+        },
+    },
+
+    "2018":{
+        "HLT_xe110_pufit_xe70_L1XE50":{
+            "TRIGGER": ROOT.TCut("(run_number >= 348885 && run_number <= 355468  && HLT_xe110_pufit_xe70_L1XE50)"),
+            "NO_TRIGGER": ROOT.TCut("run_number >= 348885 && run_number <= 355468"),
+            "LUMI": 64.225,
+            "RUNS":(348197, 364485),
         },
     },
 }

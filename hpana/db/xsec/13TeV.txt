@@ -16,6 +16,7 @@
 346253 	MadGraphPy8EvtGen_A14NNPDF30LO_HpI_H150 	 1. 	 1.	 1. 	 1.
 346255 	MadGraphPy8EvtGen_A14NNPDF30LO_HpI_H160 	 1. 	 1.	 1. 	 1.
 346257 	MadGraphPy8EvtGen_A14NNPDF30LO_HpI_H170 	 1. 	 1.	 1. 	 1.
+346259 	MadGraphPy8EvtGen_A14NNPDF30LO_HpI_H180 	 1. 	 1.	 1. 	 1.
 346261 	MadGraphPy8EvtGen_A14NNPDF30LO_HpI_H190 	 1. 	 1.	 1. 	 1.
 346263 	aMcAtNloPy8EvtGen_A14NNPDF30NLO_HpH_H200 	 1. 	 1.	 1. 	 1.
 346265 	aMcAtNloPy8EvtGen_A14NNPDF30NLO_HpH_H225 	 1. 	 1.	 1. 	 1.

@@ -1,7 +1,7 @@
 # stdlib
 import os
 import array
-
+import numpy as np
 
 # local
 from . import log
@@ -192,6 +192,9 @@ def dataset_hists(hist_worker,
                         log.debug("({0}) * ({1})".format(selection, eventweight))
 
                         htmp = ROOT.gDirectory.Get(histname)
+                        if not htmp:
+                            log.error("Failed to get %s histogram for %s dataset"%(histname, outname))
+                            continue 
                         htmp.SetDirectory(0)
                         if var.bins:
                             htmp = htmp.Rebin(len(var.bins)-1, "hn",
@@ -237,3 +240,207 @@ def dataset_hists(hist_worker,
     log.info("processed %s dataset with %i events" %
              (dataset.name, nevents))
     return hist_set
+
+
+##--------------------------------------------------------------------------
+## - - helper for Pool processing (looping over events directly; slower!)
+##--------------------------------------------------------------------------
+def dataset_hists_direct(hist_worker,
+                  outdir="histsdir",
+                  clf_features=[],
+                  clf_models={},
+                  kfolds=1, 
+                  **kwargs):
+    """ produces histograms for a dataset. 
+    This static method is mainly used for parallel processing.
+    """
+    channel = hist_worker.channel
+    dataset = hist_worker.dataset
+    fields = hist_worker.fields
+    categories = hist_worker.categories
+    weights = hist_worker.weights
+    systematics = hist_worker.systematics
+    outname = kwargs.pop("outname", hist_worker.name)
+    hist_templates = hist_worker.hist_templates
+    
+    log.debug("*********** processing %s dataset ***********" % dataset.name)
+    if not dataset.files:
+        log.warning("%s dataset is empty!!" % dataset.name)
+        return []
+    log.debug("DATASET {} files: {}".format(dataset.name, dataset.files))
+
+    canvas = ROOT.TCanvas()
+    # - - - - containers for hists
+    hist_set = []
+    # <! since we have to update hists name, keep tformulas untouched
+    hist_templates_tformuals = {}
+    for systematic in systematics:
+        for syst_var in systematic.variations:
+            for var in fields:
+                if hist_templates and var.name in hist_templates:
+                    if not var.name in hist_templates_tformuals:
+                        hist_templates_tformuals[var.name] = hist_templates[var.name].GetName(
+                        )
+                for category in categories:
+                    if hist_templates and var.name in hist_templates:
+                        hist = hist_templates[var.name]
+                    else:
+                        if var.bins:
+                            hist = ROOT.TH1F(
+                                "syst_%s_category_%s_var_%s" % (
+                                    syst_var.name, category.name, var.name), var.name, len(var.bins)-1, array.array("d", var.bins))
+                        else:
+                            hist = ROOT.TH1F(
+                                "syst_%s_category_%s_var_%s" % (
+                                    syst_var.name, category.name, var.name), var.name, *var.binning)
+
+                    hset = Histset(
+                        name=outname,
+                        sample=outname,
+                        variable=var.name,
+                        category=category.name,
+                        hist=hist.Clone(),  # <! a copy per category
+                        systematic=syst_var.name)
+
+                    # - - make sure the newly created hist has no dummy value
+                    hset.hist.Reset()
+                    hist_set.append(hset)
+
+    if not dataset.files:
+        log.warning("%s dataset is empty!!"%dataset.name)
+        return []
+
+    # - - loop over dataset's files
+    nevents = 0
+    for fn in dataset.files:
+        fname = fn.split("/")[-1]
+        tfile = ROOT.TFile(fn)
+        for systematic in systematics:
+            syst_type = systematic._type
+            log.debug(
+                "Doing systematic %s of type %s with %r variations"%(systematic.name, systematic._type, [v.name for v in systematic.variations]))
+            for syst_var in systematic.variations:  
+                # - - get hists for the current systematic
+                syst_hists = filter(lambda hs: hs.systematic ==
+                                    syst_var.name, hist_set)
+
+                # - - check type of systematics
+                if syst_type == "TREE":
+                    tree_name = syst_var.name
+                else:
+                    tree_name = "NOMINAL"
+
+                # - - check if the file is healthy
+                try:
+                    entries = tfile.Get(tree_name).GetEntries()
+                    nevents += entries
+                    if entries == 0:
+                        log.warning("%s tree in %s is empty, skipping!" %
+                                    (tree_name, fn))
+                        continue
+                except:
+                    log.warning("%s has no %s tree!" % (fn, systematic))
+                    continue
+
+                # - - prepares selection categories
+                for n, category in enumerate(categories):
+                    # - - get hists for the current category
+                    cat_hists = filter(lambda hs: hs.category ==
+                                    category.name, syst_hists)
+
+                    # - - get the tree
+                    tree = tfile.Get(tree_name)
+                    # - - cache only the events that pass the selections
+                    selection = category.cuts.GetTitle()
+                    event_selection = ROOT.TTreeFormula("event_selection", selection, tree)
+
+                    # - - event weight
+                    # - - if weights is provided to the worker directly, then it's taken from systematic (the case for FFs weights)
+                    eventweight = "1."
+                    if weights:
+                        eventweight = "*".join(weights[category.name])
+                    if syst_type == "WEIGHT":
+                        if isinstance(syst_var.title, dict):
+                            sw = syst_var.title[category.name][0]
+                        else:
+                            sw = syst_var.title
+                        eventweight = "(%s)*(%s)" % (eventweight, sw)
+                    event_weight = ROOT.TTreeFormula("event_weight", eventweight, tree)
+                    event_weight.SetQuickLoad(True)
+
+                    if clf_features:
+                        ## needed for kfold method training! use proper offset for evaluation 
+                        event_number = ROOT.TTreeFormula("event_number", "event_number", tree)
+                        clf_feats_tf = [ROOT.TTreeFormula(feat.name, feat.tformula, tree) for feat in clf_features]
+                        [form.SetQuickLoad(True) for form in clf_feats_tf]
+
+                    # - - loop over the events
+                    for i, event in enumerate(tree):
+                        # - - does the event pass the selections ?
+                        if not event_selection.EvalInstance():
+                            continue
+
+                        if i%1000==0:
+                            log.debug("---------------- event #: %i"%i)
+                        if clf_features:    
+                            event_num = int(event_number.EvalInstance())
+                    
+                            ## - - get prediction from each classifier
+                            for mass, rem_dict in clf_models.iteritems():
+                                if i%1000==0:
+                                    log.debug("----------------- %s"%mass)
+                                for rem, clf_dict in rem_dict.iteritems():
+                                    ## - - trained on all with rem!= event_numbr%kFOLDS --> evaluate on the complementary
+                                    if int(rem)!= event_num%kfolds: 
+                                        continue
+                                    if i%1000==0:
+                                       log.debug("kfolds:%i; rem: %s; clfs:%r"%(kfolds, rem, clf_dict)) 
+
+                                    ## - - set clf's features vector
+                                    feats = [f.EvalInstance() for f in clf_feats_tf]    
+                                    for name, clf in clf_dict.iteritems():
+                                        ifeats = np.array([feats])
+                                        score = clf.predict_proba(ifeats)[0][1]  #<! probability of belonging to class 1 (SIGNAL)
+                                        for hs in cat_hists:
+                                            hs.hist.Fill(score, event_weight.EvalInstance())
+                                            hs.hist.SetName("%s_category_%s_var_%s" %(outname, category.name, hs.variable))
+                                        if i%1000==0:
+                                            log.debug("%r : %r "%(ifeats, score))
+                        else:
+                            # - - fill the hists 
+                            for hs in cat_hists:
+                                hs.hist.Fill(hs.variable, event_weight.EvalInstance())
+                                hs.hist.SetName("%s_category_%s_var_%s" %(outname, category.name, var.name))
+                    tree.Delete()
+        tfile.Close()                    
+
+    write_hists = kwargs.pop("write_hists", False)
+
+    # <! FIX ME: should give the sample name a better solution
+    prefix = kwargs.pop("prefix", outname.split(".")[0])
+    if write_hists:
+        if not os.path.isdir(outdir):
+            os.system("mkdir -p %s" % outdir)
+        for systematic in systematics:            
+            hname = "%s.root"%(outname)
+            hpath = os.path.join(outdir, hname)
+            hfile = ROOT.TFile(hpath, "UPDATE")
+            for syst_var in systematic.variations:
+                rdir = syst_var.name
+                if not hfile.GetDirectory(rdir):
+                    hfile.mkdir(rdir)
+                hfile.cd(rdir)
+
+                for hset in filter(lambda hs: hs.systematic==syst_var.name, hist_set):
+                    hist = hset.hist
+                    hist.SetTitle(hist.GetName())
+                    hist.Write("%s" % (hist.GetName().replace(
+                        outname, prefix)), ROOT.TObject.kOverwrite)
+            hfile.Close()
+
+    canvas.Close()
+    log.debug(hist_set)
+    log.info("processed %s dataset with %i events" %
+             (dataset.name, nevents))
+    return hist_set
+

@@ -83,7 +83,7 @@ class Configuration(object):
 
     @property
     def categories(self):
-        cats = CATEGORIES[self.channel] + self.ff_cr_regions
+        cats = CATEGORIES[self.channel] #+ self.ff_cr_regions
         for c in cats:
             c.mc_camp = self.mc_camp
         return cats
@@ -94,6 +94,12 @@ class Configuration(object):
         """
         return SYSTEMATICS[self.channel]
 
+    @property
+    def systematics_variations(self):
+        varss = []
+        for st in self.systematics:
+            varss += st.variations
+    
     @property
     def data_lumi(self):
         """ lumi is per data taking year (stream)

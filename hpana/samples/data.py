@@ -69,10 +69,8 @@ class Data(Sample):
                  streams=[],
                  blind=True,
                  blind_streams=["2017", "2018"],
-                 blind_regions=["SR_TAUJET", "SR_TAULEP",
-                                "SR_TAUEL", "SR_TAUMU"],
-                 grls=["data_2015_lumi.csv",
-                       "data_2016_lumi.csv", "data_2017_lumi.csv"],
+                 blind_regions=["SR_TAUJET", "SR_TAULEP", "SR_TAUEL", "SR_TAUMU"],
+                 grls=["data_2015_lumi.csv", "data_2016_lumi.csv", "data_2017_lumi.csv", "data_2018_lumi.csv"],
                  **kwargs):
 
         database = kwargs.pop("database", None)
@@ -211,7 +209,7 @@ class Data(Sample):
         """
         # - - - - not applicable to DATA
         kwargs.pop("systematics", None)
-        systematic = Systematic("NOMINAL", _type="TREE")
+        systematics = filter(lambda s: s.name=="NOMINAL", self.config.systematics)
 
         # - - - - no weight on DATA and no hist for blind regions
         weighted = kwargs.pop("weighted", False)
@@ -227,7 +225,7 @@ class Data(Sample):
 
         _workers = super(Data, self).workers(
             categories=data_categories,
-            systematics=[systematic],
+            systematics=systematics,
             weighted=False,
             **kwargs)
         return _workers

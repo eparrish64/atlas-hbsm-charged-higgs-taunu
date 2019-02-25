@@ -5,6 +5,7 @@
 
 ## stdlib
 import os, sys, array, math
+from collections import OrderedDict
 
 ## PyPI
 import numpy as np
@@ -119,6 +120,203 @@ def fake_sources(samples, category, ftypes={}, tauid=None, antitau=None):
     }
     return merged_events
 
+
+##--------------------------------------------------------------------------
+## - - calculate CR FFs 
+##--------------------------------------------------------------------------
+def get_cr_ffs(hist_sets, 
+                control_regions=[], 
+                tau_jet_bdt_score_trans_wps=[], 
+                n_charged_tracks=[], 
+                subtract_mc=True,
+                cache_file=None,
+                write_cxx_macro=True,
+                validation_plots=False,
+                pdir="ffplots",
+                template_hist_bins=[], 
+                **kwargs):
+    """
+
+    """
+
+        # - - - -  organize the output
+    data_tau_hists = filter(lambda hs: hs.name.startswith("Data") and hs.name.endswith("_TAU"), hist_sets)
+    data_antitau_hists = filter(lambda hs: hs.name.startswith("Data") and hs.name.endswith("_ANTITAU"), hist_sets)
+
+    if subtract_mc:
+        mc_tau_hists = filter(lambda hs: not hs.name.startswith("Data") and hs.name.endswith("_TAU"), hist_sets)
+        mc_antitau_hists = filter(lambda hs: not hs.name.startswith("Data") and hs.name.endswith("_ANTITAU"), hist_sets)
+    
+    # - - - - add up the histograms for each CR region 
+    ffs_dict = {}
+    for cr in control_regions:
+        cr_name = cr.name
+        ffs_dict[cr_name] = OrderedDict()
+        
+        # - - data tau
+        data_tau_hists_cat = filter(lambda hs: hs.category==cr_name, data_tau_hists)
+        assert data_tau_hists_cat, "no (TAU) %s hist for %s CR"%("DATA", cr_name)
+        data_tau_hsum = data_tau_hists_cat[0].hist.Clone()
+        if len(data_tau_hists_cat) > 1:
+            for hs in data_tau_hists_cat[1:]:
+                data_tau_hsum.Add(hs.hist)
+        
+        # - - data antitau
+        data_antitau_hists_cat = filter(lambda hs: hs.category==cr_name, data_antitau_hists)
+        assert data_antitau_hists_cat, "no (ANTITAU) %s hist for %s CR"%("DATA", cr_name)
+        data_antitau_hsum = data_antitau_hists_cat[0].hist.Clone()
+        if len(data_antitau_hists_cat) > 1:
+            for hs in data_antitau_hists_cat[1:]:
+                data_antitau_hsum.Add(hs.hist)
+
+        if subtract_mc:
+            # - - mc tau
+            mc_tau_hists_cat = filter(lambda hs: hs.category==cr_name, mc_tau_hists)
+            assert mc_tau_hists_cat, "no (TAU) %s hist for %s CR"%("MC", cr_name)
+            mc_tau_hsum = mc_tau_hists_cat[0].hist.Clone()
+            for hs in mc_tau_hists_cat[1:]:
+                mc_tau_hsum.Add(hs.hist)
+
+            # - - mc antitau
+            mc_antitau_hists_cat = filter(lambda hs: hs.category==cr_name, mc_antitau_hists)
+            assert mc_antitau_hists_cat, "no (ANTITAU) %s hist for %s CR"%("MC", cr_name)
+            mc_antitau_hsum = mc_antitau_hists_cat[0].hist.Clone()
+            for hs in mc_antitau_hists_cat[1:]:
+                mc_antitau_hsum.Add(hs.hist)
+                
+        data_mc_tau_h = data_tau_hsum.Clone()
+        data_mc_antitau_h = data_antitau_hsum.Clone()
+        # - - subtract MC from DATA
+        if subtract_mc:
+            data_mc_tau_h.Add(mc_tau_hsum, -1)
+            data_mc_antitau_h.Add(mc_antitau_hsum, -1)
+        
+        log.info("TAU events; DATA: {}, MC: {}".format(
+            data_tau_hsum.Integral(), mc_tau_hsum.Integral() if subtract_mc else "NAN") )
+        log.info("ANTITAU events; DATA: {}, MC: {}".format(
+            data_antitau_hsum.Integral(), mc_antitau_hsum.Integral() if subtract_mc else "NAN") )
+
+        htmp_tau = data_mc_tau_h.Clone()
+        htmp_antitau = data_mc_antitau_h.Clone()
+        
+        # - - project along X and Y to get the bins
+        htmp_X = htmp_antitau.ProjectionX().Clone()
+        htmp_Y = htmp_antitau.ProjectionY().Clone()
+        htmp_Z = htmp_antitau.ProjectionZ().Clone()
+        
+        if validation_plots:
+            os.system("mkdir -p %s"%pdir)
+            canvas = ROOT.TCanvas()
+            
+            htmp_tau.Draw("")
+            canvas.Print("%s/h3_tau.png"%pdir)
+            canvas.Clear()
+
+            htmp_antitau.Draw("")
+            canvas.Print("%s/h3_antitau.png"%pdir)
+            canvas.Clear()
+
+            htmp_X.Draw()
+            canvas.Print("%s/hX_antitau.png"%pdir)
+            canvas.Clear()
+
+            htmp_Y.Draw()
+            canvas.Print("%s/hY_antitau.png"%pdir)
+            canvas.Clear()
+
+            htmp_Z.Draw()
+            canvas.Print("%s/hZ_antitau.png"%pdir)
+            canvas.Clear()
+
+            canvas.Close()
+        
+        # - - gather hists per tau pT and ntracks bin and also tau_jet_bdt_score WPs
+        for jbs_n, jbs_wp in enumerate(tau_jet_bdt_score_trans_wps):
+            jkey = "tauJetBDT_0%i"%(100*jbs_wp)
+            ffs_dict[cr_name][jkey] = {}
+            for itk_n, itk in enumerate(n_charged_tracks):
+                tkey = "%i"%itk
+                ffs_dict[cr_name][jkey][tkey]= {}
+                
+                # - - keep jet BDT score along X (only a lower cut)
+                x_low = htmp_X.FindBin(jbs_wp)
+                x_high = -1 #<! to include overflow bin too
+                
+                # - - ntracks along Y
+                y_low = htmp_Y.FindBin(itk)
+                y_high = htmp_Y.FindBin(itk)+1
+                
+                # - - fitting bins for the actual shape variable
+                fitting_bins = template_hist_bins[tkey]
+                for _bin in range(1, len(fitting_bins)):
+                    pkey = "%i"%fitting_bins[_bin]
+                    z_low = htmp_Z.FindBin(fitting_bins[_bin-1])
+                    z_high = htmp_Z.FindBin(fitting_bins[_bin])-1
+
+                    tau_bin_cont = htmp_tau.Integral(x_low, x_high, y_low, y_high, z_low, z_high)
+                    antitau_bin_cont = htmp_antitau.Integral(x_low, x_high, y_low, y_high, z_low, z_high)
+                    if antitau_bin_cont==0:
+                        log.warning("{} bin for antitau is empty, setting tau/antitau to 1!".format(pkey))
+                        tau_antitau_ratio = 1.
+                    else:
+                        tau_antitau_ratio = "%.6f"%(tau_bin_cont/float(antitau_bin_cont))
+                    ffs_dict[cr_name][jkey][tkey][pkey] = tau_antitau_ratio
+                    
+                    log.debug("bins: {}".format((x_low, x_high, y_low, y_high, z_low, z_high)))
+                    log.debug("ratio in << {}  >> bin: tau:{}, antitau: {}, ratio: {} ".format(
+                        (jkey, tkey, pkey), tau_bin_cont, antitau_bin_cont, tau_antitau_ratio))
+                    log.debug("--"*60)
+                    
+        # - - clean up
+        htmp_X.Delete()
+        htmp_Y.Delete()
+        htmp_Z.Delete()
+        htmp_tau.Delete()
+        htmp_antitau.Delete()
+                
+    if not cache_file:
+        yml_file = "FFs_CR.yml"
+    else:
+        yml_file = cache_file
+        
+    with open (yml_file, "a") as yml_cache:
+        log.info("caching the fake factors")
+        yaml.dump(ffs_dict, yml_cache, default_flow_style=False)
+
+    log.info("FFs: {} ".format(ffs_dict))
+
+    if write_cxx_macro:
+        if yml_file.endswith(".yml"): 
+            cxx_file = yml_file.replace(".yml", ".cxx")
+        else:
+            cxx_file = yml_file + ".cxx"
+            
+        with open(cxx_file, "a") as cxx_cache:
+            cxx_cache.write("#include <iostream>\n")
+            for cr in [c.name for c in control_regions]:
+                for jbs_n, jbs_wp in enumerate(tau_jet_bdt_score_trans_wps):
+                    jkey = "tauJetBDT_0%i"%(100*jbs_wp)
+                    cxx_cache.write("//! tau_0_jet_bdt_score_trans lower cut ({})\n".format(jbs_wp))
+                    cxx_cache.write(
+                        "float GetFF0{0}_{1}(float pt, int nTracks){{\n".format(int(100*jbs_wp), cr) )
+                    for itk in n_charged_tracks:
+                        tkey = "%i"%itk
+                        cxx_cache.write("\t if(nTracks==%i){\n"%itk)
+                        for pT in template_hist_bins[tkey][1:]:
+                            pkey = "%i"%pT
+                            ff = ffs_dict[cr][jkey][tkey][pkey]
+                            cxx_cache.write("\t\t if(pt < {0}) return {1};\n".format(pT, ff))
+
+                        # - - - -  close ntracks block   
+                        cxx_cache.write("\t\t else return 0;\n")   
+                        cxx_cache.write("\t\t }\n")
+
+                    # - - - - close tauJetBDTscore block
+                    cxx_cache.write("\t else return 0;\n")   
+                    cxx_cache.write("}\n\n\n")
+                
+    return ffs_dict
+    
 
 ##--------------------------------------------------------------------------
 ## - - organize the hists for calcualting FFs 

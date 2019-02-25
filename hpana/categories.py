@@ -42,7 +42,7 @@ MET150 = {
     "mc16": TCut("met_p4->Et() > 150"),
 }
 
-MET200 = {
+MET150 = {
     "mc15": TCut("met_et > 200000"),
     "mc16": TCut("met_p4->Et() > 200"),
 }
@@ -160,14 +160,14 @@ MUID_TIGHT = {
 }
 
 EL_BASE = {
-    "mc15": ROOT.TCut("n_electrons==1 && el_0_et > 30000 && el_0_id_tight && el_0_iso_FixedCutTight"\
+    "mc15": ROOT.TCut("n_electrons==1 && el_0_et > 30000 && el_0_id_tight && el_0_iso_FCTight"\
                       "&& (abs(el_0_eta) < 2.47 && !(abs(el_0_eta)< 1.52 && abs(el_0_eta)> 1.37 ))"),
-    "mc16": ROOT.TCut("n_electrons==1 && el_0_p4->Pt() > 30 && el_0_id_tight && el_0_iso_FixedCutTight"\
+    "mc16": ROOT.TCut("n_electrons==1 && el_0_p4->Pt() > 30 && el_0_id_tight && el_0_iso_FCTight"\
                       "&& (abs(el_0_p4->Eta()) < 2.47 && !(abs(el_0_p4->Eta()) < 1.52 && abs(el_0_p4->Eta()) > 1.37))"),
 }
 MU_BASE = {
-    "mc15": ROOT.TCut("n_muons==1 && mu_0_pt > 30000 && mu_0_id_tight && mu_0_iso_FixedCutTight && abs(mu_0_eta) < 2.5"),
-    "mc16": ROOT.TCut("n_muons==1 && mu_0_p4->Pt() > 30 && mu_0_id_tight && mu_0_iso_FixedCutTight && abs(mu_0_p4->Eta()) < 2.5"),
+    "mc15": ROOT.TCut("n_muons==1 && mu_0_pt > 30000 && mu_0_id_tight && mu_0_iso_Gradient && abs(mu_0_eta) < 2.5"),
+    "mc16": ROOT.TCut("n_muons==1 && mu_0_p4->Pt() > 30 && mu_0_id_tight && mu_0_iso_Gradient && abs(mu_0_p4->Eta()) < 2.5"),
 }
 
 LEP_BASE = {}
@@ -264,7 +264,6 @@ class Category:
                  tauid=TAUID_MEDIUM,
                  truth_tau=TAU_IS_TRUE,
                  cuts_list=[]):
-        
         self.channel = channel
         self.name = name
         self.label = label;
@@ -519,7 +518,7 @@ Category_SS_TAUMU = Category(
 
 Category_ZEE = Category(
     name="ZEE",
-    label="Z#rightarrow e e",
+    label="Zee",
     cuts_list = [
         CLEAN_EVT,
         TAU_BASE,
@@ -738,18 +737,15 @@ MET_TRIG_EFF_CRs = [
 CUTFLOW = {
     "taujet": OrderedDict(
         [
-            ("cleanEvent",  CLEAN_EVT),
+            ("cleanEvent",  CLEAN_EVT["mc16"]+TCut("tau_0_jet_bdt_score_trans>0.01&&n_pvx>0")),
             ("trigger", {"mc16": ROOT.TCut("1>0"), "mc15": ROOT.TCut("1>0")}), #<! trigger is applied globally (just a place holder here)
             ("tauPt40", TAU_PT40),
             ("tauID", TAUID_MEDIUM),
             ("ElOLR", TAU_EL_OLR_PASS),
             ("lepVeto", LEP_VETO),
+            ("3jets", NUM_JETS3),
+            ("jetPt25", JET_PT25),
             ("1bjets", NUM_BJETS1),
-            ("tauID", TAUID_MEDIUM),
-            ("ElOLR", TAU_EL_OLR_PASS),
-            ("tauPt40", TAU_PT40),
-            # ("3jets", NUM_JETS3),
-            # ("jetPt25", JET_PT25),
             ("MET150", MET150),
             ("mT50", MT50),
         ]),

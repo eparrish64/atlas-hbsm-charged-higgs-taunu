@@ -79,16 +79,13 @@ def get_ana_parser(base_parser=None):
 
     ana_parser.add_argument("--logsdir", type=str, default="logs",
                             help="where to put the log files")
-#FIXME for batch sub these two must be present!
-    ana_parser.add_argument("--pickle-analysis", type=str,
-                            help="give a name to pickle the analysis object and save it to that")
     
     ana_parser.add_argument("--pickled-analysis", type=str, default="ANALYSIS.pkl",
                             help="main analysis object pickled to be shipped to the worker nodes")
 
     ana_parser.add_argument("--cache-ff", action="store_true",
                             help="cache fake factors")
-#FIXME should be exclusive to batch sub    
+                            
     ana_parser.add_argument("--parallel", action="store_true",
                             help="if you want to do parallel processing")
 
@@ -109,6 +106,9 @@ def get_ana_parser(base_parser=None):
 
     ana_parser.add_argument("--rs-project", type=str,default="ctb-stelzer", choices=["ctb-stelzer", "def-doneil"],
                             help="the resource manager on your cluster")
+
+    ana_parser.add_argument("--retry", help="retry failed jobs", action="store_true")
+    
     # - - - - - - - - - parse analysis args
     #argcomplete.autocomplete(ana_parser)
 
@@ -134,8 +134,8 @@ def get_plotting_parser(base_parser=None):
     plotting_parser.add_argument('--backgrounds', action="store_true",
                                  help='plot backgrounds', )
     
-    plotting_parser.add_argument('--signals', action="store_true",
-                                 help='plot signals', )
+    plotting_parser.add_argument('--signals', nargs="+", #action="store_true",
+                                 help='signals', )
     
     plotting_parser.add_argument('--logy', action="store_true",
                                  help='Y axis in log scale', )
@@ -280,11 +280,20 @@ def get_clf_parser():
     
     clf_parser.add_argument("--parallel", action="store_true",
                             help="if you want to do parallel processing")
-    
+
+    clf_parser.add_argument("--ncpu", type=int, default=multiprocessing.cpu_count(),
+                            help="how many cores to use")
+
     clf_parser.add_argument("--validation-plots", action="store_true",
                             help="plot some roc curves to see the training performance")
     
-    clf_parser.add_argument("--kfolds", type=int, default=1,
+    clf_parser.add_argument("--rank-feats", action="store_true",
+                            help="features importance ")
+    
+    clf_parser.add_argument("--plot-correlations", action="store_true",
+                            help="plot features correlation")
+
+    clf_parser.add_argument("--kfolds", type=int, default=3,
                             help="number for folds for k-fold training")
     
     clf_parser.add_argument("--outdir", type=str, default="clfout",

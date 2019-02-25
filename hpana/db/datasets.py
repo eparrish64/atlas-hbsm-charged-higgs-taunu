@@ -24,6 +24,8 @@ from .. import EVENTS_CUTFLOW_HIST, EVENTS_CUTFLOW_BIN, MC_CAMPAIGN
 
 # ROOT
 import ROOT
+ROOT.SetSignalPolicy(ROOT.kSignalFast)
+ROOT.gROOT.SetBatch(True)
 
 try:
     import pyAMI
@@ -119,8 +121,8 @@ MC_CATEGORIES = {
               'merge': (9778, 10009)},
     'mc16d': {'reco': (10201,),
               'merge': (10210,)},
-    'mc16e': {'reco': (),
-              'merge': ()},
+    'mc16e': {'reco': (10724),
+              'merge': (10726)},
     'mc16f': {'reco': (),
               'merge': ()}
 }
@@ -221,13 +223,15 @@ class Database(dict):
                 match.group('stream'),
                 match.group('tag'))
 
-    def __init__(self, name='DB', version="", verbose=False, stream=sys.stdout):
+    def __init__(self, name='DB', version="", verbose=False, stream=sys.stdout, log_level="DEBUG"):
         super(Database, self).__init__()
         self.name = name
         self.verbose = verbose
         self.stream = stream
         self.version = version
-        
+        log.setLevel(log_level)
+        log.debug("Initialzing Database ...")
+
         # - - - - - - - - where to put the database yml file
         self.filepath = os.path.join(HERE, 'DataBase/%s%s.yml' % (self.name, self.version))
         if os.path.isfile(self.filepath):
@@ -365,20 +369,22 @@ class Database(dict):
                     uname = "%s_%s"%(name, rtag)
 
                     ## - - set stream to data streams based on reco tag
-                    if rtag=="9315" or rtag=="9364":
+                    if rtag in ["9315", "9364"]:
                         stream = ["2015", "2016"]
-                    elif rtag=="10210" or rtag=="10201":
+                    elif rtag in ["10210", "10201"]:
                         stream = ["2017"]
+                    elif rtag in ["10724", "10726"]:
+                        stream = ["2018"]    
                     else:
-                        log.warning("can't set stream for %s"%rtag)
+                        log.warning("unknown reco tag %s"%rtag)
                         
                     # - - - - - - - - update the DB with this dataset
-                    dataset = self.get(name, None)
+                    dataset = self.get(uname, None)
                     if dataset is not None and version == dataset.version:
                         if dir not in dataset.dirs:
                             dataset.dirs.append(dir)
                     else:
-                        self[uname] = Dataset(
+                        m_ds = Dataset(
                             name=uname, 
                             datatype=MC,
                             treename=mc_treename,
@@ -392,6 +398,12 @@ class Database(dict):
                             file_pattern=mc_pattern,
                             year=year,
                             stream=stream)
+                        ## cache some heavy properties here
+                        m_ds.files = m_ds.get_files()
+                        m_ds.events = m_ds.get_events()
+                        m_ds.xsec_kfact_effic = m_ds.get_xsec_kfact_effic()
+
+                        self[uname] = m_ds
 
         # - - - - - - - - EMBEDDING
         if embed_path is not None:
@@ -431,7 +443,7 @@ class Database(dict):
                     name = 'DATA%s_%s' % (stream, match.group('id'))
                     
                     # add datasets to the database
-                    self[name] = Dataset(
+                    d_ds = Dataset(
                         name=name,
                         datatype=DATA,
                         treename=data_treename,
@@ -445,6 +457,13 @@ class Database(dict):
                         version=version,
                         file_pattern=data_pattern,
                         year=year)
+
+                    ## cache some heavy properties  
+                    d_ds.files = d_ds.get_files()
+                    d_ds.events = -1 #d_ds.get_events() 
+                    d_ds.xsec_kfact_effic = 1.
+
+                    self[name] = d_ds
 
     def __setitem__(self, name, ds):
         super(Database, self).__setitem__(name, ds)
@@ -472,7 +491,13 @@ class Database(dict):
         """
         """
         datasets = []
-        for nkey, info in self.iteritems():
+        if ds:
+            keys = filter(lambda k: ds in k, self.keys())
+        else:
+            keys = self.keys()
+
+        for nkey in keys:
+            info = self[nkey]
             keep = True
             if name:
                 keep &= (name==nkey)
@@ -526,7 +551,11 @@ class Dataset(Serializable):
                  tag=None,
                  grl=None,
                  year=None,
-                 stream=None):
+                 stream=None, 
+                 files=[], 
+                 events=0,
+                 xsec_kfact_effic=(1., 1., 1.),
+                 ):
         self.name = name
         self.ntup_name = ntup_name
         self.datatype = datatype
@@ -542,30 +571,46 @@ class Dataset(Serializable):
         self.grl = grl
         self.year = year
         self.stream = stream
-        
-    @property
+        self.files = files
+        self.events = events
+        self.xsec_kfact_effic = xsec_kfact_effic
+
+    @cached_property
     def weight(self):
         if self.events !=0:
             return reduce(lambda x,y:x*y, self.xsec_kfact_effic) / self.events
         else:
             log.warning(" 0 lumi weight for %s"%self.name)
             return 0.
-        
-    @property
-    def events(self,
-               events_cutflow_hist=EVENTS_CUTFLOW_HIST[MC_CAMPAIGN],
-               events_cutflow_bin=EVENTS_CUTFLOW_BIN[MC_CAMPAIGN]):
+
+    @classmethod
+    def count_raw_events(cls, rfile):
+        rf = ROOT.TFile("f", "READ")
+        events_cutflow_hist = EVENTS_CUTFLOW_HIST[MC_CAMPAIGN]
+        events_cutflow_bin = EVENTS_CUTFLOW_BIN[MC_CAMPAIGN]
+        return 
+
+    def get_events(self,
+        events_cutflow_hist = EVENTS_CUTFLOW_HIST[MC_CAMPAIGN],
+        events_cutflow_bin = EVENTS_CUTFLOW_BIN[MC_CAMPAIGN]):
         nevents = 0
         assert (events_cutflow_hist and events_cutflow_bin), "metadata hist info is not provided!"
         for f in self.files:
-            if not METADATA_TTREE_MERGED:
+            rf = ROOT.TFile(f, "READ")
+            ## checking ig aux hists are written to a different file
+            if not events_cutflow_hist in [k.GetName() for k in rf.GetListOfKeys()]:
                 sdir, fname = os.path.split(f)
                 if sdir.endswith("_BS"):
                     f = os.path.join(sdir.replace("_BS", "_hist"), fname.replace(".BSM_Hptaunu.", ".hist-output."))
                 if not os.path.isfile(f):
                     log.warning("can't retrieve hmetadata (skipping!); missing %s"%f)
                     continue
-            rf = ROOT.TFile(f, "READ")
+
+                ## close the open file and open the one with aux hists    
+                rf.Close()    
+                rf = ROOT.TFile(f, "READ")
+
+            ## retrieve aux hists     
             hmetadata = rf.Get(events_cutflow_hist)
             num = hmetadata.GetBinContent(events_cutflow_bin)
             log.debug("%s, #events: %i"%(f, num))
@@ -573,52 +618,39 @@ class Dataset(Serializable):
             rf.Close()
         return nevents
     
-    @property
-    def xsec_kfact_effic(self):
+    def get_xsec_kfact_effic(self):
         global XSEC_CACHE_MODIFIED
         global XSEC_CACHE
         year = int(self.year) % 1E3
-        if self.datatype == DATA:
-            return 1., 1., 1.
-        if year in XSEC_CACHE and self.id in XSEC_CACHE[year]:
-            log.debug("using cached cross section for dataset %s" % self.ds)
-            return XSEC_CACHE[year][self.id]
-        try:
-            XSEC_CACHE[year] = {}
-            # - - - - cache XSEC 
-            with open(XSEC_FILE, "r") as xfile:
-                for line in xfile:
-                    line.strip()
-                    if line[0].isdigit():
-                        line = line.split()
-                        XSEC_CACHE[year][int(line[0])] = (float(line[2]),
-                                                          float(line[3]), float(line[4]))
-            XSEC_CACHE_MODIFIED = True
-            return XSEC_CACHE[year][self.id]
-        
-        except KeyError:
-            log.warning("cross section of dataset %s not available locally. "
-                        "Looking it up in AMI instead. AMI cross sections can be very"
-                        "wrong! You have been warned!"
-                        % self.ds)
-        if USE_PYAMI:
-            if self.ds in DS_NOPROV:
-                xs, effic = get_dataset_xsec_effic(amiclient, DS_NOPROV[self.ds])
-            else:
-                xs, effic = get_dataset_xsec_effic(amiclient, self.ds)
-            if year not in XSEC_CACHE:
-                XSEC_CACHE[year] = {}
-            XSEC_CACHE[year][self.name] = (xs, 1., effic)
-            XSEC_CACHE_MODIFIED = True
-            return xs, 1., effic
-        
         if self.name is None:
             log.warning("there's a NONE dataset in the database!")
-            return 1., 1., 1.
-        raise Exception("cross section of dataset %s is not known!" % self.ds)
-    
-    @property
-    def files(self):
+            xsec = (1., 1., 1.)
+        if self.datatype == DATA:
+             xsec = (1.,1., 1.)
+        elif year in XSEC_CACHE and self.id in XSEC_CACHE[year]:
+            log.debug("using cached cross section for dataset %s" % self.ds)
+            xsec = XSEC_CACHE[year][self.id]
+        else:
+            try:
+                XSEC_CACHE[year] = {}
+                # - - - - cache XSEC 
+                with open(XSEC_FILE, "r") as xfile:
+                    for line in xfile:
+                        line.strip()
+                        if line[0].isdigit():
+                            line = line.split()
+                            XSEC_CACHE[year][int(line[0])] = (float(line[2]),
+                                                            float(line[3]), float(line[4]))
+                XSEC_CACHE_MODIFIED = True
+                xsec = XSEC_CACHE[year][self.id]
+            
+            except KeyError:
+                log.warning("cross section of dataset %s not available; setting it to 1.!!!"%self.ds)
+                xsec = (1.,1., 1.)
+
+        return reduce(lambda x, y: x*y, xsec)
+
+    def get_files(self):
         if not self.dirs:
             log.warning(
                 "files requested from dataset %s "

@@ -1,8 +1,13 @@
 
+## stdlib
 import os, math, array
 from contextlib import contextmanager
 import threading
 
+## local
+from hpana import log
+
+## ROOT
 import ROOT
 from ROOT import TCanvas, TPad, TH1F, TLine
 ATLAS_LABEL = 'ATLAS Internal'
@@ -324,9 +329,8 @@ class RatioPlot(TCanvas):
 def save_canvas(canvas, directory, name, formats=None):
     # save plots to disk 
     filepath = os.path.join(directory, name)
-    path = os.path.dirname(filepath)
-    if not os.path.exists(path):
-        os.mkdir(path, 0755)
+    if not os.path.isdir(directory):
+        os.mkdir(directory, 0755)
 
     if formats is not None:
         if isinstance(formats, basestring):
@@ -344,7 +348,7 @@ def fold_overflow(hist):
     nbins = hist.GetNbinsX()
     first_bin = hist.GetBinContent(0) + hist.GetBinContent(1)  
     hist.SetBinContent(1, first_bin)
-    last_bin = hist.GetBinContent(nbins-1) + hist.GetBinContent(nbins)
+    last_bin = hist.GetBinContent(nbins+1) + hist.GetBinContent(nbins)
     hist.SetBinContent(nbins-1, last_bin)
     return 
 
@@ -410,8 +414,7 @@ def uncertainty_band(hists_dict, overflow=True):
     
     Parameters
     ----------
-    hists = list (dict), holding backgrounds info and hists
-    systematics:list, list of analysis systematics.
+    hists = dict, holding backgrounds info and hists
     
     Returns
     -------
@@ -419,95 +422,101 @@ def uncertainty_band(hists_dict, overflow=True):
     corrsponding to total nom, low band and high band error
     """
 
+    ## explicit copy and don't touch the original hists
+    hists_dict = dict(hists_dict) 
+
+    ## get list of the samples 
     samples = hists_dict.keys()
+
+    ## get all the systematics
+    systematics = []
+    for sample in samples:
+        for st in hists_dict[sample].keys():
+            if not st in systematics:
+                systematics += [st]
+
+    ## retrieve the total nominal/syst hists and aggregate them if needed
     total_nom = hists_dict[samples[0]]["NOMINAL"].Clone()
+
     for s in samples[:]:
         total_nom.Add(hists_dict[s]["NOMINAL"])
-    
-    var_high = []
-    var_low = []
-    # include stat errors 
-    total_model_stat_high = total_nom.Clone()
-    total_model_stat_low = total_nom.Clone()
+
+    for syst in systematics:
+        total_syst = total_nom.Clone()
+        total_syst.Reset()
+        for s in samples:
+            if syst in hists_dict[s]:
+                total_syst.Add(hists_dict[s][syst])
+            else:
+                total_syst.Add(hists_dict[s]["NOMINAL"]) 
+
+        if not "TOTAL" in hists_dict:
+            hists_dict["TOTAL"] = {}
+        hists_dict["TOTAL"][syst] = total_syst
+
+    ## containers for the variations 
+    var_high = {}
+    var_low = {}
+
+    ## include stat errors 
     for i in range(0, total_nom.GetNbinsX()):
-        total_model_stat_high.SetBinContent(
-            i, total_model_stat_high.GetBinContent(i) + total_nom.GetBinErrorUp(i))
-        total_model_stat_low.SetBinContent(
-            i, total_model_stat_low.GetBinContent(i) - total_nom.GetBinErrorLow(i))
+        bkey = "BIN%i"%i
+        if not bkey in var_high:
+            var_high[bkey] = []
+        if not bkey in var_low:
+            var_low[bkey] = []
 
-    var_high.append(total_model_stat_high)
-    var_low.append(total_model_stat_low)
+        var_high[bkey] += [total_nom.GetBinErrorUp(i)]
+        var_low[bkey] += [total_nom.GetBinErrorLow(i)] 
 
-    systematics = None
-    if systematics:
+    ## deal with the systematics 
+    if len(systematics) > 1:
         total_high = total_nom.Clone()
         total_high.Reset()
         total_low = total_high.Clone()
         total_max = total_high.Clone()
         total_min = total_high.Clone()
+        
         for syst in systematics:
-            for model in hists:
-                mname = model.keys()[0]
-                m_obj = model[mname]['INFO']
-                nom_hist = model[m_obj.name]['HISTS']['NOMINAL']
-                syst_hists = model[m_obj.name]['HISTS'][syst] #<! (UP, DOWN)
+            for i in range(0, total_nom.GetNbinsX()):
+                bkey = "BIN%i"%i
             
-                if overflow:
-                    [fold_overflow(sh) for sh in syst_hists]
-                if high == 'NOMINAL':
-                    total_high += nom_hist
+                ## get bin variation 
+                bnom = total_nom.GetBinContent(i)
+
+                ## be extra cautious 
+                if bnom==0:
+                    continue
+                if math.isnan(bnom) or math.isinf(bnom):
+                    log.warning(
+                        "Content of bin %i is %r while a float is expected; check %s histogram; skipping this bin!"%(i, bnom, total_nom.GetName()))
+                    continue
+                bvar = bnom - hists_dict["TOTAL"][syst].GetBinContent(i)
+                if math.isnan(bvar) or math.isinf(bvar):
+                    log.warning(
+                        "Content of bin %i is %r while a float is expected; check %s histogram; skipping this bin!"%(i, bvar, hists_dict["TOTAL"][syst].GetName()))
+                    continue
+
+                ## spot suspiciously larg variations  
+                var_pcnt = (abs(bvar)/bnom) * 100
+                if  var_pcnt> 200 and bnom > 10:
+                    log.warning("Suspiciously large variation for %s: %i%%; check %s histogram; skipping!"%(syst, var_pcnt, hists_dict["TOTAL"][syst].GetName()))
+                    continue
+
+                if bvar > 0:
+                    var_low[bkey] += [bvar]
                 else:
-                    ## retrieve the high syst component hist
-                    total_high += syst_hists[0]
-
-                if low == 'NOMINAL':
-                    total_low += nom_hist
-                else:
-                    ## retrieve the low syst component hist
-                    total_low += syst_hists[1]
-                
-            if total_low.Integral() <= 0:
-                log.warning("{0} is non-positive".format(syst))
-            if total_high.Integral() <= 0:
-                log.warning("{0} is non-positive".format(syst))
-    
-            ## find min, max bin by bin
-            for i in range(0, total_high.GetNbinsX()):
-                total_max.SetBinContent(i, max(total_high.GetBinContent(i), 
-                                               total_low.GetBinContent(i), 
-                                               total_nom.GetBinContent(i)))
-            
-                total_min.SetBinContent(i, min(total_high.GetBinContent(i), 
-                                               total_low.GetBinContent(i), 
-                                               total_nom.GetBinContent(i)))
-
-            if total_min.Integral() <= 0:
-                log.warning("{0}_DOWN: lower bound is non-positive".format(syst))
-            if total_max.Integral() <= 0:
-                log.warning("{0}_UP: upper bound is non-positive".format(syst))
-
-            var_high.append(total_max)
-            var_low.append(total_min)
-
-            log.debug("{0} {1}".format(str(syst), str(variations)))
-            log.debug("{0} {1} {2}".format(
-                    total_max.Integral(),
-                    total_nom.Integral(),
-                    total_min.Integral()))
-    
-            pass #<! syst loop
-
-        pass #<! if systematics 
+                    var_high[bkey] += [bvar]
 
     # sum variations in quadrature bin-by-bin
     high_band = total_nom.Clone()
     high_band.Reset()
     low_band = high_band.Clone()
     for i in range(0, high_band.GetNbinsX()):
-        sum_high = math.sqrt(
-            sum([(v.GetBinContent(i) - total_nom.GetBinContent(i))**2 for v in var_high]))
-        sum_low = math.sqrt(
-            sum([(v.GetBinContent(i) - total_nom.GetBinContent(i))**2 for v in var_low]))
+        bkey="BIN%i"%i
+        sum_high = math.sqrt(sum([v**2 for v in var_high[bkey]]))
+        sum_low = math.sqrt(sum([v**2 for v in var_low[bkey]]))
+
         high_band.SetBinContent(i, sum_high)
         low_band.SetBinContent(i, sum_low)
 
@@ -567,8 +576,7 @@ def ratio_hist(h1, h2):
     ratio_hist.GetYaxis().SetTitleFont(43)
     ratio_hist.GetYaxis().SetTitleSize(16)
     ratio_hist.GetYaxis().SetTitleOffset(1.8)
-    ratio_hist.GetYaxis().SetRangeUser(0.5, 1.5)
-    
+    ratio_hist.GetYaxis().SetRangeUser(0.2, 1.8)
     return ratio_hist 
 
 ##----------------------------------------------------------------------------

@@ -3,6 +3,21 @@
 # ROOT version should be set manually 
 export ALRB_rootVersion=6.14.08-x86_64-slc6-gcc62-opt
 
+
+# determine path to this script
+# http://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-stored-in
+SOURCE_HPANA_SETUP="${BASH_SOURCE[0]:-$0}"
+
+DIR_HPANA_SETUP="$( dirname "$SOURCE_HPANA_SETUP" )"
+while [ -h "$SOURCE_HPANA_SETUP" ]
+do 
+  SOURCE_HPANA_SETUP="$(readlink "$SOURCE_HPANA_SETUP")"
+  [[ $SOURCE_HPANA_SETUP != /* ]] && SOURCE_HPANA_SETUP="$DIR_HPANA_SETUP/$SOURCE_HPANA_SETUP"
+  DIR_HPANA_SETUP="$( cd -P "$( dirname "$SOURCE_HPANA_SETUP"  )" && pwd )"
+done
+DIR_HPANA_SETUP="$( cd -P "$( dirname "$SOURCE_HPANA_SETUP" )" && pwd )"
+
+
 case $USER in 
 	edrechsl)
 		VENVPATH=/home/edrechsl/virtEnvs/venv_hpana
@@ -33,6 +48,5 @@ echo "Activating the virtual env"
 source $VENVPATH/bin/activate
 echo "If this is the first time install do: pip install -r requirements.txt"
 
-export PYTHONPATH=$PWD:$PYTHONPATH
-export PATH=$PWD/bin:$PATH
-
+export PYTHONPATH=${DIR_HPANA_SETUP}${PYTHONPATH:+:$PYTHONPATH}
+export PATH=${DIR_HPANA_SETUP}/bin${PATH:+:$PATH}

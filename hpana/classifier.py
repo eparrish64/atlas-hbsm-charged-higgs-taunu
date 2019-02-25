@@ -8,7 +8,10 @@ from collections import OrderedDict
 import threading
 
 ## PyPI
+import matplotlib
+matplotlib.use('pdf')
 import matplotlib.pyplot as plt
+
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.metrics import roc_curve, roc_auc_score
@@ -220,7 +223,7 @@ class SClassifier(GradientBoostingClassifier):
 
         bkg_dfs = []
         for bkg in missing_bkgs:
-            log.info("Adding %s bkg"%bkg.name)
+            log.info("Adding %s bkg ..."%bkg.name)
             bfiles = []
 
             ## - - treat QCD fakes properly 
@@ -242,6 +245,9 @@ class SClassifier(GradientBoostingClassifier):
              
             ## - - keep total event weight too
             log.debug(ws)
+            if not bfiles:
+                log.warning("No root file is found for %s"%bkg.name)
+                continue
             b_arr = root2array(bfiles, treename=treename, branches=branches+[ws], selection=cuts.GetTitle())
             df = pd.DataFrame(b_arr.flatten())
 
@@ -255,7 +261,7 @@ class SClassifier(GradientBoostingClassifier):
 
         sig_dfs = []
         for sig in missing_sigs:
-            log.info("Adding %s signal"%sig.name)
+            log.info("Adding %s signal ..."%sig.name)
             ws = sig.weights(categories=[category]).values()[0]
             ws = "*".join(ws)
             log.debug(ws)
@@ -267,6 +273,11 @@ class SClassifier(GradientBoostingClassifier):
             sfiles = []
             for ds in sig.datasets:
                 sfiles += ds.files
+
+            if not sfiles:
+                log.warning("No root file is found for %s"%sig.name)
+                continue
+    
             s_arr = root2array(sfiles, treename=treename, branches=branches+[ws], selection=cuts.GetTitle())
             df = pd.DataFrame(s_arr.flatten())
             columns[ws] = "weight"
@@ -275,10 +286,11 @@ class SClassifier(GradientBoostingClassifier):
             ## - - class label for sig
             sig_df["class_label"] = pd.Series(np.ones(sig_df.size))
             sig_dfs += [sig_df]
-        
+
         ## - - index based on the sample name
         keys = [bkg.name for bkg in missing_bkgs] + [sig.name for sig in missing_sigs]
-        dframe = pd.concat(bkg_dfs+sig_dfs, keys=keys)
+        print bkg_dfs+sig_dfs
+        dframe = pd.concat(bkg_dfs+sig_dfs, keys=keys, sort=False)
             
         if overwrite:
             log.warning("caching training data")
@@ -303,6 +315,7 @@ def train_model(model, X_train, Y_train, X_weight,
         test_size = 0.2
     else:
         test_size = 0.0
+
     X_train, X_test, Y_train, Y_test, X_weight_tr, X_weight_ts = train_test_split(X_train, Y_train, X_weight, test_size=test_size)
     mpath = os.path.join(outdir, model.name)
     
@@ -312,7 +325,7 @@ def train_model(model, X_train, Y_train, X_weight,
             model = cPickle.load(cache)
     else:
         ## - - train the model,
-        ## - - please note that signals might have negetive weights and therefore will be thrown away for training!
+        ## - - please note that signals might have negative weights and therefore will be thrown away for training!
         model = model.fit(X_train, Y_train, sample_weight=X_weight_tr if weight_sample else None)
         if save_model:
             mpath = os.path.join(outdir, model.name)
@@ -333,8 +346,131 @@ def train_model(model, X_train, Y_train, X_weight,
         plt.title('ROC curve')
         plt.legend(loc='best')
         plt.savefig(os.path.join(outdir, model.name.replace(".pkl", ".png") ) )
+        plt.close()
 
     log.info("Trained %s model"%(model.name))
     return model
 
     
+##--------------------------------------------------------------------------
+## plot feature importance 
+##--------------------------------------------------------------------------
+def features_ranking(model, features, plot=True, outdir="./"):
+    """ get features ranking for a trained model and plot them.
+    """
+
+    importance = model.feature_importances_
+    importance = pd.DataFrame(importance, index=[ft.name for ft in features], 
+                            columns=["Importance"])
+
+
+    importance["Std"] = np.std([tree[0].feature_importances_
+                                for tree in model.estimators_[10:]], axis=0)
+
+    ## get the labels                                    
+    x = range(model.n_features_) 
+    labels = []
+    for ft in features:
+        if ft.latex:
+            title = ft.latex
+        else:
+            title = ft.name
+        labels += [title]
+
+
+    y = importance.ix[:, 0]
+    yerr = importance.ix[:, 1]
+
+    plt.figure(10)
+    bars = plt.barh(x, y, yerr=yerr, align="center", tick_label=labels)
+
+    ## automatize bar colors depending on the size 
+    for ft_imp, b in zip(model.feature_importances_, bars):
+        if ft_imp > 0.2:
+            b.set_color("orangered")
+        elif ft_imp > 0.15:
+            b.set_color("salmon")
+        elif ft_imp > 0.1:
+            b.set_color("orange")
+
+    plt.gcf().subplots_adjust(left=0.27)
+    plt.xlabel("Gini Importance")
+
+    ## set plot title based on the mass region that the model is trained on
+    masses = model.name.split("_")[5].split("to")
+    if len(masses) > 1:
+        mtag =r"$ %s \leq m_{H^+} \leq %s [GeV]$"%(masses[0], masses[1])
+    elif masses:
+        mtag = masses[0]                
+    else:
+        mtag = "..."        
+    p_title = "Training Region: %s"%mtag
+    plt.title(p_title)
+
+    ## save the plot
+    if not os.path.isdir(outdir):
+        os.system("mkdir -p %s"%outdir)
+    fname = os.path.join(outdir, "feature_importance_%s"%model.name.replace(".pkl", "")) 
+    log.info("Saving %s ..."%fname)
+    plt.savefig(fname+".png")
+    plt.savefig(fname+".pdf", format='pdf', dpi=1000)
+    plt.close()
+
+##--------------------------------------------------------------------------
+## plot feature importance 
+##--------------------------------------------------------------------------
+def features_correlation(train_data, features, outdir="./", outname="features_correlation", title=""):
+    """
+    Get the correlation matrix for the input features & target.
+    
+    Parameters
+    ----------
+    train_data: pandas data frame; training samples
+    
+    features: list; train features/+target
+    outdir: str; path for the plots
+
+    Return
+    ------
+    None
+    """
+    corr_matrix = train_data.corr()
+
+    fig, ax1 = plt.subplots(ncols=1, figsize=(10,8))
+    opts = {'cmap': plt.get_cmap("RdBu"),
+            'vmin': -1, 'vmax': +1}
+        
+    heatmap1 = ax1.pcolor(corr_matrix, **opts)
+    plt.colorbar(heatmap1, ax=ax1)
+    if title:
+       ax1.set_title(title) 
+    
+    ## set the lables 
+    labels = corr_matrix.columns.values
+    titles = []
+    for ft in features:
+        if ft.latex:
+            title = ft.latex
+        else:
+            title = ft.name
+        titles += [title]
+
+    for ax in (ax1,):
+        # shift location of ticks to center of the bins
+        ax.set_xticks(np.arange(len(labels))+1., minor=False)
+        ax.set_yticks(np.arange(len(labels))+0.5, minor=False)
+        ax.set_xticklabels(titles, minor=False, ha='right', rotation=70)
+        ax.set_yticklabels(titles, minor=False)
+
+    ## add margin for the labels 
+    plt.gcf().subplots_adjust(left=0.2, bottom=0.2)
+
+    ## save the plot 
+    if not os.path.isdir(outdir):
+        os.system("mkdir -p %s"%outdir)
+    fname = os.path.join(outdir, outname)
+    log.info("Saving %s ..."%fname)
+    plt.savefig(fname+".png")
+    plt.savefig(fname+".pdf", format='pdf', dpi=1000)
+    plt.close()
+

@@ -48,12 +48,14 @@ class Variable(object):
             bins=None,
             tformula=None,
             blind_cut=None,
+            latex=None,
             **kwargs):
         
         self.name = name
         self.title = title
         self.unit = unit
         self.scale = scale
+        self.latex = latex
         self._binning = binning
         self._bins = bins
         
@@ -137,13 +139,15 @@ class Variable(object):
         return "VARIABLE:: name=%r, tformula=%r, binning=%r, scale=%r, mc_camp=%r"%(
             self.name, self.tformula, self.binning, self.scale, self.mc_camp)
 
-##------------------------------------------------------------------------------------------
 ## Building the analysis variables; KEEP THEM AS CLEAN AS POSSIBLE :)
 
+##############################################
 # - - - - - - - - tau
+##############################################
 tau_0_pt = Variable(
     "tau_0_pt", 
     title='#font[52]{p}_{T}(#tau_{1}) GeV',
+    latex=r"$\tau_{p_T}$",
     tformula={
         "mc16": "tau_0_p4->Pt()",
         "mc15": "0.001*tau_0_pt"},
@@ -184,6 +188,7 @@ tau_0_q = Variable(
 tau_0_upsilon = Variable(
     "tau_0_upsilon", 
     title='#font[52]{#Upsilon}',
+    latex=r"$\tau_{\Upsilon}$",
     tformula = {
         "mc15": '(tau_0_n_tracks==1)*(2.0*tau_0_allTrk_pt/tau_0_pt-1) + -111*(tau_0_n_tracks!=1)',
         "mc16": "((tau_0_n_charged_tracks==1)*tau_0_upsilon_pt_based+ -111*(tau_0_n_charged_tracks!=1))"
@@ -210,14 +215,113 @@ tau_0_jet_width = Variable(
     binning=(40, 0., .4))
 
 
+##############################################
+# - - - - - - - muon
+##############################################
+mu_0_pt = Variable(
+    "mu_0_pt", 
+    title='#font[52]{p}_{T}(#mu_{1}) GeV',
+    tformula="mu_0_p4->Pt()",
+    binning=(20, 0, 400),
+    unit='GeV',
+    scale=1.)
+
+
+##############################################
+# - - - - - - - electron
+##############################################
+el_0_pt = Variable(
+    "el_0_pt", 
+    title='#font[52]{p}_{T}(e_{1}) GeV',
+    tformula="mu_0_p4->Pt()",
+    binning=(20, 0, 400),
+    unit='GeV',
+    scale=1.)
+    
+
+##############################################
+# - - - - - - - - jets
+##############################################
+n_jets = Variable(
+    "n_jets", 
+    title='#font[52]{Number of Selected Jets}',
+    binning= (10, -.5, 9.5))
+
+n_bjets = Variable(
+    "n_bjets", 
+    title='#font[52]{Number of Selected b-Jets}',
+    binning= (10, -.5, 9.5))
+
+jet_0_pt =  Variable(
+    "jet_0_pt",
+    title='#font[52]{p}_{T}(j_{1}) GeV',
+    latex=r"$j^{0}_{p_T}$",
+    tformula={
+        "mc16": "jet_0_p4->Pt()",
+        "mc15": "jet_0_pt",},
+    binning=(20, 0, 500),
+    scale=1.,
+    unit='GeV')
+
+bjet_0_pt =  Variable(
+    "bjet_0_pt",
+    title='#font[52]{p}_{T}lead b-jet GeV',
+    latex=r"$b-jet_{p_T}$",
+    tformula={
+        "mc16": "bjet_0_p4->Pt()",
+        "mc15": "bjet_0_pt",},
+    binning=(20, 0, 500),
+    scale=1.,
+    unit='GeV')
+
+#WIP: FIX ME - - - - subleading light jet (make sure it's not a bjet)
+jet_1_pt = Variable(
+    "jet_1_pt",
+    title='#font[52]{p}_{T}(sub-leading jet) GeV',
+    tformula={
+        "mc16": "jet_1_p4->Pt()",
+        "mc15": "jet_1_pt",},
+    binning=(20, 0, 500),
+    scale=1.,
+    unit='GeV')
+
+jet_0_eta = Variable(
+    "jet_0_eta",
+    title='#font[152]{#eta}(j_{1})',
+    tformula={
+        "mc16":"jet_0_p4->Eta()",
+        "mc15":"jet_0_eta",},
+    binning=(60, -4, 4))
+
+jet_0_phi = Variable(
+    "jet_0_phi",
+    title='#font[152]{#phi}(j_{1})',
+    tformula={
+        "mc16":"jet_0_p4->Phi()",
+        "mc15":"jet_0_phi",},
+    binning=(20, -3.2, 3.2))
+
+bjet_0_phi = Variable(
+    "bjet_0_phi",
+    title='#font[152]{#phi}(bj_{1})',
+    tformula={
+        "mc16":"bjet_0_p4->Phi()",
+        "mc15":"bjet_0_phi",},
+    binning=(20, -3.2, 3.2))
+
+
+##############################################
 # - - - - - - - - MET
+##############################################
 met_et = Variable(
     "met_et", 
     title='#font[52]{E}^{miss}_{T} GeV',
+    latex=r"$E^{miss}_{T}$",
     tformula={
         "mc16":"met_p4->Et()",
         "mc15": "met_et"},
-    binning=(20, 0, 400),
+    binning=(100, 0, 500),
+    bins=range(0, 200, 20) + range(200, 400, 50),
     scale=1.,
     unit='GeV')
 
@@ -249,26 +353,31 @@ met_phi = Variable(
         "mc15": "met_phi"},
     binning=(10, -math.pi, math.pi))
  
+##############################################
 # - - - - - - - - tau + MET
+##############################################
 tau_0_met_dphi = Variable(
     "tau_0_met_dphi",
     title='#Delta#phi(#tau, E^{miss}_{T})',
-    # tformula={
-    #     "mc15": "TMath::Pi() - fabs( fabs( tau_0_p4->Phi() - met_p4->Phi() ) - TMath::Pi() )",
-    #     "mc16": "TMath::Pi() - fabs( fabs( tau_0_p4->Phi() - met_p4->Phi() ) - TMath::Pi() )",
-    #     },
+    latex=r"$\Delta\phi(\tau, E^{miss}_{T})$",
     binning=(10, -math.pi, math.pi))
 
 tau_0_met_mt = Variable(
     "tau_0_met_mt",
     title='m_{T}(#tau, E^{miss}_{T})GeV',
+    latex=r"$m_{T}(\tau, E^{miss}_{T})$",
     binning=(20, 0, 500), 
     scale=1.,
     unit='GeV')
 
+
+##############################################
+# - - - - - - - - tau + JET
+##############################################
 met_jet_dphi_ratio = Variable(
     "met_jet_dphi_ratio",
     title="#Delta#phi(#tau, E^{miss}_{T})/#Delta#phi(jet, E^{miss}_{T})",
+    latex=r"$\Delta\phi(\tau, E^{miss}_{T})/\Delta\phi(j, E^{miss}_{T})$",
     tformula="(TMath::Pi() - fabs( fabs( tau_0_p4->Phi() - met_p4->Phi() ) - TMath::Pi() ))/ "\
     "(1 + TMath::Pi() - fabs( fabs( jet_0_p4->Phi() - met_p4->Phi() ) - TMath::Pi() )"\
     "+ TMath::Pi() - fabs( fabs( jet_1_p4->Phi() - met_p4->Phi() ) - TMath::Pi() ))",
@@ -278,76 +387,17 @@ met_jet_dphi_ratio = Variable(
 tau_met_jet_dphi_min = Variable(
     "tau_met_jet_dphi_min",
     title="min #Delta#phi(#tau, E^{miss}_{T}, jet)",
+    latex=r"min $\Delta\phi(\tau, E^{miss}_{T}, j)$",
     tformula="min(min((TMath::Pi() - fabs(tau_0_p4->Phi() - met_p4->Phi()) )**2 + ( jet_0_p4->Phi() - met_p4->Phi())**2"\
     ", (TMath::Pi() - fabs(tau_0_p4->Phi() - met_p4->Phi()) )**2 + ( jet_0_p4->Phi() - met_p4->Phi())**2)"\
     ", (TMath::Pi() - fabs( tau_0_p4->Phi() - met_p4->Phi()) )**2 + ( jet_1_p4->Phi() - met_p4->Phi())**2) ",
     binning=(20, 0, 10),
 )
 
-
-#WIP - - - - - - - muon
-
-#WIP - - - - - - - electron
-
-#WIP - - - - - - - muon + electron
-
-#WIP - - - - - - - lep + MET
-
-
-# - - - - - - - - jets
-n_jets = Variable(
-    "n_jets", 
-    title='#font[52]{Number of Selected Jets}',
-    binning= (10, -.5, 9.5))
-
-n_bjets = Variable(
-    "n_bjets", 
-    title='#font[52]{Number of Selected b-Jets}',
-    binning= (10, -.5, 9.5))
-
-jet_0_pt =  Variable(
-    "jet_0_pt",
-    title='#font[52]{p}_{T}(j_{1}) GeV',
-    tformula={
-        "mc16": "jet_0_p4->Pt()",
-        "mc15": "jet_0_pt",},
-    binning=(20, 0, 500),
-    scale=1.,
-    unit='GeV')
-
-bjet_0_pt =  Variable(
-    "bjet_0_pt",
-    title='#font[52]{p}_{T}lead b-jet GeV',
-    tformula={
-        "mc16": "bjet_0_p4->Pt()",
-        "mc15": "bjet_0_pt",},
-    binning=(20, 0, 500),
-    scale=1.,
-    unit='GeV')
-
-#WIP: FIX ME - - - - subleading light jet (make sure it's not a bjet)
-jet_1_pt = Variable(
-    "jet_1_pt",
-    title='#font[52]{p}_{T}(sub-leading jet) GeV',
-    tformula={
-        "mc16": "jet_1_p4->Pt()",
-        "mc15": "jet_1_pt",},
-    binning=(20, 0, 500),
-    scale=1.,
-    unit='GeV')
-
-jet_0_eta = Variable(
-    "jet_0_eta",
-    title='#font[152]{#eta}(j_{1})',
-    tformula={
-        "mc16":"jet_0_p4->Eta()",
-        "mc15":"jet_0_eta",},
-    binning=(60, -4, 4))
-
-# - - - - - - - -  BDT input features 
 bjet_0_met_dphi = Variable(
     "bjet_0_met_dphi", 
     title='#font[52]{#Delta#phi}(b-jet ,E^{miss}_{T})',
+    latex=r"$\Delta\phi(b-jet ,E^{miss}_{T})$",
     tformula={
         "mc16":"acos(cos(met_p4->Phi() - bjet_0_p4->Phi()))",
         "mc15": "acos(cos(met_phi-bjet_0_phi))",},
@@ -356,53 +406,172 @@ bjet_0_met_dphi = Variable(
 bjet_0_tau_0_dr = Variable(
     "bjet_0_tau_0_dr", 
     title='#font[52]{#Delta}R(#tau, b-jet)',
+    latex=r"$\Delta R(\tau, b-jet)$",
     tformula={
         "mc16": "sqrt(acos(cos(tau_0_p4->Phi() - bjet_0_p4->Phi()))**2 + (tau_0_p4->Phi() - bjet_0_p4->Eta())**2)",
         "mc15": "sqrt(acos(cos(tau_0_phi-bjet_0_phi))**2 + (tau_0_eta-bjet_0_eta)**2)",},
     binning=(20, 0, 6.4))
 
 
-#WIP: - - - - - - - - BDT scores
+##############################################
+# - - - - - - - mu + el
+##############################################
+lep_0_pt = Variable(
+    "lep_0_pt", 
+    title='#font[52]{p}_{T}(l_{1}) GeV',
+    latex=r"$\ell_{p_T}$",
+    tformula="mu_0_p4->Pt()+el_0_p4->Pt()",
+    binning=(20, 0, 400),
+    unit='GeV',
+    scale=1.)
 
+
+##############################################
+# - - - - - - - lep + tau
+##############################################
+tau_0_lep_0_dr = Variable(
+    "tau_0_lep_0_dr",
+    title='#Delta#phi(l, #tau)',
+    latex=r"$\Delta\phi(\ell, \tau)$",
+    tformula="sqrt(acos(cos(tau_0_p4->Phi() - el_0_p4->Phi() - mu_0_p4->Phi()))**2 + (tau_0_p4->Eta() - el_0_p4->Eta() - mu_0_p4->Eta())**2)",
+    binning=(10, 0, 6.4))
+
+##############################################
+# - - - - - - - lep + MET
+##############################################
+mu_0_met_dphi = Variable(
+    "mu_0_met_dphi",
+    title='#Delta#phi(#mu, E^{miss}_{T})',
+    latex=r"$\Delta\phi(\mu, E^{miss}_{T})$",
+    tformula="acos(cos(met_p4->Phi() - mu_0_p4->Phi()))",
+    binning=(10, -math.pi, math.pi))
+
+el_0_met_dphi = Variable(
+    "mu_0_met_dphi",
+    title='#Delta#phi(#tau, E^{miss}_{T})',
+    latex=r"$\Delta\phi(e, E^{miss}_{T})$",
+    tformula="acos(cos(met_p4->Phi() - el_0_p4->Phi()))",
+    binning=(10, -math.pi, math.pi))
+
+lep_0_met_dphi = Variable(
+    "lep_0_met_dphi",
+    title='#Delta#phi(l, E^{miss}_{T})',
+    latex=r"$\Delta\phi(\ell, E^{miss}_{T})$",
+    tformula="acos(cos(met_p4->Phi() - el_0_p4->Phi() - mu_0_p4->Phi()))",
+    binning=(10, -math.pi, math.pi))
+
+lep_0_met_mt = Variable(
+    "lep_0_met_mt",
+    title='m_{T}(l, E^{miss}_{T})GeV',
+    latex=r"$m_{T}(\ell, E^{miss}_{T}$)",
+    binning=(20, 0, 500),
+    tformula="sqrt(2 * (el_0_p4->Pt() + mu_0_p4->Pt()) * met_p4->Et() * (1 - cos(met_p4->Phi() - el_0_p4->Phi() - mu_0_p4->Phi() ) ) )", 
+    unit='GeV')
+
+##############################################
+# - - - - - - - lep + jet
+##############################################
+bjet_0_lep_0_dr = Variable(
+    "bjet_0_lep_0_dr",
+    title='#Delta#phi(l, b-jet)',
+    latex=r"$\Delta\phi(\ell, b-jet)$",
+    tformula="sqrt(acos(cos(bjet_0_p4->Phi() - el_0_p4->Phi() - mu_0_p4->Phi()))**2 + (bjet_0_p4->Eta() - el_0_p4->Eta() - mu_0_p4->Eta())**2)",
+    binning=(10, 0, 6.4))
+
+
+##############################################
+#WIP: - - - - - - - - BDT scores
+##############################################
+
+
+
+##-----------------------------------------------------------------
 # - - - - - - - - taujet channel variables list
+##-----------------------------------------------------------------
 VARIABLES_TAUJET = [
     tau_0_pt,
     tau_0_eta,
     tau_0_phi, 
     tau_0_n_charged_tracks,
-    tau_0_q, 
+    # tau_0_q, 
     tau_0_upsilon,
     
     met_et,
-    met_etx,
-    met_ety,
-    met_phi,
+    # met_etx,
+    # met_ety,
+    # met_phi,
     
     tau_0_met_mt,
     tau_0_met_dphi,
     
     n_jets,
     n_bjets,
+    
     jet_0_pt,
     jet_0_eta,
-    bjet_0_pt,
+    # jet_0_phi,
+    # jet_1_pt,
+
+    # bjet_0_pt,
+    # bjet_0_phi,
+    
+    # bjet_0_met_dphi,
+    # bjet_0_tau_0_dr,
+    met_jet_dphi_ratio,
+    # tau_met_jet_dphi_min,
+]
+
+##-----------------------------------------------------------------
+# - - - - - - - - taulep channel variables list
+##-----------------------------------------------------------------
+VARIABLES_TAULEP = [
+    tau_0_pt,
+    tau_0_eta,
+    tau_0_n_charged_tracks,
+    tau_0_q, 
+    tau_0_upsilon,
+
+    # el_0_pt,
+    # mu_0_pt,
+    lep_0_pt,
+
+    met_et,
+    tau_0_met_mt,
+    tau_0_met_dphi,
+    lep_0_met_mt,
+    lep_0_met_dphi,
+
+    n_jets,
+    n_bjets,    
+    jet_0_pt,
+    jet_0_eta,
     jet_1_pt,
+
+    bjet_0_pt,
     
     bjet_0_met_dphi,
     bjet_0_tau_0_dr,
+    bjet_0_lep_0_dr,
+    tau_0_lep_0_dr,
     met_jet_dphi_ratio,
-    tau_met_jet_dphi_min,
 ]
 
 
-# - - - - - - - - prep all varibales dictionary 
+# - - - - treat properly regions where Y is not modeled well
+Y = "(tau_0_n_charged_tracks==1)*(2.0*tau_0_allTrk_pt/tau_0_p4->Pt()-1) + -111*(tau_0_n_charged_tracks!=1)"
+Y_CORRECTED = "(tau_0_n_charged_tracks==1)*CorrectUpsilon_1D_WCR((2.0*tau_0_allTrk_pt/tau_0_p4->Pt()-1), tau_0_n_charged_tracks)"
+BDT_SELECTION_1P = "(tau_0_n_charged_tracks + ({0}>0.95)*({0}<1.05)*(tau_0_jet_bdt_loose == 1)"\
+                   "+ ({1}>0.95)*({1}<1.05)*(tau_0_jet_bdt_loose != 1))".format(Y, Y_CORRECTED)
+
+# - - - - - - - - prep all variables dictionary 
 VARIABLES = {}
 VARIABLES["taujet"] = VARIABLES_TAUJET
+VARIABLES["taulep"] = VARIABLES_TAULEP
 
-VARIABLES["taulep"] = VARIABLES_TAUJET
 
-
+##-----------------------------------------------------------------
 # - - - - - - - - BDT input features
+##-----------------------------------------------------------------
 CLF_FEATURES = {
     "taujet": [
         tau_0_met_dphi,
@@ -411,56 +580,73 @@ CLF_FEATURES = {
         bjet_0_pt,
         bjet_0_met_dphi,
         bjet_0_tau_0_dr,
-        tau_0_upsilon,
         met_jet_dphi_ratio,
-        tau_met_jet_dphi_min,
+        tau_0_upsilon,
     ],
-    "taulep": [],
+    "taulep": [
+        tau_0_pt,
+        lep_0_pt,
+        bjet_0_pt,
+        met_et,
+        tau_0_met_dphi,
+        lep_0_met_dphi,
+        bjet_0_met_dphi,
+        tau_0_lep_0_dr,
+        bjet_0_lep_0_dr,
+        met_jet_dphi_ratio,
+        tau_0_upsilon,
+    ],
 }
 
 
-
-
+##-----------------------------------------------------------------
 # - - - - - - - -  BDT scores
-
-# - - - - treat properly regions where Y is not modeled well
-Y = "(tau_0_n_charged_tracks==1)*(2.0*tau_0_allTrk_pt/tau_0_p4->Pt()-1) + -111*(tau_0_n_charged_tracks!=1)"
-Y_CORRECTED = "(tau_0_n_charged_tracks==1)*CorrectUpsilon_1D_WCR((2.0*tau_0_allTrk_pt/tau_0_p4->Pt()-1), tau_0_n_charged_tracks)"
-BDT_SELECTION_1P = "(tau_0_n_charged_tracks + ({0}>0.95)*({0}<1.05)*(tau_0_jet_bdt_loose == 1)"\
-                   "+ ({1}>0.95)*({1}<1.05)*(tau_0_jet_bdt_loose != 1))".format(Y, Y_CORRECTED)
-
-clf_score_GB100_mass_90to120 = Variable(
-    "clf_score_GB100_mass_90to120",    
-    title='BDT score, 90 to 120 [GeV]',
-    tformula= {
-        "mc16": "({0}==1)*GB100_mass_90to120_ntracks_1"\
-        "+ ({0}!=1)*GB100_mass_90to120_ntracks_3".format("tau_0_n_charged_tracks"),
-        },
+##-----------------------------------------------------------------
+clf_score_GB200_mass_90to120 = Variable(
+    "clf_score_GB200_mass_90to120",    
+    title='BDT score', #90 to 120 [GeV]',
+    # tformula= {
+    #     "mc16": "({0}==1)*GB100_mass_90to120_ntracks_1"\
+    #     "+ ({0}!=1)*GB100_mass_90to120_ntracks_3".format("tau_0_n_charged_tracks"),
+    #     },
     binning=(20, 0, 1), 
 )
-clf_score_GB100_mass_400to400 = Variable(
-    "clf_score_GB100_mass_400to400",    
-    title='BDT score, 400 [GeV]',
-    tformula= {
-        "mc16": "({0}==1)*GB100_mass_400to400_ntracks_1"\
-        "+ ({0}!=1)*GB100_mass_400to400_ntracks_3".format("tau_0_n_charged_tracks"),
-        },
+clf_score_GB200_mass_130to160 = Variable(
+    "clf_score_GB200_mass_130to160",    
+    title='BDT score', #130 to 160 [GeV]',
+    binning=(20, 0, 1), 
+)
+clf_score_GB200_mass_170to190 = Variable(
+    "clf_score_GB200_mass_170to190",    
+    title='BDT score', #170 to 190 [GeV]',
+    binning=(20, 0, 1), 
+)
+
+clf_score_GB200_mass_200to400 = Variable(
+    "clf_score_GB200_mass_200to400",    
+    title='BDT score', #200 to 400 [GeV]',
     binning=(20, 0, 1), 
 )
 
 BDT_SCORES = {
     "taujet":[
-        clf_score_GB100_mass_90to120,
-        clf_score_GB100_mass_400to400,
+        clf_score_GB200_mass_90to120,
+        clf_score_GB200_mass_130to160,
+        clf_score_GB200_mass_170to190,
+        clf_score_GB200_mass_200to400,
     ],
-    "taulep":[],
+    "taulep":[
+        clf_score_GB200_mass_90to120,
+        clf_score_GB200_mass_130to160,
+        clf_score_GB200_mass_170to190,
+        clf_score_GB200_mass_200to400,
+    ],
 }
 
-# - - - - - - - - add BDT scores to the list of analysis variables 
-#VARIABLES["taujet"] += BDT_SCORES["taujet"]
 
-
-# - - - - - - - - variables for rQCD calcualtion (different for 1p and 3p taus)
+##-----------------------------------------------------------------
+# - - - - - - - - variables for rQCD calculation
+##-----------------------------------------------------------------
 rQCD_VARS = {"1": tau_0_jet_width, "3": tau_0_jet_bdt_score_trans}
 
 # - - - - - - - - variables for extracting FFs shapes 

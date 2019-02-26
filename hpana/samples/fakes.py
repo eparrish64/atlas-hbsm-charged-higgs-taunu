@@ -14,7 +14,7 @@ import ROOT
 from hpana.samples.sample import Sample
 from hpana.containers import Histset, HistWorker
 from hpana.dataset_hists import dataset_hists
-from hpana.systematics import Systematic
+from hpana.systematics import Systematic, Variation
 from hpana.categories import (
     Category, ANTI_TAU, TAU_IS_LEP, TAU_IS_TRUE, TAU_IS_LEP_OR_HAD, FF_CR_REGIONS, CATEGORIES)
 from hpana import log
@@ -166,16 +166,26 @@ class QCD(Sample):
         FF_COM: fit 
         """
         ff_ws = self.ff_weights()
-        systematics = []
+
+        ## NOMINAL (This is a special case where the FF weight is provided through Systematic)
+        ffs_nom = Systematic(
+            "NOMINAL", _type="WEIGHT", variations=[Variation("NOMINAL", title=ff_ws["NOMINAL"], _type="WEIGHT")], )
 
         # variations from antitau definition
-        systematics += [Systematic("FFs_1up", title=ff_ws["FFs_1up"], _type="WEIGHT")]
-        systematics += [Systematic("FFs_1down", title= ff_ws["FFs_1down"], _type="WEIGHT")]
+        ffs_tauID_syst = Systematic("FFs_tauID", _type="WEIGHT")
+        ffs_tauID_syst.variations = [
+            Variation("FFs_1up", title=ff_ws["FFs_1up"], _type="WEIGHT"),
+            Variation("FFs_1down", title=ff_ws["FFs_1down"], _type="WEIGHT"),
+        ]
         
         # variations from template-fit 
-        systematics += [Systematic("rQCD_1up", title=ff_ws["rQCD_1up"], _type="WEIGHT")]
-        systematics += [Systematic("rQCD_1down", title=ff_ws["rQCD_1down"], _type="WEIGHT")]
-        return systematics
+        ffs_rQCD_syst = Systematic("FFs_rQCD", _type="WEIGHT")
+        ffs_rQCD_syst.variations = [
+            Variation("rQCD_1up", title=ff_ws["rQCD_1up"], _type="WEIGHT"),
+            Variation("rQCD_1down", title=ff_ws["rQCD_1down"], _type="WEIGHT"),
+        ]
+
+        return [ffs_nom, ffs_tauID_syst, ffs_rQCD_syst]
 
     
     def cutflow(self, cuts, **kwargs):
@@ -212,12 +222,13 @@ class QCD(Sample):
         if not fields:
             fields = self.config.variables
 
+        qcd_systematics = self.systematics
         if systematics:
             systematics = filter(
-                lambda s: s.name in ["NOMINAL"]+[st.name for st in self.systematics], systematics)
+                lambda s: s.name in [st.name for st in systematics], qcd_systematics)
         else:
-            systematics = self.systematics
-                        
+            systematics = qcd_systematics            
+
         # - - - - correct tau polarization for fakes
         if self.correct_upsilon:
             log.debug("correcting upsilon for %s sample"%self.name)
@@ -272,13 +283,12 @@ class QCD(Sample):
             for ds in mc.datasets:
                 total_weights = {}
                 for cat, weights in mc_weights.iteritems():
-                    total_weights[cat] = mc_weights[cat] + ff_weights["NOMINAL"][cat]
+                    total_weights[cat] = mc_weights[cat][:]
                 # - - - - lumi weight  
                 if weighted:
                     # - - lumi weight
                     if ds.events !=0:
-                        lumi_weight = self.data_lumi(ds.stream) * reduce(
-                            lambda x,y:x*y, ds.xsec_kfact_effic) / ds.events
+                        lumi_weight = (self.data_lumi(ds.stream) * ds.xsec_kfact_effic) / ds.events
                     else:
                         log.warning(" 0 lumi weight for %s"%ds.name)
                         lumi_weight = 0
@@ -309,7 +319,6 @@ class QCD(Sample):
                 systematics=systematics,
                 fields=fields,
                 categories=data_categories,
-                weights=ff_weights["NOMINAL"],
                 channel=self.config.channel)
             data_workers.append(worker)
 
@@ -363,21 +372,22 @@ class QCD(Sample):
         # - - - - add DATA/MC dataset hists, then subtract sum of MC from DATA
         merged_hist_set = []
         for systematic in systematics:
-            for var in fields:
-                for cat in categories:
-                    data_hists = filter(
-                        lambda hs: (hs.systematic==systematic.name and hs.variable==var.name and hs.category==cat.name), data_hist_set)
-                    data_hsum = reduce(lambda h1, h2: h1 + h2, [hs.hist for hs in data_hists])
-                    
-                    mc_hists = filter(
-                        lambda hs: (hs.systematic==systematic.name and hs.variable==var.name and hs.category==cat.name), mc_hist_set)
-                    mc_hsum = reduce(lambda h1, h2: h1 + h2, [hs.hist for hs in mc_hists])
-                    
-                    # - - subtract MC from DATA
-                    qcd_hsum = data_hsum - mc_hsum
-                    outname = self.config.hist_name_template.format(self.name, cat, var)
-                    qcd_hsum.SetTitle(outname)
-                    merged_hist_set += [Histset(sample=self.name, category=cat.name, variable=var.name, hist=qcd_hsum)]
+            for syst_var in systematic.variations:
+                for var in fields:
+                    for cat in categories:
+                        data_hists = filter(
+                            lambda hs: (hs.systematic==syst_var.name and hs.variable==var.name and hs.category==cat.name), data_hist_set)
+                        data_hsum = reduce(lambda h1, h2: h1 + h2, [hs.hist for hs in data_hists])
+                                
+                        mc_hists = filter(
+                            lambda hs: (hs.systematic==syst_var.name and hs.variable==var.name and hs.category==cat.name), mc_hist_set)
+                        mc_hsum = reduce(lambda h1, h2: h1 + h2, [hs.hist for hs in mc_hists])
+                        
+                        # - - subtract MC from DATA
+                        qcd_hsum = data_hsum - mc_hsum
+                        outname = self.config.hist_name_template.format(self.name, cat, var)
+                        qcd_hsum.SetTitle(outname)
+                        merged_hist_set += [Histset(sample=self.name, category=cat.name, variable=var.name, hist=qcd_hsum)]
                     
         return merged_hist_set
                 
@@ -406,9 +416,12 @@ class QCD(Sample):
             # - - - - get QCD MC component hists (to be subtracted)
             for hf in mc_hfiles:
                 htf = ROOT.TFile(hf, "READ")
-                systematics = [k.GetName() for k in htf.GetListOfKeys()]
-                for systematic in systematics:
-                    systdir = htf.Get(systematic)
+                systs = [k.GetName() for k in htf.GetListOfKeys()]
+                for st in systs:
+                    if not st in systematics:
+                        systematics += [st]
+                for syst in systs:
+                    systdir = htf.Get(syst)
                     for hname in [k.GetName() for k in systdir.GetListOfKeys()]:
                         # - - regex match the hist name
                         match = re.match(self.config.hist_name_regex, hname)
@@ -416,14 +429,13 @@ class QCD(Sample):
                             sample = match.group("sample")
                             category = match.group("category")
                             variable = match.group("variable")
-
                             fields.add(variable)
                             categories.add(category)
 
-                            hist = htf.Get("%s/%s"%(systematic, hname))
+                            hist = htf.Get("%s/%s"%(syst, hname))
                             hist.SetDirectory(0) #<! detach
                             hset = Histset(sample=sample, category=category, variable=variable,
-                                            systematic=systematic, hist=hist)
+                                            systematic=syst, hist=hist)
                             mc_hist_set.append(hset)
                 htf.Close()
 
@@ -431,9 +443,12 @@ class QCD(Sample):
             data_hist_set = []
             for hf in data_hfiles:
                 htf = ROOT.TFile(hf, "READ")
-                systematics = [k.GetName() for k in htf.GetListOfKeys()]
-                for systematic in systematics:
-                    systdir = htf.Get(systematic)
+                systs = [k.GetName() for k in htf.GetListOfKeys()]
+                for st in systs:
+                    if not st in systematics:
+                        systematics += [st]
+                for syst in systs:
+                    systdir = htf.Get(syst)
                     for hname in [k.GetName() for k in systdir.GetListOfKeys()]:
                         # - - regex match the hist name
                         match = re.match(self.config.hist_name_regex, hname)
@@ -444,10 +459,10 @@ class QCD(Sample):
 
                             assert (variable in fields and category in categories), "sth missing!"
 
-                            hist = htf.Get("%s/%s"%(systematic, hname))
+                            hist = htf.Get("%s/%s"%(syst, hname))
                             hist.SetDirectory(0) #<! detach from the htf
                             hset = Histset(sample=sample, category=category, variable=variable,
-                                            systematic=systematic, hist=hist)
+                                            systematic=syst, hist=hist)
                             data_hist_set.append(hset)
                 htf.Close()
         else:
@@ -550,7 +565,7 @@ class LepFake(Sample):
     
     def workers(self, categories=[],
                 fields=[],
-                systematics=["NOMINAL"],
+                systematics=[],
                 weighted=True,
                 **kwargs):
         """
@@ -572,7 +587,7 @@ class LepFake(Sample):
         for mc in self.mc:
             # - - - - turn off truth matching 
             lepfake_workers += mc.workers(categories=mc_categories, fields=fields,systematics=systematics,
-                                          weighted=weighted,channel=self.config.channel, **kwargs)
+                                        weighted=weighted,channel=self.config.channel, **kwargs)
 
         # - - - - add LepFake prefix to the workers names
         # - - - - so that are no mistaken with DATA/MC workers.
@@ -628,14 +643,15 @@ class LepFake(Sample):
         # - - - - add MC dataset hists
         merged_hist_set = []
         for systematic in systematics:
-            for var in fields:
-                for cat in categories:
-                    mc_hists = filter(
-                        lambda hs: (hs.systematic==systematic and hs.variable==var.name and hs.category==cat.name), hist_sets)
-                    mc_hsum = reduce(lambda h1, h2: h1 + h2, [hs.hist for hs in mc_hists])
-                    outname = self.config.hist_name_template.format(self.name, cat.name, var.name)
-                    mc_hsum.SetTitle(outname)
-                    merged_hist_set.append(Histset(sample=self.name, category=cat.name, variable=var.name, hist=mc_hsum) )
+            for syst_var in systematic.variations:
+                for var in fields:
+                    for cat in categories:
+                        mc_hists = filter(
+                            lambda hs: (hs.systematic==syst_var.name and hs.variable==var.name and hs.category==cat.name), hist_sets)
+                        mc_hsum = reduce(lambda h1, h2: h1 + h2, [hs.hist for hs in mc_hists])
+                        outname = self.config.hist_name_template.format(self.name, cat.name, var.name)
+                        mc_hsum.SetTitle(outname)
+                        merged_hist_set.append(Histset(sample=self.name, category=cat.name, variable=var.name, hist=mc_hsum) )
                     
         return merged_hist_set
         

@@ -58,8 +58,26 @@ class Single_Top(MC, Background):
 ##----------------------------------------------------------------------------------------
 ##
 class TTbar(Single_Top):
-    # mixin 
-    pass
+
+    def __init__(self, *args, **kwargs):
+        super(TTbar, self).__init__(*args, **kwargs)
+        self.kwargs = kwargs
+
+    def workers(self, **kwargs):
+        """ Since TTbar jobs are heavy assigning one worker per systematic
+        """
+        systematics = kwargs.pop("systematics", [])
+        if not systematics:
+            systematics = self.systematics
+
+        workers = []
+        for systematic in systematics:
+            _workers = super(TTbar, self).workers(systematics=[systematic], **kwargs)
+            for w in _workers:
+                w.name = w.name + "." + systematic.name  
+            workers += _workers
+
+        return workers
 
 
 ##----------------------------------------------------------------------------------------

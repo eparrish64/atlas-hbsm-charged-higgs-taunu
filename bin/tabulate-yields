@@ -64,7 +64,7 @@ if YIELDS_ARGS.categories:
 
 ## systematics
 all_systematics = config.systematics[:]  # <! common systematics
-all_systematics += analysis.qcd.systematics  # <! QCD fakes only
+all_systematics += analysis.qcd.systematics[1:]  # <! QCD fakes only
 if YIELDS_ARGS.systematics:
     systematics = filter(
         lambda s: s.name in YIELDS_ARGS.systematics, all_systematics)
@@ -73,10 +73,14 @@ elif YIELDS_ARGS.systs:
 else:
     systematics = config.systematics[:1] #<! NOMINAL
 
-fields = config.variables[:1]  # <! tau_0_pt
+systematics_vars = []
+for st in systematics:
+    systematics_vars += st.variations 
+
+fields = config.variables[0:1]  # <! tau_0_pt
 
 # - - - - - - - - samples
-samples = analysis.backgrounds + [analysis.data] + analysis.signals
+samples = analysis.backgrounds + [analysis.data] #+ analysis.signals 
 backgrounds = analysis.backgrounds
 if YIELDS_ARGS.samples:
     samples = filter(lambda s: s.name in YIELDS_ARGS.samples, samples)
@@ -92,18 +96,24 @@ if YIELDS_ARGS.yields_table:
     if YIELDS_ARGS.hists_file:
         hfile = ROOT.TFile(YIELDS_ARGS.hists_file, "READ")
         var = fields[0]
-        for sample in samples:
-            for systematic in systematics:
-                for cat in categories:
-                    hname = os.path.join(systematic.name, config.hist_name_template.format(
+        for syst_var in systematics_vars:
+            for sample in samples:
+                for cat in categories:                    
+                    hname = os.path.join(syst_var.name, config.hist_name_template.format(
                         sample.name, cat.name, var.name))
                     hist = hfile.Get(hname)
                     if not hist:
-                        log.warning("can't find %s hist; skipping!" % hname)
-                        continue
-                    events = hist.Integral(0, -1)
+                        log.debug("can't find %s hist; using NOMINAL!" % hname)
+                        hname = os.path.join("NOMINAL", config.hist_name_template.format(
+                            sample.name, cat.name, var.name))
+
+                    if sample.name=="Data" and cat.name in analysis.data.blind_regions:
+                        events = -1
+                    else:                        
+                        hist = hfile.Get(hname)
+                        events = hist.Integral(0, -1)
                     yields.append(
-                        Yield(sample=sample.name, category=cat.name, systematic=systematic.name, events=events))
+                        Yield(sample=sample.name, category=cat.name, systematic=syst_var.name, events=events))
 
     # - - - - - - - - count on the fly
     else:
@@ -117,17 +127,24 @@ if YIELDS_ARGS.yields_table:
             nevents = hs.hist.Integral(0, -1)
             yields.append(
                 Yield(sample=hs.sample, category=hs.category, systematic=hs.systematic, events=nevents))
-
+                
     # - - - - - - - - sum of bkg
-    for systematic in systematics:
-        for cat in categories:
+    for cat in categories:
+        yields_nom = filter(
+                lambda y: y.category == cat.name and y.systematic == "NOMINAL", yields)
+        bkg_yields_nom = filter(
+                lambda y: y.sample in [b.name for b in backgrounds], yields_nom)
+        events_sum_nom = sum([y.events for y in bkg_yields_nom])
+
+        for systematic in systematics_vars:
             yields_cat = filter(
                 lambda y: y.category == cat.name and y.systematic == systematic.name, yields)
             bkg_yields = filter(
                 lambda y: y.sample in [b.name for b in backgrounds], yields_cat)
             events_sum = sum([y.events for y in bkg_yields])
+            rvalue = "%0.2f"%events_sum if systematic.name=="NOMINAL" else "%0.2f(%0.2f%%)"%(events_sum, ((events_sum-events_sum_nom)/events_sum_nom)*100)
             yields.append(
-                Yield(sample="bkgSum", category=cat.name, systematic=systematic.name, events=events_sum))
+                Yield(sample="bkgSum", category=cat.name, systematic=systematic.name, events=rvalue))
 
     # - - - - - - - - tabulate the yields
     for cat in categories:
@@ -139,16 +156,16 @@ if YIELDS_ARGS.yields_table:
             if not y.sample in headers:
                 headers += [y.sample]
         rows_cat = []
-        for syst in [s.name for s in systematics]:
+        for syst in [s.name for s in systematics_vars]:
             yields_cat_syst = filter(
                 lambda y: y.systematic == syst, yields_cat)
-            row = [syst] + [y.events for y in yields_cat_syst]
+            row = [syst[:50]] + [y.events for y in yields_cat_syst]
             rows_cat.append(row)
 
         if YIELDS_ARGS.latex:
-            ostring += tabulate(rows_cat, headers=headers, tablefmt='latex')
+            ostring += tabulate(rows_cat, headers=headers, floatfmt=".2f", tablefmt='latex')
         else:
-            ostring += tabulate(rows_cat, headers=headers)
+            ostring += tabulate(rows_cat, headers=headers, floatfmt=".2f")
         with open(YIELDS_ARGS.yfile, "a") as yfile:
             yfile.write(ostring)
 

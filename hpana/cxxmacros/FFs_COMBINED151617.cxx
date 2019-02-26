@@ -368,7 +368,7 @@ float GetFFCombined_NOMINAL(float pt, int ntracks, float FF_CR_MULTIJET, float F
 		 }
 		 else return 0;
 	 }
-	 else return 0;
+	else return 0;
 }
 
 

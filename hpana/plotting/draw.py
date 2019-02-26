@@ -7,8 +7,8 @@ import ROOT
 import re
 
 # local
-from .plot import *
-from .. import log
+from hpana.plotting.plot import *
+from hpana import log
 
 ## consts
 HIST_NAME_TEMPLATE = re.compile(
@@ -38,7 +38,7 @@ def draw(var, category,
          legend_position='right',
          output_dir=None,
          output_name=None,
-         overflow=True,
+         overflow=False,
          show_pvalue=False,
          top_label=None,
          poisson_errors=True,
@@ -97,31 +97,40 @@ def draw(var, category,
     fig, main_pad, ratio_pad = create_canvas(show_ratio=show_ratio)
 
     # gather histograms
-    samples = backgrounds + signals + [data]
+    samples = backgrounds + signals 
+    if data:
+        samples += [data]
+
     hists_dict = {}
     for sample in samples:
         hists_dict[sample.name] = {}
-        for systematic in systematics:
-            hists_dict[sample.name][systematic.name] = None
-            s_hist = None
-            if hists_file:
-                systdir = hfile.Get(systematic.name)
-                keys = [k.GetName() for k in systdir.GetListOfKeys()]
-                for k in keys:
-                    match = re.match(HIST_NAME_TEMPLATE, k)
-                    if match:
-                        if match.group("sample")==sample.name:
-                            if match.group("category")==category.name and match.group("var")==var.name:
-                                s_hist = hfile.Get("%s/%s"%(systematic.name,k))
-            else:
-                for hs in hists_sets:
-                    if hs.sample==sample.name:
-                        if hs.category==category.name:
-                            if hs.variable==var.name:
-                                s_hist =  hs
-            hists_dict[sample.name][systematic.name] = s_hist
+        for systematic in sample.systematics:
+            for syst_var in systematic.variations:
+                if hists_file:
+                    systdir = hfile.Get(syst_var.name)
+                    if not systdir:
+                        continue
+                    keys = [k.GetName() for k in systdir.GetListOfKeys()]
+                    for k in keys:
+                        match = re.match(HIST_NAME_TEMPLATE, k)
+                        if match:
+                            if match.group("sample")==sample.name:
+                                if match.group("category")==category.name and match.group("var")==var.name:
+                                    s_hist = hfile.Get("%s/%s"%(syst_var.name,k))
+                else:
+                    for hs in hists_set:
+                        if hs.systematic==syst_var.name:
+                            if hs.sample==sample.name:
+                                if hs.category==category.name:
+                                    if hs.variable==var.name:
+                                        s_hist =  hs
+
+                hists_dict[sample.name][syst_var.name] = s_hist
+
+    log.debug("Retrieved histograms %r"%hists_dict)
 
     # backgrounds 
+    backgrounds_stack = []
     if backgrounds:
         if not isinstance(backgrounds, (list, tuple)):
             backgrounds = [backgrounds]
@@ -163,46 +172,35 @@ def draw(var, category,
         
             backgrounds_error = ROOT.TGraphAsymmErrors()
             for i in range(0, total_backgrounds.GetNbinsX()):
-                backgrounds_error.SetPoint(i, total_backgrounds.GetXaxis().GetBinCenter(i), 
-                                           total_backgrounds.GetBinContent(i))
+                tb_nom_cnt = total_backgrounds.GetBinContent(i)
+                backgrounds_error.SetPoint(i, total_backgrounds.GetXaxis().GetBinCenter(i), tb_nom_cnt)
 
                 eyh = high_band_backgrounds.GetBinContent(i)
                 eyl = low_band_backgrounds.GetBinContent(i)
+                ey = max(eyh, eyl)
+
                 ## dummy x error for plotting
                 exh = total_backgrounds.GetXaxis().GetBinWidth(i)/2.
                 exl = exh
-                backgrounds_error.SetPointError(i, exl, exh, eyl, eyh)
+                backgrounds_error.SetPointError(i, exl, exh, ey, ey)
 
-            #backgrounds_error.SetFillColor(ROOT.kYellow-1)
             backgrounds_error.SetFillStyle(3004)
             backgrounds_error.SetFillColor(ROOT.kRed)
 
             main_errors.append(backgrounds_error)
 
-            # eleg = 'Stat+Syst' 
-            # if not systematics:
-            eleg = 'Stat'
+            eleg = 'Stat+Syst' 
+            if not systematics:
+                eleg = 'Stat'
             legend.AddEntry(backgrounds_error, eleg ,'F')
+
     # - - - - - - - - signals
     if signals:
         if not isinstance(signals, (list, tuple)):
             signals = [signals]
         signals_hists   = []
-        for sig in signals:
-            hname = "{0}/{1}".format(tree_name, HIST_NAME_TEMPLATE.format(sig.name, category.name, var.name))
-            if hists_file:
-                sig_hist = hfile.Get(hname)
-                if not sig_hist:
-                    log.warning("can't find %s hist; skipping!"%hname)
-                    continue
-            else:
-                sig_hist = filter(
-                    lambda hs: hs.sample==sig.name and hs.category==category.name and hs.variable==var.name, hists_set)
-                if not sig_hist:
-                    log.warning("can't find %s hist; skipping!"%hname)
-                    continue
-                sig_hist = sig_hist[0].hist
-
+        for sig in signals:    
+            sig_hist = hists_dict[sig.name]["NOMINAL"]
             # - - - - scale signals if needed
             if scale_sig_to_bkg_sum:
                 bkg_hsum = reduce(lambda h1, h2: h1+h2, backgrounds_hists_nom)
@@ -267,7 +265,7 @@ def draw(var, category,
         if not blind:
             if backgrounds:
                 if backgrounds_hists_nom:
-                    total_backgrounds = reduce(lambda h1, h2: h1+h2, backgrounds_hists_nom)
+                    #total_backgrounds = reduce(lambda h1, h2: h1+h2, backgrounds_hists_nom)
                     if show_pvalue:
                         # show p-value and chi^2
                         pvalue = total_backgrounds.Chi2Test(data_hist, 'WW')
@@ -291,40 +289,41 @@ def draw(var, category,
                         extra_info.append(chi2_label)
 
     # - - - - - - - - the ratio plot
-    if category.name in data.blind_regions:
-        show_ratio = False
-    if show_ratio:
-        sum_bkgs = reduce(lambda h1, h2: h1+h2, backgrounds_hists_nom)
-        if bin_optimization:
-            sum_bkgs = rebin(sum_bkgs, opt_bins) 
-        
-        rhist = ratio_hist(data_hist, sum_bkgs)
-        rhist.GetXaxis().SetTitle(var.title)
-        rhist.GetYaxis().SetTitle('Data/Sum bkg')
-
+    if data and category.name in data.blind_regions:
+            show_ratio = False
+    if show_ratio:        
         # - - - - draw band below points on ratio plot
         if error_bars:
             # - - background uncertainty band
             total_backgrounds, high_band_backgrounds, low_band_backgrounds = uncertainty_band(
                 backgrounds_hists_dict, overflow=overflow)
+
+            rhist = ratio_hist(data_hist, total_backgrounds)
+            rhist.GetXaxis().SetTitle(var.title)
+            rhist.GetYaxis().SetTitle('Data/Sum bkg')
             ratio_hist_high = ratio_hist(data_hist, total_backgrounds + high_band_backgrounds)
             ratio_hist_low = ratio_hist(data_hist, total_backgrounds - low_band_backgrounds)
 
             ratio_error = ROOT.TGraphAsymmErrors()
             for i in range(0, rhist.GetNbinsX()):
-                ratio_error.SetPoint(i, rhist.GetXaxis().GetBinCenter(i), 1)
+                h_cnt = ratio_hist_high.GetBinContent(i)
+                l_cnt = ratio_hist_low.GetBinContent(i)
+                m_cnt = rhist.GetBinContent(i)
 
-                eyh = abs(1 - ratio_hist_high.GetBinContent(i))
-                eyl = abs(1 - ratio_hist_low.GetBinContent(i))
+                eyh = max(h_cnt-m_cnt, l_cnt-m_cnt, 0)
+                eyl = abs(min(h_cnt-m_cnt, l_cnt-m_cnt, 0))
+                ey = max(eyh, eyl)
+
                 # - - dummy x error for plotting
                 exh = rhist.GetXaxis().GetBinWidth(i)/2.
                 exl = exh
-                ratio_error.SetPointError(i, exl, exh, eyl, eyh)
 
-            ratio_error.SetLineColor(ROOT.kYellow)
-            ratio_error.SetMarkerColor(ROOT.kRed)
-            ratio_error.SetFillColor(ROOT.kRed)
-            ratio_error.SetFillStyle(3004)
+                ratio_error.SetPoint(i, rhist.GetXaxis().GetBinCenter(i), 1)
+                ratio_error.SetPointError(i, exl, exh, ey, ey)
+
+            ratio_error.SetMarkerColor(ROOT.kMagenta+2)
+            ratio_error.SetFillColor(ROOT.kMagenta+2)
+            ratio_error.SetFillStyle(3001)
             
     # - - - - - - - - add lumi, category , ... labels 
     extra_info += label_plot(main_pad,
@@ -333,22 +332,20 @@ def draw(var, category,
                              atlas_label=ATLAS_LABEL)
     
     # - - - - - - - - set y axis limit
+    ymin = 0 
     if ylimits:
         ymin, ymax = ylimits
     elif backgrounds:
         ymax = max([h.GetMaximum() for h in backgrounds_stack])
-        ymin = min([h.GetMinimum() for h in backgrounds_stack])
     elif data:
         ymax = data_hist.GetMaximum()
-        ymin = data_hist.GetMinimum()
     elif signals:
         ymax = max([h.GetMaximum() for h in signals_hists])
-        ymin = min([h.GetMinimum() for h in signals_hists])
 
     if logy:
         # - - - - make sure ymin > 0 for log scale
         if ymin<=0:
-            ymin = 0.001
+            ymin = 0.01
         main_pad.cd()
         main_pad.SetLogy()
             
@@ -362,11 +359,13 @@ def draw(var, category,
                 h.SetMaximum(ymax + 100 *ymax)
             else:
                 h.SetMaximum(ymax + 0.4 *ymax)
+
             h.Draw("HIST")
+            h.GetXaxis().SetTitle(var.title)
             if not show_ratio:
-                if isinstance(h, ROOT.THStack):
-                    h.GetHistogram().GetXaxis().SetTitle(var.title)
-                    
+                h.GetXaxis().SetTitle(var.title)
+                main_pad.Modified(); fig.Update()
+                
     # - -  add on the signals
     if signals:
         main_pad.cd()
@@ -377,7 +376,7 @@ def draw(var, category,
             sh.Draw("HIST SAME")
             sh.SetLineColor(sig.color)
             sh.SetLineStyle(sig.hist_decor["line_style"])
-            
+                
     # - - - - - - - - draw errors
     for erf in main_errors:
         erf.Draw('SAME E2')
@@ -420,7 +419,7 @@ def draw(var, category,
 
     save_canvas(fig, output_dir, output_name, formats=output_formats)
 
-    # - - - - - - - - release the memory
+    ## clean up
     if hists_file:
         hfile.Close()
 

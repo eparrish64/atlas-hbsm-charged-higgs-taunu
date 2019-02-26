@@ -13,22 +13,51 @@ import numpy as np
 ## - -  parse ana args (needed before ROOT)
 from hpana.cmd import get_clf_parser 
 clf_parser = get_clf_parser()
+
 clf_parser.add_argument('--files', nargs='+', 
                     help='ntuples to append clf score to them')
+
 clf_parser.add_argument('--models', '-w', nargs="+",
                         help='path to xml or pickled trained models')
+
 clf_parser.add_argument("--mtype", choices=["keras", "bdt"], default="bdt",
                         help="TMVA Method type")
-clf_parser.add_argument("--syst", action="store_true",
-                        help="should you want to append clf scores to the syst Trees")
+
+clf_parser.add_argument("--fields", nargs="+",
+                    help="list of the variables that you want to analyze")
+
+clf_parser.add_argument("--categories", nargs="+",
+                    help="list of the categories that you want to analyze")
+
+clf_parser.add_argument("--systematics", nargs="+",
+                    help="list of the systematics that you want to analyze")
+
+clf_parser.add_argument("--systs", "-s", action="store_true",
+                    help="process systematics")
+
+clf_parser.add_argument("--samples", nargs="+",
+                            help="list of samples to process")
+
+clf_parser.add_argument("--merge-hists", action="store_true",
+                            help="merge histograms")
+
+clf_parser.add_argument("--append", action="store_true",
+                            help="append clf scores to TTrees")
+
+clf_parser.add_argument("--direct", action="store_true",
+                            help="calculate clf scores on the fly")
 
 CLF_ARGS = clf_parser.parse_args()
 
 
 ## local
-from hpana.variables import CLF_FEATURES
-from hpana.cluster.parallel import run_pool
+from hpana.variables import CLF_FEATURES, BDT_SCORES
 from hpana.classifier import Classifier
+from hpana.dataset_hists import dataset_hists_direct
+from hpana.cluster.parallel import run_pool, Job
+from hpana.analysis import Analysis
+from hpana.config import Configuration
+
 from hpana import log
 log.setLevel(CLF_ARGS.log)
  
@@ -298,14 +327,14 @@ def evaluate_scores(file_name, models):
 ##-----------------------------------------------
 ## simple class for parallel processing
 ##-----------------------------------------------
-class Job(Process):
+class AppendJob(Process):
     """
     simpel worker class for parallel
     processing. the run method is necessary,
     which will overload the run method of Procces.
     """
     def __init__(self, file_name, models, copy_file=False, outdir=None):
-        super(Job, self).__init__()
+        super(AppendJob, self).__init__()
         self.file_name = file_name
         job_name = file_name
         if '/' in job_name:
@@ -353,19 +382,87 @@ if __name__=='__main__':
     if not CLF_ARGS.models:
         raise IOError('Path to trained models pls ?')
     models = get_models(CLF_ARGS.models)
-    
-    ## sort files based on size to start the heavier ones sooner.
-    CLF_ARGS.files.sort(key=lambda f: os.path.getsize(f), reverse=True)
-    jobs = [Job(f, models, copy_file=COPY_FILE, outdir=CLF_ARGS.outdir) for f in CLF_ARGS.files]
+    if CLF_ARGS.rank_feats:
+        from hpana.classifier import features_ranking
+        for mass, mdict in models.iteritems():
+            for rem, clf_dict in mdict.iteritems():
+                if rem!=1: #<! 1 fold should be enough 
+                    continue 
+                for name, clf in clf_dict.iteritems():
+                    features_ranking(clf, CLF_FEATURES[CLF_ARGS.channel], outdir=CLF_ARGS.outdir)
 
-    st = time.time()
-    ## run a pool of jobs
-    if CLF_ARGS.parallel or len(jobs)> 1:
-        run_pool(jobs, n_jobs=-1)
-    else:
-        ## processing one file only (also for PBS, CONDOR Batch)
-        for job in jobs:
-            job.run()
-            
-    ft = time.time()
-    print "Delta t: ", (ft - st)
+    if CLF_ARGS.direct:
+        # - - - - build analysis main configuration object
+        config = Configuration(CLF_ARGS.channel, data_streams=CLF_ARGS.data_streams, db_version=CLF_ARGS.db_version)
+
+
+        # - - - - instantiate the analysis
+        analysis = Analysis(config, compile_cxx=True)
+
+        # # - - - - some checks on cmd args
+        if CLF_ARGS.fields:
+            fields = filter(lambda v: v.name in CLF_ARGS.fields, BDT_SCORES[CLF_ARGS.channel])
+        else:
+            fields = BDT_SCORES[CLF_ARGS.channel]
+
+        if CLF_ARGS.categories:
+            categories = filter(
+                lambda c: c.name in CLF_ARGS.categories, config.categories)
+        else:
+            categories = config.categories
+
+        ## systematics
+        all_systematics = config.systematics[:]  # <! common systematics
+        all_systematics += analysis.qcd.systematics  # <! QCD fakes only
+        if CLF_ARGS.systematics:
+            systematics = filter(
+                lambda s: s.name in CLF_ARGS.systematics, all_systematics)
+        elif CLF_ARGS.systs:
+            systematics = []# all_systematics
+        else:
+            systematics = config.systematics[:1] #<! NOMINAL
+
+        # - - - - if you wish to look at specific samples
+        if CLF_ARGS.samples:
+            samples = filter(lambda s: s.name in CLF_ARGS.samples, analysis.samples)
+        else:
+            samples = analysis.get_signals()#+analysis.samples
+
+        if CLF_ARGS.parallel:
+            ## prepare hist workers 
+            analysis.setWorkers(samples=samples, fields=fields, categories=categories, systematics=systematics)
+            ana_workers = analysis.getWorkers()
+
+            jobs = []
+            for w in ana_workers:
+                jobs.append(Job(dataset_hists_direct, w, 
+                    clf_models=models, clf_features=CLF_FEATURES[CLF_ARGS.channel], kfolds=CLF_ARGS.kfolds,
+                    write_hists=True, outdir=CLF_ARGS.outdir))
+
+            log.info("************** submitting %i jobs  ************" % len(jobs))
+            log.info("***********************************************")
+            run_pool(jobs, n_jobs=CLF_ARGS.ncpu)
+        
+        if CLF_ARGS.merge_hists:
+            log.info(
+                "************** merging histograms  ************")
+            log.info(
+                "***********************************************")
+            analysis.merge_hists(samples=samples, histsdir=CLF_ARGS.outdir, overwrite=True, write=True)
+
+    if CLF_ARGS.append:
+        ## sort files based on size to start the heavier ones sooner.
+        CLF_ARGS.files.sort(key=lambda f: os.path.getsize(f), reverse=True)
+        jobs = [AppendJob(f, models, copy_file=COPY_FILE, outdir=CLF_ARGS.outdir) for f in CLF_ARGS.files]
+
+        st = time.time()
+        ## run a pool of jobs
+        if CLF_ARGS.parallel or len(jobs)> 1:
+            run_pool(jobs, n_jobs=-1)
+        else:
+            ## processing one file only (also for PBS, CONDOR Batch)
+            for job in jobs:
+                job.run()
+                
+        ft = time.time()
+        print "Delta t: ", (ft - st)

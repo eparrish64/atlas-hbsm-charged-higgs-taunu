@@ -1,34 +1,34 @@
 #! /usr/bin/env python
 
 # stdlib
-import ROOT
 import os
 import sys
 import time
+import glob
 import pickle
-
-# local
-from hpana import log
-from hpana.systematics import SYSTEMATICS
-from hpana.dataset_hists import dataset_hists
-from hpana.cluster.parallel import FuncWorker, run_pool, Job
-from hpana.samples.sample import Sample
-from hpana.analysis import Analysis
-from hpana.config import Configuration
-
-# PyPI
-import dill
-from tabulate import tabulate
 
 # - - - - - - - -  parse ana args (needed before ROOT)
 from hpana.cmd import get_ana_parser
 ana_parser = get_ana_parser()
 ANA_ARGS = ana_parser.parse_args()
 
+
+# local
+from hpana import log
+from hpana.dataset_hists import dataset_hists, dataset_hists_direct
+from hpana.cluster.parallel import run_pool, Job
+from hpana.analysis import Analysis
+from hpana.config import Configuration
+
+# PyPI
+import dill
+
+
 # - - - - - - - -  set log level
 log.setLevel(ANA_ARGS.log)
 
 # - - - - - - - - Speed things up a bit
+import ROOT
 ROOT.SetSignalPolicy(ROOT.kSignalFast)
 ROOT.gROOT.SetBatch(True)
 log.info("ROOT is in batch mode")
@@ -36,6 +36,8 @@ log.info("ROOT is in batch mode")
 # -------------------------------------------------------------
 # consts
 # -------------------------------------------------------------
+__HERE = os.path.dirname(os.path.abspath(__file__))
+
 # - - - - build analysis main configuration object
 config = Configuration(
     ANA_ARGS.channel,
@@ -67,7 +69,7 @@ if ANA_ARGS.systematics:
     systematics = filter(
         lambda s: s.name in ANA_ARGS.systematics, all_systematics)
 elif ANA_ARGS.systs:
-    systematics = all_systematics
+    systematics = []# all_systematics
 else:
     systematics = config.systematics[:1] #<! NOMINAL
 
@@ -77,50 +79,58 @@ if ANA_ARGS.samples:
 else:
     samples = analysis.samples
 
-analysis.setWorkers(
-    samples=samples,
-    fields=fields,
-    categories=categories,
-    systematics=systematics)
 
 # -------------------------------------------------------------
 # main driver
 # -------------------------------------------------------------
-
-
 def main():
+    # - - assign workers 
+    analysis.setWorkers(samples=samples, fields=fields, categories=categories, systematics=systematics)
+    ana_workers = analysis.getWorkers()
+
     # - -  run on multicores
-    if ANA_ARGS.parallel:
+    if ANA_ARGS.dry_run:
+        log.info("************** submitting %i jobs  ************" % len(ana_workers))
+        for w in ana_workers:
+            print "--"*70
+            print w
+
+    # - - run on multicores 
+    elif ANA_ARGS.parallel:
         jobs = []
-        for worker in analysis.workers(
-                samples=samples,
-                fields=fields,
-                categories=categories,
-                systematics=systematics):
+        for worker in ana_workers:
+            jobs.append(Job(dataset_hists, worker, write_hists=True, outdir=ANA_ARGS.outdir))
 
-            jobs.append(Job(dataset_hists, worker,
-                            write_hists=True, outdir=ANA_ARGS.outdir))
-
-            if ANA_ARGS.dry_run:
-                print "--"*100
-                print worker
-        if not ANA_ARGS.dry_run:
-            log.info(
-                "************** submitting %i jobs  ************" % len(jobs))
-            log.info(
-                "***********************************************")
-            run_pool(jobs, n_jobs=ANA_ARGS.ncpu)
+        log.info("************** submitting %i jobs  ************" % len(jobs))
+        log.info("***********************************************")
+        run_pool(jobs, n_jobs=ANA_ARGS.ncpu)
 
     # - -  run on cluster
-    if ANA_ARGS.cluster:
-        # # - -  pickle the analysis: KEEP IT IN THE MAIN DIR,
-        # # IF YOU DONT WANT TO SHIP THE WHOLE CODE TO THE NODES.
-        if ANA_ARGS.pickle_analysis:
-            with open(ANA_ARGS.pickle_analysis, "wb") as pfile:
-                dill.dump(analysis, pfile)
-        if ANA_ARGS.pickled_analysis:
-            with open(ANA_ARGS.pickled_analysis, "rb") as pfile:
-                pickled_analysis = dill.load(pfile)
+    elif ANA_ARGS.cluster:
+        ## retry failed jobs ?
+        if ANA_ARGS.retry:
+            submitted_jobs = set([j.split("/")[-1].split("-")[-1] for j in glob.glob("%s/jobs/submitted*"%ANA_ARGS.outdir)])
+            completed_jobs = set([j.split("/")[-1].split("-")[-1] for j in glob.glob("%s/jobs/done*"%ANA_ARGS.outdir)])
+    
+            failed_jobs = []
+            for j in submitted_jobs:
+                if not j in completed_jobs:
+                        if not j in failed_jobs:
+                            failed_jobs += [j]
+
+            log.warning("Following %i jobs are failed; you have to resubmit them"%len(failed_jobs))
+            submit_file = open("%s/submit_%i_failed.sh"%(ANA_ARGS.outdir, len(failed_jobs)), "w")
+
+            for j in failed_jobs:
+                log.info("updating job script for %s"%j) 
+                submit_file.write("sbatch %s/jobs/%s.slurm \n"%(ANA_ARGS.outdir, j))
+            submit_file.close()
+
+            return 
+
+        # - -  pickle the analysis: IF YOU DONT WANT TO SHIP THE WHOLE CODE TO THE NODES.
+        with open(ANA_ARGS.pickled_analysis, "wb") as pfile:
+            dill.dump(analysis, pfile)
 
         # - - clusters' resource manager and scheduler
         if ANA_ARGS.rs_manager == "TORQUE":
@@ -129,16 +139,14 @@ def main():
 
             # - - setup the submit dir
             os.system(
-                "mkdir -p {0}/jobs {0}/failed {0}/done {0}/submitted {0}/hists".format(ANA_ARGS.outdir))
+                "mkdir -p {0}/jobs {0}/hists".format(ANA_ARGS.outdir))
             log.info(
-                "************** submitting %i jobs to the cluster ************" % len(pickled_analysis.workers()))
+                "************** submitting %i jobs to the cluster ************" % len(analysis.workers()))
             log.info(
                 "**************************************************************")
 
-            os.system("mkdir -p %s %s/jobs/" %
-                      (ANA_ARGS.logsdir, ANA_ARGS.outdir))
-            # - -  create the job scripts and run them.
-            for aw in pickled_analysis.workers()[:2]:
+            os.system("mkdir -p %s %s/jobs/" %(ANA_ARGS.logsdir, ANA_ARGS.outdir))
+            for aw in ana_workers:
                 jfile_name = "%s/jobs/%s.pbs" % (ANA_ARGS.outdir, aw.name)
 
                 # - - write the job submission script with right permissions
@@ -148,7 +156,7 @@ def main():
                                                  outdir=ANA_ARGS.outdir,
                                                  local_scratch=ANA_ARGS.local_scratch,
                                                  pickled_analysis=ANA_ARGS.pickled_analysis,
-                                                 script_path="process-dataset",
+                                                 script_path=os.path.join(__HERE, "process-dataset"),
                                                  jobname=aw.name,))
 
                 os.close(jfile)
@@ -162,30 +170,31 @@ def main():
             # - - write jobs
             from hpana.cluster.job_template import SLURM_JOB_TEMPLATE
 
-            # create list of workers for requested jobs
-            pickledAna_workerList = pickled_analysis.getWorkers()
-
             # - - setup the submit dir
             os.system(
-                "mkdir -p {0}/jobs {0}/failed {0}/done {0}/submitted {0}/hists".format(ANA_ARGS.outdir))
+                "mkdir -p {0}/jobs  {0}/logs {0}/hists".format(ANA_ARGS.outdir))
             log.info(
-                "************** submitting %i jobs to the cluster ************" % len(pickledAna_workerList))
+                "************** submitting %i jobs to the cluster ************" % len(ana_workers))
             log.info(
                 "**************************************************************")
 
             os.system("mkdir -p %s %s/jobs/" %
                       (os.path.join(ANA_ARGS.outdir, ANA_ARGS.logsdir), ANA_ARGS.outdir))
             submitfile_name = "%s/%s.sh" % (ANA_ARGS.outdir, "submitAllJobs")
-            submitFile = os.open(
+            submit_file = os.open(
                 submitfile_name, os.O_CREAT | os.O_WRONLY, 0755)
 
             # - -  create the job scripts and run them. Returns Analysis workers
-            for aw in pickledAna_workerList:
+            for aw in ana_workers:
+                if ANA_ARGS.dry_run:
+                    print "--"*100
+                    print aw.name
 
                 # - - payload for container
-                payload = "source ${{SLURM_SUBMIT_DIR}}/hpana/cluster/slurmJob.sh {pickled_analysis} {script_path}".format(
+                payload = "source {job_script} {pickled_analysis} {script_path}".format(
+                    job_script=os.path.join(__HERE, "slurm_job.sh"),
                     pickled_analysis=ANA_ARGS.pickled_analysis,
-                    script_path="bin/process-dataset"
+                    script_path=os.path.join(__HERE, "process-dataset"),
                 )
 
                 # - - write the job submission script with right permissions
@@ -197,7 +206,7 @@ def main():
                                  ANA_ARGS.outdir, ANA_ARGS.logsdir),
                              outdir=ANA_ARGS.outdir,
                              local_scratch=ANA_ARGS.local_scratch,
-                             jobname=aw.name,  # important - jobname steers which worker used from pickled ana
+                             jobname=aw.name,  #<! important - jobname steers which worker used from pickled ana
                              payload=payload,
                              project=ANA_ARGS.rs_project
                          )
@@ -208,14 +217,15 @@ def main():
                 # - - - - write submission to file to be used outside container
                 log.info("Writing to %s for job %s ..." %
                          (submitfile_name, aw.name))
-                os.write(submitFile, "sbatch %s\n" % jfile_name)
+                os.write(submit_file, "sbatch %s\n" % jfile_name)
 
-            os.close(submitFile)
+            os.close(submit_file)
             log.warning("Submission not supported from within container.")
             log.warning("Please launch outside container via:")
             log.warning("\t sh {0}".format(submitfile_name))
+    
 
-    # - - - - - - - - @NOTE: if you submitted jobs to the cluster wait till they're all done!
+    # - - @NOTE: if you submitted jobs to the cluster wait till they're all done!
     if ANA_ARGS.merge_hists:
         if ANA_ARGS.cluster:
             raise RuntimeError(
@@ -227,8 +237,7 @@ def main():
         analysis.merge_hists(
             histsdir=ANA_ARGS.outdir,
             overwrite=True,
-            write=True,
-            samples=ANA_ARGS.samples,)
+            write=True,)
 
 
 # -------------------------------------------------------------
@@ -239,6 +248,6 @@ if __name__ == "__main__":
     main()
 
     end_time = time.time()
-    elapsed_time = (end_time - start_time)
+    elapsed_time = (end_time - start_time)/60.
     log.info(
-        "\n****************** elapsed time: %0.2f s ******************" % elapsed_time)
+        "\n****************** elapsed time: %0.1f mins ******************" % elapsed_time)

@@ -7,7 +7,7 @@
 """
 
 ## stdlib
-import os, sys, time, array, pickle, copy
+import os, sys, time, array, pickle, copy, random
 import multiprocessing
 
 
@@ -22,7 +22,7 @@ ffs_parser = get_ffs_parser()
 FFs_ARGS = ffs_parser.parse_args()
 
 ## local
-from hpana.rqcd import fit_alpha, prep_ff_hists, fake_sources, plot_cr_ffs, plot_alpha 
+from hpana.rqcd import get_cr_ffs, fit_alpha, prep_ff_hists, fake_sources, plot_cr_ffs, plot_alpha 
 from hpana.variables import rQCD_VARS, FFS_TEMPLATE_VARS, tau_0_jet_width, tau_0_jet_bdt_score_trans
 from hpana.categories import (
     FAKE_TAU_SOURCE,
@@ -34,6 +34,7 @@ from hpana.categories import (
     Category_TAUEL_BVETO,
     Category_TAUMU_BVETO)
     
+from hpana.dataset_hists import dataset_hists
 from hpana.config import Configuration
 from hpana.analysis import Analysis
 from hpana.trigger import get_mj_met_trigger
@@ -166,15 +167,30 @@ if __name__=="__main__":
             "antitau": LOOSE_TAU,
             "validation_plots":FFs_ARGS.validation_plots,}
 
+        ffs_workers = []
         ## taujet
         mj_met_trig = get_mj_met_trigger(FFs_ARGS.data_streams)
-        tj_ffs = taujet_analysis.cache_ffs(control_regions=[], trigger=mj_met_trig, **kparams)
-        cr_ffs.update(tj_ffs)
+        ffs_workers += taujet_analysis.ffs_workers(control_regions=[], trigger=mj_met_trig, **kparams)
         
         ## taulep
-        tl_ffs = taulep_analysis.cache_ffs(control_regions=[], **kparams)
-        cr_ffs.update(tl_ffs)
+        ffs_workers += taulep_analysis.ffs_workers(control_regions=[], **kparams)
         
+        log.info(
+            "************** submitting %i jobs  ************"%len(ffs_workers))
+        log.info(
+            "***********************************************")
+        rand_workers = [ ffs_workers[i] for i in sorted(random.sample(xrange(len(ffs_workers)), min(20, len(ffs_workers) ) ) ) ]
+        log.debug(rand_workers)
+        log.debug("*"*80)
+
+        pool = multiprocessing.Pool(multiprocessing.cpu_count())
+        results = [pool.apply_async(dataset_hists, args=(w,)) for w in ffs_workers]
+        hist_sets = []
+        for res in results:
+            hist_sets += res.get(36000)
+        
+        cr_ffs = get_cr_ffs(hist_sets, control_regions=FFS_CONTROL_REGIONS, **kparams)
+
         with open(FFs_ARGS.ffs_cr_cache, "w") as ffs_cr_cache:
             yaml.dump(cr_ffs, ffs_cr_cache)
             

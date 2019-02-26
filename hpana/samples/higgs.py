@@ -9,55 +9,101 @@ from .sample import MC, Signal
 
 class Higgs(MC, Signal):
     # - - - - - - - - - signal mass points 
-    MASSES_LOW = {
-        90: "344287",
-        100: "344288",
-        110: "344289",
-        120: "344290",
-        
-        130: "344291",
-        140: "344292",
-        150: "344293",
+    TAUJET_SIGS ={
+        "LOW":{ 
+            80 : "346239",
+            90 : "346241",
+            100 : "346243",
+            110 : "346245",
+            120 : "346247",
+            130 : "346249",
+        },
+        "INT":{
+            140 : "346251",
+            150 : "346253",
+            160 : "346255",
+            170 : "346257",
+            180 : "346259",
+            190 : "346261",
+        },
+        "HIGH":{        
+            200 : "346263",
+            225 : "346265",
+            250 : "346267",
+            275 : "346269",
+            300 : "346271",
+            350 : "346273",
+            400 : "346275",
+            500 : "346277",
+            600 : "346279",
+            700 : "346281",
+            800 : "346283",
+            900 : "346285",
+            1000 : "346287",
+            1200 : "346289",
+            1400 : "346291",
+            1600 : "346293",
+            1800 : "346295",
+            2000 : "346297",
+            2500 : "346299",
+            3000 : "346301",
+        }   
+    }
+
+    TAULEP_SIGS = {
+        "LOW":{ 
+            80 : "346238",
+            90 : "346240",
+            100 : "346242",
+            110 : "346244",
+            120 : "346246",
+            130 : "346248",
+        },
+        "INT":{
+            140 : "346250",
+            150 : "346252",
+            160 : "346254",
+            170 : "346256",
+            180 : "346258",
+            190 : "346260",
+        },
+        "HIGH":{
+            200 : "346262",
+            225 : "346264",
+            250 : "346266",
+            275 : "346268",
+            300 : "346270",
+            350 : "346272",
+            400 : "346274",
+            500 : "346276",
+            600 : "346278",
+            700 : "346280",
+            800 : "346282",
+            900 : "346284",
+            1000 : "346286",
+            1200 : "346288",
+            1400 : "346290",
+            1600 : "346292",
+            1800 : "346294",
+            2000 : "346296",
+            2500 : "346298",
+            3000 : "346300",
         }
-    MASSES_INT = {
-        160: "344250",
-        165: "344251",
-        170: "344252",
-        175: "344253",
-        180: "344254",
-    }
-    
-    MASSES_HIGH = {
-        200: "341524",
-        225: "341525",
-        250: "341526",
-        275: "341527",
-        300: "341528",
-        350: "341529",
-        400: "341003",
-
-        500: "341530",
-        600: "341531",
-        700: "341532",
-        800: "341533",
-        900: "341534",
-        1000: "341535",
-        1200: "341536",
-        1400: "341537",
-        1600: "341538",
-        1800: "341539",
-        2000: "341540",
     }
 
-    MASSES = {}
-    MASSES.update(MASSES_LOW)
-    MASSES.update(MASSES_INT)
-    MASSES.update(MASSES_HIGH)
+    MASSES_DICT = {
+        "taulep":TAULEP_SIGS,
+        "taujet": TAUJET_SIGS,
+    } 
+
+    MASSES = []
+    for mode in ["LOW", "INT", "HIGH"]:
+        MASSES += MASSES_DICT["taujet"][mode].keys() 
 
     SAMPLE_PATTERN = {
-        "LOW": "MadGraphPythia8EvtGen_A14NNPDF23LO_Hplus_H{0}_taunu",
-        "INT": "MadGraphPythia8EvtGen_A14NNPDF23LO_HplusInt_H{0}_taunu",
-        "HIGH": "aMcAtNloPythia8EvtGen_A14NNPDF23LO_Hplus4FS_H{0}_taunu",
+        "LOW": "MadGraphPy8EvtGen_A14NNPDF30LO_HpL_H{}",
+        "INT": "MadGraphPy8EvtGen_A14NNPDF30LO_HpI_H{}",
+        "HIGH": "aMcAtNloPy8EvtGen_A14NNPDF30NLO_HpH_H{}",
     }
     
     NORM_BY_THEORY = True
@@ -70,7 +116,9 @@ class Higgs(MC, Signal):
                  scale=1,
                  **kwargs):
         
-        assert mass in Higgs.MASSES
+        ## check if this mass point is supported
+        assert mass in Higgs.MASSES, "unsupported %r mass"%mass
+
         if not name:
             name = "Hplus{}".format(mass)
         if label is None:
@@ -83,11 +131,11 @@ class Higgs(MC, Signal):
         self.name = name
         self.label=label
         
-        if mass <= max(Higgs.MASSES_LOW.keys()):
+        if mass <= 130:
             mode = "LOW"
-        elif mass <= max(Higgs.MASSES_INT.keys()):
+        elif mass <= 190:
             mode = "INT"
-        elif mass <= max(Higgs.MASSES_HIGH.keys()):
+        elif 200 <= mass <= 3000:
             mode = "HIGH"
         else:
             raise ValueError("unknown mass {} for the signal!".format(mass))

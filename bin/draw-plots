@@ -1,10 +1,4 @@
 #!/usr/bin/env python
-
-import ROOT
-from hpana import log
-from hpana.plotting import draw
-from hpana.analysis import Analysis
-from hpana.config import Configuration
 """
 * This script is for producing final analysis plots.
 * input is a ROOT TFile containing all the kinemtatics
@@ -13,8 +7,8 @@ from hpana.config import Configuration
 """
 
 # stdl-lib
-import sys
-import os
+import sys, os
+import multiprocessing 
 from collections import OrderedDict
 
 # - - - - - - - - - parse plot args (needed before ROOT)
@@ -22,12 +16,19 @@ from hpana.cmd import get_plotting_parser
 plotting_parser = get_plotting_parser()
 PLOTTING_ARGS = plotting_parser.parse_args()
 
-# local
+## local 
+from hpana.plotting import draw
+from hpana.analysis import Analysis
+from hpana.config import Configuration
+from hpana.cluster.parallel import run_pool, Job
+from hpana.variables import BDT_SCORES
 
 # - - - - - - - -  set log level
+from hpana import log
 log.setLevel(PLOTTING_ARGS.log)
 
 # - - - - - - - - Speed things up a bit
+import ROOT
 ROOT.SetSignalPolicy(ROOT.kSignalFast)
 ROOT.gROOT.SetBatch(True)
 log.info("ROOT is in batch mode")
@@ -45,27 +46,22 @@ analysis = Analysis(config)
 
 backgrounds = analysis.backgrounds
 data = analysis.data
-signals = analysis.signals
+if data.streams==["2015", "2016"]:
+    data.blind=False
+    data.blind_regions=[] 
+    data.blind_streams=[2017, 2018]
 
 # - - - - - - - - some checks on cmd args
 if PLOTTING_ARGS.fields:
-    fields = filter(lambda v: v.name in PLOTTING_ARGS.fields, config.variables)
+    fields = filter(lambda v: v.name in PLOTTING_ARGS.fields+BDT_SCORES[PLOTTING_ARGS.channel] , config.variables)
 else:
-    fields = config.variables
+    fields = config.variables 
 
 if PLOTTING_ARGS.categories:
     categories = filter(
         lambda c: c.name in PLOTTING_ARGS.categories, config.categories)
 else:
     categories = config.categories
-
-# systematics
-systematics = config.systematics  # <! common systematics
-systematics += analysis.qcd.systematics  # <! QCD fakes only
-if PLOTTING_ARGS.systematics:
-    # WIP: filter based on the list of systematics available
-    systematics = filter(
-        lambda s: s.name in PLOTTING_ARGS.systematics, systematics)
 
 ## systematics
 all_systematics = config.systematics[:]  # <! common systematics
@@ -86,26 +82,39 @@ if PLOTTING_ARGS.backgrounds:
 # - - - - if you wish to look at the signals
 if PLOTTING_ARGS.signals:
     signals = filter(
-        lambda s: s.name in PLOTTING_ARGS.signals, analysis.signals)
+        lambda s: s.name in PLOTTING_ARGS.signals, analysis.get_signals())
+else:
+    signals = analysis.get_signals(masses=[100, 160, 400, 3000])
 
 if PLOTTING_ARGS.no_data:
     data = None
 
-# - - - - - - - - do the plots
+
+## draw parameters 
+params = {
+    "hists_file":PLOTTING_ARGS.hists_file,
+    "backgrounds":backgrounds,
+    "data":data,
+    "signals":signals,
+    "signal_scale":1,
+    "systematics":systematics,
+    "output_dir":PLOTTING_ARGS.pdir,
+    "logy":PLOTTING_ARGS.logy,
+    "show_ratio":True,
+    "show_pvalue":False,
+    "error_bars":True,
+    "bin_optimization":False,
+    "scale_sig_to_bkg_sum":True,
+    "output_formats": ["png", "eps", "pdf"]
+}
+
+## setup the output directory for the plots
+if not os.path.isdir(params["output_dir"]):
+    os.system("mkdir -p %s"%params["output_dir"])
+
+jobs = []
+## draw plots
 for var in fields:
     for cat in categories:
-        draw(var, cat,
-             hists_file=PLOTTING_ARGS.hists_file,
-             backgrounds=backgrounds,
-             data=data,
-             signals=signals,
-             signal_scale=1,
-             systematics=systematics,
-             output_dir=PLOTTING_ARGS.pdir,
-             logy=PLOTTING_ARGS.logy,
-             show_ratio=True,
-             show_pvalue=False,
-             error_bars=True,
-             bin_optimization=False,
-             scale_sig_to_bkg_sum=True,
-             )
+        jobs += [Job(draw, var, cat, **params)]
+run_pool(jobs, n_jobs=-1)

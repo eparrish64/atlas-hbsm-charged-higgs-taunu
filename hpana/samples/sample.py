@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # std lib imports
-import os, sys, pickle, string, glob, copy, re 
+import os, sys, pickle, string, glob, copy, re, time  
 from operator import add, itemgetter
 from collections import namedtuple
 import random 
@@ -36,6 +36,35 @@ class Sample(object):
     label: 
         string; sample's lable (used for plotting, etc.) 
     """
+
+    ## these are some of the heavy datasets which will take a very long time to process if we want to process
+    ## all the systematics in one job. We can boost the analysis by assigning one worker per systematic for them.
+    HEAVY_DATASETS = [
+        "PowhegPy8EG_CT10nloME_AZNLOCTEQ6L1_WWlvlv",
+        "PowhegPy8EG_CT10nloME_AZNLOCTEQ6L1_WZlvll_mll4",
+        "PowhegPy8EG_CT10nloME_AZNLOCTEQ6L1_ZZqqll_mqq20mll20",
+        "PowhegPy8EG_CT10nloME_AZNLOCTEQ6L1_ZZvvqq_mqq20",
+        "PowhegPythia8EvtGen_A14_Wt_DR_inclusive_antitop",
+        "PowhegPythia8EvtGen_A14_Wt_DR_inclusive_top",
+        "Sherpa_221_NNPDF30NNLO_Wenu_MAXHTPTV140_280_BFilter",
+        "Sherpa_221_NNPDF30NNLO_Wenu_MAXHTPTV140_280_CFilterBVeto",
+        "Sherpa_221_NNPDF30NNLO_Wmunu_MAXHTPTV140_280_BFilter",
+        "Sherpa_221_NNPDF30NNLO_Wmunu_MAXHTPTV140_280_CFilterBVeto",
+        "Sherpa_221_NNPDF30NNLO_Wmunu_MAXHTPTV500_1000",
+        "Sherpa_221_NNPDF30NNLO_Zee_MAXHTPTV0_70_BFilter",
+        "Sherpa_221_NNPDF30NNLO_Zee_MAXHTPTV140_280_BFilter",
+        "Sherpa_221_NNPDF30NNLO_Zee_MAXHTPTV140_280_CFilterBVeto",
+        "Sherpa_221_NNPDF30NNLO_Zee_MAXHTPTV140_280_CVetoBVeto",
+        "Sherpa_221_NNPDF30NNLO_Zee_MAXHTPTV70_140_BFilter",
+        "Sherpa_221_NNPDF30NNLO_Zee_MAXHTPTV70_140_CVetoBVeto",
+        "Sherpa_221_NNPDF30NNLO_Zmumu_MAXHTPTV0_70_BFilter",
+        "Sherpa_221_NNPDF30NNLO_Zmumu_MAXHTPTV140_280_BFilter",
+        "Sherpa_221_NNPDF30NNLO_Zmumu_MAXHTPTV140_280_CFilterBVeto",
+        "Sherpa_221_NNPDF30NNLO_Zmumu_MAXHTPTV140_280_CVetoBVeto",
+        "Sherpa_221_NNPDF30NNLO_Zmumu_MAXHTPTV70_140_BFilter",
+        "Sherpa_221_NNPDF30NNLO_Zmumu_MAXHTPTV70_140_CVetoBVeto",
+    ]
+
 
     def __init__(self, config, name='Sample', label='Sample', **kwargs):
         ## the main configuration object check ../config.py
@@ -148,7 +177,7 @@ class Sample(object):
 
     @property
     def systematics(self):
-        return self.config.systematics
+        return self.config.systematics[:]
 
     def data_lumi(self, data_streams):
         """
@@ -203,10 +232,11 @@ class Sample(object):
         selection string is passed to the worker. Furtheremore for each selection category a weight is also 
         assigned.
         """
+
         if not systematics:
-            systematics = self.config.systematics[:1] #<! NOMINAL
+            systematics = self.systematics #<! NOMINAL
         else: #<! sanity check 
-            systematics = filter(lambda s: s.name in [st.name for st in self.systematics], systematics)
+            systematics = filter(lambda s: s.name in [st.name for st in systematics], self.systematics)
 
         if not fields:
             fields = self.config.variables
@@ -232,7 +262,6 @@ class Sample(object):
                 sts = set(ds.stream) - set(self.config.data_streams)
                 if len(sts)>0:
                     continue
-                
             # - - - - one worker per dataset
             # weights list per category
             weights = self.weights(categories=categories)
@@ -242,8 +271,7 @@ class Sample(object):
                 if weighted:
                     # - - lumi weight
                     if ds.events !=0:
-                        lumi_weight = self.data_lumi(ds.stream) * reduce(
-                            lambda x,y:x*y, ds.xsec_kfact_effic) / ds.events
+                        lumi_weight = (self.data_lumi(ds.stream) * ds.xsec_kfact_effic) / ds.events
                     else:
                         log.warning(" 0 lumi weight for %s"%ds.name)
                         lumi_weight = 0
@@ -256,21 +284,38 @@ class Sample(object):
                     if extra_weight:
                         weights[category.name] += [extra_weight]
 
-            worker = HistWorker(
-                name="%s.%s"%(self.name, ds.name),
-                sample=self.name,
-                dataset=ds,
-                fields=fields,
-                categories=categories_cp,
-                weights=weights,
-                systematics=systematics,
-                hist_templates=hist_templates,
-                channel=self.config.channel) 
-
-            workers.add(worker)
+            ## speeding up the analysis by submitting one job per systematic for heavy datasets 
+            if ds.ds in Sample.HEAVY_DATASETS and len(systematics)>1:
+               for syst in systematics:
+                    worker = HistWorker(
+                        name="%s.%s.%s"%(self.name, ds.name, syst.name),
+                        sample=self.name,
+                        dataset=ds,
+                        fields=fields,
+                        categories=categories_cp,
+                        weights=weights,
+                        systematics=[syst], 
+                        hist_templates=hist_templates,
+                        channel=self.config.channel)
+                    log.debug("--"*70)
+                    log.debug(worker)     
+                    workers.add(worker)
+            else:
+                worker = HistWorker(
+                    name="%s.%s"%(self.name, ds.name),
+                    sample=self.name,
+                    dataset=ds,
+                    fields=fields,
+                    categories=categories_cp,
+                    weights=weights,
+                    systematics=systematics, 
+                    hist_templates=hist_templates,
+                    channel=self.config.channel)
+                log.debug("--"*70)
+                log.debug(worker)     
+                workers.add(worker)
 
         return list(workers)
-
 
     def hists(self, categories=[],
               fields=[],
@@ -318,36 +363,38 @@ class Sample(object):
         # - - - - merge all the hists for this sample
         merged_hist_set = []
         for systematic in systematics:
-            for var in fields:
-                for cat in categories:
-                    hists = filter(
-                        lambda hs: (hs.systematic==systematic and hs.variable==var.name and hs.category==cat.name), hist_sets)
-                    hsum = hists[0].hist
-                    for hs in hists[1:]:
-                        hsum.Add(hs.hist)
-                    outname = self.config.hist_name_template.format(self.name, cat, var)
-                    hsum.SetTitle(outname)
-                    hsum.SetName(outname)
-                    merged_hist_set.append(Histset(sample=self.name, category=cat.name, variable=var.name, hist=hsum) )
+            for syst_var in systematic.variations:
+                for var in fields:
+                    for cat in categories:
+                        hists = filter(
+                            lambda hs: (hs.systematic==systematic and hs.variable==var.name and hs.category==cat.name), hist_sets)
+                        hsum = hists[0].hist
+                        for hs in hists[1:]:
+                            hsum.Add(hs.hist)
+                        outname = self.config.hist_name_template.format(self.name, cat, var)
+                        hsum.SetTitle(outname)
+                        hsum.SetName(outname)
+                        merged_hist_set.append(Histset(sample=self.name, category=cat.name, variable=var.name, hist=hsum) )
         canvas.Close()
         return merged_hist_set
     
-    def write_hists(self, hist_set, hists_file, systematics=["NOMINAL"], overwrite=True):
+    def write_hists(self, hist_set, hists_file, systematics=[], overwrite=True):
         """
         """
         tf = ROOT.TFile(hists_file, "UPDATE")
         for systematic in systematics:
-            rdir = "%s"%(systematic)
-            if not tf.GetDirectory(rdir):
-                tf.mkdir(rdir)
-            tf.cd(rdir)
-            for hs in hist_set:
-                hist = hs.hist
-                if overwrite:
-                    log.debug("overwriting the existing hist")
-                    hist.Write(hist.GetName(), ROOT.TObject.kOverwrite)
-                else:
-                    hist.Write(hist.GetName())
+            for syst_var in systematic.variations:
+                rdir = "%s"%(syst_var.name)
+                if not tf.GetDirectory(rdir):
+                    tf.mkdir(rdir)
+                tf.cd(rdir)
+                for hs in hist_set:
+                    hist = hs.hist
+                    if overwrite:
+                        log.debug("overwriting the existing hist")
+                        hist.Write(hist.GetName(), ROOT.TObject.kOverwrite)
+                    else:
+                        hist.Write(hist.GetName())
         tf.Close()
             
         return 
@@ -375,9 +422,13 @@ class Sample(object):
             hist_set = []
             for hf in hfiles:
                 htf = ROOT.TFile(hf, "READ")
-                systematics = [k.GetName() for k in htf.GetListOfKeys()]
-                for systematic in systematics:
-                    systdir = htf.Get(systematic)
+                systs = [k.GetName() for k in htf.GetListOfKeys()]
+                for st in systs:
+                    if not st in systematics:
+                        systematics += [st]
+
+                for syst in systs:
+                    systdir = htf.Get(syst)
                     for hname in [k.GetName() for k in systdir.GetListOfKeys()]:
                         # - - regex match the hist name
                         match = re.match(self.config.hist_name_regex, hname)
@@ -387,10 +438,10 @@ class Sample(object):
                             variable = match.group("variable")
                             fields.add(variable)
                             categories.add(category)
-                            hist = htf.Get("%s/%s"%(systematic, hname))
+                            hist = htf.Get("%s/%s"%(syst, hname))
                             hist.SetDirectory(0) #<! detach from htf
                             hset = Histset(sample=sample, category=category, variable=variable,
-                                            systematic=systematic, hist=hist)
+                                            systematic=syst, hist=hist)
                             hist_set.append(hset)
                 htf.Close()
         else:
@@ -398,7 +449,7 @@ class Sample(object):
             fields = list(set([hs.variable for hs in hist_set] ) )
             categories = list(set([hs.category for hs in hist_set] ) )
             systematics = list(set([hs.systematic for hs in hist_set]))
-
+            
         if write:
             # - - - - output file
             if not hists_file:
@@ -414,11 +465,16 @@ class Sample(object):
         # - - - - add them up
         merged_hist_set = []
         for systematic in systematics:
+            syst_hists = filter(lambda h: h.systematic==systematic, hist_set)
             for var in fields:
                 for cat in categories:
                     hists = filter(
-                        lambda hs: (hs.systematic==systematic and hs.variable==var and hs.category==cat), hist_set)
-                    hsum = hists[0].hist
+                        lambda hs: (hs.variable==var and hs.category==cat), syst_hists)
+                    if not hists:
+                        log.warning(
+                            "No hist for sample %s with systematic:%s , var:%s , and cat: %s is found!"%(self.name, systematic, var, cat))
+                        continue        
+                    hsum = hists[0].hist.Clone() #<! get the ownership right! 
                     for hs in hists[1:]:
                         hsum.Add(hs.hist)
                     outname = self.config.hist_name_template.format(self.name, cat, var)
@@ -487,7 +543,7 @@ class SystematicsSample(Sample):
 
         # - - - - - - - - signals    
         elif isinstance(self, Signal):
-            # - - - - samples already defined in Signal subclass
+            # - - - - samples already defined in Signal class
             log.debug(self.samples)
             assert len(self.samples) > 0
         else:
@@ -507,13 +563,8 @@ class SystematicsSample(Sample):
                 ## - - query on database with dataset ds property which is the same as sample's name
                 dss = self.config.database.query(ds=name, streams=self.config.data_streams)
                 for ds in dss:
-                    xsec, kfact, effic = ds.xsec_kfact_effic
                     log.debug(
-                    "dataset: {0}  cross section: {1} [pb] \n"
-                        "k-factor: {2} \n"
-                        "filtering efficiency: {3}\n"
-                        "events {4}".format(
-                            ds.name, xsec, kfact, effic, ds.events))
+                    "dataset: {0} \n cross section: {1} [pb] \n events {2}".format(ds.name, ds.xsec_kfact_effic, ds.events))
                     datasets.append(ds)
 
         return datasets

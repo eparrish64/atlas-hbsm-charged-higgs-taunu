@@ -42,14 +42,14 @@ log.info("ROOT is in batch mode")
 ## consts 
 ##-------------------------------------------------------------
 TREE_NAME = "NOMINAL"
-N_TRACKS = [1, 3]
+N_TRACKS = [1]
 FOLD_CUT_STR = "event_number%{0}!={1}"
 
 MASS_RANGES = [
     (90, 100, 110, 120), #< low mas I
-    # (130, 140, 150, 160), #< low mass II
-    # (160, 165, 170, 175, 180), #< int mass
-    (400, )# (200, 225, 250, 300, 350, 400), #< high mass I
+    (130, 140, 150, 160), #< int mass I
+    (170, 180, 190), #< int mass II
+    (200, 225, 250, 300, 350, 400), #< high mass I
     # range(500, 1100, 100) + range(1200, 2200, 200), #< high mass II
 ] 
 
@@ -62,15 +62,12 @@ CONFIG = Configuration(CLF_ARGS.channel,
 ## - - instantiate Analysis
 ANALYSIS  = Analysis(CONFIG, compile_cxx=True)
 
-## - - training samples ["TTbar", "SingleTop", "Wtaunu", "DiBoson", "Ztautau"]
-BKGS = filter(lambda s: s.name in ["TTbar", "SingleTop", "Wtaunu", "DiBoson", "Ztautau"], ANALYSIS.backgrounds)
+## - - training samples ["TTbar", "SingleTop", "Wtaunu", "Ztautau", "DiBoson"]
+BKGS = filter(lambda s: s.name in ["TTbar", "SingleTop", "Wtaunu", "Ztautau", "DiBoson"], ANALYSIS.backgrounds)
 SIGS = ANALYSIS.get_signals(masses=[m for mr in MASS_RANGES for m in mr])
 
 ## - - training features
 FEATS = CLF_FEATURES[CLF_ARGS.channel]
-
-## - - selections
-SELECTIONS = CLASSIFIER_CATEGORIES["taujet"].cuts*(ROOT.TCut("tau_0_n_charged_tracks==1"))
 
 ## - - setup outdir
 os.system("mkdir -p %s"%CLF_ARGS.outdir)
@@ -86,7 +83,13 @@ if CLF_ARGS.backend=="sklearn":
 
     ## - - event number for kfold training and ntracks for different training for different tau prongs. 
     BRACHES = ["event_number"] + ["tau_0_n_charged_tracks"] + [ft.tformula for ft in FEATS]
-    mparams = {"n_estimators":100}
+    mparams = {
+        "n_estimators":200, 
+        "min_weight_fraction_leaf": 0.02,
+        "max_depth": 10,
+        "verbose":1,
+        "learning_rate":0.1,
+        }
     clf_type = "GB%i"%mparams["n_estimators"]
 
     ## - - prepare training Dataframe
@@ -106,18 +109,26 @@ if CLF_ARGS.backend=="sklearn":
                 X_train = sdf[[ft.name for ft in CLF_FEATURES[CLF_ARGS.channel] ]] 
                 Y_train = sdf["class_label"]
                 X_weight = sdf["weight"] #<! pass it sample_weight to the fit method
-                
+
                 log.info("Training in mass rage:%s on ntracks=%i, nfold=%i, nevents=%i, and nfeatures=%i"%(
                     mass_tag, ntracks, rem, X_train.shape[0], X_train.shape[1]))
 
                 ## - - instantiate the model
-                sclf = SClassifier(CLF_ARGS.channel, **mparams)
-                sclf.name = SClassifier.MODEL_NAME_STR_FORMAT.format(
+                clf_name = SClassifier.MODEL_NAME_STR_FORMAT.format(
                     clf_type, CLF_ARGS.channel, mass_tag, ntracks, CLF_ARGS.kfolds, rem, X_train.shape[1])
+                sclf = SClassifier(CLF_ARGS.channel, name=clf_name, **mparams)
+
+                ## correlation matrix ?
+                if CLF_ARGS.plot_correlations:
+                    from hpana.classifier import features_correlation
+                    if rem !=1: #<! should be enough 
+                        continue
+                    p_title = r"Correlation Matrix: $ %i \leq m_{H^+} \leq %i [GeV]$"%(signal_masses[0], signal_masses[-1])
+                    features_correlation(X_train, CLF_FEATURES[CLF_ARGS.channel], outname=clf_name.replace(".pkl", ""), outdir=CLF_ARGS.outdir, title=p_title)
 
                 ## - - assign the job
                 jobs.append(Job(train_model, sclf, X_train, Y_train, X_weight,
-                                outdir=CLF_ARGS.outdir, validation_plots=CLF_ARGS.validation_plots))
+                                weight_sample=False, outdir=CLF_ARGS.outdir, validation_plots=CLF_ARGS.validation_plots))
     ## - - run
     if CLF_ARGS.parallel:
         run_pool(jobs, n_jobs=-1)
@@ -129,7 +140,6 @@ if CLF_ARGS.backend=="sklearn":
 ## tmva backend
 ##-----------------------------
 else:
-
     ## - - initialize TMVA
     ROOT.TMVA.Tools.Instance()
     ROOT.TMVA.PyMethodBase.PyInitialize()

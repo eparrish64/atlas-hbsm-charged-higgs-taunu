@@ -234,10 +234,7 @@ def main():
             "************** merging histograms  ************")
         log.info(
             "***********************************************")
-        analysis.merge_hists(
-            histsdir=ANA_ARGS.outdir,
-            overwrite=True,
-            write=True,)
+        analysis.merge_hists(samples=samples, histsdir=ANA_ARGS.outdir, overwrite=True, write=True,)
 
 
 # -------------------------------------------------------------

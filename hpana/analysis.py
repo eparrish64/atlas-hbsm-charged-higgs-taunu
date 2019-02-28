@@ -344,9 +344,7 @@ class Analysis(object):
         return merged_hists
     
     def merge_hists(self, samples=[], hist_set=[], **kwargs):
-        if samples:
-            samples = filter(lambda s: s.name in samples, self.samples)
-        else:
+        if not samples:
             samples = self.samples
 
         merged_hists = []

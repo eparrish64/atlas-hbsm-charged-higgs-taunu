@@ -1,0 +1,20 @@
+================
+This folder contains the GRLs and lumicalc files for the 2016 pp dataset reprocessed in release 21. 
+The luminosity tag used to produce the lumicalc files is OflLumi-13TeV-009.
+================
+
+Note that there is no difference between the GRLs in this directory and the previous versions stored in:
+/cvmfs/atlas.cern.ch/repo/sw/database/GroupData/GoodRunsLists/data16_13TeV/20170605/
+
+This directory just contains the latest (final) 2015+2016 luminosity tag (OflLumi-13TeV-009), 
+which is an update relative to the lumicalc files and quoted luminosities in the above directory (which used OflLumi-13TeV-008).
+
+-----------------
+Runs: 297730 - 311481 
+
+Luminosities:
+-----------------
+physics_25ns_21.0.19                     : 32988.1 pb-1   
+physics_25ns_21.0.19_ignoreToroidStatus  : 33651.8 pb-1 
+physics_25ns_21.0.19_BjetHLT             : 24555.6 pb-1 
+physics_25ns_21.0.19_BjetHLT_Tight       : 20644.1 pb-1 

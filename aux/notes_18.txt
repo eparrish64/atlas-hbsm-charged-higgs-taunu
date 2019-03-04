@@ -1,0 +1,19 @@
+Runs: 348885 - 364292
+
+This folder contains the 2018 pp dataset GRL for Periods B-Q (full 2018). 
+The GRL is called: data18_13TeV.periodAllYear_DetStatus-v102-pro22-04_Unknown_PHYS_StandardGRL_All_Good_25ns_Triggerno17e33prim.xml
+A soft link to this GRL with shorter logical name is: physics_25ns_Triggerno17e33prim.xml
+Analyses are recommented to use the 1.7e34 primary triggers in 2018, hence the name of this GRL.
+
+The luminosity for these GRLs has been calculated using the preliminary 2018 luminosity tag (OflLumi-13TeV-001).
+For more information on luminosity tags, please see:
+https://twiki.cern.ch/twiki/bin/view/Atlas/LuminosityForPhysics
+
+This folder also contains "actualMu" pileup rootfiles, since for MC16d and later we use the per-BCID pileup mu distribution rather than the BCID-averaged one.
+More information can be found here:
+https://twiki.cern.ch/twiki/bin/viewauth/AtlasProtected/ExtendedPileupReweighting#Generating_the_actual_pileup_fil
+
+Luminosity:
+-----------------
+physics_25ns_Triggerno17e33prim                     : 59937.2 pb-1 
+

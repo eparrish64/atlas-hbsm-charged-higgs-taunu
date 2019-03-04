@@ -1,0 +1,20 @@
+Runs: 325713 - 340453
+
+This folder contains the full 2017 pp dataset GRLs for Periods B-K. 
+The GRLs correspond to ***the fast 2017 data-reprocessing*** (i.e. *not* the original tier0 processing).
+
+The luminosity for these GRLs has been calculated using the preliminary 2017 luminosity tag (OflLumi-13TeV-010).
+For more information on luminosity tags, please see:
+https://twiki.cern.ch/twiki/bin/view/Atlas/LuminosityForPhysics
+
+~700/pb of data was recovered in the 2017 fast reprocessing, so it is very important that you update to use this new GRL if your analysis is using the reprocessed data.
+
+This folder also contains new "actualMu" pileup rootfiles, since for MC16d and later we use the per-BCID pileup mu distribution rather than the BCID-averaged one.
+More information can be found here:
+https://twiki.cern.ch/twiki/bin/viewauth/AtlasProtected/ExtendedPileupReweighting#Generating_the_actual_pileup_fil
+
+Luminosities:
+-----------------
+physics_25ns_Triggerno17e33prim                     : 44307.4 pb-1   
+physics_25ns_BjetHLT_Normal2017			    : 43650.0 pb-1
+physics_25ns_JetHLT_Normal2017			    : 44150.0 pb-1

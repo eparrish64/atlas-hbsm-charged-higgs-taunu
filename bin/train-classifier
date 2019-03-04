@@ -46,11 +46,11 @@ N_TRACKS = [1]
 FOLD_CUT_STR = "event_number%{0}!={1}"
 
 MASS_RANGES = [
-    (90, 100, 110, 120), #< low mas I
+    (80, 90, 100, 110, 120), #< low mas 
     (130, 140, 150, 160), #< int mass I
     (170, 180, 190), #< int mass II
     (200, 225, 250, 300, 350, 400), #< high mass I
-    # range(500, 1100, 100) + range(1200, 2200, 200), #< high mass II
+    range(500, 1100, 100) + range(1200, 2200, 200) + [2500, 3000], #< high mass II
 ] 
 
 ## - - build analysis main configuration object

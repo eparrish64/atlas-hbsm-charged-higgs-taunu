@@ -366,7 +366,7 @@ tau_0_met_mt = Variable(
     "tau_0_met_mt",
     title='m_{T}(#tau, E^{miss}_{T})GeV',
     latex=r"$m_{T}(\tau, E^{miss}_{T})$",
-    binning=(20, 0, 500), 
+    binning=(3000, 0, 3000), #<! fine binning needed for WS (rebin for plotting)
     scale=1.,
     unit='GeV')
 

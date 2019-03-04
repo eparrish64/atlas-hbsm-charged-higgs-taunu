@@ -8,8 +8,8 @@ from multiprocessing import Process
 ##-------------------------------------------------------------------------------------
 ## setup cmd args
 parser = argparse.ArgumentParser()
-parser.add_argument('action', choices=['rm', 'ab', 'at', 'skim', "mtf"],
-                    help='remove branches, add branches, add trees, or skim trees', )
+parser.add_argument('action', choices=['rm', 'ab', 'at', 'skim', "mtf", "zip"],
+                    help='remove branches, add branches, add trees, skim trees or compress trees', )
 parser.add_argument('--files', nargs='+', 
                     help='ntuples to be decorated')
 parser.add_argument('--outdir', "-od", type=str, 
@@ -27,6 +27,10 @@ args = parser.parse_args()
 
 # ROOT stuff after cmd setup
 import ROOT
+ROOT.gROOT.SetBatch(True)
+# ROOT.gROOT.Macro( '$ROOTCOREDIR/scripts/load_packages.C' )
+# if(not ROOT.xAOD.Init().isSuccess()): print "Failed xAOD.Init()"
+
 from hpana import log
 from hpana.cluster.parallel import run_pool
 
@@ -258,6 +262,30 @@ def skim_tree(file_name, selections=SELECTIONS, **kwargs):
     
     return
 
+##-------------------------------------------------------------------------------------
+## 
+def compress_file(file_name, copy_input=False, merge_metadata=False, suffix=".cmp", 
+    out_keys=["NOMINAL", "h_metadata", "h_metadata_theory_weights", "h_metadata_htxs_weights", "EventLoop_FileExecuted", "EventLoop_JobStats"]):
+    """
+    """
+    ifile = ROOT.TFile(file_name, "READ")
+    ofile = ROOT.TFile(file_name+suffix, "RECREATE")
+    keys = ifile.GetListOfKeys()
+    keys = filter(lambda k: k.GetName() in out_keys, keys)
+    for key in keys:
+        tobject = key.ReadObj()
+        if isinstance(tobject, ROOT.TTree):
+            cobject = tobject.CloneTree()
+            cobject.SetAutoFlush(0)
+        else:
+            cobject = tobject.Clone()
+        cobject.Write()
+
+    ofile.Close()
+    ifile.Close()
+
+    return 
+
 ##----------------------------------------------------------------------------------------
 ##
 def merge_tfiles(idir, **kwargs):
@@ -293,9 +321,8 @@ class Job(Process):
         """
         
         # copy to new file
-        if self.copy_input:
+        if self.copy_input:    
             opath = "%s.%s"%(self.ipath, args.suffix)
-            
             # - - - - if out dir is provided copy files to it
             if self.outdir:
                 reldir, oname = opath.split("/")[-2:]
@@ -330,16 +357,16 @@ if __name__=='__main__':
     
     # - - - - whats's the ipath for workfunc
     if not args.files:
-        raise IOError('ipath file pls?')
+        raise IOError('input files plz?')
     dfiles = args.files
 
     # - - - - setup the workers args 
 
     workfunc_args = dict()
     
-    workfunc_args['copy_ipath']  = True
+    workfunc_args['copy_input']  = True
     if args.update_in_place:
-        workfunc_args['copy_ipath']  = False
+        workfunc_args['copy_input']  = False
 
     if args.outdir:
         workfunc_args["outdir"] = args.outdir
@@ -361,6 +388,10 @@ if __name__=='__main__':
     
     elif args.action=="mtf":
         workfunc = merge_tfiles
+
+    elif args.action=="zip":
+        workfunc_args['copy_input'] = False
+        workfunc = compress_file        
         
     else:
         raise Exception(" requested--- %s --- action is not supported"%args.action)

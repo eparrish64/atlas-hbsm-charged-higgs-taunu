@@ -58,7 +58,7 @@ fi
 #SBATCH --account=ctb-stelzer
 SLURM_JOB_TEMPLATE ="""\
 #!/bin/bash
-#SBATCH --time=00:10:00
+#SBATCH --time=5:0:00
 #SBATCH --account={project}
 #SBATCH --job-name={jobname}
 #SBATCH --error={logsdir}/%x.e%A

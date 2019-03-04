@@ -2,16 +2,26 @@
 "2018":
   common:
     grl: ""
-   
   taujet:
-    mc_path: /project/6024950/sbahrase/SAMPLES/HBSM/nTuples/2018/18v04/taujet/mc16a/
-    mc_prefix: "user."
-    mc_pattern: '*hist-output.root*'
+    mc_path: /project/6024950/sbahrase/SAMPLES/HBSM/nTuples/v06/taujet/mc16/
+    mc_prefix: #"group.phys-higgs.TJ.mc16"
+    mc_pattern: '*.BSM_Hptaunu.root*' #[!*.nn]'  
     mc_treename: 'NOMINAL'
     mc_sampletype:
-    data_path: /project/6024950/sbahrase/SAMPLES/HBSM/nTuples/2018/18v04/taujet/data
-    data_prefix: "user."
-    data_pattern: '*hist-output.root*'
+    data_path: /project/6024950/sbahrase/SAMPLES/HBSM/nTuples/v06/taujet/data/
+    data_prefix: 
+    data_pattern: '*.BSM_Hptaunu.root*' #'*hist-output*[!*.nn]' 
     data_treename: 'NOMINAL'
     data_sampletype:
             
+  taulep:
+    mc_path: /project/6024950/sbahrase/SAMPLES/HBSM/nTuples/v06/taulep/mc16/
+    mc_prefix: #'user.'
+    mc_pattern: '*.BSM_Hptaunu.root*'   
+    mc_treename: 'NOMINAL'
+    mc_sampletype:
+    data_path: /project/6024950/sbahrase/SAMPLES/HBSM/nTuples/v06/taulep/data/
+    data_prefix: 
+    data_pattern: '*.BSM_Hptaunu.root*'  # '*hist-output*[!*.nn]' 
+    data_treename: 'NOMINAL'
+    data_sampletype:

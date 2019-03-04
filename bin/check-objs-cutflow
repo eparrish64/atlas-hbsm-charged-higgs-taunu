@@ -35,7 +35,7 @@ log.info("ROOT is in batch mode")
 ##------------------------------------------------------------------------
 ## consts
 ##------------------------------------------------------------------------
-CF_HISTS_KEYS = ["cutflow_muon_NOMINAL", "cutflow_ele_NOMINAL", "cutflow_tau_NOMINAL"]
+CF_HISTS_KEYS = ["cutflow_muon_NOMINAL", "cutflow_ele_NOMINAL", "cutflow_tau_NOMINAL", "cutflow_jet_NOMINAL"]
 
 
 ##------------------------------------------------------------------------
@@ -66,7 +66,7 @@ def cutflow_table(ifiles, cfkeys=[], latex=True):
                     else:
                         row = (bin_label, 0)
                 else:
-                    row = (bin_label, "%.2f%%"%( (1 - ((bin_one-hbin)/bin_one) )*100.))
+                    row = (bin_label, "%i (%.2f%%)"%( hbin, (1 - ((lbin-hbin)/lbin) )*100.))
                 table[fkey][k][row[0]] = row[1]
             ## overal reduction
             table[fkey][k]["overall"] = "%.2f%%"%(100* (1 - (hk.GetBinContent(1) - hk.GetBinContent(hk.GetNbinsX()))/(hk.GetBinContent(1) ) ) )

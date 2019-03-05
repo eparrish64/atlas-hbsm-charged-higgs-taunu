@@ -119,11 +119,8 @@ TAU_IS_OTHER = TCut("!(%s || %s || %s ||%s ||%s || %s)"%(
 
 ## QCD fake tau
 TAU_IS_FAKE = TCut("!(%s || %s)"%(TAU_IS_TRUE, TAU_IS_LEP))
+ANTI_TAU = TCut("tau_0_jet_bdt_score_trans > 0.02 && tau_0_jet_bdt_loose==0")
 
-ANTI_TAU = {
-    "mc15": TCut("tau_0_jet_bdt_score_sig > 0.02 && tau_0_jet_bdt_loose==0"),
-    "mc16": TCut("tau_0_jet_bdt_score_trans > 0.02 && tau_0_jet_bdt_loose==0"),
-}
 
 VETO_TAU = ROOT.TCut("n_taus==0")
 TAU_EL_OLR_PASS = {
@@ -622,6 +619,7 @@ FAKE_TAU_SOURCE = {
 ##------------------------------------------------------------------------------------
 CLF_TJ = Category("CLF_TAUJET",
                   label="clf #tau-jet",
+                  truth_tau=None,
                   cuts_list=[
                       CLEAN_EVT,
                       TAU_BASE,
@@ -633,6 +631,7 @@ CLF_TJ = Category("CLF_TAUJET",
 
 CLF_TL = Category("CLF_TAULEP",
                   label="clf #tau-lep",
+                  truth_tau=None,
                   cuts_list=[
                       CLEAN_EVT,
                       TAU_BASE,

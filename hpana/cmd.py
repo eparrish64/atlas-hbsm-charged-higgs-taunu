@@ -293,10 +293,16 @@ def get_clf_parser():
     clf_parser.add_argument("--plot-correlations", action="store_true",
                             help="plot features correlation")
 
-    clf_parser.add_argument("--kfolds", type=int, default=3,
+    clf_parser.add_argument("--kfolds", type=int, default=5,
                             help="number for folds for k-fold training")
     
     clf_parser.add_argument("--outdir", type=str, default="clfout",
                             help="directory to put the training outputs in")
+
+    clf_parser.add_argument("--sig", nargs="+", default=None,
+                            help="list of signals")
+
+    clf_parser.add_argument("--bkg", nargs="+", default=None,
+                            help="list of bkgs")
 
     return clf_parser

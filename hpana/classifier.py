@@ -24,7 +24,7 @@ import pickle, cPickle
 
 ## local 
 from . import log 
-from categories import CLASSIFIER_CATEGORIES, TAU_IS_TRUE
+from categories import CLASSIFIER_CATEGORIES, TAU_IS_TRUE, ANTI_TAU
 
 ## ROOT 
 import ROOT
@@ -54,21 +54,21 @@ class Classifier(TMVA.Factory):
         self.method_type = method_type
         self.method_name = method_name
             
-        ## - - instantiate Base 
+        ## instantiate Base 
         super(Classifier, self).__init__(factory_name, self.output, self.params)
         
-        ## - - add input features to the TMVA.DataLoader
+        ## add input features to the TMVA.DataLoader
         for var in self.features:
             self.dataloader.AddVariable(var.tformula, var.title, 
                                         var.unit if hasattr(var, "unit") else "",)
             
-        ## - - features dict in order to keep references for TMVA.Reader !
+        ## features dict in order to keep references for TMVA.Reader !
         self.features_dict = OrderedDict()
             
-        ## - - retrieve trained model
+        ## retrieve trained model
         if weight_file:
             self.weight_file = weight_file
-            ## - - instantiate Reader for model evaluation
+            ## instantiate Reader for model evaluation
             self.reader = TMVA.Reader()
 
             for feat in self.features:
@@ -112,7 +112,7 @@ class Classifier(TMVA.Factory):
         if signal_masses:
             signals = filter(lambda s: s.mass in signal_masses, signals)
 
-        ## - - prepare bkg and sig tree
+        ## prepare bkg and sig tree
         bkg_tchain = ROOT.TChain(treename)
         bkg_files = []
         for bkg in backgrounds:
@@ -153,7 +153,7 @@ class Classifier(TMVA.Factory):
         """
         """
         assert os.path.isfile(self.weight_file), "weight file is not provided"
-        ## - - update referenced features 
+        ## update referenced features 
         for feat, val in features_dict.iteritems():
             self.features_dict[feat] = val
         return self.reader.EvaluateMVA(self.method_name)
@@ -180,12 +180,13 @@ class SClassifier(GradientBoostingClassifier):
                      channel="taujet",
                      treename="NOMINAL",
                      train_data="CLF_DATA.pkl",
+                     data_lumi=36200, 
                      overwrite=False,
                      truth_match_tau=True):
         """Training input as pandas DataFrame
         """
 
-        ## - - first check if all the samples are already available in the training Dataframe
+        ## first check if all the samples are already available in the training Dataframe
         missing_bkgs = []
         missing_sigs = []
         if os.path.isfile(train_data) and not overwrite:
@@ -212,84 +213,134 @@ class SClassifier(GradientBoostingClassifier):
             category = CLASSIFIER_CATEGORIES[channel]
         cuts = category.cuts
 
-        ## - - keep event number (is needed for kfold training)
+        ## keep event number (is needed for kfold training)
         if not branches:
             branches = ["event_number"] + [ft.tformula for ft in features]
 
-        ## - - feature name as column label
+        ## feature name as column label
         columns = {}
         for feat in features:
             columns[feat.tformula] = feat.name
 
+        ## backgrounds 
         bkg_dfs = []
         for bkg in missing_bkgs:
             log.info("Adding %s bkg ..."%bkg.name)
             bfiles = []
-
-            ## - - treat QCD fakes properly 
+            ## treat QCD fakes properly 
             if "QCD" in bkg.name:
-                ## - - only FF weights are applicable here
-                ws = bkg.ff_weights(categories=[category]).values()[0]
+                ## only FF weights are applicable here
+                ws = bkg.ff_weights(categories=[category])["NOMINAL"][category.name]   
                 ws = "*".join(ws)
                 for ds in bkg.data.datasets:
+                    log.debug("**"*30 + ds.name + "**"*30)
                     bfiles += ds.files
-                ## - - add antitau cut    
-                cuts = category.cuts * ROOT.TCut("tau_0_jet_bdt_score_trans > 0.02 && tau_0_jet_bdt_loose==0")
+                ## add antitau cut 
+                category.tauid = ANTI_TAU
+                category.truth_tau = None #<! not applicable to DATA   
+                cuts = category.cuts 
+                if not bfiles:
+                    log.warning("No root file is found for %s"%bkg.name)
+                    continue
+                selection = cuts.GetTitle()
+                log.debug("Cut: %r\n"%selection)
+                log.debug("Weight: %r\n"%ws)
+
+                b_arr = root2array(bfiles, treename=treename, branches=branches+[ws], selection=selection)
+                df = pd.DataFrame(b_arr.flatten())
+                columns[ws] = "weight"
+                df = df.rename(columns=columns)
+                log.debug("#events: %r\n"%df.shape[0])
+
+                ## class label for bkg 
+                df["class_label"] = pd.Series(np.zeros(df.size))
+                bkg_dfs += [df]
             else:
-                ws = bkg.weights(categories=[category]).values()[0]
-                ws = "*".join(ws)
+                b_arrs = []
+                b_dfs = []
+                index_offset = 0
                 for ds in bkg.datasets:
-                    bfiles += ds.files
-                if truth_match_tau:
-                    cuts = category.cuts * TAU_IS_TRUE 
-             
-            ## - - keep total event weight too
-            log.debug(ws)
-            if not bfiles:
-                log.warning("No root file is found for %s"%bkg.name)
-                continue
-            b_arr = root2array(bfiles, treename=treename, branches=branches+[ws], selection=cuts.GetTitle())
-            df = pd.DataFrame(b_arr.flatten())
+                    log.debug("**"*30 + ds.name + "**"*30)
+                    bfiles = ds.files
+                    if truth_match_tau:
+                        cuts = category.cuts + TAU_IS_TRUE 
+                    if not bfiles:
+                        log.warning("No root file is found for %s"%bkg.name)
+                        continue
 
-            ## - - rename columns 
-            columns[ws] = "weight"
-            bkg_df = df.rename(columns=columns)
+                    ## common Scale Factors
+                    ws = bkg.weights(categories=[category]).values()[0]
+                    ws = "*".join(ws)
 
-            ## - - class label for bkg 
-            bkg_df["class_label"] = pd.Series(np.zeros(bkg_df.size))
-            bkg_dfs += [bkg_df]
+                    ## add luminosity weight 
+                    lumi_weight = (bkg.data_lumi(ds.stream) * ds.xsec_kfact_effic) / ds.events
+                    ws = ws + "*{}".format(lumi_weight)
+                    selection = cuts.GetTitle()
+                    log.debug("Cut: %r\n"%selection)
+                    log.debug("Weight: %r\n"%ws)
 
+                    ## convert ROOT to numpy array 
+                    b_arr = root2array(bfiles, treename=treename, branches=branches+[ws], selection=selection)
+                    df = pd.DataFrame(b_arr.flatten())
+
+                    ## CAREFUL the weight string changes due to LUMI factor
+                    columns[ws] = "weight"
+                    df = df.rename(columns=columns)
+                    log.debug("Weight sum: %r\n"%np.sum(df["weight"]))
+                    log.debug("#events: %r\n"%df.shape[0])
+                    b_dfs += [df]
+
+                bkg_df = pd.concat(b_dfs, ignore_index=True, sort=False)
+                ## class label for bkg 
+                bkg_df["class_label"] = pd.Series(np.zeros(bkg_df.size))
+                bkg_dfs += [bkg_df]
+            log.debug("--"*70)
+
+        ## signals 
         sig_dfs = []
         for sig in missing_sigs:
             log.info("Adding %s signal ..."%sig.name)
-            ws = sig.weights(categories=[category]).values()[0]
-            ws = "*".join(ws)
-            log.debug(ws)
             
             if truth_match_tau:
-                cuts = category.cuts * TAU_IS_TRUE
+                cuts = category.cuts + TAU_IS_TRUE
             
-            ## - - keep total event weight too
-            sfiles = []
+            s_dfs = []
             for ds in sig.datasets:
-                sfiles += ds.files
+                log.debug("**"*30 + ds.name +"**"*30)
+                sfiles = ds.files
+                if not sfiles:
+                    log.warning("No root file is found for %s"%sig.name)
+                    continue
+                
+                ## common Scale Factors 
+                ws = sig.weights(categories=[category]).values()[0]
+                ws = "*".join(ws)
 
-            if not sfiles:
-                log.warning("No root file is found for %s"%sig.name)
-                continue
-    
-            s_arr = root2array(sfiles, treename=treename, branches=branches+[ws], selection=cuts.GetTitle())
-            df = pd.DataFrame(s_arr.flatten())
-            columns[ws] = "weight"
-            sig_df = df.rename(columns=columns)
-            
-            ## - - class label for sig
-            sig_df["class_label"] = pd.Series(np.ones(sig_df.size))
-            sig_dfs += [sig_df]
+                ## add luminosity weight 
+                lumi_weight = (sig.data_lumi(ds.stream) * ds.xsec_kfact_effic) / ds.events
+                ws = ws + "*{}".format(lumi_weight)
+                selection = cuts.GetTitle()
+                log.debug("Cut: %r\n"%selection)
+                log.debug("Weight: %r\n"%ws)
 
-        ## - - index based on the sample name
+                ## convert ROOT to numpy array 
+                s_arr = root2array(sfiles, treename=treename, branches=branches+[ws], selection=selection)
+                df = pd.DataFrame(s_arr.flatten())
+
+                columns[ws] = "weight"
+                df = df.rename(columns=columns)
+                log.debug("Weight sum: %r\n"%np.sum(df["weight"]))
+                log.debug("#events: %r\n"%df.shape[0])
+                log.debug("--"*70)
+                s_dfs += [df]
+
+            s_df = pd.concat(s_dfs, ignore_index=True, sort=False)
+            ## class label for bkg 
+            s_df["class_label"] = pd.Series(np.ones(s_df.size))
+            sig_dfs += [s_df]
+
+        ## concat sig & bkg and index based on the sample name
         keys = [bkg.name for bkg in missing_bkgs] + [sig.name for sig in missing_sigs]
-        print bkg_dfs+sig_dfs
         dframe = pd.concat(bkg_dfs+sig_dfs, keys=keys, sort=False)
             
         if overwrite:
@@ -324,8 +375,8 @@ def train_model(model, X_train, Y_train, X_weight,
         with open(mpath, "r") as cache:
             model = cPickle.load(cache)
     else:
-        ## - - train the model,
-        ## - - please note that signals might have negative weights and therefore will be thrown away for training!
+        ## train the model,
+        ## please note that signals might have negative weights and therefore will be thrown away for training!
         model = model.fit(X_train, Y_train, sample_weight=X_weight_tr if weight_sample else None)
         if save_model:
             mpath = os.path.join(outdir, model.name)

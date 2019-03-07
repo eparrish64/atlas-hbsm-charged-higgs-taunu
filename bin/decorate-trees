@@ -264,19 +264,24 @@ def skim_tree(file_name, selections=SELECTIONS, **kwargs):
 
 ##-------------------------------------------------------------------------------------
 ## 
-def compress_file(file_name, copy_input=False, merge_metadata=False, suffix=".cmp", 
+def compress_file(file_name, copy_input=False, merge_metadata=False, suffix=".cmp", overwrite=False,
     out_keys=["NOMINAL", "h_metadata", "h_metadata_theory_weights", "h_metadata_htxs_weights", "EventLoop_FileExecuted", "EventLoop_JobStats"]):
     """
     """
     ifile = ROOT.TFile(file_name, "READ")
-    ofile = ROOT.TFile(file_name+suffix, "RECREATE")
+    ofile_name = file_name+suffix
+    if os.path.isfile(ofile_name) and not overwrite:
+        log.warning("%s already exists, set overwrite=True if you want to overwrite it"%ofile_name)
+    ofile = ROOT.TFile(ofile_name, "RECREATE")
+
     keys = ifile.GetListOfKeys()
     keys = filter(lambda k: k.GetName() in out_keys, keys)
     for key in keys:
+        log.info("Writing %s to %s"%(key.name, ofile_name))
         tobject = key.ReadObj()
         if isinstance(tobject, ROOT.TTree):
+            tobject.SetAutoFlush(0)
             cobject = tobject.CloneTree()
-            cobject.SetAutoFlush(0)
         else:
             cobject = tobject.Clone()
         cobject.Write()

@@ -72,8 +72,8 @@ TRIGGERS = {
     },
 }
 
-# - - - - multijet + MET trigger for FFs multijet CR
-MULTIJET_TRIGGER = {
+# - - - - multijet + MET trigger for FFs multijet CR (@NOTE the MET trig threshold)
+MULTIJET_MET_TRIGGER = {
     "2015": "run_number <= 284484 && (HLT_4j85 || HLT_xe70_tc_lcw || HLT_xe70_mht)",
     "2016": "(run_number >= 296939 && run_number <= 300287 && HLT_4j85) || (HLT_4j100 && (run_number > 300287 && run_number <= 311481))",
     "2017": "(run_number >= 324320 && HLT_4j120 && run_number <=341649)",
@@ -185,8 +185,7 @@ def get_mj_met_trigger(streams, dtype="DATA"):
 
     trig_string = []
     for st in streams:
-        trig_string.append("( ({0}) || ({1}) )".format(
-            MULTIJET_TRIGGER[st], TRIGGERS["taujet"]["DATA"][st]))
+        trig_string.append("( {0} )".format(MULTIJET_MET_TRIGGER[st]))
 
     trig_string = "||".join(trig_string)
     return ROOT.TCut(trig_string)

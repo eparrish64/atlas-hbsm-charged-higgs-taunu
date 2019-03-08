@@ -129,22 +129,23 @@ if YIELDS_ARGS.yields_table:
                 Yield(sample=hs.sample, category=hs.category, systematic=hs.systematic, events=nevents))
                 
     # - - - - - - - - sum of bkg
-    for cat in categories:
-        yields_nom = filter(
-                lambda y: y.category == cat.name and y.systematic == "NOMINAL", yields)
-        bkg_yields_nom = filter(
-                lambda y: y.sample in [b.name for b in backgrounds], yields_nom)
-        events_sum_nom = sum([y.events for y in bkg_yields_nom])
+    if backgrounds:
+        for cat in categories:
+            yields_nom = filter(
+                    lambda y: y.category == cat.name and y.systematic == "NOMINAL", yields)
+            bkg_yields_nom = filter(
+                    lambda y: y.sample in [b.name for b in backgrounds], yields_nom)
+            events_sum_nom = sum([y.events for y in bkg_yields_nom])
 
-        for systematic in systematics_vars:
-            yields_cat = filter(
-                lambda y: y.category == cat.name and y.systematic == systematic.name, yields)
-            bkg_yields = filter(
-                lambda y: y.sample in [b.name for b in backgrounds], yields_cat)
-            events_sum = sum([y.events for y in bkg_yields])
-            rvalue = "%0.2f"%events_sum if systematic.name=="NOMINAL" else "%0.2f(%0.2f%%)"%(events_sum, ((events_sum-events_sum_nom)/events_sum_nom)*100)
-            yields.append(
-                Yield(sample="bkgSum", category=cat.name, systematic=systematic.name, events=rvalue))
+            for systematic in systematics_vars:
+                yields_cat = filter(
+                    lambda y: y.category == cat.name and y.systematic == systematic.name, yields)
+                bkg_yields = filter(
+                    lambda y: y.sample in [b.name for b in backgrounds], yields_cat)
+                events_sum = sum([y.events for y in bkg_yields])
+                rvalue = "%0.2f"%events_sum if systematic.name=="NOMINAL" else "%0.2f(%0.2f%%)"%(events_sum, ((events_sum-events_sum_nom)/events_sum_nom)*100)
+                yields.append(
+                    Yield(sample="bkgSum", category=cat.name, systematic=systematic.name, events=rvalue))
 
     # - - - - - - - - tabulate the yields
     for cat in categories:

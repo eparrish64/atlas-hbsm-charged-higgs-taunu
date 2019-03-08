@@ -105,7 +105,7 @@ params = {
     "error_bars":True,
     "bin_optimization":False,
     "scale_sig_to_bkg_sum":True,
-    "output_formats": ["png", "eps", "pdf"]
+    "output_formats": PLOTTING_ARGS.fmt,
 }
 
 ## setup the output directory for the plots

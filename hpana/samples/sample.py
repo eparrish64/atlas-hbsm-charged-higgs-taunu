@@ -139,19 +139,19 @@ class Sample(object):
         else:
             cuts += trigger
         
-        # - - - - tauID (for fakes check fakes.py)
+        # - - tauID (for fakes check fakes.py)
         if tauid:
             cuts += tauid
         else:
             cuts += self.config.tauid
 
-        # - - - - truth matching (defualt it true tau)
+        # - - truth matching (defualt it true tau)
         if truth_match_tau:
             cuts += truth_match_tau
         elif isinstance(self, MC):
             cuts += self.config.true_tau
 
-        # - - - - place holder for any sample specific custs
+        # - - place holder for any sample specific custs
         if extra_cuts:
             cuts += extra_cuts
             
@@ -163,9 +163,9 @@ class Sample(object):
         The weights could in general be dependent on the category selection.
         """
 
-        # - - - - defensive copy
+        # - - defensive copy
         weight_fields = self.config.weight_fields[:]
-        # - - - - MC common weights
+        # - - MC common weights
         if not categories:
             categories = self.config.categories
         weights_dict = {}
@@ -196,7 +196,7 @@ class Sample(object):
         for cat in categories:
             hcat = filter(lambda hs: hs.category==cat.name, hist_set)
             hist = hcat[0].hist
-            # - - - - add the events from overflow bin too 
+            # - - add the events from overflow bin too 
             nbins = hist.GetNbinsX() + 2
             nevents[cat.name] = hist.Integral(0, nbins)
             log.info("# of events from %s tree of %s sample in category %s: %0.4f"%(
@@ -243,18 +243,18 @@ class Sample(object):
         if not categories:
             categories = self.config.categories
 
-        # - - - - same trigger for all selection categories ?
+        # - - same trigger for all selection categories ?
         if not trigger:
             triggers = self.triggers(categories)
 
-        # - - - - defensive copy 
+        # - - defensive copy 
         categories_cp = copy.deepcopy(categories)
         for category in categories_cp:
             category.cuts += trigger if trigger else triggers[category.name]
             if extra_cuts:
                 category.cuts += extra_cuts
             
-        # - - - - one worker per dataset per systematic
+        # - - one worker per dataset per systematic
         workers = set()
         for ds in self.datasets:
             if isinstance(self, MC):
@@ -262,16 +262,20 @@ class Sample(object):
                 sts = set(ds.stream) - set(self.config.data_streams)
                 if len(sts)>0:
                     continue
-            # - - - - one worker per dataset
+
+            # - - one worker per dataset
             # weights list per category
             weights = self.weights(categories=categories)
 
             for category in categories_cp:
-                # - - - - lumi, MC and extra weights  
+                # - - lumi, MC and extra weights  
                 if weighted:
                     # - - lumi weight
                     if ds.events !=0:
-                        lumi_weight = (self.data_lumi(ds.stream) * ds.xsec_kfact_effic) / ds.events
+                        if ds.lumi_weight:
+                            lumi_weight = self.data_lumi(ds.stream) * ds.lumi_weight
+                        else:
+                            lumi_weight = (self.data_lumi(ds.stream) * ds.xsec_kfact_effic) / ds.events
                     else:
                         log.warning(" 0 lumi weight for %s"%ds.name)
                         lumi_weight = 0
@@ -342,11 +346,11 @@ class Sample(object):
         if not categories:
             raise RuntimeError("no category is selected to produce hists for it")
         
-        # - - - - - - - - create a default canvas for the TTree.Draw
+        # - - - - - - create a default canvas for the TTree.Draw
         canvas = ROOT.TCanvas()
 
         hist_sets = []
-        # - - - - prepare the workers
+        # - - prepare the workers
         workers = self.workers(
             categories=categories,
             fields=fields,
@@ -360,7 +364,7 @@ class Sample(object):
         for res in results:
             hist_sets += res.get(3600) #<! without the timeout this blocking call ignores all signals.
 
-        # - - - - merge all the hists for this sample
+        # - - merge all the hists for this sample
         merged_hist_set = []
         for systematic in systematics:
             for syst_var in systematic.variations:
@@ -408,14 +412,14 @@ class Sample(object):
         if not hist_set:
             log.info("reading dataset hists from %s"%histsdir)
             assert histsdir, "hists dir is not provided!"
-            # - - - - retrieve the samples hists
+            # - - retrieve the samples hists
             hfiles = glob.glob("%s/%s.*"%(histsdir, self.name))
 
             if not hfiles:
                 log.warning("no hists found for the %s in %s dir"%(self.name, histsdir))
                 return []
 
-            # - - - - extract the hists 
+            # - - extract the hists 
             fields = set()
             categories = set()
             systematics = []
@@ -445,24 +449,24 @@ class Sample(object):
                             hist_set.append(hset)
                 htf.Close()
         else:
-            # - - - - get list of categories and fields available in hist_set
+            # - - get list of categories and fields available in hist_set
             fields = list(set([hs.variable for hs in hist_set] ) )
             categories = list(set([hs.category for hs in hist_set] ) )
             systematics = list(set([hs.systematic for hs in hist_set]))
             
         if write:
-            # - - - - output file
+            # - - output file
             if not hists_file:
                 hists_file = self.config.hists_file
             merged_hists_file = ROOT.TFile(os.path.join(histsdir, hists_file), "UPDATE")
         
-        # - - - - make sure hists are for this sample
+        # - - make sure hists are for this sample
         hist_set = filter(lambda hs: hs.sample.startswith(self.name), hist_set)
         if not hist_set:
             log.warning("no hist is found for %s; skipping the merge!"%self.name)
             return []
 
-        # - - - - add them up
+        # - - add them up
         merged_hist_set = []
         for systematic in systematics:
             syst_hists = filter(lambda h: h.systematic==systematic, hist_set)
@@ -491,7 +495,7 @@ class Sample(object):
                         merged_hists_file.cd(rdir)
                         hsum.Write(outname, ROOT.TObject.kOverwrite)
                         
-        # - - - - close open streams
+        # - - close open streams
         if write:
             merged_hists_file.Close()
         
@@ -521,10 +525,10 @@ class SystematicsSample(Sample):
     def __init__(self, *args, **kwargs):
         database = kwargs.pop("database", None)
         
-        # - - - - - - - - instantiate the base class
+        # - - - - - - instantiate the base class
         super(SystematicsSample, self).__init__(*args, database=database, **kwargs)
         
-        # - - - - - - - - backgrounds
+        # - - - - - - backgrounds
         if isinstance(self, Background):
             sample_key = self.__class__.__name__.lower()
             sample_info = samples_db.get_sample(
@@ -534,16 +538,16 @@ class SystematicsSample(Sample):
             if 'color' in sample_info and 'color' not in kwargs:
                 kwargs['color'] = sample_info['color']
 
-            # - - - - list of sample components from DataBase
+            # - - list of sample components from DataBase
             self.samples = sample_info['samples']
             log.debug(self.samples)
             if (self.samples is None or len(self.samples) < 1):
                 log.error("no sample is available for %s"%sample_info['name'])
                 raise RuntimeError
 
-        # - - - - - - - - signals    
+        # - - - - - - signals    
         elif isinstance(self, Signal):
-            # - - - - samples already defined in Signal class
+            # - - samples already defined in Signal class
             log.debug(self.samples)
             assert len(self.samples) > 0
         else:
@@ -554,7 +558,7 @@ class SystematicsSample(Sample):
     @cached_property
     def datasets(self):
         datasets = []
-        # - - - - - - - loop over samples and get datasets for each
+        # - - - - - loop over samples and get datasets for each
         for i, name in enumerate(self.samples):
             log.debug("--"*60)
             log.debug(name)

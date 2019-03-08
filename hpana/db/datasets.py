@@ -41,10 +41,12 @@ except ImportError:
 
 ##--------------------------------------------------------------------------------
 ## consts
-
+##--------------------------------------------------------------------------------
+# Maximum files per Dataset; otherwise Dataset will be broken to sub-Dataset in order to speed up the analysis
+N_DS_FILES = 10 
 METADATA_TTREE_MERGED = False
 if not METADATA_TTREE_MERGED:
-    log.info("Assuming that metadata and TTrees are written to different TFiles (v06 ntuples); see hpana.db.dataset.py!")
+    log.debug("Assuming that metadata and TTrees are written to different TFiles (v06 ntuples); see hpana.db.dataset.py!")
 
 DATA, MC, EMBED, MCEMBED = range(4)
 TYPES = {
@@ -399,16 +401,56 @@ class Database(dict):
                             year=year,
                             stream=stream)
                         ## cache some heavy properties here
-                        m_ds.files = m_ds.get_files()
-                        m_ds.events = m_ds.get_events()
-                        m_ds.xsec_kfact_effic = m_ds.get_xsec_kfact_effic()
+                        m_ds.files = sorted(m_ds.get_files())
 
-                        self[uname] = m_ds
+                        ## if a dataset has more than N_DS_FILES files then break it to some sub-datasets in order to boost the analysis
+                        num_files = len(m_ds.files)
+                        if  num_files > N_DS_FILES:
+                            sub_dss = []
+                            log.info("Breaking %s dataset to %i sub-datasets ..."%(uname, 1+num_files/N_DS_FILES))
+                            cnt = 0 
+                            nf = 1
+                            while cnt <= num_files:
+                                files = m_ds.files[cnt:cnt+N_DS_FILES]
+                                cnt += N_DS_FILES
+                                ## now create sub-datasets
+                                sub_uname = m_ds.name+"__"+str(nf).zfill(3)
+                                nf +=1 
+                                s_ds = Dataset(
+                                    name=sub_uname, 
+                                    datatype=MC,
+                                    treename=mc_treename,
+                                    ds=name,
+                                    ntup_name=basename,
+                                    id=int(match.group('id')),
+                                    version=version,
+                                    tag_pattern=None,
+                                    tag=rtag,
+                                    dirs=[dir],
+                                    file_pattern=mc_pattern,
+                                    year=year,
+                                    stream=stream)
+                                
+                                s_ds.files = files
+                                s_ds.events = s_ds.get_events()
+                                s_ds.xsec_kfact_effic = s_ds.get_xsec_kfact_effic()
+                                sub_dss += [s_ds]
+                                self[sub_uname] = s_ds
+                                log.debug(s_ds)
 
-        # - - - - - - - - EMBEDDING
-        if embed_path is not None:
-            log.warning('Not ready yet!')
-
+                            ## LUMI weight: 1/w = 1/w1 + 1/w2 + 1/w3 + ...
+                            lumi_weight = 1./(sum([float(d.events)/d.xsec_kfact_effic for d in sub_dss])) 
+                            
+                            for sd in sub_dss:
+                                sd.lumi_weight = lumi_weight
+                            log.info("LUMI weight: {}".format(lumi_weight))
+                        else:
+                            m_ds.events = m_ds.get_events()
+                            m_ds.xsec_kfact_effic = m_ds.get_xsec_kfact_effic()
+                            if m_ds.events!=0:
+                                m_ds.lumi_weight = m_ds.xsec_kfact_effic/float(m_ds.events)
+                            self[uname] = m_ds
+         
         # - - - - - - - - DATA
         log.info('--------------------------------> DATA')
         if data_path is not None:
@@ -510,8 +552,6 @@ class Database(dict):
                     keep &= (st in streams)
             if keep:
                 datasets += [self[nkey]]
-                if len(datasets)==len(streams):
-                    break 
 
         if not datasets or (len(datasets) < len(streams)-1):
             log.warning("Missing stream for {}: {}".format(name if name else ds, [k.name for k in datasets]))
@@ -555,6 +595,7 @@ class Dataset(Serializable):
                  files=[], 
                  events=0,
                  xsec_kfact_effic=(1., 1., 1.),
+                 lumi_weight = None, 
                  ):
         self.name = name
         self.ntup_name = ntup_name
@@ -574,6 +615,7 @@ class Dataset(Serializable):
         self.files = files
         self.events = events
         self.xsec_kfact_effic = xsec_kfact_effic
+        self.lumi_weight = lumi_weight
 
     @cached_property
     def weight(self):

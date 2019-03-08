@@ -286,9 +286,11 @@ class QCD(Sample):
                     total_weights[cat] = mc_weights[cat][:]
                 # - - - - lumi weight  
                 if weighted:
-                    # - - lumi weight
                     if ds.events !=0:
-                        lumi_weight = (self.data_lumi(ds.stream) * ds.xsec_kfact_effic) / ds.events
+                        if ds.lumi_weight:
+                            lumi_weight = self.data_lumi(ds.stream) * ds.lumi_weight
+                        else:
+                            lumi_weight = (self.data_lumi(ds.stream) * ds.xsec_kfact_effic) / ds.events
                     else:
                         log.warning(" 0 lumi weight for %s"%ds.name)
                         lumi_weight = 0

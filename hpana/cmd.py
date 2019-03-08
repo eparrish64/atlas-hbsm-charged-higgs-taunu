@@ -137,6 +137,8 @@ def get_plotting_parser(base_parser=None):
     plotting_parser.add_argument('--signals', nargs="+", #action="store_true",
                                  help='signals', )
     
+    plotting_parser.add_argument('--fmt', nargs="+", default=["png", "eps", "pdf"],
+                                help="format for the plots")
     plotting_parser.add_argument('--logy', action="store_true",
                                  help='Y axis in log scale', )
     
@@ -269,14 +271,21 @@ def get_clf_parser():
     
     clf_parser.add_argument("--backend", choices=["tmva","sklearn",],
                              help="ML backend", default="sklearn")
+
     clf_parser.add_argument("--train-bdt", action="store_true",
                             help="tarin a Boosted Decision Tree")
+
+    clf_parser.add_argument("--optimize-bdt", action="store_true",
+                            help="optimize Boosted Decision Tree")
     
     clf_parser.add_argument("--train-data", default=None,
                             help="tarining data ")
     
     clf_parser.add_argument("--train-nn", action="store_true",
                             help="tarin a Neural Network")
+    
+    clf_parser.add_argument("--per-mass", action="store_true",
+                            help="tarin per mass point")
     
     clf_parser.add_argument("--parallel", action="store_true",
                             help="if you want to do parallel processing")

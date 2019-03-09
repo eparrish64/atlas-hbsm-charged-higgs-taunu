@@ -32,7 +32,9 @@ from hpana.categories import (
     Category_SR_TAUJET,
     Category_SR_TAULEP,
     Category_TAUEL_BVETO,
-    Category_TAUMU_BVETO)
+    Category_TAUMU_BVETO,
+    Category_SS_TAUEL,
+    Category_SS_TAUMU)
     
 from hpana.dataset_hists import dataset_hists
 from hpana.config import Configuration
@@ -82,8 +84,8 @@ TAU_PT_BINS = {
 }
 
 ## - - - - CR and target selection regions
-TAULEP_TARGET_REGIONS = taulep_config.categories
-TAUJET_TARGET_REGIONS = taujet_config.categories
+TAULEP_TARGET_REGIONS = taulep_config.categories + taulep_config.ff_cr_regions
+TAUJET_TARGET_REGIONS = taujet_config.categories + taujet_config.ff_cr_regions
 TARGET_REGIONS = TAUJET_TARGET_REGIONS + TAULEP_TARGET_REGIONS
 FFS_CONTROL_REGIONS = taujet_config.ff_cr_regions + taulep_config.ff_cr_regions
 
@@ -263,9 +265,11 @@ if __name__=="__main__":
                                pdir=FFs_ARGS.pdir,
                                validation_plots=FFs_ARGS.validation_plots)
         if FFs_ARGS.validation_plots:
-            tj_regions = [FF_CR_MULTIJET, Category_BVETO, Category_SR_TAUJET]
-            tl_regions = [FF_CR_WJETS, Category_TAUEL_BVETO, Category_TAUMU_BVETO, Category_SR_TAULEP]
-            plot_alpha(alphas, cr_ffs, regions=tl_regions+tj_regions, pdir=FFs_ARGS.pdir, colors=COLORS)
+            tj_regions = [Category_BVETO, Category_SR_TAUJET]
+            plot_alpha(alphas, cr_ffs, regions=tj_regions, pdir=FFs_ARGS.pdir, suffix="taujet", colors=COLORS)
+
+            tl_regions = [Category_SS_TAUEL, Category_SS_TAUMU, Category_SR_TAULEP]
+            plot_alpha(alphas, cr_ffs, regions=tl_regions, pdir=FFs_ARGS.pdir, suffix="taulep", colors=COLORS)
     
 end_time = time.time()
 elapsed_time = (end_time - start_time)/60.

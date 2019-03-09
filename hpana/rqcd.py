@@ -543,6 +543,15 @@ def fit_alpha(cr_hists, target_hists,
                 for index, cat in enumerate(regions):
                     cxx_cache.write("\t //! Combined FFs for ({}) target region\n".format(cat))
                     cxx_cache.write("\t if (index==%i) {\n"%(QCD.FF_INDICIES[cat]))
+
+                    ## special categories 
+                    if cat=="DILEP_BTAG": #<! 99 % ttbar! no fakes 
+                        cxx_cache.write("\t return 0;\n\t}\n")
+                        continue
+                    if cat in ["FF_CR_MULTIJET", "FF_CR_WJETS"]:
+                        cxx_cache.write("\t return %s;\n\t}\n"%cat)
+                        continue
+
                     for itk in ntracks:
                         tkey = "%i"%itk
                         cxx_cache.write("\t\t if(ntracks==%i){\n"%itk)
@@ -553,6 +562,7 @@ def fit_alpha(cr_hists, target_hists,
                                 continue
                             alpha = alphas[tkey][pkey][cat][syst]
                             cxx_cache.write("\t\t\t if(pt < {0}) return ({1}*FF_CR_MULTIJET) + ({2}*FF_CR_WJETS);\n".format(pT, alpha, 1 - alpha ))
+                        cxx_cache.write("\t\t\t else return 0;\n")                                
                         cxx_cache.write("\t\t }\n")
 
                     # - - - -  close ntracks block
@@ -783,7 +793,7 @@ def validate_template_fit(cr_hists_dict, target_hists_dict, chi2s,
 ## - - plot alpha
 ##--------------------------------------------------------------------------
 def plot_alpha(alphas, cr_ffs,
-               regions=[], pdir="ffplots",
+               regions=[], pdir="ffplots", suffix=None,
                colors=[ROOT.kRed, ROOT.kGreen, ROOT.kBlue, ROOT.kOrange, ROOT.kMagenta]):
     """plot alpha as a function of pT for 1p/3p taus
     """
@@ -837,7 +847,7 @@ def plot_alpha(alphas, cr_ffs,
                      (1-alpha_down)*float(cr_ffs["FF_CR_WJETS"]["tauJetBDT_02"][itk][pkey])
                 comb_ff_h.SetBinContent(nbin+1, ff)
                 comb_ff_h.SetBinError(nbin+1, ff_up-ff_down)
-            
+
             alpha_h.SetLineColor(colors[ic])
             alpha_h.SetMarkerColor(colors[ic])
             alpha_h.SetLineWidth(3)
@@ -845,14 +855,14 @@ def plot_alpha(alphas, cr_ffs,
             alpha_h.GetXaxis().SetTitle("p^{T}_{#tau} GeV")
             alpha_hists.append(alpha_h)
 
-            alpha_h.GetYaxis().SetRangeUser(-2., 5)
+            alpha_h.GetYaxis().SetRangeUser(-3., 5)
             a_legend.AddEntry(alpha_h, "%s"%cat.label, "L")
 
             comb_ff_h.SetLineColor(colors[ic])
             comb_ff_h.SetMarkerColor(colors[ic])
             comb_ff_h.SetLineWidth(3)
             comb_ff_h.GetYaxis().SetTitle("Fake-Factors")
-            comb_ff_h.GetYaxis().SetTitleOffset(0.95)
+            comb_ff_h.GetYaxis().SetTitleOffset(0.8)
             comb_ff_h.GetXaxis().SetTitle("p^{T}_{#tau} GeV")
 
             comb_ff_h.GetYaxis().SetRangeUser(0.01, 1)
@@ -881,7 +891,8 @@ def plot_alpha(alphas, cr_ffs,
             label.Draw("SAME")
         a_legend.Draw("SAME")
         canvas.SetLogx()
-        canvas.Print(os.path.join(pdir, "ALPHA_inclusive_%s.png"%(itk)) )
+        a_outname = os.path.join(pdir, "ALPHA_inclusive_%s%s.png"%(itk, "_"+suffix if suffix else "") )
+        canvas.Print(a_outname)
         canvas.Close()
 
         ## - - another canvas with different y scale !
@@ -896,5 +907,6 @@ def plot_alpha(alphas, cr_ffs,
         for label in labels:
             label.Draw("SAME")
         a_legend.Draw("SAME")
-        tcanvas.Print(os.path.join(pdir, "FFs_COM_inclusive_%s.png"%(itk)) )
+        ff_outname = os.path.join(pdir, "FFs_COM_inclusive_%s%s.png"%(itk, "_"+suffix if suffix else ""))
+        tcanvas.Print(ff_outname) 
         tcanvas.Close()

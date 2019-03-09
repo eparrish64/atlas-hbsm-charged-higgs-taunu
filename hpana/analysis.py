@@ -28,58 +28,37 @@ class Analysis(object):
     """ main analysis class.
     """
     __HERE = os.path.dirname(os.path.abspath(__file__))
-    CXX_MACROS = [
-    "metTrigEff1516.cxx",
-
-    "FFs_COMBINED151617.cxx",
-    "FFs_CR151617.cxx",
-
-    # - - - - correction factor for tau polarization(only applied to 1 prong taus, upsilon variable, and QCD sample)    
-    "CorrectUpsilon.cxx",
-    "CorrectUpsilon_WCR.cxx",
-    "CorrectUpsilon_QCD.cxx",
-    ]
-    CXX_MACROS = [os.path.join(__HERE, "cxxmacros", cm) for cm in CXX_MACROS]
-
-    ROOT_CONF_FILES = []
-    ROOT_CONF_FILES = [os.path.join(__HERE, "cxxmacros", cm) for cm in ROOT_CONF_FILES]
     
     def __init__(self, config,
                  suffix=None,
-                 use_embedding=False,
                  compile_cxx=False,
+                 root_conf_files = [],
+                 metTrig_eff_macros=["metTrigEff1516.cxx",],
+                 FFs_macros=["FFs_CR151617.cxx", "FFs_COMBINED151617.cxx"],
+                 upsilon_macros=["CorrectUpsilon.cxx", "CorrectUpsilon_WCR.cxx", "CorrectUpsilon_QCD.cxx",],
                  ):
-        # - - - - - - - - main configuration object 
+        # - - main configuration object 
         self.config = config 
 
-        self.database = None     
-        # - - - - - - - - loading and compiling cxx macros
+        self.suffix = suffix
+        self.root_conf_files = root_conf_files
+        self.metTrig_eff_macros = metTrig_eff_macros
+        self.FFs_macros = FFs_macros
+        self.upsilon_macros = upsilon_macros
+        self.cxx_macros = self.metTrig_eff_macros + self.FFs_macros + self.upsilon_macros 
+
+        # - - loading and compiling cxx macros
         if compile_cxx:
             self.compile_cxx()
-
-            # - - - - - - - - copy root config files to working dir
-            for rf in Analysis.ROOT_CONF_FILES:
+            # - - copy root config files to working dir
+            for rf in [os.path.join(Analysis.__HERE, "cxxmacros", rc) for rc in self.root_conf_files]:
                 os.system("cp %s %s"%(rf, os.getcwd()))
-                
-        # - - - - - - - - some basic flags
-        self.use_embedding = use_embedding
-        self.suffix = suffix
-        
-        # - - - - - - - - analysis MC samples 
-        if use_embedding:
-            raise RuntimeError("Embedding is not ready yet!")
-            log.info("Using embedded W --> taunu")
-            self.wtaunu = samples.Embedded_Wtaunu(
-                self.config,
-                name='Wtaunu',
-                label='W#rightarrow#tau#nu',
-                color=16)
-        else:
-            self.wtaunu = samples.Sh_Wtaunu(
-                self.config,
-                name='Wtaunu',
-                label='W#rightarrow#tau#nu',
-                color=16)
+                    
+        self.wtaunu = samples.Sh_Wtaunu(
+            self.config,
+            name='Wtaunu',
+            label='W#rightarrow#tau#nu',
+            color=16)
         self.wlnu = samples.Sh_Wlnu(
             self.config,
             name='Wlnu',
@@ -124,7 +103,7 @@ class Analysis(object):
             pt_weighted=False,
             color=ROOT.kOrange)
         
-        # - - - - - - - - MC with prompt tau BKG components 
+        # - - MC with prompt tau BKG components 
         self.mc = [
             self.ttbar,
             self.single_top,
@@ -136,7 +115,7 @@ class Analysis(object):
             #self.others, #<! super small
             ]
         
-        # - - - - - - - - DATA 
+        # - - DATA 
         self.data = samples.Data(
             self.config,
             name='Data',
@@ -145,14 +124,14 @@ class Analysis(object):
             blind=False,
             linewidth=1)
         
-        # - - - - - - - - leptons faking a tau
+        # - - leptons faking a tau
         self.lepfakes = samples.LepFake(
             self.config, self.mc[:],
             name='LepFakes',
             label='lep #rightarrow #tau',
             color=ROOT.kGreen+3)
         
-        # - - - - - - - - jets faking a tau
+        # - - jets faking a tau
         self.qcd = samples.QCD(
             self.config, self.data, self.mc[:],
             name='QCD',
@@ -170,7 +149,7 @@ class Analysis(object):
             self.diboson,
             ] 
         
-        # - - - - - - - - signals 
+        # - - signals 
         self.signals = self.get_signals() 
         
         self.samples = [self.qcd, self.lepfakes] + self.mc  + self.signals + [self.data]  
@@ -179,10 +158,10 @@ class Analysis(object):
         self._workers=[]
 
     def compile_cxx(self):
-        log.info("loading cxx macros ...")
-        for cm in Analysis.CXX_MACROS:
+        log.info("Loading & compiling cxx macros ...")
+        macros = [os.path.join(Analysis.__HERE, "cxxmacros", cm) for cm in self.cxx_macros]
+        for cm in macros:
             ROOT.gROOT.ProcessLine(".L %s"%cm)
-
         
     def get_signals(self, masses=[], scale=1):
 
@@ -212,12 +191,8 @@ class Analysis(object):
             line_styles += line_styles
 
         for i, mass in enumerate(masses):
-            signals.append(samples.Higgs(self.config,
-                                         database=self.database,
-                                         mass=mass,
-                                         scale=scale,
-                                         color=colors[i], 
-                                         line_style=line_styles[i]))
+            signals.append(
+                samples.Higgs(self.config, mass=mass, scale=scale, color=colors[i], line_style=line_styles[i]))
             
         return signals
 

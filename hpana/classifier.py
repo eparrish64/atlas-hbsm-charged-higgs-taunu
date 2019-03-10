@@ -2,16 +2,18 @@
 
 """
 ## stdl
-import os
+import os, time
 from array import array 
 from collections import OrderedDict
-import threading
+import multiprocessing
+from multiprocessing import Process
 
 ## PyPI
 import matplotlib
 matplotlib.use('pdf')
 import matplotlib.pyplot as plt
 
+from sklearn.model_selection import GridSearchCV
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.metrics import roc_curve, roc_auc_score
@@ -29,6 +31,9 @@ from categories import CLASSIFIER_CATEGORIES, TAU_IS_TRUE, ANTI_TAU
 ## ROOT 
 import ROOT
 from ROOT import TMVA
+
+## consts
+N_FILES = 10
 
 ##----------------------------------------------------------------------------------
 ## Base classifier class
@@ -167,10 +172,12 @@ class SClassifier(GradientBoostingClassifier):
     """
     MODEL_NAME_STR_FORMAT = "model_{0}_channel_{1}_mass_{2}_ntracks_{3}_nfolds_{4}_fold_{5}_nvars_{6}.pkl" #<! name, channel, ntracks, nfolds, fold, n_vars 
     
-    def __init__(self, channel, name="GB",**params):
-        self.params = params
+    def __init__(self, channel, name="GB", mass_range=[], **params):
+        log.debug("Initializing SClassifier ...")
+        self.kparams = params
         self.channel = channel
         self.name = name 
+        self.mass_range = mass_range
         super(SClassifier, self).__init__(**params)
 
     @staticmethod
@@ -189,22 +196,23 @@ class SClassifier(GradientBoostingClassifier):
         ## first check if all the samples are already available in the training Dataframe
         missing_bkgs = []
         missing_sigs = []
+        cached_dframe = None
         if os.path.isfile(train_data) and not overwrite:
             log.info("Reading training data from %s"%train_data)
             with open(train_data, "r") as cache:
-                dframe = cPickle.load(cache)
+                cached_dframe = cPickle.load(cache)
             for b in backgrounds:
-                if not (b.name in dframe.index):
+                if not (b.name in cached_dframe.index):
                     log.warning("missing %s in %s Dataframe"%(b.name, train_data))
                     missing_bkgs += [b]
                     
             for s in signals:
-                if not (s.name in dframe.index):
+                if not (s.name in cached_dframe.index):
                     log.warning("missing %s in %s Dataframe"%(s.name, train_data))
                     missing_sigs += [s]
             if not missing_sigs and not missing_bkgs:
                 log.info("All requested samples are available in %s Dataframe"%train_data)
-                return dframe
+                return cached_dframe
         else:
             missing_bkgs = backgrounds
             missing_sigs = signals
@@ -232,69 +240,109 @@ class SClassifier(GradientBoostingClassifier):
                 ## only FF weights are applicable here
                 ws = bkg.ff_weights(categories=[category])["NOMINAL"][category.name]   
                 ws = "*".join(ws)
-                for ds in bkg.data.datasets:
-                    log.debug("**"*30 + ds.name + "**"*30)
-                    bfiles += ds.files
+                
                 ## add antitau cut 
                 category.tauid = ANTI_TAU
                 category.truth_tau = None #<! not applicable to DATA   
                 cuts = category.cuts 
-                if not bfiles:
-                    log.warning("No root file is found for %s"%bkg.name)
-                    continue
                 selection = cuts.GetTitle()
                 log.debug("Cut: %r\n"%selection)
                 log.debug("Weight: %r\n"%ws)
 
-                b_arr = root2array(bfiles, treename=treename, branches=branches+[ws], selection=selection)
-                df = pd.DataFrame(b_arr.flatten())
-                columns[ws] = "weight"
-                df = df.rename(columns=columns)
-                log.debug("#events: %r\n"%df.shape[0])
+                ## pool of workers 
+                pool = multiprocessing.Pool() 
+                pool_res = []
 
-                ## class label for bkg 
-                df["class_label"] = pd.Series(np.zeros(df.size))
-                bkg_dfs += [df]
-            else:
-                b_arrs = []
+                log.debug("**"*30 + " Parallel processing %i datasets(%r)  for %s "%(len(bkg.data.datasets), bkg.data.streams, bkg.name) + "**"*30)
+                for ds in bkg.data.datasets:
+                    bfiles = ds.files                        
+                    if not bfiles:
+                        log.warning("No root file is found for %s"%ds.name)
+                        continue
+                    if empty_tree(bfiles, treename=treename):
+                        log.warning("%s tree is empty for %s dataset; skipping!"%(treename, ds.name))
+                        continue
+
+                    kargs = {"treename": treename, "branches": branches+[ws], "selection": selection, "warn_missing_tree": True}    
+                    pool_res += [pool.apply_async(root2array, (bfiles,), dict(kargs))]
+
+                ## close the pool and wait for the workers to finish
+                pool.close()
+                pool.join()
+
+                ## retrive the pool output and create Dataframes 
                 b_dfs = []
-                index_offset = 0
+                for res in pool_res:
+                    r_arr = res.get(3600)
+                    p_df = pd.DataFrame(r_arr.flatten())
+                    columns[ws] = "weight"
+                    p_df = p_df.rename(columns=columns)
+                    log.debug("Weight sum: %r\n"%np.sum(p_df["weight"]))
+                    log.debug("#events: %r\n"%p_df.shape[0])
+                    b_dfs += [p_df]
+
+                bkg_df = pd.concat(b_dfs, ignore_index=True, sort=False)
+                ## class label for bkg 
+                bkg_df["class_label"] = pd.Series(np.zeros(bkg_df.size))
+                bkg_dfs += [bkg_df]
+                log.debug("--"*70)
+
+            else:
+                b_dfs = []
+                pool = multiprocessing.Pool() 
+                pool_res = []
+                pool_ws = []
                 for ds in bkg.datasets:
                     log.debug("**"*30 + ds.name + "**"*30)
                     bfiles = ds.files
                     if truth_match_tau:
                         cuts = category.cuts + TAU_IS_TRUE 
                     if not bfiles:
-                        log.warning("No root file is found for %s"%bkg.name)
+                        log.warning("No root file is found for %s"%ds.name)
+                        continue
+                    if empty_tree(bfiles, treename=treename):
+                        log.warning("%s tree is empty for %s dataset; skipping!"%(treename, ds.name))
                         continue
 
                     ## common Scale Factors
                     ws = bkg.weights(categories=[category]).values()[0]
                     ws = "*".join(ws)
 
-                    ## add luminosity weight 
-                    lumi_weight = (bkg.data_lumi(ds.stream) * ds.xsec_kfact_effic) / ds.events
+                    ## add luminosity weight
+                    if ds.lumi_weight:
+                        lumi_weight = ds.lumi_weight
+                    else: 
+                        lumi_weight = (bkg.data_lumi(ds.stream) * ds.xsec_kfact_effic) / ds.events                        
                     ws = ws + "*{}".format(lumi_weight)
+                    pool_ws += [ws] #<! @NOTE each dataset has a different weight --> keep them to properly rename all to 'weight'
+
                     selection = cuts.GetTitle()
                     log.debug("Cut: %r\n"%selection)
                     log.debug("Weight: %r\n"%ws)
+                    kargs = {"treename": treename, "branches": branches+[ws], "selection": selection, "warn_missing_tree": True}    
+                    pool_res += [pool.apply_async(root2array, (bfiles,), dict(kargs))]
 
-                    ## convert ROOT to numpy array 
-                    b_arr = root2array(bfiles, treename=treename, branches=branches+[ws], selection=selection)
-                    df = pd.DataFrame(b_arr.flatten())
+                ## close the pool and wait for the workers to finish
+                pool.close()
+                pool.join()
 
-                    ## CAREFUL the weight string changes due to LUMI factor
-                    columns[ws] = "weight"
-                    df = df.rename(columns=columns)
-                    log.debug("Weight sum: %r\n"%np.sum(df["weight"]))
-                    log.debug("#events: %r\n"%df.shape[0])
-                    b_dfs += [df]
+                ## retrive the pool output and create Dataframes 
+                for bds, pw, res in zip(bkg.datasets, pool_ws, pool_res):
+                    print bds
+                    r_arr = res.get(3600)
+                    p_df = pd.DataFrame(r_arr.flatten())
+                    ## @NOTE the weight string changes due to LUMI factor from dataset to dataset --> rename it to avoid concatenation confusion 
+                    columns[pw] = "weight"
+                    p_df = p_df.rename(columns=columns)
+                    log.debug("Weight sum: %r\n"%np.sum(p_df["weight"]))
+                    log.debug("#events: %r\n"%p_df.shape[0])
+                    b_dfs += [p_df]
 
                 bkg_df = pd.concat(b_dfs, ignore_index=True, sort=False)
                 ## class label for bkg 
                 bkg_df["class_label"] = pd.Series(np.zeros(bkg_df.size))
                 bkg_dfs += [bkg_df]
-            log.debug("--"*70)
+                log.debug("--"*70)
 
         ## signals 
         sig_dfs = []
@@ -324,7 +372,7 @@ class SClassifier(GradientBoostingClassifier):
                 log.debug("Weight: %r\n"%ws)
 
                 ## convert ROOT to numpy array 
-                s_arr = root2array(sfiles, treename=treename, branches=branches+[ws], selection=selection)
+                s_arr = root2array(sfiles, treename=treename, branches=branches+[ws], selection=selection, warn_missing_tree=True)
                 df = pd.DataFrame(s_arr.flatten())
 
                 columns[ws] = "weight"
@@ -340,9 +388,15 @@ class SClassifier(GradientBoostingClassifier):
             sig_dfs += [s_df]
 
         ## concat sig & bkg and index based on the sample name
-        keys = [bkg.name for bkg in missing_bkgs] + [sig.name for sig in missing_sigs]
-        dframe = pd.concat(bkg_dfs+sig_dfs, keys=keys, sort=False)
-            
+        m_keys = [bkg.name for bkg in missing_bkgs] + [sig.name for sig in missing_sigs]
+        new_dframe = pd.concat(bkg_dfs+sig_dfs, keys=m_keys, sort=False)
+
+        if cached_dframe is not None:
+            keys = [sb.name for sb in backgrounds+signals]
+            dframe = pd.concat([new_dframe, cached_dframe], sort=False)
+        else:
+            dframe = new_dframe   
+
         if overwrite:
             log.warning("caching training data")
             os.system("rm %s"%train_data)
@@ -352,16 +406,37 @@ class SClassifier(GradientBoostingClassifier):
             
         return dframe
     
-
-
     
 ##--------------------------------------------------------------------------
 ## util for parallel processing
 ##--------------------------------------------------------------------------
 def train_model(model, X_train, Y_train, X_weight,
                 outdir="", weight_sample=False, save_model=True, validation_plots=False):
+    """ Train a classifier and produce some validation plots.
+    Parameters
+    ----------
+    model: DecisionTree;
+        sklearn classifier 
+    X_train: numpy ndarray; 
+        training features 
+    Y_train: numpy ndarray;
+        training class labels
+    X_weight: numpy ndarray;
+        training samples weights (data points with higher weight will be penelized more upon wrong classification)
+    outdir: str;
+        path to save the model and roc curve 
+    weight_sample: bool;
+        whether to use the sample weight or go with the sklearn's default balanced weight procedure for the classes. 
+    save_model: bool;
+        whether to save the trained model to disk or not
+    validation_plots: bool;
+        whether to plot roc curves or not    
+
+    Return
+    ------
+    trained model 
     """
-    """
+
     if validation_plots:
         test_size = 0.2
     else:
@@ -376,7 +451,7 @@ def train_model(model, X_train, Y_train, X_weight,
             model = cPickle.load(cache)
     else:
         ## train the model,
-        ## please note that signals might have negative weights and therefore will be thrown away for training!
+        ## please note that samples with negative weights will be thrown away for training
         model = model.fit(X_train, Y_train, sample_weight=X_weight_tr if weight_sample else None)
         if save_model:
             mpath = os.path.join(outdir, model.name)
@@ -402,7 +477,85 @@ def train_model(model, X_train, Y_train, X_weight,
     log.info("Trained %s model"%(model.name))
     return model
 
-    
+
+##--------------------------------------------------------------------------
+# Utility function to report best scores
+##--------------------------------------------------------------------------
+def report(results, n_top=10):
+    r_str = ""
+    for i in range(1, n_top + 1):
+        candidates = np.flatnonzero(results['rank_test_score'] == i)
+        for candidate in candidates:
+            r_str += ("--"*50 +"\n")
+            r_str += ("Model with rank: {0}\n".format(i))
+            r_str += ("Mean validation score: {0:.3f} (std: {1:.3f})\n".format(
+                  results['mean_test_score'][candidate], results['std_test_score'][candidate]))
+            r_str += ("Mean training time: {0:.2f} [min]\n".format(results['mean_fit_time'][candidate]))                  
+            r_str += ("Parameters: {0}\n".format(results['params'][candidate]))
+    print r_str
+    return r_str
+
+##--------------------------------------------------------------------------
+## Utility function for optimizing hyprparameters of a model
+##--------------------------------------------------------------------------
+def optimize_model(model, X_train, Y_train, X_weight, param_grid={},
+                outdir="", weight_sample=False, save_model=True, validation_plots=False):
+    """ Tune model's hyper parameters and return the best performing alongside the model.
+    Parameters
+    ----------
+    see train_model() 
+    """
+
+    gb_clf = GradientBoostingClassifier()
+
+    # parameters to be passed to the estimator's fit method (gb_clf)
+    fit_params = {"sample_weight": X_weight}
+
+    # run grid search
+    grid_search = GridSearchCV(gb_clf, param_grid=param_grid, cv=3, n_jobs=-1, verbose=1, scoring="roc_auc",  return_train_score=False)
+    start = time.time()
+    grid_search.fit(X_train, Y_train)
+
+    print("GridSearchCV took %.2f seconds for %d candidate parameter settings."
+        % (time.time() - start, len(grid_search.cv_results_['params'])))
+
+    report_name = os.path.join(outdir, model.name.replace(".pkl", "_HyperParams.txt"))
+    with open(report_name, "w") as rfile:
+        rfile.write(model.name.replace(".pkl", ""))
+        rfile.write(report(grid_search.cv_results_))
+
+    return grid_search.cv_results_
+
+
+##--------------------------------------------------------------------------
+## plot predicted signal and background scores 
+##--------------------------------------------------------------------------
+def plot_scores(model, bkg_array, sig_array, outdir="", label=None, outname=None):
+    """
+    """
+    bkg_score = model.predict_proba(bkg_array)[:, 1]
+    sig_score = model.predict_proba(sig_array)[:, 1]
+    bins = numpy.linspace(0, 1, 10)
+
+    ## plot hists
+    plt.figure(1)
+    plt.hist(bkg_array, bins, density=True, histtype="stepfilled", alpha=0.5, label='BKG')
+    plt.hist(sig_array, bins, density=True, histtype="stepfilled", alpha=0.5, label='SIG')
+    plt.ylabel('# of events')
+    plt.xlabel('BDT score')
+    plt.legend(loc='best')
+
+    if not outname: 
+        outname = model.name.replace(".pkl", ".png") 
+    plt.savefig(os.path.join(outdir, outname))
+    plt.close()
+
+    log.info("Trained %s model"%(model.name))
+
+
+
+
+
 ##--------------------------------------------------------------------------
 ## plot feature importance 
 ##--------------------------------------------------------------------------
@@ -525,3 +678,67 @@ def features_correlation(train_data, features, outdir="./", outname="features_co
     plt.savefig(fname+".pdf", format='pdf', dpi=1000)
     plt.close()
 
+##--------------------------------------------------------------------------
+## 
+##--------------------------------------------------------------------------
+def empty_tree(files, treename="NOMINAL"):
+    """ given a list of ROOT files see if at least one of them has treename 
+    """
+    evts = 0
+    for fl in files:
+        tf = ROOT.TFile(fl)
+        tr = tf.Get(treename)
+        if tr:
+            evts += tr.GetEntries()
+
+    return evts==0
+
+
+##-----------------------------------------------
+## simple class for appending clf scores to TTrees
+##-----------------------------------------------
+class AppendJob(Process):
+    """
+    simpel worker class for parallel
+    processing. the run method is necessary,
+    which will overload the run method of Procces.
+    """
+    def __init__(self, file_name, models, copy_file=False, outdir=None):
+        super(AppendJob, self).__init__()
+        self.file_name = file_name
+        job_name = file_name
+        if '/' in job_name:
+            job_name = job_name.split('/')[-1]
+        self.job_name = job_name.replace('.root','') 
+        self.models = models
+        self.copy_file = copy_file
+        self.outdir = outdir
+        
+    def run(self):
+        # copy to new file
+        if self.copy_file:
+            output = self.file_name + '.nn'
+            if os.path.exists(output):
+                log.warning(" {} already exists (will skip copying if file is in good shape)" .format(output))
+                tf = ROOT.TFile.Open(output, 'READ')
+                if not tf:
+                    log.warning("{} exists but it's ZOMBIE, replacing it".format(output))
+                    os.remove(output)
+                    shutil.copy(self.file_name, output)
+            else:
+                if self.outdir:
+                    reldir = self.file_name.split("/")[-2]
+                    fname = self.file_name.split("/")[-1]
+                    opath = os.path.join(self.outdir, reldir)
+                    os.system("mkdir -p %s"%opath)
+                    output = os.path.join(opath, fname)
+                    
+                log.info("copying {0} to {1} ...".format(self.file_name, output))
+                shutil.copy(self.file_name, output)
+        else:
+            output = self.file_name
+        
+        # the actual calculation happens here
+        evaluate_scores(output, self.models)
+
+        return 

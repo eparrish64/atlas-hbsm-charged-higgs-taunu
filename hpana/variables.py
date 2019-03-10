@@ -573,29 +573,57 @@ VARIABLES["taulep"] = VARIABLES_TAULEP
 # - - - - - - - - BDT input features
 ##-----------------------------------------------------------------
 CLF_FEATURES = {
-    "taujet": [
-        tau_0_met_dphi,
-        tau_0_pt,
-        met_et,
-        bjet_0_pt,
-        bjet_0_met_dphi,
-        bjet_0_tau_0_dr,
-        met_jet_dphi_ratio,
-        tau_0_upsilon,
-    ],
-    "taulep": [
-        tau_0_pt,
-        lep_0_pt,
-        bjet_0_pt,
-        met_et,
-        tau_0_met_dphi,
-        lep_0_met_dphi,
-        bjet_0_met_dphi,
-        tau_0_lep_0_dr,
-        bjet_0_lep_0_dr,
-        met_jet_dphi_ratio,
-        tau_0_upsilon,
-    ],
+    "taujet": {
+        "LOW": [
+            tau_0_met_dphi,
+            tau_0_pt,
+            met_et,
+            bjet_0_pt,
+            bjet_0_met_dphi,
+            bjet_0_tau_0_dr,
+            met_jet_dphi_ratio,
+            tau_0_upsilon,
+        ],
+        
+        "HIGH": [ #<! above 400 GeV
+            tau_0_met_dphi,
+            tau_0_pt,
+            met_et,
+            bjet_0_pt,
+            bjet_0_met_dphi,
+            bjet_0_tau_0_dr,
+            met_jet_dphi_ratio,
+        ],
+    },
+
+    "taulep": {
+        "LOW": [
+            tau_0_pt,
+            lep_0_pt,
+            bjet_0_pt,
+            met_et,
+            tau_0_met_dphi,
+            lep_0_met_dphi,
+            bjet_0_met_dphi,
+            tau_0_lep_0_dr,
+            bjet_0_lep_0_dr,
+            met_jet_dphi_ratio,
+            tau_0_upsilon,
+        ],
+        "HIGH": [ #<! above 400 GeV
+            tau_0_pt,
+            lep_0_pt,
+            bjet_0_pt,
+            met_et,
+            tau_0_met_dphi,
+            lep_0_met_dphi,
+            bjet_0_met_dphi,
+            tau_0_lep_0_dr,
+            bjet_0_lep_0_dr,
+            met_jet_dphi_ratio,
+        ],
+    }
+        
 }
 
 

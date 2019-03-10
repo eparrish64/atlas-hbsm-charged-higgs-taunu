@@ -314,4 +314,6 @@ def get_clf_parser():
     clf_parser.add_argument("--bkg", nargs="+", default=None,
                             help="list of bkgs")
 
+    clf_parser.add_argument("--mass-range", nargs=2, default=[80, 3000], 
+                            help="signals' mass range")
     return clf_parser

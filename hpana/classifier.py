@@ -172,12 +172,33 @@ class SClassifier(GradientBoostingClassifier):
     """
     MODEL_NAME_STR_FORMAT = "model_{0}_channel_{1}_mass_{2}_ntracks_{3}_nfolds_{4}_fold_{5}_nvars_{6}.pkl" #<! name, channel, ntracks, nfolds, fold, n_vars 
     
-    def __init__(self, channel, name="GB", mass_range=[], **params):
+    def __init__(self, channel, 
+                    name="GB", 
+                    mass_range=[], 
+                    features=[], 
+                    X_train=None, 
+                    X_weight=None, 
+                    Y_train=None, 
+                    weight_sample=False,
+                    is_trained=False,
+                    kfolds=5,
+                    ntracks=1,
+                    **params):
         log.debug("Initializing SClassifier ...")
         self.kparams = params
         self.channel = channel
         self.name = name 
+        self.features = features
         self.mass_range = mass_range
+        self.X_train = X_train
+        self.Y_train = Y_train
+        self.X_weight = X_weight
+        self.weight_sample = weight_sample
+        self.kfolds = kfolds
+        self.ntracks = ntracks
+        self.is_trained = is_trained
+
+        ## instantiate the base
         super(SClassifier, self).__init__(**params)
 
     @staticmethod
@@ -410,8 +431,8 @@ class SClassifier(GradientBoostingClassifier):
 ##--------------------------------------------------------------------------
 ## util for parallel processing
 ##--------------------------------------------------------------------------
-def train_model(model, X_train, Y_train, X_weight,
-                outdir="", weight_sample=False, save_model=True, validation_plots=False):
+def train_model(model, X_train=None, Y_train=None, X_weight=None,
+                outdir="", weight_sample=False, save_model=True, overwrite=False):
     """ Train a classifier and produce some validation plots.
     Parameters
     ----------
@@ -429,57 +450,44 @@ def train_model(model, X_train, Y_train, X_weight,
         whether to use the sample weight or go with the sklearn's default balanced weight procedure for the classes. 
     save_model: bool;
         whether to save the trained model to disk or not
-    validation_plots: bool;
-        whether to plot roc curves or not    
 
     Return
     ------
     trained model 
     """
 
-    if validation_plots:
-        test_size = 0.2
-    else:
-        test_size = 0.0
+    X_train = model.X_train
+    X_weight = model.X_weight
+    Y_train = model.Y_train 
 
-    X_train, X_test, Y_train, Y_test, X_weight_tr, X_weight_ts = train_test_split(X_train, Y_train, X_weight, test_size=test_size)
     mpath = os.path.join(outdir, model.name)
-    
+    is_trained = False 
     if os.path.isfile(mpath):
-        log.info("found already trained model %s"%mpath)
+        log.info("Reading the %s model from disk ..."%mpath)
         with open(mpath, "r") as cache:
             model = cPickle.load(cache)
-    else:
+            is_trained =  model.is_trained
+            if is_trained:
+                log.warning("The %s model is already trained! set overwrite=True, if you want to overwrite it"%mpath)
+                if overwrite:
+                    os.remove(mpath)
+                    is_trained = False                                    
+
+    if not is_trained:
         ## train the model,
-        ## please note that samples with negative weights will be thrown away for training
-        model = model.fit(X_train, Y_train, sample_weight=X_weight_tr if weight_sample else None)
+        model = model.fit(X_train, Y_train, sample_weight=X_weight if weight_sample else None)
+        model.is_trained = True
         if save_model:
             mpath = os.path.join(outdir, model.name)
             with open(mpath, "w") as cache:
                 cPickle.dump(model, cache, protocol=2)
     
-    if validation_plots:
-        Y_score = model.predict_proba(X_test)[:, 1]
-        fpr_grd, tpr_grd, _ = roc_curve(Y_test, Y_score)
-        auc = roc_auc_score(Y_test, Y_score)
-        
-        ## plot roc 
-        plt.figure(1)
-        plt.plot([0, 1], [0, 1], 'k--')
-        plt.plot(fpr_grd, tpr_grd, label="AUC = %.4f"%auc)
-        plt.ylabel('Signal efficiency (sensitivity)')
-        plt.xlabel('Background rejection (specificity)')
-        plt.title('ROC curve')
-        plt.legend(loc='best')
-        plt.savefig(os.path.join(outdir, model.name.replace(".pkl", ".png") ) )
-        plt.close()
-
     log.info("Trained %s model"%(model.name))
     return model
 
 
 ##--------------------------------------------------------------------------
-# Utility function to report best scores
+# utility function to report best scores
 ##--------------------------------------------------------------------------
 def report(results, n_top=10):
     r_str = ""
@@ -496,7 +504,7 @@ def report(results, n_top=10):
     return r_str
 
 ##--------------------------------------------------------------------------
-## Utility function for optimizing hyprparameters of a model
+## utility function for optimizing hyprparameters of a model
 ##--------------------------------------------------------------------------
 def optimize_model(model, X_train, Y_train, X_weight, param_grid={},
                 outdir="", weight_sample=False, save_model=True, validation_plots=False):
@@ -530,31 +538,76 @@ def optimize_model(model, X_train, Y_train, X_weight, param_grid={},
 ##--------------------------------------------------------------------------
 ## plot predicted signal and background scores 
 ##--------------------------------------------------------------------------
-def plot_scores(model, bkg_array, sig_array, outdir="", label=None, outname=None):
+def plot_scores(models, dframe=None, backgrounds=[], signals=[], ntracks=[1], kfolds=5,
+                outdir="", bins=None, label=None, outname=None):
     """
     """
-    bkg_score = model.predict_proba(bkg_array)[:, 1]
-    sig_score = model.predict_proba(sig_array)[:, 1]
-    bins = numpy.linspace(0, 1, 10)
+    b_dframe = dframe.loc[[bkg.name for bkg in backgrounds]]
+    s_dframe = dframe.loc[[sig.name for sig in signals]]
+    log.debug(30*"*" + " Testing Data Frame " + 30*"*")
+    log.debug(dframe)
 
-    ## plot hists
-    plt.figure(1)
-    plt.hist(bkg_array, bins, density=True, histtype="stepfilled", alpha=0.5, label='BKG')
-    plt.hist(sig_array, bins, density=True, histtype="stepfilled", alpha=0.5, label='SIG')
-    plt.ylabel('# of events')
-    plt.xlabel('BDT score')
-    plt.legend(loc='best')
+    for mtag, tdict in models.iteritems():
+        ## evaluate based on the mass region that the model is trained on
+        masses = [int(m) for m in mtag.split("to")] 
+        r_signals = filter(lambda s: masses[0] <= s.mass <= masses[1], signals)
+        log.info("*"*80)
+        log.info("Signals: {0} || #events: {1} ; backgrounds: {2} || #events: {3}".format(
+            [s.name for s in signals], s_dframe.shape[0], [b.name for b in backgrounds], b_dframe.shape[0]))
 
-    if not outname: 
-        outname = model.name.replace(".pkl", ".png") 
-    plt.savefig(os.path.join(outdir, outname))
-    plt.close()
+        for sig in r_signals:
+            sm_df = dframe.loc[[sig.name]]
+            for ntrack in ntracks:
+                m_models = models[mtag][ntrack]
+                ## trained on fold !=rem --> test on the complementary fold
+                s_scores = []
+                b_scores = []
+                for rem in range(kfolds):
+                    m_model = filter(lambda m: "fold_%i"%rem in m.name, m_models)[0]
+                    if not m_model:
+                        log.warning("Failed to retrive trained model in mass range %s, ntrack=%i, and for fold %i"%(mtag, ntrack, rem))
+                        continue
+                    if m_model.kfolds!=kfolds:
+                        log.warning(
+                            "The %s model is trained with %i folds while you want to evaluate it on %i folds, this will bias the perofrmance!!!"%(
+                                m_model.name, m_model.kfolds, kfolds))
 
-    log.info("Trained %s model"%(model.name))
+                    feats = m_model.features
+                    b_df = b_dframe[(b_dframe["event_number"]%kfolds==rem) & (b_dframe["tau_0_n_charged_tracks"]==ntrack)]
+                    b_test = b_df[[ft.name for ft in feats ]]
 
+                    s_df = sm_df[(sm_df["event_number"]%kfolds==rem) & (sm_df["tau_0_n_charged_tracks"]==ntrack)]
+                    s_test = s_df[[ft.name for ft in feats ]]
 
+                    ## evaluate score 
+                    b_score = m_model.predict_proba(b_test)[:, 1]
+                    b_scores += [b_score]
+                    s_score = m_model.predict_proba(s_test)[:, 1]
+                    s_scores += [s_score]
 
+                b_arr = np.concatenate(b_scores)
+                s_arr = np.concatenate(s_scores)
 
+                ## - - plot
+                log.info("Testing on mass %i, ntrack=%i, bkg events=%i, and sig events=%i"%(
+                        sig.mass, ntrack, b_arr.shape[0], s_arr.shape[0]))
+                if not bins:
+                    bins = np.linspace(0, 1, 50)
+
+                ## plot hists
+                plt.figure(10)
+                plt.hist(
+                    [s_arr, b_arr], bins, log=True, density=True, histtype="stepfilled", color=['r', 'b'], alpha=0.85, label=[r'$H^+$[%iGeV]'%sig.mass, r"$\sum BKG$"])
+                plt.ylabel(r'$p.d.f$')
+                plt.xlabel('BDT score')
+                plt.legend(loc='upper right')
+
+                ## save plot
+                outname = "BDT_score_{}_{}.png".format(sig.name, m_model.name.replace(".pkl", ""))
+                plt.savefig(os.path.join(outdir, outname))
+                plt.close()
+
+    return 
 
 ##--------------------------------------------------------------------------
 ## plot feature importance 

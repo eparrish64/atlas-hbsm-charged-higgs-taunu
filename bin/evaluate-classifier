@@ -58,7 +58,7 @@ CLF_ARGS = clf_parser.parse_args()
 
 ## local
 from hpana.variables import CLF_FEATURES, BDT_SCORES
-from hpana.classifier import Classifier, SClassifier, AppendJob
+from hpana.classifier import Classifier, SClassifier, AppendJob, plot_scores
 from hpana.dataset_hists import dataset_hists_direct
 from hpana.cluster.parallel import run_pool, Job
 from hpana.analysis import Analysis
@@ -379,75 +379,7 @@ if __name__=='__main__':
         dframe = SClassifier.prepare_data(backgrounds, signals, ALL_FEATS, data_lumi=config.data_lumi,
                                       channel=CLF_ARGS.channel, branches=branches, train_data=CLF_ARGS.train_data)
 
-        b_dframe = dframe.loc[[bkg.name for bkg in backgrounds]]
-        s_dframe = dframe.loc[[sig.name for sig in signals]]
-        log.debug(30*"*" + " Testing Data Frame " + 30*"*")
-        log.debug(dframe)
-
-        for mtag, tdict in models.iteritems():
-            ## test based on the mass region that the model is trained on
-            masses = [int(m) for m in mtag.split("to")] 
-            r_signals = filter(lambda s: masses[0] <= s.mass <= masses[1], signals)
-            log.info("*"*80)
-            log.info("Signals: {0} || #events: {1} ; backgrounds: {2} || #events: {3}".format(
-                [s.name for s in signals], s_dframe.shape[0], [b.name for b in backgrounds], b_dframe.shape[0]))
-
-            for sig in r_signals:
-                ## - - different set of features for low mass and high mass
-                if sig.mass > 500:
-                    feats = CLF_FEATURES[CLF_ARGS.channel]["HIGH"]
-                else:
-                    feats = CLF_FEATURES[CLF_ARGS.channel]["LOW"]
-
-                sm_df = dframe.loc[[sig.name]]
-                for ntracks in N_TRACKS:
-                    if CLF_ARGS.kfolds:
-                        m_models = models[mtag][ntracks]
-                        ## trained on fold !=rem --> test on the complementary fold
-                        s_scores = []
-                        b_scores = []
-                        for rem in range(CLF_ARGS.kfolds):
-                            m_model = filter(lambda m: "fold_%i"%rem in m.name, m_models)[0]
-                            if not m_model:
-                                log.warning("Failed to retrive trained model in mass range %s, ntracks=%i, and for fold %i"%(mtag, ntracks, rem))
-                                continue
-
-                            b_df = b_dframe[(b_dframe["event_number"]%CLF_ARGS.kfolds==rem) & (b_dframe["tau_0_n_charged_tracks"]==ntracks)]
-                            b_test = b_df[[ft.name for ft in feats ]]
-
-                            s_df = sm_df[(sm_df["event_number"]%CLF_ARGS.kfolds==rem) & (sm_df["tau_0_n_charged_tracks"]==ntracks)]
-                            s_test = s_df[[ft.name for ft in feats ]]
-
-                            ## evaluate score 
-                            b_score = m_model.predict_proba(b_test)[:, 1]
-                            b_scores += [b_score]
-                            s_score = m_model.predict_proba(s_test)[:, 1]
-                            s_scores += [s_score]
-
-                        b_arr = np.concatenate(b_scores)
-                        s_arr = np.concatenate(s_scores)
-
-                        ## - - plot
-                        log.info("Testing on mass %i, ntracks=%i, bkg events=%i, and sig events=%i"%(
-                                sig.mass, ntracks, b_arr.shape[0], s_arr.shape[0]))
-
-                        bins = np.linspace(0, 1, 50)
-
-                        ## plot hists
-                        plt.figure(10)
-                        plt.hist(
-                            [s_arr, b_arr], bins, log=True, density=True, histtype="stepfilled", color=['r', 'b'], alpha=0.85, label=[r'$H^+$[%iGeV]'%sig.mass, "BKG"])
-                        # plt.hist(
-                        #     b_arr, bins, log=True, density=True, histtype="stepfilled", facecolor='b', alpha=0.75, label='BKG')
-                        plt.ylabel('Fraction of events')
-                        plt.xlabel('BDT score')
-                        plt.legend(loc='upper right')
-
-                        ## save plot
-                        outname = "BDT_score_{}_{}.png".format(sig.name, m_model.name.replace(".pkl", ""))
-                        plt.savefig(os.path.join(CLF_ARGS.outdir, outname))
-                        plt.close()
-                            
+        plot_scores(models, dframe=dframe, backgrounds=backgrounds, signals=signals, outdir=CLF_ARGS.outdir)                      
     if CLF_ARGS.direct:
         # - -  build analysis main configuration object
         config = Configuration(CLF_ARGS.channel, data_streams=CLF_ARGS.data_streams, db_version=CLF_ARGS.db_version)

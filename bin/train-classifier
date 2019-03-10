@@ -18,6 +18,7 @@ CLF_ARGS = clf_parser.parse_args()
 from root_numpy import root2array, tree2array
 import h5py
 import numpy as np
+import pickle, cPickle
 
 ## local
 from hpana.config import Configuration
@@ -173,12 +174,19 @@ if CLF_ARGS.backend=="sklearn":
                     ## - - instantiate the model
                     clf_name = SClassifier.MODEL_NAME_STR_FORMAT.format(
                         clf_type, CLF_ARGS.channel, mass_tag, ntracks, CLF_ARGS.kfolds, rem, X_train.shape[1])
-                    sclf = SClassifier(CLF_ARGS.channel, name=clf_name, **mparams)
+                    sclf = SClassifier(CLF_ARGS.channel, 
+                    name=clf_name, features=feats, X_train=X_train, X_weight=X_weight, Y_train=Y_train, weight_sample=False, **mparams)
+
+                    with open("tmpMODEL.pkl", "w") as ml:
+                        cPickle.dump(sclf, ml, protocol=2)
+
+                    with open("tmpMODEL.pkl", "r") as ml:
+                        tr_ml = cPickle.load(ml)
 
                     ## - - assign the job
                     if CLF_ARGS.train_bdt:
-                        jobs.append(Job(train_model, sclf, X_train, Y_train, X_weight,
-                                        weight_sample=True, outdir=CLF_ARGS.outdir, validation_plots=CLF_ARGS.validation_plots))
+                        jobs.append(Job(train_model, tr_ml, X_train, Y_train, X_weight,
+                                        weight_sample=True, outdir=CLF_ARGS.outdir))
             else:
                 sdf = dframe[(dframe["tau_0_n_charged_tracks"]==ntracks)]
                 ## - - different set of features for low mass and high mass
@@ -199,12 +207,13 @@ if CLF_ARGS.backend=="sklearn":
                 ## - - instantiate the model
                 clf_name = SClassifier.MODEL_NAME_STR_FORMAT.format(
                     clf_type, CLF_ARGS.channel, mass_tag, ntracks, "NA", "NA", X_train.shape[1])
-                sclf = SClassifier(CLF_ARGS.channel, name=clf_name, **mparams)
+                sclf = SClassifier(CLF_ARGS.channel, 
+                    name=clf_name, features=feats, X_train=X_train, X_weight=X_weight, Y_train=Y_train, weight_sample=False, **mparams)
 
                 ## - - assign the job
                 if CLF_ARGS.train_bdt:
                     jobs.append(Job(train_model, sclf, X_train, Y_train, X_weight,
-                                    weight_sample=True, outdir=CLF_ARGS.outdir, validation_plots=CLF_ARGS.validation_plots))
+                                    weight_sample=True, outdir=CLF_ARGS.outdir))
                 
             ## correlation matrix ?
             if CLF_ARGS.plot_correlations:

@@ -539,7 +539,7 @@ def optimize_model(model, X_train, Y_train, X_weight, param_grid={},
 ## plot predicted signal and background scores 
 ##--------------------------------------------------------------------------
 def plot_scores(models, dframe=None, backgrounds=[], signals=[], ntracks=[1], kfolds=5,
-                outdir="", bins=None, label=None, outname=None):
+                outdir="", bins=None, plot_roc=True, overlay_rocs=True, label=None, outname=None):
     """
     """
     b_dframe = dframe.loc[[bkg.name for bkg in backgrounds]]
@@ -547,6 +547,7 @@ def plot_scores(models, dframe=None, backgrounds=[], signals=[], ntracks=[1], kf
     log.debug(30*"*" + " Testing Data Frame " + 30*"*")
     log.debug(dframe)
 
+    rocs = []
     for mtag, tdict in models.iteritems():
         ## evaluate based on the mass region that the model is trained on
         masses = [int(m) for m in mtag.split("to")] 
@@ -565,7 +566,7 @@ def plot_scores(models, dframe=None, backgrounds=[], signals=[], ntracks=[1], kf
                 for rem in range(kfolds):
                     m_model = filter(lambda m: "fold_%i"%rem in m.name, m_models)[0]
                     if not m_model:
-                        log.warning("Failed to retrive trained model in mass range %s, ntrack=%i, and for fold %i"%(mtag, ntrack, rem))
+                        log.warning("Failed to retrive trained model in mass range %s, ntracks=%i, and for fold %i"%(mtag, ntrack, rem))
                         continue
                     if m_model.kfolds!=kfolds:
                         log.warning(
@@ -591,7 +592,7 @@ def plot_scores(models, dframe=None, backgrounds=[], signals=[], ntracks=[1], kf
                 ## - - plot
                 log.info("Testing on mass %i, ntrack=%i, bkg events=%i, and sig events=%i"%(
                         sig.mass, ntrack, b_arr.shape[0], s_arr.shape[0]))
-                if not bins:
+                if bins is None:
                     bins = np.linspace(0, 1, 50)
 
                 ## plot hists
@@ -603,9 +604,48 @@ def plot_scores(models, dframe=None, backgrounds=[], signals=[], ntracks=[1], kf
                 plt.legend(loc='upper right')
 
                 ## save plot
-                outname = "BDT_score_{}_{}.png".format(sig.name, m_model.name.replace(".pkl", ""))
-                plt.savefig(os.path.join(outdir, outname))
+                outname = os.path.join(outdir, "BDT_score_{}_{}.png".format(sig.name, m_model.name.replace(".pkl", "")))
+                plt.savefig(outname)
                 plt.close()
+
+                if plot_roc:
+                    Y_score = np.concatenate([b_arr, s_arr])
+                    b_true = np.zeros(b_arr.size)
+                    s_true = np.ones(s_arr.size)
+                    Y_true = np.concatenate([b_true, s_true])
+
+                    fpr_grd, tpr_grd, _ = roc_curve(Y_true, Y_score)
+                    auc = roc_auc_score(Y_true, Y_score)
+                    
+                    rocs += [(m_model, fpr_grd, tpr_grd, auc)]
+                    ## plot roc 
+                    plt.figure(1)
+                    plt.plot([0, 1], [0, 1], 'k--')
+                    plt.plot(fpr_grd, tpr_grd, label="AUC = %.4f"%auc)
+                    plt.ylabel('Signal efficiency ')
+                    plt.xlabel('Background rejection ')
+                    plt.title(r'ROC curve($H^+$[%iGeV])'%sig.mass)
+                    plt.legend(loc='best')
+                    outname = os.path.join(outdir, "ROC_{}_{}.png".format(sig.name, m_model.name.replace(".pkl", "") ))
+                    plt.savefig(outname)
+                    plt.close()
+
+    if overlay_rocs:
+        fig = plt.figure(10)
+        ax = plt.subplot(111)
+        ax.plot([0, 1], [0, 1], 'k--')
+        for roc in rocs:
+            rmodel, fpr_grd, tpr_grd, auc = roc
+            label = "{}_nvars_{}(AUC={:.4f})".format("_".join(rmodel.name.split("_")[1:6]), len(rmodel.features), auc)
+            ax.plot(fpr_grd, tpr_grd, label=label)
+            plt.ylabel('Signal efficiency ')
+            plt.xlabel('Background rejection ')
+            plt.title(r'ROC curve)')
+        plt.legend(loc="best", fontsize="small")
+
+        outname = os.path.join(outdir, "ROC_inclusive.png")
+        plt.savefig(outname)
+        plt.close()
 
     return 
 

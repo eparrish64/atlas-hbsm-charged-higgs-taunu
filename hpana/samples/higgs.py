@@ -99,6 +99,7 @@ class Higgs(MC, Signal):
     MASSES = []
     for mode in ["LOW", "INT", "HIGH"]:
         MASSES += MASSES_DICT["taujet"][mode].keys() 
+    MASSES = sorted(MASSES)
 
     SAMPLE_PATTERN = {
         "LOW": "MadGraphPy8EvtGen_A14NNPDF30LO_HpL_H{}",

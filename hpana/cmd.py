@@ -316,4 +316,29 @@ def get_clf_parser():
 
     clf_parser.add_argument("--mass-range", nargs=2, default=[80, 3000], 
                             help="signals' mass range")
+
+    clf_parser.add_argument("--bin-scheme", default="NOM", choices=["NOM", "UP_DOWN", "SINGLE"], 
+                            help="mass binning scheme for training clfs ")
+
+    clf_parser.add_argument("--dry-run", action="store_true",
+                            help="if you just want to see the scripts that will be submitted to the cluster")
+                                
+    clf_parser.add_argument("--cluster", action="store_true",
+                            help="if you wnat to submit jobs to the cluster")
+
+    clf_parser.add_argument("--local-scratch", type=str, choices=["tmp", "scratch"], default="scratch",
+                            help="name of the local scratch disk on the nodes")
+
+    clf_parser.add_argument("--logsdir", type=str, default="logs",
+                            help="where to put the log files")
+    
+    clf_parser.add_argument("--rs-manager", type=str,default="SLURM", choices=["TORQUE", "SLURM"],
+                            help="the resource manager on your cluster")
+
+    clf_parser.add_argument("--rs-project", type=str,default="ctb-stelzer", choices=["ctb-stelzer", "def-doneil"],
+                            help="the resource manager on your cluster")
+
+    clf_parser.add_argument("--retry", action="store_true",
+                            help="retry failed jobs", )
+    
     return clf_parser

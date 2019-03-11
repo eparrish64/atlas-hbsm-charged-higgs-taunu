@@ -32,8 +32,19 @@ from categories import CLASSIFIER_CATEGORIES, TAU_IS_TRUE, ANTI_TAU
 import ROOT
 from ROOT import TMVA
 
+##----------------------------------------------------------------------------------
 ## consts
-N_FILES = 10
+##----------------------------------------------------------------------------------
+
+## - - Hyperparameters for GradientBoosting 
+GB_HYPERPARAMS = {
+    # "loss": ["deviance", "exponential"],
+    "learning_rate": [0.05, 0.1, 0.2],
+    "n_estimators":[100, 200, 300, 400], 
+    "min_samples_leaf": [0.005, 0.01, 0.02],
+    "max_depth": [10, 15, 20],
+}
+N_OPT_CORES = 16  
 
 ##----------------------------------------------------------------------------------
 ## Base classifier class
@@ -456,9 +467,12 @@ def train_model(model, X_train=None, Y_train=None, X_weight=None,
     trained model 
     """
 
-    X_train = model.X_train
-    X_weight = model.X_weight
-    Y_train = model.Y_train 
+    if X_train is None:
+        X_train = model.X_train
+    if X_weight is None:    
+        X_weight = model.X_weight
+    if Y_train is None:        
+        Y_train = model.Y_train 
 
     mpath = os.path.join(outdir, model.name)
     is_trained = False 
@@ -506,7 +520,7 @@ def report(results, n_top=10):
 ##--------------------------------------------------------------------------
 ## utility function for optimizing hyprparameters of a model
 ##--------------------------------------------------------------------------
-def optimize_model(model, X_train, Y_train, X_weight, param_grid={},
+def optimize_model(model, X_train=None, Y_train=None, X_weight=None, param_grid={},
                 outdir="", weight_sample=False, save_model=True, validation_plots=False):
     """ Tune model's hyper parameters and return the best performing alongside the model.
     Parameters
@@ -514,22 +528,29 @@ def optimize_model(model, X_train, Y_train, X_weight, param_grid={},
     see train_model() 
     """
 
+    if X_train is None:
+        X_train = model.X_train
+    if X_weight is None:    
+        X_weight = model.X_weight
+    if Y_train is None:        
+        Y_train = model.Y_train 
+
     gb_clf = GradientBoostingClassifier()
 
     # parameters to be passed to the estimator's fit method (gb_clf)
     fit_params = {"sample_weight": X_weight}
 
     # run grid search
-    grid_search = GridSearchCV(gb_clf, param_grid=param_grid, cv=3, n_jobs=-1, verbose=1, scoring="roc_auc",  return_train_score=False)
+    grid_search = GridSearchCV(gb_clf, param_grid=param_grid, cv=3, n_jobs=N_OPT_CORES, verbose=3, scoring="roc_auc",  return_train_score=False)
     start = time.time()
     grid_search.fit(X_train, Y_train)
 
     print("GridSearchCV took %.2f seconds for %d candidate parameter settings."
         % (time.time() - start, len(grid_search.cv_results_['params'])))
 
-    report_name = os.path.join(outdir, model.name.replace(".pkl", "_HyperParams.txt"))
+    report_name = os.path.join(outdir, model.name.replace(".pkl", "_HyperParams.TXT"))
     with open(report_name, "w") as rfile:
-        rfile.write(model.name.replace(".pkl", ""))
+        rfile.write("%s\n"%model.name.replace(".pkl", ""))
         rfile.write(report(grid_search.cv_results_))
 
     return grid_search.cv_results_
@@ -539,7 +560,7 @@ def optimize_model(model, X_train, Y_train, X_weight, param_grid={},
 ## plot predicted signal and background scores 
 ##--------------------------------------------------------------------------
 def plot_scores(models, dframe=None, backgrounds=[], signals=[], ntracks=[1], kfolds=5,
-                outdir="", bins=None, plot_roc=True, overlay_rocs=True, label=None, outname=None):
+                outdir="", bins=None, plot_roc=True, overlay_rocs=False, label=None, outname=None):
     """
     """
     b_dframe = dframe.loc[[bkg.name for bkg in backgrounds]]

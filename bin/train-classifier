@@ -26,9 +26,9 @@ from hpana.analysis import Analysis
 from hpana.samples.sample  import Sample
 from hpana.samples.higgs import Higgs 
 from hpana.variables import CLF_FEATURES
-from hpana.classifier import Classifier, SClassifier, train_model, optimize_model
 from hpana.categories import CLASSIFIER_CATEGORIES
 from hpana.cluster.parallel import run_pool, Job
+from hpana.classifier import Classifier, SClassifier, train_model, optimize_model, GB_HYPERPARAMS, N_OPT_CORES
 from hpana import log
 
 ## - - set log level
@@ -43,6 +43,7 @@ log.info("ROOT is in batch mode")
 ##-------------------------------------------------------------
 ## consts 
 ##-------------------------------------------------------------
+__HERE = os.path.dirname(os.path.abspath(__file__))
 TREE_NAME = "NOMINAL"
 N_TRACKS = [1]
 FOLD_CUT_STR = "event_number%{0}!={1}"
@@ -92,14 +93,6 @@ for region, rg_feats in CLF_FEATURES[CLF_ARGS.channel].iteritems():
 ## - - setup outdir
 os.system("mkdir -p %s"%CLF_ARGS.outdir)
     
-## - - Hyperparameters for GradientBoosting 
-GB_HYPERPARAMS = {
-    # "loss": ["deviance", "exponential"],
-    "learning_rate": [0.01, 0.05, 0.1, 0.2],
-    "n_estimators":[50, 100, 150, 200, 300, 400], 
-    "min_samples_leaf": [0.005, 0.01, 0.02],
-    "max_depth": [10, 15, 20],
-}
 
 ##-----------------------------
 ## sklearn backend 
@@ -119,7 +112,7 @@ if CLF_ARGS.backend=="sklearn":
 
     ## nominal prams for GB classifier 
     mparams = {
-        "n_estimators":200, 
+        "n_estimators":100, 
         "min_weight_fraction_leaf": 0.02,
         "max_depth": 10,
         "verbose":1,
@@ -131,9 +124,8 @@ if CLF_ARGS.backend=="sklearn":
     DFRAME = SClassifier.prepare_data(BKGS, SIGS, ALL_FEATS, data_lumi=CONFIG.data_lumi,
                                       channel=CLF_ARGS.channel, branches=BRACHES, train_data=CLF_ARGS.train_data)
     jobs = []
-    train_masses = TRAINING_MASS_BINS["NOM"]
-    if CLF_ARGS.per_mass:
-        train_masses = TRAINING_MASS_BINS["SINGLE"]
+    models = []
+    train_masses = TRAINING_MASS_BINS[CLF_ARGS.bin_scheme]
 
     for signal_masses in train_masses:
         mass_tag = "%ito%i"%(signal_masses[0], signal_masses[-1]) if signal_masses else "ALL_MASSES"
@@ -175,16 +167,20 @@ if CLF_ARGS.backend=="sklearn":
                     clf_name = SClassifier.MODEL_NAME_STR_FORMAT.format(
                         clf_type, CLF_ARGS.channel, mass_tag, ntracks, CLF_ARGS.kfolds, rem, X_train.shape[1])
                     sclf = SClassifier(CLF_ARGS.channel, 
-                    name=clf_name, features=feats, X_train=X_train, X_weight=X_weight, Y_train=Y_train, weight_sample=False, **mparams)
+                        name=clf_name, features=feats, X_train=X_train, X_weight=X_weight, Y_train=Y_train, weight_sample=False, **mparams)
+                    models += [sclf]
 
-                    with open("tmpMODEL.pkl", "w") as ml:
-                        cPickle.dump(sclf, ml, protocol=2)
-
-                    with open("tmpMODEL.pkl", "r") as ml:
-                        tr_ml = cPickle.load(ml)
+                    mpath = os.path.join(CLF_ARGS.outdir, sclf.name)
+                    if os.path.isfile(mpath):
+                        log.warning("Found %s model; skipping the preparation..."%mpath)
+                        continue
+                    else:
+                        log.info("Saving %s model to disk ..."%mpath)
+                        with open(mpath, "w") as mcache:
+                            cPickle.dump(sclf, mcache, protocol=2)
 
                     ## - - assign the job
-                    if CLF_ARGS.train_bdt:
+                    if CLF_ARGS.train_bdt and CLF_ARGS.parallel:
                         jobs.append(Job(train_model, tr_ml, X_train, Y_train, X_weight,
                                         weight_sample=True, outdir=CLF_ARGS.outdir))
             else:
@@ -209,19 +205,28 @@ if CLF_ARGS.backend=="sklearn":
                     clf_type, CLF_ARGS.channel, mass_tag, ntracks, "NA", "NA", X_train.shape[1])
                 sclf = SClassifier(CLF_ARGS.channel, 
                     name=clf_name, features=feats, X_train=X_train, X_weight=X_weight, Y_train=Y_train, weight_sample=False, **mparams)
+                models += [sclf]
+                mpath = os.path.join(CLF_ARGS.outdir, sclf.name)
+                if os.path.isfile(mpath):
+                    log.warning("Found %s model; skipping the preparation..."%mpath)
+                    continue
+                else:
+                    log.info("Saving %s model to disk ..."%mpath)
+                    with open(mpath, "w") as mcache: 
+                        cPickle.dump(sclf, mcache, protocol=2)
 
                 ## - - assign the job
-                if CLF_ARGS.train_bdt:
+                if CLF_ARGS.train_bdt and CLF_ARGS.parallel:
                     jobs.append(Job(train_model, sclf, X_train, Y_train, X_weight,
                                     weight_sample=True, outdir=CLF_ARGS.outdir))
                 
             ## correlation matrix ?
-            if CLF_ARGS.plot_correlations:
+            if CLF_ARGS.plot_correlations and CLF_ARGS.parallel:
                 from hpana.classifier import features_correlation
                 p_title = r"Correlation Matrix: $ %i \leq m_{H^+} \leq %i [GeV]$"%(signal_masses[0], signal_masses[-1])
                 features_correlation(X_train, CLF_FEATURES[CLF_ARGS.channel], outname=clf_name.replace(".pkl", ""), outdir=CLF_ARGS.outdir, title=p_title)
 
-            if CLF_ARGS.optimize_bdt:
+            if CLF_ARGS.optimize_bdt and CLF_ARGS.parallel:
                 jobs.append(Job(optimize_model, sclf, X_train, Y_train, X_weight, param_grid=GB_HYPERPARAMS,
                                 weight_sample=False, outdir=CLF_ARGS.outdir, validation_plots=CLF_ARGS.validation_plots))
                                                         
@@ -231,8 +236,77 @@ if CLF_ARGS.backend=="sklearn":
         log.info("**"*30 + " Submitting %i jobs "%len(jobs) + "**"*30)
         if CLF_ARGS.parallel:
             run_pool(jobs, n_jobs=-1)
-        else:
-            run_pool(jobs, n_jobs=1)
+
+        if CLF_ARGS.cluster:
+            if CLF_ARGS.rs_manager=="TORQUE":
+                raise RuntimeError("Not implemented yet ...")
+
+            elif CLF_ARGS.rs_manager == "SLURM":
+                # - - write jobs
+                from hpana.cluster.job_template import SLURM_JOB_TEMPLATE
+
+                # - - setup the submit dir
+                os.system(
+                    "mkdir -p {0}/jobs  {0}/logs {0}/models".format(CLF_ARGS.outdir))
+                log.info(
+                    "************** submitting %i jobs to the cluster ************" % len(models))
+                log.info(
+                    "**************************************************************")
+
+                os.system("mkdir -p %s %s/jobs/" %
+                        (os.path.join(CLF_ARGS.outdir, CLF_ARGS.logsdir), CLF_ARGS.outdir))
+                submitfile_name = "%s/%s.sh" % (CLF_ARGS.outdir, "submitAllJobs")
+                submit_file = os.open(
+                    submitfile_name, os.O_CREAT | os.O_WRONLY, 0755)
+
+                if CLF_ARGS.train_bdt:
+                    script = "classifier-trainer"
+                    time = "6:0:0"
+                    cores = 1 
+                    mem = "3GB"
+                else:
+                    script = "classifier-optimizer"
+                    time = "36:0:0"
+                    cores = N_OPT_CORES
+                    mem = "%iGB"%(3*N_OPT_CORES)
+
+                # - -  create the job scripts and run them. Returns Analysis workers
+                for model in models:
+                    # - - payload for container
+                    payload = "source {job_script} {pickled_model} {script_path}".format(
+                        job_script=os.path.join(__HERE, "slurm_job_clf.sh"),
+                        pickled_model=os.path.abspath(os.path.join(CLF_ARGS.outdir, model.name)),
+                        script_path=os.path.join(__HERE, script),
+                    )
+
+                    # - - write the job submission script with right permissions
+                    jfile_name = "%s/jobs/%s.slurm" % (CLF_ARGS.outdir, model.name)
+                    jfile = os.open(jfile_name, os.O_CREAT | os.O_WRONLY, 0755)
+                    os.write(jfile,
+                            SLURM_JOB_TEMPLATE.format(
+                                logsdir=os.path.join(CLF_ARGS.outdir, CLF_ARGS.logsdir),
+                                outdir=CLF_ARGS.outdir,
+                                local_scratch=CLF_ARGS.local_scratch,
+                                time=time,
+                                cores=cores,
+                                memory=mem,
+                                jobname=model.name, 
+                                payload=payload,
+                                project=CLF_ARGS.rs_project)
+                            )
+
+                    os.close(jfile)
+
+                    # - - - - write submission to file to be used outside container
+                    log.info("Writing to %s for job %s ..." %
+                            (submitfile_name, model.name))
+                    os.write(submit_file, "sbatch %s\n" % jfile_name)
+
+                os.close(submit_file)
+                log.warning("Submission not supported from within container.")
+                log.warning("Please launch outside container via:")
+                log.warning("\t sh {0}".format(submitfile_name))
+
         
 ##-----------------------------
 ## tmva backend

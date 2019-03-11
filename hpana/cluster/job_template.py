@@ -55,10 +55,11 @@ fi
 
 """
 
-#SBATCH --account=ctb-stelzer
 SLURM_JOB_TEMPLATE ="""\
 #!/bin/bash
-#SBATCH --time=5:0:00
+#SBATCH --time={time}
+#SBATCH --cpus-per-task={cores}
+#SBATCH --mem={memory}
 #SBATCH --account={project}
 #SBATCH --job-name={jobname}
 #SBATCH --error={logsdir}/%x.e%A
@@ -69,15 +70,15 @@ source /project/atlas/Tier3/AtlasUserSiteSetup.sh
 export ALRB_CONT_POSTSETUP="pwd; whoami; date; hostname -f; date -u;"
 
 #export variables needed within Container environment - SINGULARITYENV_ affix needed
-export SINGULARITYENV_TMPDIR=/{local_scratch}/${{SLURM_JOB_USER}}/${{SLURM_JOB_ID}}_${{SLURM_JOB_NAME}}
-export SINGULARITYENV_LOGSDIR=${{SLURM_SUBMIT_DIR}}/{outdir}/{logsdir}
-export SINGULARITYENV_OUTDIR=${{SLURM_SUBMIT_DIR}}/{outdir}
-
 export SINGULARITYENV_SLURM_SUBMIT_DIR=${{SLURM_SUBMIT_DIR}}
 export SINGULARITYENV_SLURM_JOB_NAME=${{SLURM_JOB_NAME}}
 export SINGULARITYENV_SLURM_JOB_USER=${{SLURM_JOB_USER}}
 export SINGULARITYENV_SLURM_JOB_ID=${{SLURM_JOB_ID}}
 export SINGULARITYENV_HOSTNAME=${{HOSTNAME}}
+
+export SINGULARITYENV_TMPDIR=/{local_scratch}/${{SLURM_JOB_USER}}/${{SLURM_JOB_ID}}
+export SINGULARITYENV_LOGSDIR=${{SLURM_SUBMIT_DIR}}/{outdir}/{logsdir}
+export SINGULARITYENV_OUTDIR=${{SLURM_SUBMIT_DIR}}/{outdir}
 
 #job
 export ALRB_CONT_RUNPAYLOAD=\"{payload}\"

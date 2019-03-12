@@ -39,12 +39,13 @@ from ROOT import TMVA
 ## - - Hyperparameters for GradientBoosting 
 GB_HYPERPARAMS = {
     # "loss": ["deviance", "exponential"],
-    "learning_rate": [0.05, 0.1, 0.2],
-    "n_estimators":[100, 200, 300, 400], 
-    "min_samples_leaf": [0.005, 0.01, 0.02],
-    "max_depth": [10, 15, 20],
+    "learning_rate": [0.1, 0.2],
+    "n_estimators":[100, 200,], 
+    "min_samples_leaf": [0.01, 0.02],
+    "max_depth": [10, 15],
 }
-N_OPT_CORES = 16  
+N_OPT_CORES = 48
+
 
 ##----------------------------------------------------------------------------------
 ## Base classifier class
@@ -438,7 +439,57 @@ class SClassifier(GradientBoostingClassifier):
             
         return dframe
     
-    
+
+##-----------------------------------------------
+## simple class for appending clf scores to TTrees
+##-----------------------------------------------
+class AppendJob(Process):
+    """
+    simpel worker class for parallel
+    processing. the run method is necessary,
+    which will overload the run method of Procces.
+    """
+    def __init__(self, file_name, models, copy_file=False, outdir=None):
+        super(AppendJob, self).__init__()
+        self.file_name = file_name
+        job_name = file_name
+        if '/' in job_name:
+            job_name = job_name.split('/')[-1]
+        self.job_name = job_name.replace('.root','') 
+        self.models = models
+        self.copy_file = copy_file
+        self.outdir = outdir
+        
+    def run(self):
+        # copy to new file
+        if self.copy_file:
+            output = self.file_name + '.nn'
+            if os.path.exists(output):
+                log.warning(" {} already exists (will skip copying if file is in good shape)" .format(output))
+                tf = ROOT.TFile.Open(output, 'READ')
+                if not tf:
+                    log.warning("{} exists but it's ZOMBIE, replacing it".format(output))
+                    os.remove(output)
+                    shutil.copy(self.file_name, output)
+            else:
+                if self.outdir:
+                    reldir = self.file_name.split("/")[-2]
+                    fname = self.file_name.split("/")[-1]
+                    opath = os.path.join(self.outdir, reldir)
+                    os.system("mkdir -p %s"%opath)
+                    output = os.path.join(opath, fname)
+                    
+                log.info("copying {0} to {1} ...".format(self.file_name, output))
+                shutil.copy(self.file_name, output)
+        else:
+            output = self.file_name
+        
+        # the actual calculation happens here
+        evaluate_scores(output, self.models)
+
+        return 
+
+
 ##--------------------------------------------------------------------------
 ## util for parallel processing
 ##--------------------------------------------------------------------------
@@ -503,7 +554,7 @@ def train_model(model, X_train=None, Y_train=None, X_weight=None,
 ##--------------------------------------------------------------------------
 # utility function to report best scores
 ##--------------------------------------------------------------------------
-def report(results, n_top=10):
+def report(results, n_top=50):
     r_str = ""
     for i in range(1, n_top + 1):
         candidates = np.flatnonzero(results['rank_test_score'] == i)
@@ -538,10 +589,11 @@ def optimize_model(model, X_train=None, Y_train=None, X_weight=None, param_grid=
     gb_clf = GradientBoostingClassifier()
 
     # parameters to be passed to the estimator's fit method (gb_clf)
-    fit_params = {"sample_weight": X_weight}
+    fit_params = {"sample_weight": X_weight if weight_sample else None}
 
     # run grid search
-    grid_search = GridSearchCV(gb_clf, param_grid=param_grid, cv=3, n_jobs=N_OPT_CORES, verbose=3, scoring="roc_auc",  return_train_score=False)
+    grid_search = GridSearchCV(
+        gb_clf, param_grid=param_grid, fit_params=dict(fit_params), cv=3, n_jobs=N_OPT_CORES, verbose=3, scoring="roc_auc",  return_train_score=False)
     start = time.time()
     grid_search.fit(X_train, Y_train)
 
@@ -567,6 +619,8 @@ def plot_scores(models, dframe=None, backgrounds=[], signals=[], ntracks=[1], kf
     s_dframe = dframe.loc[[sig.name for sig in signals]]
     log.debug(30*"*" + " Testing Data Frame " + 30*"*")
     log.debug(dframe)
+    log.info("Signals: {0} || #events: {1} ; backgrounds: {2} || #events: {3}".format(
+        [s.name for s in signals], s_dframe.shape[0], [b.name for b in backgrounds], b_dframe.shape[0]))
 
     rocs = []
     for mtag, tdict in models.iteritems():
@@ -574,9 +628,6 @@ def plot_scores(models, dframe=None, backgrounds=[], signals=[], ntracks=[1], kf
         masses = [int(m) for m in mtag.split("to")] 
         r_signals = filter(lambda s: masses[0] <= s.mass <= masses[1], signals)
         log.info("*"*80)
-        log.info("Signals: {0} || #events: {1} ; backgrounds: {2} || #events: {3}".format(
-            [s.name for s in signals], s_dframe.shape[0], [b.name for b in backgrounds], b_dframe.shape[0]))
-
         for sig in r_signals:
             sm_df = dframe.loc[[sig.name]]
             for ntrack in ntracks:
@@ -807,52 +858,63 @@ def empty_tree(files, treename="NOMINAL"):
 
     return evts==0
 
+##--------------------------------------------------------------------------
+## simple hyperparameters handler 
+##--------------------------------------------------------------------------
+def get_hparams(channel, mass_range=(), bin_scheme="NOM", model_type="GB"):
+    """Optimized Hyperparameters for differnet classifiers classifier.
 
-##-----------------------------------------------
-## simple class for appending clf scores to TTrees
-##-----------------------------------------------
-class AppendJob(Process):
+    Parameters
+    ----------
+    channel: str,
+        analysis channel, taujet or taulep
+    mass_range: tuple,
+        signlas's mass range
+    bin_scheme: str,
+        mass binning scheme for training classifiers
+    model_type: str, 
+        classifier type
     """
-    simpel worker class for parallel
-    processing. the run method is necessary,
-    which will overload the run method of Procces.
-    """
-    def __init__(self, file_name, models, copy_file=False, outdir=None):
-        super(AppendJob, self).__init__()
-        self.file_name = file_name
-        job_name = file_name
-        if '/' in job_name:
-            job_name = job_name.split('/')[-1]
-        self.job_name = job_name.replace('.root','') 
-        self.models = models
-        self.copy_file = copy_file
-        self.outdir = outdir
-        
-    def run(self):
-        # copy to new file
-        if self.copy_file:
-            output = self.file_name + '.nn'
-            if os.path.exists(output):
-                log.warning(" {} already exists (will skip copying if file is in good shape)" .format(output))
-                tf = ROOT.TFile.Open(output, 'READ')
-                if not tf:
-                    log.warning("{} exists but it's ZOMBIE, replacing it".format(output))
-                    os.remove(output)
-                    shutil.copy(self.file_name, output)
-            else:
-                if self.outdir:
-                    reldir = self.file_name.split("/")[-2]
-                    fname = self.file_name.split("/")[-1]
-                    opath = os.path.join(self.outdir, reldir)
-                    os.system("mkdir -p %s"%opath)
-                    output = os.path.join(opath, fname)
-                    
-                log.info("copying {0} to {1} ...".format(self.file_name, output))
-                shutil.copy(self.file_name, output)
+
+    ## GradientBoosting 
+    hparams_GB = {
+        "taujet": {
+            "NOM": {
+                "80to120": {'n_estimators': 100, 'learning_rate': 0.1, 'max_depth': 10, 'min_samples_leaf': 0.02},
+                "130to160": {'n_estimators': 100, 'learning_rate': 0.1, 'max_depth': 10, 'min_samples_leaf': 0.01},
+                "170to190": {'n_estimators': 100, 'learning_rate': 0.2, 'max_depth': 10, 'min_samples_leaf': 0.01},
+                "200to400": {'n_estimators': 100, 'learning_rate': 0.1, 'max_depth': 10, 'min_samples_leaf': 0.01},
+                "500to3000": {'n_estimators': 200, 'learning_rate': 0.1, 'max_depth': 10, 'min_samples_leaf': 0.01},
+            },
+            "UP_DOWN":{},
+            "SINGLE":{},
+
+        },
+        "taulep": {
+            "NOM": {
+                "80to120": {'n_estimators': 200, 'learning_rate': 0.1, 'max_depth': 15, 'min_samples_leaf': 0.01},
+                "130to160": {'n_estimators': 200, 'learning_rate': 0.1, 'max_depth': 15, 'min_samples_leaf': 0.02},
+                "170to190": {'n_estimators': 200, 'learning_rate': 0.1, 'max_depth': 10, 'min_samples_leaf': 0.01},
+                "200to400": {'n_estimators': 200, 'learning_rate': 0.1, 'max_depth': 10, 'min_samples_leaf': 0.02},
+                "500to3000": {'n_estimators': 200, 'learning_rate': 0.1, 'max_depth': 10, 'min_samples_leaf': 0.01},
+            },
+            "UP_DOWN":{},
+            "SINGLE":{},
+
+        },
+    }
+
+    mtag = "%ito%i"%(mass_range[0], mass_range[-1])
+    if model_type=="GB":
+        if not bin_scheme in hparams_GB[channel]:
+            log.warning("Hyperparameters are not tuned for %s binning scheme, trying the NOM one ..."%bin_scheme)
+            bin_scheme = "NOM"
+        if mtag in hparams_GB[channel][bin_scheme]:
+            return hparams_GB[channel][bin_scheme][mtag]
         else:
-            output = self.file_name
-        
-        # the actual calculation happens here
-        evaluate_scores(output, self.models)
+            log.warning("Hyperparameters are not tuned for %s mass range, use another range plz"%mtag)
 
-        return 
+    else:
+        raise RuntimeError("Hyperparameters for classifier of type %s are not tuned yet!"%model_type)
+
+

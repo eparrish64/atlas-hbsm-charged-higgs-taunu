@@ -2,7 +2,7 @@
 
 """
 ## stdl
-import os, time
+import os, time, copy
 from array import array 
 from collections import OrderedDict
 import multiprocessing
@@ -270,14 +270,17 @@ class SClassifier(GradientBoostingClassifier):
             bfiles = []
             ## treat QCD fakes properly 
             if "QCD" in bkg.name:
+
+                ## @NOTE defensive copying to avoid clashing with cuts for other samples
+                category_cp = copy.deepcopy(category)
                 ## only FF weights are applicable here
-                ws = bkg.ff_weights(categories=[category])["NOMINAL"][category.name]   
+                ws = bkg.ff_weights(categories=[category_cp])["NOMINAL"][category.name]   
                 ws = "*".join(ws)
                 
                 ## add antitau cut 
-                category.tauid = ANTI_TAU
-                category.truth_tau = None #<! not applicable to DATA   
-                cuts = category.cuts 
+                category_cp.tauid = ANTI_TAU
+                category_cp.truth_tau = None #<! not applicable to DATA   
+                cuts = category_cp.cuts 
                 selection = cuts.GetTitle()
                 log.debug("Cut: %r\n"%selection)
                 log.debug("Weight: %r\n"%ws)
@@ -286,7 +289,8 @@ class SClassifier(GradientBoostingClassifier):
                 pool = multiprocessing.Pool() 
                 pool_res = []
 
-                log.debug("**"*30 + " Parallel processing %i datasets(%r)  for %s "%(len(bkg.data.datasets), bkg.data.streams, bkg.name) + "**"*30)
+                log.debug(
+                    "**"*30 + " Parallel processing %i datasets(%r)  for %s "%(len(bkg.data.datasets), bkg.data.streams, bkg.name) + "**"*30)
                 for ds in bkg.data.datasets:
                     bfiles = ds.files                        
                     if not bfiles:
@@ -361,7 +365,6 @@ class SClassifier(GradientBoostingClassifier):
 
                 ## retrive the pool output and create Dataframes 
                 for bds, pw, res in zip(bkg.datasets, pool_ws, pool_res):
-                    print bds
                     r_arr = res.get(3600)
                     p_df = pd.DataFrame(r_arr.flatten())
                     ## @NOTE the weight string changes due to LUMI factor from dataset to dataset --> rename it to avoid concatenation confusion 
@@ -880,11 +883,11 @@ def get_hparams(channel, mass_range=(), bin_scheme="NOM", model_type="GB"):
     hparams_GB = {
         "taujet": {
             "NOM": {
-                "80to120": {'n_estimators': 100, 'learning_rate': 0.1, 'max_depth': 10, 'min_samples_leaf': 0.02},
-                "130to160": {'n_estimators': 100, 'learning_rate': 0.1, 'max_depth': 10, 'min_samples_leaf': 0.01},
-                "170to190": {'n_estimators': 100, 'learning_rate': 0.2, 'max_depth': 10, 'min_samples_leaf': 0.01},
-                "200to400": {'n_estimators': 100, 'learning_rate': 0.1, 'max_depth': 10, 'min_samples_leaf': 0.01},
-                "500to3000": {'n_estimators': 200, 'learning_rate': 0.1, 'max_depth': 10, 'min_samples_leaf': 0.01},
+                "80to120": {'n_estimators': 200, 'learning_rate': 0.1, 'max_depth': 20, 'min_samples_leaf': 0.01},
+                "130to160": {'n_estimators': 200, 'learning_rate': 0.1, 'max_depth': 20, 'min_samples_leaf': 0.01},
+                "170to190": {'n_estimators': 200, 'learning_rate': 0.1, 'max_depth': 20, 'min_samples_leaf': 0.01},
+                "200to400": {'n_estimators': 200, 'learning_rate': 0.1, 'max_depth': 20, 'min_samples_leaf': 0.01},
+                "500to3000": {'n_estimators': 200, 'learning_rate': 0.1, 'max_depth': 20, 'min_samples_leaf': 0.01},
             },
             "UP_DOWN":{},
             "SINGLE":{},

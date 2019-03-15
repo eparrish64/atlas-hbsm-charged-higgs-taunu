@@ -144,7 +144,7 @@ XSEC_CACHE_MODIFIED = False
 XSEC_CACHE = {}
 if os.path.isfile(XSEC_CACHE_FILE):
     with open(XSEC_CACHE_FILE) as cache:
-        log.info("Loading cross section cache in %s ..." % XSEC_CACHE_FILE)
+        log.info("Loading cross sections from %s ..." % XSEC_CACHE_FILE)
         XSEC_CACHE = pickle.load(cache)
 
 
@@ -225,7 +225,7 @@ class Database(dict):
                 match.group('stream'),
                 match.group('tag'))
 
-    def __init__(self, name='DB', version="", verbose=False, stream=sys.stdout, log_level="DEBUG"):
+    def __init__(self, name='DB', version="", verbose=False, stream=sys.stdout, log_level="INFO"):
         super(Database, self).__init__()
         self.name = name
         self.verbose = verbose

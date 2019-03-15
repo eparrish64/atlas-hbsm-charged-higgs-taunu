@@ -1,39 +1,29 @@
-"""
-
+""" TMVA or Sklearn based Classifier to be trained in separating signals from backgrounds
 """
 ## stdl
-import os, time
+import os, time, copy
 from array import array 
 from collections import OrderedDict
 import multiprocessing
-from multiprocessing import Process
 
 ## PyPI
-import matplotlib
-matplotlib.use('pdf')
-import matplotlib.pyplot as plt
-
-from sklearn.model_selection import GridSearchCV
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.metrics import roc_curve, roc_auc_score
 from sklearn.model_selection import train_test_split
-    
+from sklearn.preprocessing import StandardScaler
 from root_numpy import root2array, tree2array
 import numpy as np
 import pandas as pd
 import pickle, cPickle
 
 ## local 
-from . import log 
-from categories import CLASSIFIER_CATEGORIES, TAU_IS_TRUE, ANTI_TAU
+from hpana import log 
+from hpana.categories import CLASSIFIER_CATEGORIES, TAU_IS_TRUE, ANTI_TAU
 
 ## ROOT 
 import ROOT
 from ROOT import TMVA
-
-## consts
-N_FILES = 10
 
 ##----------------------------------------------------------------------------------
 ## Base classifier class
@@ -168,16 +158,33 @@ class Classifier(TMVA.Factory):
 ##----------------------------------------------------------------------------------
 class SClassifier(GradientBoostingClassifier):
     """
-
     """
     MODEL_NAME_STR_FORMAT = "model_{0}_channel_{1}_mass_{2}_ntracks_{3}_nfolds_{4}_fold_{5}_nvars_{6}.pkl" #<! name, channel, ntracks, nfolds, fold, n_vars 
     
-    def __init__(self, channel, name="GB", mass_range=[], **params):
+    def __init__(self, channel, 
+                    name="GB", 
+                    mass_range=[], 
+                    features=[], 
+                    train_df=None, 
+                    weight_sample=False,
+                    is_trained=False,
+                    kfolds=5,
+                    ntracks=1,
+                    **params):
         log.debug("Initializing SClassifier ...")
         self.kparams = params
         self.channel = channel
         self.name = name 
+        self.features = features
         self.mass_range = mass_range
+        self.train_df = train_df
+        self.weight_sample = weight_sample
+        self.kfolds = kfolds
+        self.ntracks = ntracks
+        self.is_trained = is_trained
+        self.hyperparams = params
+
+        ## instantiate the base
         super(SClassifier, self).__init__(**params)
 
     @staticmethod
@@ -217,7 +224,7 @@ class SClassifier(GradientBoostingClassifier):
             missing_bkgs = backgrounds
             missing_sigs = signals
             
-        if not category:
+        if category is None:
             category = CLASSIFIER_CATEGORIES[channel]
         cuts = category.cuts
 
@@ -237,14 +244,17 @@ class SClassifier(GradientBoostingClassifier):
             bfiles = []
             ## treat QCD fakes properly 
             if "QCD" in bkg.name:
+
+                ## @NOTE defensive copying to avoid clashing with cuts for other samples
+                category_cp = copy.deepcopy(category)
                 ## only FF weights are applicable here
-                ws = bkg.ff_weights(categories=[category])["NOMINAL"][category.name]   
+                ws = bkg.ff_weights(categories=[category_cp])["NOMINAL"][category.name]   
                 ws = "*".join(ws)
                 
                 ## add antitau cut 
-                category.tauid = ANTI_TAU
-                category.truth_tau = None #<! not applicable to DATA   
-                cuts = category.cuts 
+                category_cp.tauid = ANTI_TAU
+                category_cp.truth_tau = None #<! not applicable to DATA   
+                cuts = category_cp.cuts 
                 selection = cuts.GetTitle()
                 log.debug("Cut: %r\n"%selection)
                 log.debug("Weight: %r\n"%ws)
@@ -253,7 +263,8 @@ class SClassifier(GradientBoostingClassifier):
                 pool = multiprocessing.Pool() 
                 pool_res = []
 
-                log.debug("**"*30 + " Parallel processing %i datasets(%r)  for %s "%(len(bkg.data.datasets), bkg.data.streams, bkg.name) + "**"*30)
+                log.debug(
+                    "**"*30 + " Parallel processing %i datasets(%r)  for %s "%(len(bkg.data.datasets), bkg.data.streams, bkg.name) + "**"*30)
                 for ds in bkg.data.datasets:
                     bfiles = ds.files                        
                     if not bfiles:
@@ -310,7 +321,7 @@ class SClassifier(GradientBoostingClassifier):
 
                     ## add luminosity weight
                     if ds.lumi_weight:
-                        lumi_weight = ds.lumi_weight
+                        lumi_weight = bkg.data_lumi(ds.stream) * ds.lumi_weight
                     else: 
                         lumi_weight = (bkg.data_lumi(ds.stream) * ds.xsec_kfact_effic) / ds.events                        
                     ws = ws + "*{}".format(lumi_weight)
@@ -328,7 +339,6 @@ class SClassifier(GradientBoostingClassifier):
 
                 ## retrive the pool output and create Dataframes 
                 for bds, pw, res in zip(bkg.datasets, pool_ws, pool_res):
-                    print bds
                     r_arr = res.get(3600)
                     p_df = pd.DataFrame(r_arr.flatten())
                     ## @NOTE the weight string changes due to LUMI factor from dataset to dataset --> rename it to avoid concatenation confusion 
@@ -365,7 +375,10 @@ class SClassifier(GradientBoostingClassifier):
                 ws = "*".join(ws)
 
                 ## add luminosity weight 
-                lumi_weight = (sig.data_lumi(ds.stream) * ds.xsec_kfact_effic) / ds.events
+                if ds.lumi_weight:
+                    lumi_weight = bkg.data_lumi(ds.stream) * ds.lumi_weight
+                else: 
+                    lumi_weight = (bkg.data_lumi(ds.stream) * ds.xsec_kfact_effic) / ds.events                        
                 ws = ws + "*{}".format(lumi_weight)
                 selection = cuts.GetTitle()
                 log.debug("Cut: %r\n"%selection)
@@ -406,277 +419,96 @@ class SClassifier(GradientBoostingClassifier):
             
         return dframe
     
-    
+
+
 ##--------------------------------------------------------------------------
 ## util for parallel processing
 ##--------------------------------------------------------------------------
-def train_model(model, X_train, Y_train, X_weight,
-                outdir="", weight_sample=False, save_model=True, validation_plots=False):
+def train_model(model, 
+    train_df=None,
+    features=[], 
+    positive_weights=True, 
+    balanced=True,
+    outdir="", 
+    weight_sample=False, 
+    scale_features=True, 
+    save_model=True, 
+    overwrite=False):
     """ Train a classifier and produce some validation plots.
     Parameters
     ----------
     model: DecisionTree;
         sklearn classifier 
-    X_train: numpy ndarray; 
-        training features 
-    Y_train: numpy ndarray;
-        training class labels
-    X_weight: numpy ndarray;
-        training samples weights (data points with higher weight will be penelized more upon wrong classification)
+    train_df: pandas.DataFrame; 
+        training dataframe  
     outdir: str;
         path to save the model and roc curve 
     weight_sample: bool;
         whether to use the sample weight or go with the sklearn's default balanced weight procedure for the classes. 
     save_model: bool;
         whether to save the trained model to disk or not
-    validation_plots: bool;
-        whether to plot roc curves or not    
 
     Return
     ------
     trained model 
     """
+    if weight_sample:
+        balanced = False
 
-    if validation_plots:
-        test_size = 0.2
-    else:
-        test_size = 0.0
+    if train_df is None:
+        tr_df = model.train_df
+    if not features :
+        features = model.features
 
-    X_train, X_test, Y_train, Y_test, X_weight_tr, X_weight_ts = train_test_split(X_train, Y_train, X_weight, test_size=test_size)
+    if balanced: 
+        weight_sample = False   
+        b_df = tr_df[tr_df["class_label"]==0]
+        s_df = tr_df[tr_df["class_label"]==1]
+        log.info("Balancing training classes (under-sampling); signal events:{} | bkg events: {}".format(s_df.shape[0], b_df.shape[0]))
+        b_df = b_df.sample(s_df.shape[0], replace=True)
+        tr_df_ud = pd.concat([b_df, s_df], axis=0)
+
+    ## - - training arrays
+    X_train = tr_df_ud[[ft.name for ft in features]]    
+    Y_train = tr_df_ud["class_label"]
+    if weight_sample:
+        log.info("Using event weight for training, events with negative weight are thrown away")        
+        X_weight = tr_df_ud["weight"] 
+        ## in order to avoid events with negative weight thrown away        
+        if positive_weights: 
+            log.info("using abs(weights)!")
+            X_weight = np.absolute(X_weight.values)
+
+    if scale_features:
+        log.info("Scaling features using StandardScaler ...")
+        scaler = StandardScaler()
+        X_train = scaler.fit_transform(X_train.values)
+
     mpath = os.path.join(outdir, model.name)
-    
+    is_trained = False 
     if os.path.isfile(mpath):
-        log.info("found already trained model %s"%mpath)
+        log.info("Loading %s model from disk ..."%mpath)
         with open(mpath, "r") as cache:
             model = cPickle.load(cache)
-    else:
+            is_trained =  model.is_trained
+            if is_trained:
+                log.warning("The %s model is already trained! set overwrite=True, if you want to overwrite it"%mpath)
+                if overwrite:
+                    os.remove(mpath)
+                    is_trained = False                                    
+
+    if not is_trained:
         ## train the model,
-        ## please note that samples with negative weights will be thrown away for training
-        model = model.fit(X_train, Y_train, sample_weight=X_weight_tr if weight_sample else None)
+        model = model.fit(X_train.values, Y_train.values, sample_weight=X_weight if weight_sample else None)
+        model.is_trained = True
         if save_model:
             mpath = os.path.join(outdir, model.name)
             with open(mpath, "w") as cache:
                 cPickle.dump(model, cache, protocol=2)
     
-    if validation_plots:
-        Y_score = model.predict_proba(X_test)[:, 1]
-        fpr_grd, tpr_grd, _ = roc_curve(Y_test, Y_score)
-        auc = roc_auc_score(Y_test, Y_score)
-        
-        ## plot roc 
-        plt.figure(1)
-        plt.plot([0, 1], [0, 1], 'k--')
-        plt.plot(fpr_grd, tpr_grd, label="AUC = %.4f"%auc)
-        plt.ylabel('Signal efficiency (sensitivity)')
-        plt.xlabel('Background rejection (specificity)')
-        plt.title('ROC curve')
-        plt.legend(loc='best')
-        plt.savefig(os.path.join(outdir, model.name.replace(".pkl", ".png") ) )
-        plt.close()
-
     log.info("Trained %s model"%(model.name))
     return model
 
-
-##--------------------------------------------------------------------------
-# Utility function to report best scores
-##--------------------------------------------------------------------------
-def report(results, n_top=10):
-    r_str = ""
-    for i in range(1, n_top + 1):
-        candidates = np.flatnonzero(results['rank_test_score'] == i)
-        for candidate in candidates:
-            r_str += ("--"*50 +"\n")
-            r_str += ("Model with rank: {0}\n".format(i))
-            r_str += ("Mean validation score: {0:.3f} (std: {1:.3f})\n".format(
-                  results['mean_test_score'][candidate], results['std_test_score'][candidate]))
-            r_str += ("Mean training time: {0:.2f} [min]\n".format(results['mean_fit_time'][candidate]))                  
-            r_str += ("Parameters: {0}\n".format(results['params'][candidate]))
-    print r_str
-    return r_str
-
-##--------------------------------------------------------------------------
-## Utility function for optimizing hyprparameters of a model
-##--------------------------------------------------------------------------
-def optimize_model(model, X_train, Y_train, X_weight, param_grid={},
-                outdir="", weight_sample=False, save_model=True, validation_plots=False):
-    """ Tune model's hyper parameters and return the best performing alongside the model.
-    Parameters
-    ----------
-    see train_model() 
-    """
-
-    gb_clf = GradientBoostingClassifier()
-
-    # parameters to be passed to the estimator's fit method (gb_clf)
-    fit_params = {"sample_weight": X_weight}
-
-    # run grid search
-    grid_search = GridSearchCV(gb_clf, param_grid=param_grid, cv=3, n_jobs=-1, verbose=1, scoring="roc_auc",  return_train_score=False)
-    start = time.time()
-    grid_search.fit(X_train, Y_train)
-
-    print("GridSearchCV took %.2f seconds for %d candidate parameter settings."
-        % (time.time() - start, len(grid_search.cv_results_['params'])))
-
-    report_name = os.path.join(outdir, model.name.replace(".pkl", "_HyperParams.txt"))
-    with open(report_name, "w") as rfile:
-        rfile.write(model.name.replace(".pkl", ""))
-        rfile.write(report(grid_search.cv_results_))
-
-    return grid_search.cv_results_
-
-
-##--------------------------------------------------------------------------
-## plot predicted signal and background scores 
-##--------------------------------------------------------------------------
-def plot_scores(model, bkg_array, sig_array, outdir="", label=None, outname=None):
-    """
-    """
-    bkg_score = model.predict_proba(bkg_array)[:, 1]
-    sig_score = model.predict_proba(sig_array)[:, 1]
-    bins = numpy.linspace(0, 1, 10)
-
-    ## plot hists
-    plt.figure(1)
-    plt.hist(bkg_array, bins, density=True, histtype="stepfilled", alpha=0.5, label='BKG')
-    plt.hist(sig_array, bins, density=True, histtype="stepfilled", alpha=0.5, label='SIG')
-    plt.ylabel('# of events')
-    plt.xlabel('BDT score')
-    plt.legend(loc='best')
-
-    if not outname: 
-        outname = model.name.replace(".pkl", ".png") 
-    plt.savefig(os.path.join(outdir, outname))
-    plt.close()
-
-    log.info("Trained %s model"%(model.name))
-
-
-
-
-
-##--------------------------------------------------------------------------
-## plot feature importance 
-##--------------------------------------------------------------------------
-def features_ranking(model, features, plot=True, outdir="./"):
-    """ get features ranking for a trained model and plot them.
-    """
-
-    importance = model.feature_importances_
-    importance = pd.DataFrame(importance, index=[ft.name for ft in features], 
-                            columns=["Importance"])
-
-
-    importance["Std"] = np.std([tree[0].feature_importances_
-                                for tree in model.estimators_[10:]], axis=0)
-
-    ## get the labels                                    
-    x = range(model.n_features_) 
-    labels = []
-    for ft in features:
-        if ft.latex:
-            title = ft.latex
-        else:
-            title = ft.name
-        labels += [title]
-
-
-    y = importance.ix[:, 0]
-    yerr = importance.ix[:, 1]
-
-    plt.figure(10)
-    bars = plt.barh(x, y, yerr=yerr, align="center", tick_label=labels)
-
-    ## automatize bar colors depending on the size 
-    for ft_imp, b in zip(model.feature_importances_, bars):
-        if ft_imp > 0.2:
-            b.set_color("orangered")
-        elif ft_imp > 0.15:
-            b.set_color("salmon")
-        elif ft_imp > 0.1:
-            b.set_color("orange")
-
-    plt.gcf().subplots_adjust(left=0.27)
-    plt.xlabel("Gini Importance")
-
-    ## set plot title based on the mass region that the model is trained on
-    masses = model.name.split("_")[5].split("to")
-    if len(masses) > 1:
-        mtag =r"$ %s \leq m_{H^+} \leq %s [GeV]$"%(masses[0], masses[1])
-    elif masses:
-        mtag = masses[0]                
-    else:
-        mtag = "..."        
-    p_title = "Training Region: %s"%mtag
-    plt.title(p_title)
-
-    ## save the plot
-    if not os.path.isdir(outdir):
-        os.system("mkdir -p %s"%outdir)
-    fname = os.path.join(outdir, "feature_importance_%s"%model.name.replace(".pkl", "")) 
-    log.info("Saving %s ..."%fname)
-    plt.savefig(fname+".png")
-    plt.savefig(fname+".pdf", format='pdf', dpi=1000)
-    plt.close()
-
-##--------------------------------------------------------------------------
-## plot feature importance 
-##--------------------------------------------------------------------------
-def features_correlation(train_data, features, outdir="./", outname="features_correlation", title=""):
-    """
-    Get the correlation matrix for the input features & target.
-    
-    Parameters
-    ----------
-    train_data: pandas data frame; training samples
-    
-    features: list; train features/+target
-    outdir: str; path for the plots
-
-    Return
-    ------
-    None
-    """
-    corr_matrix = train_data.corr()
-
-    fig, ax1 = plt.subplots(ncols=1, figsize=(10,8))
-    opts = {'cmap': plt.get_cmap("RdBu"),
-            'vmin': -1, 'vmax': +1}
-        
-    heatmap1 = ax1.pcolor(corr_matrix, **opts)
-    plt.colorbar(heatmap1, ax=ax1)
-    if title:
-       ax1.set_title(title) 
-    
-    ## set the lables 
-    labels = corr_matrix.columns.values
-    titles = []
-    for ft in features:
-        if ft.latex:
-            title = ft.latex
-        else:
-            title = ft.name
-        titles += [title]
-
-    for ax in (ax1,):
-        # shift location of ticks to center of the bins
-        ax.set_xticks(np.arange(len(labels))+1., minor=False)
-        ax.set_yticks(np.arange(len(labels))+0.5, minor=False)
-        ax.set_xticklabels(titles, minor=False, ha='right', rotation=70)
-        ax.set_yticklabels(titles, minor=False)
-
-    ## add margin for the labels 
-    plt.gcf().subplots_adjust(left=0.2, bottom=0.2)
-
-    ## save the plot 
-    if not os.path.isdir(outdir):
-        os.system("mkdir -p %s"%outdir)
-    fname = os.path.join(outdir, outname)
-    log.info("Saving %s ..."%fname)
-    plt.savefig(fname+".png")
-    plt.savefig(fname+".pdf", format='pdf', dpi=1000)
-    plt.close()
 
 ##--------------------------------------------------------------------------
 ## 
@@ -694,51 +526,3 @@ def empty_tree(files, treename="NOMINAL"):
     return evts==0
 
 
-##-----------------------------------------------
-## simple class for appending clf scores to TTrees
-##-----------------------------------------------
-class AppendJob(Process):
-    """
-    simpel worker class for parallel
-    processing. the run method is necessary,
-    which will overload the run method of Procces.
-    """
-    def __init__(self, file_name, models, copy_file=False, outdir=None):
-        super(AppendJob, self).__init__()
-        self.file_name = file_name
-        job_name = file_name
-        if '/' in job_name:
-            job_name = job_name.split('/')[-1]
-        self.job_name = job_name.replace('.root','') 
-        self.models = models
-        self.copy_file = copy_file
-        self.outdir = outdir
-        
-    def run(self):
-        # copy to new file
-        if self.copy_file:
-            output = self.file_name + '.nn'
-            if os.path.exists(output):
-                log.warning(" {} already exists (will skip copying if file is in good shape)" .format(output))
-                tf = ROOT.TFile.Open(output, 'READ')
-                if not tf:
-                    log.warning("{} exists but it's ZOMBIE, replacing it".format(output))
-                    os.remove(output)
-                    shutil.copy(self.file_name, output)
-            else:
-                if self.outdir:
-                    reldir = self.file_name.split("/")[-2]
-                    fname = self.file_name.split("/")[-1]
-                    opath = os.path.join(self.outdir, reldir)
-                    os.system("mkdir -p %s"%opath)
-                    output = os.path.join(opath, fname)
-                    
-                log.info("copying {0} to {1} ...".format(self.file_name, output))
-                shutil.copy(self.file_name, output)
-        else:
-            output = self.file_name
-        
-        # the actual calculation happens here
-        evaluate_scores(output, self.models)
-
-        return 

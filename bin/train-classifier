@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-* This scripts provieds functionalities for trainning a binary classifier in order to separate signal from background.
+* This scripts provides functionalities for training a binary classifier in order to separate signal from background.
 * It's build on top of the MVA with the option for Pythonic keras & scikit-learn backends.
 """
 
@@ -57,7 +57,7 @@ CONFIG = Configuration(CLF_ARGS.channel, db_version=CLF_ARGS.db_version)
 ANALYSIS  = Analysis(CONFIG, compile_cxx=True)
 
 ## - - training samples (no need for l-->tau fakes or MC j--> tau fakes for masses < 500GeV)
-BKGS = filter(lambda b: not b.name in ["LepFakes", "QCD"], ANALYSIS.backgrounds)
+BKGS = filter(lambda b: not b.name in ["LepFakes"], ANALYSIS.backgrounds)
 if CLF_ARGS.bkg:
     BKGS = filter(lambda b: b.name in CLF_ARGS.bkg, BKGS)
 

@@ -108,7 +108,7 @@ if __name__=='__main__':
         analysis = Analysis(config, compile_cxx=True)
 
         ## - - prepare testing dataFrame 
-        backgrounds =  filter(lambda b: not b.name in ["LepFakes", "QCD"], analysis.backgrounds)
+        backgrounds =  filter(lambda b: not b.name in ["LepFakes"], analysis.backgrounds)
         if CLF_ARGS.bkg:
             backgrounds = filter(lambda b: b.name in CLF_ARGS.bkg, backgrounds)
 

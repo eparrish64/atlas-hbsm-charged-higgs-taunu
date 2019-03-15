@@ -26,19 +26,15 @@ from hpana.analysis import Analysis
 from hpana.samples.sample  import Sample
 from hpana.samples.higgs import Higgs 
 from hpana.variables import CLF_FEATURES
-from hpana.categories import CLASSIFIER_CATEGORIES
+from hpana.categories import CLASSIFIER_CATEGORIES, Category_SR_TAUJET
 from hpana.cluster.parallel import run_pool, Job
-from hpana.classifier import (Classifier, 
-    SClassifier, 
-    train_model, 
-    optimize_model, 
-    GB_HYPERPARAMS, 
-    N_OPT_CORES,
-    get_hparams)
 
-from hpana import log
+from hpana.mva.classifier import Classifier, SClassifier, train_model
+from hpana.mva.optimization import get_hparams
+from hpana.mva import N_TRACKS, FOLD_CUT_STR, TRAINING_MASS_BINS, BRANCHES, ALL_FEATS
 
 ## - - set log level
+from hpana import log
 log.setLevel(CLF_ARGS.log)
 
 # - - speed things up a bit
@@ -51,38 +47,17 @@ log.info("ROOT is in batch mode")
 ## consts 
 ##-------------------------------------------------------------
 __HERE = os.path.dirname(os.path.abspath(__file__))
-TREE_NAME = "NOMINAL"
-N_TRACKS = [1]
-FOLD_CUT_STR = "event_number%{0}!={1}"
-
-## different training mass bins 
-TRAINING_MASS_BINS = {
-    # as of 2015+2016 legacy analysis
-    "NOM": [     
-        (80, 90, 100, 110, 120), #< low mas 
-        (130, 140, 150, 160), #< int mass I
-        (170, 180, 190), #< int mass II
-        (200, 225, 250, 275, 300, 350, 400), #< high mass I
-        tuple(range(500, 1100, 100) + range(1200, 2200, 200) + [2500, 3000]), #< high mass II
-        ],   
-    # one mass point above and one blow --> no discontinuity in training bins 
-    "UP_DOWN": [(80, 90, 100), (2000, 2500, 3000)] + [tuple(Higgs.MASSES[cnt-1:cnt+2]) for cnt in range(len(Higgs.MASSES))[3:-2]],
-
-    # train per mass point 
-    "SINGLE": [(m,) for m in Higgs.MASSES],
-} 
 
 ## - - build analysis main configuration object
-CONFIG = Configuration(CLF_ARGS.channel, 
-                       data_streams=CLF_ARGS.data_streams,
-                       mc_campaign=CLF_ARGS.mc_campaign,
-                       db_version=CLF_ARGS.db_version)
+CONFIG = Configuration(CLF_ARGS.channel, db_version=CLF_ARGS.db_version)
+                    #    data_streams=CLF_ARGS.data_streams,
+                    #    )
 
 ## - - instantiate Analysis
 ANALYSIS  = Analysis(CONFIG, compile_cxx=True)
 
 ## - - training samples (no need for l-->tau fakes or MC j--> tau fakes for masses < 500GeV)
-BKGS = filter(lambda b: not b.name in ["LepFakes"], ANALYSIS.backgrounds)
+BKGS = filter(lambda b: not b.name in ["LepFakes", "QCD"], ANALYSIS.backgrounds)
 if CLF_ARGS.bkg:
     BKGS = filter(lambda b: b.name in CLF_ARGS.bkg, BKGS)
 
@@ -95,13 +70,6 @@ TRAINING_BKGS = {
     "LOW": filter(lambda b: not b.name in ["QCD"] , BKGS),
     "HIGH":  BKGS[:], #<! above 500 GeV
 }  
-
-## - - complete list of training features irrespective of the mass region (to get a complete Dataframe for training)
-ALL_FEATS = []
-for region, rg_feats in CLF_FEATURES[CLF_ARGS.channel].iteritems():
-    for ft in rg_feats:
-        if not ft.name in [f.name for f in ALL_FEATS]:
-            ALL_FEATS += [ft] 
 
 ## - - setup outdir
 os.system("mkdir -p %s"%CLF_ARGS.outdir)
@@ -116,20 +84,16 @@ if CLF_ARGS.backend=="sklearn":
     except ImportError:
         raise RuntimeError("Please install sklearn; (pip install sklearn)")
 
-    ## - - turn off kfold splitting
-    if CLF_ARGS.plot_correlations or CLF_ARGS.optimize_bdt:
-        CLF_ARGS.kfolds = None
-
-    ## - - event number for kfold training and ntracks for different training for different tau prongs. 
-    BRACHES = ["event_number"] + ["tau_0_n_charged_tracks"] + [ft.tformula for ft in ALL_FEATS]
+    # ## - - turn off kfold splitting
+    # if CLF_ARGS.plot_correlations or CLF_ARGS.optimize_bdt or CLF_ARGS.scale_feats:
+    #     CLF_ARGS.kfolds = None
 
     ## - - prepare training Dataframe
-    DFRAME = SClassifier.prepare_data(BKGS, SIGS, ALL_FEATS, data_lumi=CONFIG.data_lumi,
-                                      channel=CLF_ARGS.channel, branches=BRACHES, train_data=CLF_ARGS.train_data)
+    DFRAME = SClassifier.prepare_data(BKGS, SIGS, ALL_FEATS[CLF_ARGS.channel], data_lumi=CONFIG.data_lumi,
+                                      channel=CLF_ARGS.channel, branches=BRANCHES[CLF_ARGS.channel], train_data=CLF_ARGS.train_data)
     jobs = []
     models = []
     train_masses = TRAINING_MASS_BINS[CLF_ARGS.bin_scheme]
-
     for signal_masses in train_masses:
         mass_tag = "%ito%i"%(signal_masses[0], signal_masses[-1]) if signal_masses else "ALL_MASSES"
         signals = filter(lambda s: s.mass in signal_masses, SIGS)
@@ -138,10 +102,16 @@ if CLF_ARGS.backend=="sklearn":
         if not signals:
             log.info("No signal in %s mass range; skipping!"%mass_tag)
             continue
+
+        ## - - different set of features for low mass and high mass
+        if (len(signals)==1 and signals[0].mass > 400) or any([s.mass>500 for s in signals]):
+            feats = CLF_FEATURES[CLF_ARGS.channel]["HIGH"]
+        else:
+            feats = CLF_FEATURES[CLF_ARGS.channel]["LOW"]
         
         ## get tuned Hyperparameters
         hyper_params = get_hparams(CLF_ARGS.channel, mass_range=signal_masses, bin_scheme=CLF_ARGS.bin_scheme, model_type="GB")
-        hyper_params["verbose"] = 2
+        hyper_params["verbose"] = 1
 
         ## get list of backgrounds to be used in this signal region 
         if max(signal_masses) > 400:
@@ -153,100 +123,46 @@ if CLF_ARGS.backend=="sklearn":
         dframe = DFRAME.loc[[bkg.name for bkg in reg_bkgs]+[sig.name for sig in signals]]
         s_dframe = DFRAME.loc[[sig.name for sig in signals]]
         log.info("*"*80)
-        log.info("Signals: {0} || #events: {1} ; backgrounds: {2} || #events: {3}".format(
+        log.info("Signals: {0} | #events: {1} ; backgrounds: {2} | #events: {3}".format(
             [s.name for s in signals], s_dframe.shape[0], [b.name for b in reg_bkgs], dframe.shape[0]-s_dframe.shape[0]))
         log.debug(30*"*" + " Training Data Frame " + 30*"*")
         log.debug(dframe)
 
         ## training separately for 1p and 3p taus (do not include QCD fakes for 1p training)
         for ntracks in N_TRACKS:
-            if CLF_ARGS.kfolds:
-                for rem in range(CLF_ARGS.kfolds):
-                    sdf = dframe[(dframe["event_number"]%CLF_ARGS.kfolds!=rem) & (dframe["tau_0_n_charged_tracks"]==ntracks)]
-
-                    ## - - different set of features for low mass and high mass
-                    if (len(signals)==1 and signals[0].mass > 400) or any([s.mass>500 for s in signals]):
-                        feats = CLF_FEATURES[CLF_ARGS.channel]["HIGH"]
-                    else:
-                        feats = CLF_FEATURES[CLF_ARGS.channel]["LOW"]
-
-                    ## - - training arrays
-                    X_train = sdf[[ft.name for ft in feats]]    
-                    Y_train = sdf["class_label"]
-                    X_weight = sdf["weight"] #<! pass it sample_weight to the fit method
-                    
-                    log.info("Training in mass rage:%s on ntracks=%i, nevents=%i, and nfeatures=%i\n\t\tHyperparams: %r\n"%(
-                        mass_tag, ntracks, X_train.shape[0], X_train.shape[1], hyper_params))
-
-                    ## - - instantiate the model
-                    clf_name = SClassifier.MODEL_NAME_STR_FORMAT.format(
-                        "GB%i"%hyper_params["n_estimators"],CLF_ARGS.channel, mass_tag, ntracks, CLF_ARGS.kfolds, rem, X_train.shape[1])
-                    sclf = SClassifier(CLF_ARGS.channel, 
-                        name=clf_name, features=feats, X_train=X_train, X_weight=X_weight, Y_train=Y_train, weight_sample=False, **hyper_params)
-                    models += [sclf]
-
-                    ## - - assign the job
-                    if CLF_ARGS.train_bdt and CLF_ARGS.parallel:
-                        jobs.append(Job(train_model, sclf, weight_sample=False, outdir=CLF_ARGS.outdir))
-
-                    ## pickle the model                        
-                    mpath = os.path.join(CLF_ARGS.outdir, sclf.name)
-                    if os.path.isfile(mpath):
-                        log.warning("Found %s model; skipping the preparation..."%mpath)
-                        continue
-                    else:
-                        log.info("Saving %s model to disk ..."%mpath)
-                        with open(mpath, "w") as mcache:
-                            cPickle.dump(sclf, mcache, protocol=2)
-            else:
-                sdf = dframe[(dframe["tau_0_n_charged_tracks"]==ntracks)]
-                ## - - different set of features for low mass and high mass
-                if (len(signals)==1 and signals[0].mass > 400) or any([s.mass>500 for s in signals]):
-                    feats = CLF_FEATURES[CLF_ARGS.channel]["HIGH"]
+            for rem in range(CLF_ARGS.kfolds): #<@NOTE 1 obviously is all
+                if CLF_ARGS.kfolds==1:
+                    where = (dframe["tau_0_n_charged_tracks"]==ntracks)
                 else:
-                    feats = CLF_FEATURES[CLF_ARGS.channel]["LOW"]
-
-                ## - - training arrays
-                X_train = sdf[[ft.name for ft in feats]]    
-
-                Y_train = sdf["class_label"]
-                X_weight = sdf["weight"] #<! pass it sample_weight to the fit method
-                
+                    where = (dframe["event_number"]%CLF_ARGS.kfolds!=rem) & (dframe["tau_0_n_charged_tracks"]==ntracks)
+                sdf = dframe[where]
+                                    
                 log.info("Training in mass rage:%s on ntracks=%i, nevents=%i, and nfeatures=%i\n\t\tHyperparams: %r\n"%(
-                    mass_tag, ntracks, X_train.shape[0], X_train.shape[1], hyper_params))
+                    mass_tag, ntracks, sdf.shape[0], sdf.shape[1], hyper_params))
 
                 ## - - instantiate the model
                 clf_name = SClassifier.MODEL_NAME_STR_FORMAT.format(
-                    "GB%i"%hyper_params["n_estimators"], CLF_ARGS.channel, mass_tag, ntracks, "NA", "NA", X_train.shape[1])
+                    "GB%i"%hyper_params["n_estimators"],CLF_ARGS.channel, mass_tag, ntracks, CLF_ARGS.kfolds, rem, len(feats))
                 sclf = SClassifier(CLF_ARGS.channel, 
-                    name=clf_name, features=feats, X_train=X_train, X_weight=X_weight, Y_train=Y_train, weight_sample=False, **hyper_params)
+                    train_df=sdf, name=clf_name, features=feats, weight_sample=False, **hyper_params)
+                models += [sclf]
 
                 ## - - assign the job
                 if CLF_ARGS.train_bdt and CLF_ARGS.parallel:
-                    jobs.append(Job(train_model, sclf, weight_sample=True, outdir=CLF_ARGS.outdir))
+                    jobs.append(Job(train_model, sclf, weight_sample=False, balanced=True, scale_features=False, outdir=CLF_ARGS.outdir))
 
-                models += [sclf]
+                ## pickle the model                        
                 mpath = os.path.join(CLF_ARGS.outdir, sclf.name)
                 if os.path.isfile(mpath):
                     log.warning("Found %s model; skipping the preparation..."%mpath)
                     continue
                 else:
                     log.info("Saving %s model to disk ..."%mpath)
-                    with open(mpath, "w") as mcache: 
+                    with open(mpath, "w") as mcache:
                         cPickle.dump(sclf, mcache, protocol=2)
-                
-            ## correlation matrix ?
-            if CLF_ARGS.plot_correlations and CLF_ARGS.parallel:
-                from hpana.classifier import features_correlation
-                p_title = r"Correlation Matrix: $ %i \leq m_{H^+} \leq %i [GeV]$"%(signal_masses[0], signal_masses[-1])
-                features_correlation(X_train, CLF_FEATURES[CLF_ARGS.channel], outname=clf_name.replace(".pkl", ""), outdir=CLF_ARGS.outdir, title=p_title)
-
-            if CLF_ARGS.optimize_bdt and CLF_ARGS.parallel:
-                jobs.append(Job(optimize_model, sclf, X_train, Y_train, X_weight, param_grid=GB_HYPERPARAMS,
-                                weight_sample=False, outdir=CLF_ARGS.outdir, validation_plots=CLF_ARGS.validation_plots))
-                                                        
+                                    
     
-    if CLF_ARGS.train_bdt or CLF_ARGS.optimize_bdt:
+    if CLF_ARGS.train_bdt:
         ## - - run
         log.info("**"*30 + " Submitting %i jobs "%len(jobs) + "**"*30)
         if CLF_ARGS.parallel:
@@ -274,17 +190,6 @@ if CLF_ARGS.backend=="sklearn":
                 submit_file = os.open(
                     submitfile_name, os.O_CREAT | os.O_WRONLY, 0755)
 
-                if CLF_ARGS.train_bdt:
-                    script = "classifier-trainer"
-                    time = "6:0:0"
-                    cores = 1 
-                    mem = "2GB"
-                else:
-                    script = "classifier-optimizer"
-                    time = "8:0:0" #<! based on 16 cores 
-                    cores = N_OPT_CORES
-                    mem = "%iGB"%(3*N_OPT_CORES)
-
                 # - -  create the job scripts and run them. Returns Analysis workers
                 for model in models:
                     # - - payload for container
@@ -302,9 +207,9 @@ if CLF_ARGS.backend=="sklearn":
                                 logsdir=os.path.join(CLF_ARGS.outdir, CLF_ARGS.logsdir),
                                 outdir=CLF_ARGS.outdir,
                                 local_scratch=CLF_ARGS.local_scratch,
-                                time=time,
-                                cores=cores,
-                                memory=mem,
+                                time="6:0:0",
+                                cores=1,
+                                memory="1GB",
                                 jobname=model.name, 
                                 payload=payload,
                                 project=CLF_ARGS.rs_project)

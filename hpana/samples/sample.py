@@ -170,9 +170,14 @@ class Sample(object):
             categories = self.config.categories
         weights_dict = {}
 
+        ## In general weights might change from category to category 
         for category in categories:
-            weights_dict[category.name] = [w.title for w in weight_fields]
-        
+            ## make sure there's no weight applied twice 
+            ws = set()
+            for w in weight_fields:
+                ws.add(w.title)
+            weights_dict[category.name] = list(ws)
+
         return weights_dict
 
     @property

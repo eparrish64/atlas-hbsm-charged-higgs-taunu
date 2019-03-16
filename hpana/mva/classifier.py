@@ -169,6 +169,7 @@ class SClassifier(GradientBoostingClassifier):
                     weight_sample=False,
                     is_trained=False,
                     kfolds=5,
+                    fold_num=0,
                     ntracks=1,
                     **params):
         log.debug("Initializing SClassifier ...")
@@ -180,6 +181,7 @@ class SClassifier(GradientBoostingClassifier):
         self.train_df = train_df
         self.weight_sample = weight_sample
         self.kfolds = kfolds
+        self.fold_num = fold_num
         self.ntracks = ntracks
         self.is_trained = is_trained
         self.hyperparams = params

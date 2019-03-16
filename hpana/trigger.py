@@ -50,7 +50,7 @@ TRIGGERS = {
             "2015": ("((run_number <= 288000)&&"\
                      "(HLT_e24_lhmedium_L1EM20VH || HLT_e60_lhmedium || HLT_e120_lhloose || HLT_mu20_iloose_L1MU15 || HLT_mu50))"),
         
-            "2016": ("((run_number >= 296939 && run_number <= 302872)"\
+            "2016": ("((run_number >= 296939 && run_number <= 311481)"\
                      "&&(HLT_e26_lhtight_nod0_ivarloose || HLT_e60_lhmedium_nod0 || HLT_e140_lhloose_nod0 ||HLT_mu24_ivarloose||HLT_mu24_ivarmedium || HLT_mu26_ivarmedium || HLT_mu50))"),
         
             "2017": (" run_number >= 325713 && run_number <= 340453 && (HLT_e26_lhtight_nod0_ivarloose || HLT_e140_lhloose_nod0 || HLT_e60_lhmedium_nod0 ||HLT_mu26_ivarmedium || HLT_mu50)"),
@@ -62,7 +62,7 @@ TRIGGERS = {
             "2015": ("((NOMINAL_pileup_random_run_number <= 288000)"\
                      "&&(HLT_e24_lhmedium_L1EM20VH || HLT_e60_lhmedium || HLT_e120_lhloose || HLT_mu20_iloose_L1MU15 || HLT_mu50))"),
 
-            "2016": ("((NOMINAL_pileup_random_run_number >= 296939 && NOMINAL_pileup_random_run_number <= 302872)"\
+            "2016": ("((NOMINAL_pileup_random_run_number >= 296939 && NOMINAL_pileup_random_run_number <= 311481)"\
                      "&&(HLT_e26_lhtight_nod0_ivarloose || HLT_e60_lhmedium_nod0 || HLT_e140_lhloose_nod0 || HLT_mu26_ivarmedium || HLT_mu50))"),
 
             "2017": (" NOMINAL_pileup_random_run_number >= 325713 && NOMINAL_pileup_random_run_number <= 340453 && (HLT_e26_lhtight_nod0_ivarloose || HLT_e140_lhloose_nod0 || HLT_e60_lhmedium_nod0 ||HLT_mu26_ivarmedium || HLT_mu50)"),

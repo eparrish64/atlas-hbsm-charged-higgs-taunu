@@ -197,10 +197,7 @@ class Data(Sample):
                 Category(name, cuts_list=cuts_list, mc_camp=self.config.mc_camp))
 
         field = kwargs.pop("field", self.config.variables[0])
-        hists = self.hists(categories=categories,
-                           fields=[field],
-                           systematics=["NOMINAL"],
-                           **kwargs)
+        hists = self.hists(categories=categories, fields=[field], **kwargs)
 
         return hists
 

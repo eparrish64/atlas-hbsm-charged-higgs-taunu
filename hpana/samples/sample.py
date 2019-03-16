@@ -239,7 +239,7 @@ class Sample(object):
         """
 
         if not systematics:
-            systematics = self.systematics #<! NOMINAL
+            systematics = self.systematics[:1] #<! NOMINAL
         else: #<! sanity check 
             systematics = filter(lambda s: s.name in [st.name for st in systematics], self.systematics)
 
@@ -326,10 +326,7 @@ class Sample(object):
 
         return list(workers)
 
-    def hists(self, categories=[],
-              fields=[],
-              systematics=["NOMINAL"],
-              **kwargs):
+    def hists(self, categories=[], fields=[], systematics=[], **kwargs):
         """
         Parameters
         ----------
@@ -351,40 +348,25 @@ class Sample(object):
         if not categories:
             raise RuntimeError("no category is selected to produce hists for it")
         
-        # - - - - - - create a default canvas for the TTree.Draw
-        canvas = ROOT.TCanvas()
+        if not systematics:
+            systematics = self.systematics[:1] #<! NOMINAL
+        else: #<! sanity check 
+            systematics = filter(lambda s: s.name in [st.name for st in systematics], self.systematics)
 
-        hist_sets = []
         # - - prepare the workers
-        workers = self.workers(
-            categories=categories,
-            fields=fields,
-            systematics=systematics,
-            **kwargs)
+        workers = self.workers(categories=categories, fields=fields, **kwargs)
 
         log.info(
             "************** processing %s sample hists in parallel, njobs=%i ************"%(self.name, len(workers) ) )
         pool = multiprocessing.Pool(multiprocessing.cpu_count())
         results = [pool.apply_async(dataset_hists, (wk,)) for wk in workers]
+        hist_set = []
         for res in results:
-            hist_sets += res.get(3600) #<! without the timeout this blocking call ignores all signals.
+            hist_set += res.get(3600) #<! without the timeout this blocking call ignores all signals.
 
         # - - merge all the hists for this sample
-        merged_hist_set = []
-        for systematic in systematics:
-            for syst_var in systematic.variations:
-                for var in fields:
-                    for cat in categories:
-                        hists = filter(
-                            lambda hs: (hs.systematic==systematic and hs.variable==var.name and hs.category==cat.name), hist_sets)
-                        hsum = hists[0].hist
-                        for hs in hists[1:]:
-                            hsum.Add(hs.hist)
-                        outname = self.config.hist_name_template.format(self.name, cat, var)
-                        hsum.SetTitle(outname)
-                        hsum.SetName(outname)
-                        merged_hist_set.append(Histset(sample=self.name, category=cat.name, variable=var.name, hist=hsum) )
-        canvas.Close()
+        merged_hist_set = self.merge_hists(hist_set=hist_set, write=False)
+
         return merged_hist_set
     
     def write_hists(self, hist_set, hists_file, systematics=[], overwrite=True):

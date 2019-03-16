@@ -144,7 +144,7 @@ if CLF_ARGS.backend=="sklearn":
                 clf_name = SClassifier.MODEL_NAME_STR_FORMAT.format(
                     "GB%i"%hyper_params["n_estimators"],CLF_ARGS.channel, mass_tag, ntracks, CLF_ARGS.kfolds, rem, len(feats))
                 sclf = SClassifier(CLF_ARGS.channel, 
-                    train_df=sdf, name=clf_name, features=feats, weight_sample=False, **hyper_params)
+                    train_df=sdf, name=clf_name, features=feats, weight_sample=False, mass_range=signal_masses, kfolds=CLF_ARGS.kfolds, fold_num=rem, **hyper_params)
                 models += [sclf]
 
                 ## - - assign the job
@@ -226,6 +226,7 @@ if CLF_ARGS.backend=="sklearn":
                 log.warning("Submission not supported from within container.")
                 log.warning("Please launch outside container via:")
                 log.warning("\t sh {0}".format(submitfile_name))
+
 
         
 ##-----------------------------

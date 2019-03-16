@@ -93,6 +93,7 @@ if CLF_ARGS.mtype=="keras":
 ##-----------------------------------------------
 if __name__=='__main__':
     import time
+    itime = time.time()
     if not CLF_ARGS.models:
         raise IOError('Path to trained models pls ?')        
     models = get_models(CLF_ARGS.models)
@@ -157,7 +158,7 @@ if __name__=='__main__':
         if CLF_ARGS.samples:
             samples = filter(lambda s: s.name in CLF_ARGS.samples, analysis.samples)
         else:
-            samples = analysis.get_signals()#+analysis.samples
+            samples = analysis.samples
 
         if CLF_ARGS.parallel:
             ## prepare hist workers 
@@ -166,9 +167,7 @@ if __name__=='__main__':
 
             jobs = []
             for w in ana_workers:
-                jobs.append(Job(dataset_hists_direct, w, 
-                    clf_models=models, clf_features=CLF_FEATURES[CLF_ARGS.channel], kfolds=CLF_ARGS.kfolds,
-                    write_hists=True, outdir=CLF_ARGS.outdir))
+                jobs.append(Job(dataset_hists_direct, w, clf_models=models, write_hists=True, outdir=CLF_ARGS.outdir))
 
             log.info("************** submitting %i jobs  ************" % len(jobs))
             log.info("***********************************************")
@@ -194,6 +193,8 @@ if __name__=='__main__':
             ## processing one file only (also for PBS, CONDOR Batch)
             for job in jobs:
                 job.run()
-                
-        ft = time.time()
-        print "Delta t: ", (ft - st)
+
+    ftime = time.time()
+    elapsed_time = (ftime - itime)
+    log.info("\n****************** elapsed time: %i sec ******************" % elapsed_time)
+

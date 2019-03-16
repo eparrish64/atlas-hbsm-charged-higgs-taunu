@@ -628,46 +628,50 @@ CLF_FEATURES = {
 
 
 ##-----------------------------------------------------------------
-# - - - - - - - -  BDT scores
+# - - - - - - - -  BDT scores (fine binning for WS; rebin for plots)
 ##-----------------------------------------------------------------
-clf_score_GB200_mass_90to120 = Variable(
-    "clf_score_GB200_mass_90to120",    
+clf_score_GB200_mass_80to120 = Variable(
+    "clf_score_GB200_mass_80to120",    
     title='BDT score', #90 to 120 [GeV]',
-    # tformula= {
-    #     "mc16": "({0}==1)*GB100_mass_90to120_ntracks_1"\
-    #     "+ ({0}!=1)*GB100_mass_90to120_ntracks_3".format("tau_0_n_charged_tracks"),
-    #     },
-    binning=(20, 0, 1), 
+    binning=(1000, 0, 1), 
 )
 clf_score_GB200_mass_130to160 = Variable(
     "clf_score_GB200_mass_130to160",    
     title='BDT score', #130 to 160 [GeV]',
-    binning=(20, 0, 1), 
+    binning=(1000, 0, 1), 
 )
 clf_score_GB200_mass_170to190 = Variable(
     "clf_score_GB200_mass_170to190",    
     title='BDT score', #170 to 190 [GeV]',
-    binning=(20, 0, 1), 
+    binning=(1000, 0, 1), 
 )
 
 clf_score_GB200_mass_200to400 = Variable(
     "clf_score_GB200_mass_200to400",    
     title='BDT score', #200 to 400 [GeV]',
-    binning=(20, 0, 1), 
+    binning=(1000, 0, 1), 
+)
+
+clf_score_GB200_mass_500to3000 = Variable(
+    "clf_score_GB200_mass_500to3000",    
+    title='BDT score', #500 to 3000 [GeV]',
+    binning=(1000, 0, 1), 
 )
 
 BDT_SCORES = {
     "taujet":[
-        clf_score_GB200_mass_90to120,
+        clf_score_GB200_mass_80to120,
         clf_score_GB200_mass_130to160,
         clf_score_GB200_mass_170to190,
         clf_score_GB200_mass_200to400,
+        clf_score_GB200_mass_500to3000,
     ],
     "taulep":[
-        clf_score_GB200_mass_90to120,
+        clf_score_GB200_mass_80to120,
         clf_score_GB200_mass_130to160,
         clf_score_GB200_mass_170to190,
         clf_score_GB200_mass_200to400,
+        clf_score_GB200_mass_500to3000,
     ],
 }
 

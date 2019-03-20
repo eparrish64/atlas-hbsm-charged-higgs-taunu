@@ -28,6 +28,7 @@ from hpana.variables import met_et as MET_ET
 from hpana.trigger import MET_TRIGGERS
 from hpana.dataset_hists import dataset_hists
 from hpana.cluster.parallel import close_pool
+from hpana.plotting.plot import label_plot
 from hpana import log
 
 
@@ -38,7 +39,8 @@ log.setLevel(TRIG_EFF_ARGS.log)
 import ROOT
 ROOT.SetSignalPolicy(ROOT.kSignalFast)
 ROOT.gROOT.SetBatch(True)
-log.info("ROOT is in batch mode")
+ROOT.gROOT.SetStyle("ATLAS")
+log.debug("ROOT is in batch mode")
 ROOT.gErrorIgnoreLevel = ROOT.kWarning #<! turn off useless ROOT Info messages
 ROOT.Math.MinimizerOptions.SetDefaultMinimizer("Minuit2")
 
@@ -46,7 +48,7 @@ ROOT.Math.MinimizerOptions.SetDefaultMinimizer("Minuit2")
 ##------------------------------------------------------------------------------------
 ## - - consts
 ##------------------------------------------------------------------------------------
-ERR_FUNC_STR = "{0}*(1 + TMath::Erf((x - {1})/{2}))+{3}" #<! KEEP x ; ROOT CAN"T HANDLE ANYTHING ELSE FOR DIREC PLOTTING
+ERR_FUNC_STR = "{0}*(1 + TMath::Erf((met_et - {1})/{2}))+{3}" #<! @NOTE KEEP x FOR DIRECT PLOTTING ROOT CAN"T HANDLE ANYTHING ELSE
 MET_ET.bins = range(0, 200, 20) + range(200, 400, 50)
 COLORS = [ROOT.kRed, ROOT.kBlue, ROOT.kGreen, ROOT.kMagenta, ROOT.kOrange, ROOT.kYellow]
 
@@ -196,14 +198,17 @@ def fit_eff(eff_hists,
     ## - - do the fit per trigger per variation
     fit_params  = {}
     fit_funcs = {}
+    years = sorted(eff_hists.keys())
     for year, triggers in eff_hists.iteritems():
         fit_funcs[year] = {}
+        fit_params[year] = {}
         for trigger, variations in triggers.iteritems():
             lumi = MET_TRIGGERS[year][trigger]["LUMI"]
             fit_funcs[year][trigger] = {}
+            fit_params[year][trigger] = {}
             for variation, hist in variations.iteritems():
                 if not variation in fit_params:
-                    fit_params[variation] = []
+                    fit_params[year][trigger][variation] = ""
                 log.info("performing error function fit for %s trigger & %s region"%(trigger, variation))
 
                 ## - - initialize the function with some reasonable parameters 
@@ -214,118 +219,175 @@ def fit_eff(eff_hists,
                 hist.Fit(err_function, "EM")
                 fit_func = hist.GetFunction("erf")
                 params = [fit_func.GetParameter(n) for n in range(num_params)]
-                fit_params[variation] += ["%0.4f * (%s)"%(lumi/total_lumi, ERR_FUNC_STR.format(*params))]
+                fit_params[year][trigger][variation] = "(%s)"%ERR_FUNC_STR.format(*params)
                 fit_funcs[year][trigger][variation] = (hist, fit_func)
 
     if fit_cache:
+        ## efficiency per year
         with open(fit_cache, "w") as cfile:
-            istring = "float metTrigEff(float met_et, int variation_index){\n"
-            cfile.write(istring)
             index = 1000
+            istring = "float metTrigEff(float met_et, int variation_index, int run_number){\n"
+            cfile.write(istring)
             for n, variation in enumerate(MET_TRIG_EFF_CRs):
                 cfile.write("\t //! variation: %s\n"%variation.name)
                 cfile.write("\t if(variation_index==%i){\n"%(index+n))
-                cfile.write("\t\t return %s;"%(" + ".join(fit_params[variation.name]) ) )
+                ## efficiency per year    
+                for year in years:
+                    y_triggers = MET_TRIGGERS[year].keys()
+                    year_lumi = sum([MET_TRIGGERS[year][tr]["LUMI"] for tr in y_triggers])
+                    rl = min([MET_TRIGGERS[year][tr]["RUNS"][0] for tr in y_triggers])
+                    rh = max([MET_TRIGGERS[year][tr]["RUNS"][1] for tr in y_triggers])
+
+                    ## weight periods
+                    y_eff = [] 
+                    for y_trig in y_triggers:
+                        p_lumi = MET_TRIGGERS[year][y_trig]["LUMI"]
+                        y_eff += ["%0.4f * (%s)"%(p_lumi/year_lumi, fit_params[year][y_trig][variation.name])]
+
+                    cfile.write("\t\t // year: %s \n"%year)
+                    cfile.write("\t\t if(run_number >= %i && run_number <= %i){\n"%(rl, rh))
+                    cfile.write("\t\t\t return %s;"%(" + ".join(y_eff) ) )
+                    cfile.write("\n\t\t }\n")
+                cfile.write("\n\t\t else return 0;\n}\n\n")
+            cfile.write("\t\t else return 1.; \n\t}\n")
+
+        ## overall efficiency
+        with open(fit_cache, "a") as cfile:
+            index = 1000
+            istring = "\n\n// total efficiency (lumi weighted) \nfloat metTrigEff(float met_et, int variation_index){\n"
+            cfile.write(istring)
+            for n, variation in enumerate(MET_TRIG_EFF_CRs):
+                cfile.write("\t //! variation: %s\n"%variation.name)
+                cfile.write("\t if(variation_index==%i){\n"%(index+n))
+                ## efficiency per year    
+                tot_eff = []
+                for year in years:
+                    for trigger in MET_TRIGGERS[year].keys():
+                        lumi = MET_TRIGGERS[year][trigger]["LUMI"]
+                        tot_eff += ["%0.4f * (%s)"%(lumi/total_lumi, fit_params[year][trigger][variation.name])]
+                cfile.write("\t\t return %s;"%("+".join(tot_eff)))
                 cfile.write("\n\t }\n\n")
-            cfile.write("\t else \n return 1.; \n}")
-            
+            cfile.write("\n\t else return 0;\n}\n")
+
     return fit_funcs, fit_params
 
 ##------------------------------------------------------------------------------------
 ## - - plot fit functions 
 ##------------------------------------------------------------------------------------
-def draw_fits(fit_funcs, fit_params, pdir=TRIG_EFF_ARGS.pdir, overlay=True, combined_fit=True):
+def draw_fits(fit_funcs, fit_params, 
+    pdir=TRIG_EFF_ARGS.pdir, overlay_syst=True, combined_fit=True, formats=[".png",".pdf", ".eps"]):
     """ Given a dict of hists, fit funcs draw them 
     """
-    canvas = ROOT.TCanvas()
+    os.system("mkdir -p %s"%pdir)
+    canvas = ROOT.TCanvas("c", "c", 800, 700)
     for year, fits in fit_funcs.iteritems():
         triggers = fits.keys()
         variations = filter(lambda var: var.name in fit_funcs[year][triggers[0]].keys(), MET_TRIG_EFF_CRs)
         for trigger in triggers:
             lumi = MET_TRIGGERS[year][trigger]["LUMI"]
-            if overlay:
-                legend = ROOT.TLegend(0.15, 0.7, 0.45, 0.85)
-            else:
-                legend = ROOT.TLegend(0.15, 0.8, 0.45, 0.85)
-                
-            rlabel = ROOT.TLatex(
-                canvas.GetLeftMargin() + 0.45,
-                1 - canvas.GetTopMargin() - 0.055,
-                '#bf{%s} (%s, %0.2f fb^{-1})'%(trigger, year, lumi))
-            rlabel.SetNDC()
-            rlabel.SetTextFont(43)
-            rlabel.SetTextSize(15)
-            rlabel.SetTextAlign(31)
-            
+            legend = ROOT.TLegend(0.5, 0.2, 0.9, 0.45)
+            legend.SetNColumns(2)
+            lables = label_plot(canvas, category=trigger, data_info="#int L dt = %0.2f fb^{-1} (%s)"%(lumi, year), textsize=18)    
+
             for n, variation in enumerate(variations):
                 hist, fit_func = fits[trigger][variation.name]
-                if overlay:
-                    fit_func.SetLineColor(COLORS[n])
-                else:
-                    fit_func.SetLineColor(COLORS[0])
+                hist.SetMarkerSize(2)
+                hist.SetMarkerColor(ROOT.kMagenta)
+                fit_func.SetMarkerColor(COLORS[n])
+                fit_func.SetMarkerSize(1)
+                fit_func.SetMarkerStyle(21+n)
                     
                 if n==0:
                     hist.GetXaxis().SetTitle(MET_ET.title)
-                    hist.GetYaxis().SetTitle("efficiency")
-                    hist.Draw("PE1")
-                    fit_func.Draw("P SAME")
-                if overlay:    
-                    fit_func.Draw("EP SAME")
-                    legend.AddEntry(fit_func, variation.label, "L")
+                    hist.GetYaxis().SetTitle("E^{mis}_{T} Trigger Efficiency")
+                    hist.Draw("E1")
+                    fit_func.Draw("PSAME")
+                    for label in lables:
+                        label.Draw("SAME")
+                if overlay_syst:    
+                    fit_func.Draw("PSAME")
+                    legend.AddEntry(fit_func, variation.label, "LP")
                 else:
                     hist.GetXaxis().SetTitle(MET_ET.title)
-                    hist.GetYaxis().SetTitle("efficiency")
+                    hist.GetYaxis().SetTitle("E^{mis}_{T} Trigger Efficiency")
                     hist.Draw("PE1")
                     fit_func.Draw("P SAME")
-                    legend.AddEntry(fit_func, variation.label, "L")
+                    legend.AddEntry(fit_func, variation.label, "LP")
 
                     legend.Draw("SAME")
-                    rlabel.Draw("SAME")
-                    os.system("mkdir -p %s"%pdir)
-                    canvas.Print("%s/MET_trig_eff%s_%s_%s.png"%(pdir, year, variation.name, trigger))
+                    outname = "%s/MET_trig_eff%s_%s_%s"%(pdir, year, variation.name, trigger)
+                    log.info("Saving %s"%outname)
+                    for fmt in formats:
+                        canvas.Print(outname+fmt)
                     legend.Clear()
                     canvas.Clear()
-            if overlay:
+            if overlay_syst:
                 legend.Draw("SAME")
-                rlabel.Draw("SAME")
                 os.system("mkdir -p %s"%pdir)
-                canvas.Print("%s/MET_trig_eff%s_%s.png"%(pdir, year, trigger))
+                outname = "%s/MET_trig_eff%s_%s"%(pdir, year, trigger)
+                log.info("Saving %s"%outname)
+                for fmt in formats:
+                    canvas.Print(outname+fmt)
                 legend.Clear()
                 canvas.Clear()
 
-        if combined_fit:
-            lumi_total = sum([MET_TRIGGERS[year][trg]["LUMI"] for trg in triggers])
-            legend = ROOT.TLegend(0.6, 0.6, 0.9, 0.85)
-            rlabel = ROOT.TLatex(
-                canvas.GetLeftMargin() + 0.15,
-                1 - canvas.GetTopMargin() - 0.055,
-                '#bf{%s} (%0.2f fb^{-1})'%(year, lumi_total))
-            rlabel.SetNDC()
-            rlabel.SetTextFont(43)
-            rlabel.SetTextSize(15)
-            rlabel.SetTextAlign(31)
+    if combined_fit:
+        # canvas = ROOT.TCanvas("cnew", "cnew", 800, 700)
+
+        total_lumi = 0
+        for y, trgs in MET_TRIGGERS.iteritems():
+            for trg in trgs:
+                total_lumi += MET_TRIGGERS[y][trg]["LUMI"]
             
+        for variation in MET_TRIG_EFF_CRs:
+            legend = ROOT.TLegend(0.6, 0.2, 0.9, 0.4)
+            legend.SetNColumns(2)
+
+            ## efficiency per year
+            y_fits = []   
+            years =  MET_TRIGGERS.keys()
+            for year in years:
+                y_params = []
+                triggers = MET_TRIGGERS[year].keys()
+                year_lumi = sum([MET_TRIGGERS[year][tr]["LUMI"] for tr in triggers])
+                for trigger in triggers:
+                    lumi = MET_TRIGGERS[year][trigger]["LUMI"]
+                    y_params += ["%0.4f * (%s)"%(lumi/year_lumi, fit_params[year][trigger][variation.name].replace("met_et", "x"))]
+
+                ## @NOTE have to keep them in the scope for plotting 
+                y_fit = ROOT.TF1("fit_com_%s"%year, " + ".join(y_params), 0, 500)
+                y_fits+= [y_fit]
+
             cnt = 0
-            for var in variations:
-                fit_com = fit_params[var.name]
-                fit_com_func = ROOT.TF1("fit_com", " + ".join(fit_com), 0, 500) 
-                legend.AddEntry(fit_com_func, var.label, "L")
-                fit_com_func.SetLineColor(COLORS[2])
+            for yf, yr in zip(y_fits, years):
+                yf.SetMarkerColor(COLORS[cnt])
+                yf.SetLineColor(COLORS[cnt])
+                yf.SetMarkerStyle(20+cnt)
+                yf.SetMarkerSize(1)
                 if cnt==0:
-                    fit_com_func.Draw("L")
-                    fit_com_func.GetXaxis().SetTitle(MET_ET.title)
-                    fit_com_func.GetYaxis().SetTitle("efficiency")
+                    yf.SetMaximum(1.2)
+                    yf.SetMinimum(0)
+                    yf.GetXaxis().SetTitle(MET_ET.title)
+                    yf.GetYaxis().SetTitle("E^{mis}_{T} Trigger Efficiency")
+                    yf.Draw("LP")
                 else:
-                    fit_com_func.Draw("P SAME")
+                    yf.Draw("LP SAME")
+                legend.AddEntry(yf, yr, "LP")
                 cnt += 1
+
+            labels = label_plot(canvas, 
+                category="", data_info="#int L dt =%0.2f fb^{-1}; #sqrt{13} TeV"%(total_lumi), textsize=18)    
+            for lb in labels:
+                lb.Draw("SAME")
+            legend.Draw("SAME")
                     
-                legend.Draw("SAME")
-                rlabel.Draw("SAME")
-                os.system("mkdir -p %s"%pdir)
-                canvas.Print("%s/MET_trig_eff%s_COMBINED.png"%(pdir, year))
-                legend.Clear()
-                canvas.Clear()
-            
+            com_outname = "%s/MET_trig_eff%s_COMBINED"%(pdir, variation.name)
+            log.info("Saving %s"%com_outname)
+            for fmt in formats:
+                canvas.Print(com_outname+fmt)
+
+            canvas.Clear()
+            legend.Clear()
     canvas.Close()
                     
 ##------------------------------------------------------------------------------------
@@ -336,7 +398,7 @@ if __name__=="__main__":
     
     trigger_hists = get_trig_hists()
     fit_funcs, fit_params = fit_eff(trigger_hists)
-    draw_fits(fit_funcs, fit_params, overlay=True)
+    draw_fits(fit_funcs, fit_params, overlay_syst=True)
     
     end_time = time.time()
     elapsed_time = (end_time - start_time)/60.

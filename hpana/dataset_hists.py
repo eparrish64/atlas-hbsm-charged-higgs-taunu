@@ -5,7 +5,7 @@ import numpy as np
 
 # local
 from . import log
-from .mem_branches import MEM_BRANCHES
+from .mem_branches import MEM_BRANCHES, VETO_BRANCHES
 from .containers import Histset
 
 # ROOT
@@ -105,7 +105,6 @@ def dataset_hists(hist_worker,
                     continue
 
                 # - - prepares selection categories
-                # keep_branches = ["*"]
                 for n, category in enumerate(categories):
                     # - - get hists for the current category
                     cat_hists = filter(lambda hs: hs.category ==
@@ -114,14 +113,6 @@ def dataset_hists(hist_worker,
                     # - - get the tree
                     tree = tfile.Get(tree_name)
 
-                    # # - - speed up by reading to memory only the branches that are required
-                    # if n==0:
-                    #     branches = [br.GetName() for br in tree.GetListOfBranches()]
-                    #     keep_branches = filter(lambda b: b in branches, MEM_BRANCHES[channel])
-                    # tree.SetBranchStatus("*", 0)
-                    # for br in keep_branches:
-                    #     tree.SetBranchStatus(br, 1)
-
                     # - - cache only the events that pass the selections
                     selection = category.cuts.GetTitle()
                     tree.Draw(">>eventlist_%s" % category.name, selection)
@@ -129,7 +120,7 @@ def dataset_hists(hist_worker,
                     tree.SetEventList(eventlist)
 
                     # - - event weight
-                    # - - if weights is provided to the worker directly, then it's taken from systematic (the case for FFs weights)
+                    # - - if weights is not provided to the worker directly, then it's taken from systematic (the case for FFs weights)
                     eventweight = "1."
                     if weights:
                         eventweight = "*".join(weights[category.name])
@@ -350,9 +341,19 @@ def dataset_hists_direct(hist_worker,
 
                     # - - get the tree
                     tree = tfile.Get(tree_name)
+                    # - - speed up by reading to memory only the branches that are required
+                    if n==0:
+                        branches = [br.GetName() for br in tree.GetListOfBranches()]
+                        keep_branches = filter(lambda b: b in branches, MEM_BRANCHES[channel])
+                    tree.SetBranchStatus("*", 0)
+                    for br in keep_branches:
+                        tree.SetBranchStatus(br, 1)
+
+
                     # - - cache only the events that pass the selections
                     selection = category.cuts.GetTitle()
                     event_selection = ROOT.TTreeFormula("event_selection", selection, tree)
+
 
                     # - - event weight
                     # - - if weights is provided to the worker directly, then it's taken from systematic (the case for FFs weights)
@@ -374,15 +375,15 @@ def dataset_hists_direct(hist_worker,
                                 continue
                             hist_tmp = m_hists[0].hist
                             hist_tmp.SetName("%s_category_%s_var_%s" %(outname, category.name, m_hists[0].variable))
-                            fill_scores_histogram(tree, clf_models[mtag], hist_template=hist_tmp, event_selection=event_selection,          event_weight=event_weight)                        
+                            fill_scores_histogram(tree, clf_models[mtag], 
+                                hist_template=hist_tmp, event_selection=event_selection, event_weight=event_weight)                        
                     else:
                         # - - loop over the events
                         for i, event in enumerate(tree):
                             # - - does the event pass the selections ?
                             if not event_selection.EvalInstance():
                                 continue
-
-                            if i%1000==0:
+                            if i%10000==0:
                                 log.debug("---------------- event #: %i"%i)
                                 # - - fill the hists 
                                 for hs in cat_hists:

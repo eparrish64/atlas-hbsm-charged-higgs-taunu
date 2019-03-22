@@ -2,7 +2,7 @@
 """
 
 ## stdlib
-import multiprocessing, os, re, shutil, array 
+import multiprocessing, os, re, shutil, array, time 
 from multiprocessing import Process
 from collections import OrderedDict
 from os import environ
@@ -65,7 +65,7 @@ class AppendJob(Process):
             output = self.file_name
         
         # the actual calculation happens here
-        evaluate_scores(output, self.models)
+        evaluate_scores_on_trees(output, self.models)
 
         return 
 
@@ -308,34 +308,47 @@ def fill_scores_histogram(tree, models, hist_template=None, event_selection=None
         filled histogram
     """
 
+    log.debug("---------------- models:\n %r"%models)
+
     event_number = ROOT.TTreeFormula("event_number", "event_number", tree)
     clf_feats_tf = [ROOT.TTreeFormula(feat.name, feat.tformula, tree) for feat in models[0].features]
     for f_tf in clf_feats_tf:
         f_tf.SetQuickLoad(True)
 
-    # - - loop over the events
-    for i, event in enumerate(tree):
-        # - - does the event pass the selections ?
-        if event_selection is not None:
-            if not event_selection.EvalInstance():
-                continue
-        if i%1000==0:
-            log.debug("---------------- event #: %i"%i)
+    ## - - cache Tree block by block 
+    tree.SetCacheSize(32*2**20)
+    tree.SetCacheLearnEntries()
+    ents = tree.GetEntries()
+    blockSize = 2**18
+    blocks = ents/blockSize
+    for block in xrange(blocks+1):
+        for entry in xrange(block*blockSize, min(ents, (block+1)*blockSize)):
+            tree.LoadTree(entry)
 
-        ## - - trained on all with rem!= event_numbr%kFOLDS --> evaluate on the complementary
-        for model in models:
-            event_num = int(event_number.EvalInstance())
-            if event_num%model.kfolds!=model.fold_num:
-                continue
+            # - - does the event pass the selections ?
+            if event_selection is not None:
+                if not event_selection.EvalInstance():
+                    continue
+
+            if (entry%10000==0): 
+                log.info("Tree: {0}, Event: {1}/{2}".format(tree.GetName(), entry+1, ents))
 
             ## - - evaluate features vector
             feats = [f.EvalInstance() for f in clf_feats_tf]    
             ifeats = np.array([feats])
-            score = model.predict_proba(ifeats)[0][1]  #<! probability of belonging to class 1 (SIGNAL)
-            hist_template.Fill(score, event_weight.EvalInstance())
-        if i%1000==0:
-            log.debug("%r : %r "%(ifeats, score))
 
+            e_weight = event_weight.EvalInstance()
+            ## - - trained on all with rem!= event_numbr%kFOLDS --> evaluate on the complementary
+            for model in models:
+                event_num = int(event_number.EvalInstance())
+                if event_num%model.kfolds!=model.fold_num:
+                    continue
+
+                score = model.predict_proba(ifeats)[0][1]  #<! probability of belonging to class 1 (SIGNAL)
+                hist_template.Fill(score, e_weight)
+
+            if entry%20000==0:
+                log.debug("%r : %r "%(ifeats, score))
 
     
 ##-----------------------------------------------

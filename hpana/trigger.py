@@ -22,10 +22,13 @@ TRIGGERS = {
             "2016": "(run_number >= 296939 && (HLT_xe90_mht_L1XE50 || HLT_xe80_tc_lcw_L1XE50) && run_number <= 302872)" #<! period A-C
                         "||(run_number > 302872 && HLT_xe110_mht_L1XE50)", #<! period D-
 
-            "2017": ("((run_number >= 325713 && run_number <= 328393) && HLT_xe90_pufit_L1XE50)" #<! period B (prescaled!)
-                     "|| ((run_number >= 329385 && run_number <= 330470) && HLT_xe100_pufit_L1XE55)" #<! period C (prescaled!)
-                     "|| ((run_number >= 330857 && run_number <= 331975) && HLT_xe110_pufit_L1XE50)" #<! period D1-5 (prescaled!)
-                     "|| ((run_number >= 332303 && run_number <= 340453) && HLT_xe110_pufit_L1XE55)"), #<! D6-K
+            # "2017": ("((run_number >= 325713 && run_number <= 328393) && HLT_xe90_pufit_L1XE50)" #<! period B (prescaled!)
+            #          "|| ((run_number >= 329385 && run_number <= 330470) && HLT_xe100_pufit_L1XE55)" #<! period C (prescaled!)
+            #          "|| ((run_number >= 330857 && run_number <= 331975) && HLT_xe110_pufit_L1XE50)" #<! period D1-5 (prescaled!)
+            #          "|| ((run_number >= 332303 && run_number <= 340453) && HLT_xe110_pufit_L1XE55)"), #<! D6-K
+
+            ##@NOTE MET trigger option that gives you full luminosity at the cost of a higher threshold (recommended if you prefer not to combine triggers over different data-taking periods) 
+            "2017": ("((run_number >= 325713 && run_number <= 340453) && HLT_xe110_pufit_L1XE55)"
 
             "2018": ("( run_number >= 348885 && run_number <= 364485  && HLT_xe110_pufit_xe70_L1XE50)") #<! period B-
                     #"|| ( run_number >= 355529  && run_number <=364485  && (HLT_xe110_pufit_xe65_L1XE50 || HLT_xe110_pufit_xe70_L1XE50))") #<! period K- 
@@ -33,12 +36,17 @@ TRIGGERS = {
 
         "MC": {  # MAKE SURE THAT TRIGGER AND TRIGGER EFFICIENCY ARE NOT APPLIED ON TOP OF EACH OTHER!
             "2015": "(NOMINAL_pileup_random_run_number <= 284484 && HLT_xe70_tc_lcw)",
+            
             "2016": ("(NOMINAL_pileup_random_run_number >= 296939 && HLT_xe90_mht_L1XE50 && NOMINAL_pileup_random_run_number <= 302872)"\
                      "||(NOMINAL_pileup_random_run_number > 302872 && HLT_xe110_mht_L1XE50 && NOMINAL_pileup_random_run_number <= 311481)"),
-            "2017": ("((NOMINAL_pileup_random_run_number >= 325713 && NOMINAL_pileup_random_run_number <= 328393) && HLT_xe90_pufit_L1XE50)"\
-                     "|| ((NOMINAL_pileup_random_run_number >= 329385 && NOMINAL_pileup_random_run_number <= 330470) && HLT_xe100_pufit_L1XE55)"\
-                     "|| ((NOMINAL_pileup_random_run_number >= 330857 && NOMINAL_pileup_random_run_number <= 331975) && HLT_xe110_pufit_L1XE55)"\
-                     "|| ((NOMINAL_pileup_random_run_number >= 332303 && NOMINAL_pileup_random_run_number <= 340453) && HLT_xe110_pufit_L1XE50)"),
+            
+            # "2017": ("((NOMINAL_pileup_random_run_number >= 325713 && NOMINAL_pileup_random_run_number <= 328393) && HLT_xe90_pufit_L1XE50)"\
+            #          "|| ((NOMINAL_pileup_random_run_number >= 329385 && NOMINAL_pileup_random_run_number <= 330470) && HLT_xe100_pufit_L1XE55)"\
+            #          "|| ((NOMINAL_pileup_random_run_number >= 330857 && NOMINAL_pileup_random_run_number <= 331975) && HLT_xe110_pufit_L1XE55)"\
+            #          "|| ((NOMINAL_pileup_random_run_number >= 332303 && NOMINAL_pileup_random_run_number <= 340453) && HLT_xe110_pufit_L1XE50)"),
+
+            ##@NOTE MET trigger option that gives you full luminosity at the cost of a higher threshold (recommended if you prefer not to combine triggers over different data-taking periods) 
+            "2017": ("((NOMINAL_pileup_random_run_number >= 325713 && NOMINAL_pileup_random_run_number <= 340453) && HLT_xe110_pufit_L1XE55)"
 
             "2018": ("( NOMINAL_pileup_random_run_number >= 348885 && NOMINAL_pileup_random_run_number <= 364485  && HLT_xe110_pufit_xe70_L1XE50)") #<! period B-
                     # "|| ( NOMINAL_pileup_random_run_number >= 355529  && NOMINAL_pileup_random_run_number <=364485  && (HLT_xe110_pufit_xe65_L1XE50 || HLT_xe110_pufit_xe70_L1XE50))") #<! period K- 
@@ -72,12 +80,25 @@ TRIGGERS = {
     },
 }
 
-# - - - - multijet + MET trigger for FFs multijet CR (@NOTE the MET trig threshold)
-MULTIJET_MET_TRIGGER = {
-    "2015": "run_number <= 284484 && (HLT_4j85 || HLT_xe70_tc_lcw || HLT_xe70_mht)",
-    "2016": "(run_number >= 296939 && run_number <= 300287 && HLT_4j85) || (HLT_4j100 && (run_number > 300287 && run_number <= 311481))",
-    "2017": "(run_number >= 324320 && HLT_4j120 && run_number <=341649)",
-    "2018": "(run_number >= 348197 && HLT_4j120 && run_number <= 364485)",
+# - - - - multijet trigger for FFs multijet CR (@NOTE the MET trig threshold)
+MULTIJET_TRIGGER = {
+    "DATA":{
+        "2015": "(run_number <= 284484 && (HLT_4j120  ||HLT_3j175 || HLT_3j200||HLT_3j225||HLT_4j100 || HLT_4j110||HLT_4j85  || HLT_5j60 || HLT_5j70_L14J15 || HLT_5j85 || HLT_5j85_L14J15))",
+
+        "2016": "(run_number >= 296939 && (HLT_4j120  ||HLT_3j175 || HLT_3j200||HLT_3j225||HLT_4j100 || HLT_4j110||HLT_4j85  || HLT_5j60 || HLT_5j70_L14J15 || HLT_5j85 || HLT_5j85_L14J15) && run_number <=311481)",
+
+        "2017": "(run_number >= 324320 && (HLT_4j120  ||HLT_3j175 || HLT_3j200||HLT_3j225||HLT_4j100 || HLT_4j110||HLT_4j85  || HLT_5j60 || HLT_5j70_L14J15 || HLT_5j85 || HLT_5j85_L14J15) && run_number <=341649)",
+        "2018": "(run_number >= 348197 && (HLT_4j120  ||HLT_3j175 || HLT_3j200||HLT_3j225||HLT_4j100 || HLT_4j110||HLT_4j85  || HLT_5j60 || HLT_5j70_L14J15 || HLT_5j85 || HLT_5j85_L14J15) && run_number <= 364485)",
+        },
+
+    "MC":{
+        "2015": "(NOMINAL_pileup_random_run_number <= 284484 && (HLT_4j120  ||HLT_3j175 || HLT_3j200||HLT_3j225||HLT_4j100 || HLT_4j110||HLT_4j85  || HLT_5j60 || HLT_5j70_L14J15 || HLT_5j85 || HLT_5j85_L14J15))",
+
+        "2016": "(NOMINAL_pileup_random_run_number >= 296939 && (HLT_4j120  ||HLT_3j175 || HLT_3j200||HLT_3j225||HLT_4j100 || HLT_4j110||HLT_4j85  || HLT_5j60 || HLT_5j70_L14J15 || HLT_5j85 || HLT_5j85_L14J15) && NOMINAL_pileup_random_run_number <=311481)",
+
+        "2017": "(NOMINAL_pileup_random_run_number >= 324320 && (HLT_4j120  ||HLT_3j175 || HLT_3j200||HLT_3j225||HLT_4j100 || HLT_4j110||HLT_4j85  || HLT_5j60 || HLT_5j70_L14J15 || HLT_5j85 || HLT_5j85_L14J15) && NOMINAL_pileup_random_run_number <=341649)",
+        "2018": "(NOMINAL_pileup_random_run_number >= 348197 && (HLT_4j120  ||HLT_3j175 || HLT_3j200||HLT_3j225||HLT_4j100 || HLT_4j110||HLT_4j85  || HLT_5j60 || HLT_5j70_L14J15 || HLT_5j85 || HLT_5j85_L14J15) && NOMINAL_pileup_random_run_number <= 364485)",
+        },
 }
 
 # ------------------------------------------------------------------
@@ -137,23 +158,11 @@ MET_TRIGGERS = {
         "HLT_xe110_pufit_xe70_L1XE50":{
             "TRIGGER": ROOT.TCut("(run_number >= 348885 && run_number <= 355468  && HLT_xe110_pufit_xe70_L1XE50)"),
             "NO_TRIGGER": ROOT.TCut("run_number >= 348885 && run_number <= 355468"),
-            "LUMI": 64.225,
+            "LUMI": 58.4502,
             "RUNS":(348197, 364485),
         },
     },
 }
-
-
-# - - - - trigger efficiencies for MC [not applicabel to Fakes and DATA]
-TAUJET_EFF_TEMPLATE = "nominal_trig_eff({})"
-TRIGGER_EFFICIENCIES = dict()
-
-# - - - - taujet (MAKE SURE YOU GET THE UNITS RIGHT; GeV or MeV)
-TRIGGER_EFFICIENCIES["taujet"] = {
-    "mc15": TAUJET_EFF_TEMPLATE.format("met_et/1000."),
-    "mc16": TAUJET_EFF_TEMPLATE.format("met_p4->Et()"),
-}
-
 
 # -------------------------------------------------------
 # - - helper to reterive the overall trigger selection
@@ -176,16 +185,14 @@ def get_trigger(channel, dtype="MC", data_streams=("2015", "2016")):
 # -------------------------------------------------------
 # - -
 # -------------------------------------------------------
-def get_mj_met_trigger(streams, dtype="DATA"):
+def get_mj_trigger(streams, dtype="DATA"):
     """
     combined MJ + MET trigger used in taujet CR for FFs extraction to avoid bias from MET trigger low efficiency.
     """
-    if dtype == "MC":
-        return ROOT.TCut("")
 
     trig_string = []
     for st in streams:
-        trig_string.append("( {0} )".format(MULTIJET_MET_TRIGGER[st]))
+        trig_string.append("( {0} )".format(MULTIJET_TRIGGER[dtype][st]))
 
     trig_string = "||".join(trig_string)
     return ROOT.TCut(trig_string)

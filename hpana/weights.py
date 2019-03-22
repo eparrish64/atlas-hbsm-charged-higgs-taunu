@@ -6,6 +6,7 @@
 """
 
 __all__ = ["Weight"]
+from hpana import log
 
 ##--------------------------------------------------------------------
 ##
@@ -210,10 +211,10 @@ class Weight(object):
 
         ),
 
-        ##FIXME : PROBLEMATIC; TOO SMALL !!
+        # ##FIXME : PROBLEMATIC; TOO SMALL !!
         # "mu_0_sf_MuEffSF_Trig": (
         #   W_STR_FMT.format("n_muons", 
-        #     "mu_0_sf_NOMINAL_MuEffSF_HLT_mu24_ivarmedium_QualTight_IsoNone*mu_0_sf_NOMINAL_MuEffSF_HLT_mu26_ivarmedium_OR_HLT_mu50_QualTight_IsoNone"),
+        #     "mu_0_sf_NOMINAL_MuEffSF_HLT_mu24_ivarmedium_QualTight_IsoNone*mu_0_sf_NOMINAL_MuEffSF_HLT_mu26_imedium_QualTight_IsoNone*mu_0_sf_NOMINAL_MuEffSF_HLT_mu40_QualTight_IsoNone"),
 
         #   W_STR_FMT.format("n_muons", 
         #     "mu_0_sf_MUON_EFF_TrigSystUncertainty_1down_MuEffSF_HLT_mu24_imedium_QualTight_IsoNone"
@@ -228,7 +229,7 @@ class Weight(object):
         #   W_STR_FMT.format("n_muons", 
         #     "mu_0_sf_MUON_EFF_TrigStatUncertainty_1up_MuEffSF_HLT_mu24_imedium_QualTight_IsoNone"
         #     "*mu_0_sf_MUON_EFF_TrigStatUncertainty_1up_MuEffSF_HLT_mu50_QualTight_IsoNone"),
-        # ),
+        ),
 
     }  # W_MU
 
@@ -265,7 +266,8 @@ class Weight(object):
             W_STR_FMT.format(
                 "n_electrons", "el_0_sf_NOMINAL_EleEffSF_e24_lhmedium_L1EM20VH_OR_e60_lhmedium_OR_e120_lhloose_MediumLLH_d0z0_v13_isolFCTight_2015"
                     "*el_0_sf_NOMINAL_EleEffSF_e26_lhtight_nod0_ivarloose_OR_e60_lhmedium_nod0_OR_e140_lhloose_nod0_TightLLH_d0z0_v13_isolFCTight_2016"
-                    "*el_0_sf_NOMINAL_EleEffSF_e26_lhtight_nod0_ivarloose_OR_e60_lhmedium_nod0_OR_e140_lhloose_nod0_TightLLH_d0z0_v13_isolFCTight_2017"),
+                    "*el_0_sf_NOMINAL_EleEffSF_e26_lhtight_nod0_ivarloose_OR_e60_lhmedium_nod0_OR_e140_lhloose_nod0_TightLLH_d0z0_v13_isolFCTight_2017"
+                    ),
 
             W_STR_FMT.format(
                 "n_electrons", "el_0_sf_EL_EFF_Trigger_TOTAL_1NPCOR_PLUS_UNCOR_1down_EleEffSF_e24_lhmedium_L1EM20VH_OR_e60_lhmedium_OR_e120_lhloose_MediumLLH_d0z0_v13_isolFCTight_2015"
@@ -279,10 +281,11 @@ class Weight(object):
         )
     }
 
-    # met trigger efficiency
+    ## met trigger efficiency  (apply overall lumi weighted or apply it per year)
     W_TRIGGER_TAUJET = {
         "metTrigEff": (
-            "metTrigEff({}, 1000)".format("met_p4->Et()"),
+            "metTrigEff(met_p4->Et(), 1000, NOMINAL_pileup_random_run_number)",
+            # "metTrigEff(met_p4->Et(), 1000)",
         ),
     }
 

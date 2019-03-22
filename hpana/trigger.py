@@ -28,9 +28,9 @@ TRIGGERS = {
             #          "|| ((run_number >= 332303 && run_number <= 340453) && HLT_xe110_pufit_L1XE55)"), #<! D6-K
 
             ##@NOTE MET trigger option that gives you full luminosity at the cost of a higher threshold (recommended if you prefer not to combine triggers over different data-taking periods) 
-            "2017": ("((run_number >= 325713 && run_number <= 340453) && HLT_xe110_pufit_L1XE55)"
+            "2017": ("((run_number >= 325713 && run_number <= 340453) && HLT_xe110_pufit_L1XE55)"),
 
-            "2018": ("( run_number >= 348885 && run_number <= 364485  && HLT_xe110_pufit_xe70_L1XE50)") #<! period B-
+            "2018": ("( run_number >= 348885 && run_number <= 364485  && HLT_xe110_pufit_xe70_L1XE50)"), #<! period B-
                     #"|| ( run_number >= 355529  && run_number <=364485  && (HLT_xe110_pufit_xe65_L1XE50 || HLT_xe110_pufit_xe70_L1XE50))") #<! period K- 
         },
 
@@ -46,9 +46,9 @@ TRIGGERS = {
             #          "|| ((NOMINAL_pileup_random_run_number >= 332303 && NOMINAL_pileup_random_run_number <= 340453) && HLT_xe110_pufit_L1XE50)"),
 
             ##@NOTE MET trigger option that gives you full luminosity at the cost of a higher threshold (recommended if you prefer not to combine triggers over different data-taking periods) 
-            "2017": ("((NOMINAL_pileup_random_run_number >= 325713 && NOMINAL_pileup_random_run_number <= 340453) && HLT_xe110_pufit_L1XE55)"
+            "2017": ("((NOMINAL_pileup_random_run_number >= 325713 && NOMINAL_pileup_random_run_number <= 340453) && HLT_xe110_pufit_L1XE55)"),
 
-            "2018": ("( NOMINAL_pileup_random_run_number >= 348885 && NOMINAL_pileup_random_run_number <= 364485  && HLT_xe110_pufit_xe70_L1XE50)") #<! period B-
+            "2018": ("( NOMINAL_pileup_random_run_number >= 348885 && NOMINAL_pileup_random_run_number <= 364485  && HLT_xe110_pufit_xe70_L1XE50)"), #<! period B-
                     # "|| ( NOMINAL_pileup_random_run_number >= 355529  && NOMINAL_pileup_random_run_number <=364485  && (HLT_xe110_pufit_xe65_L1XE50 || HLT_xe110_pufit_xe70_L1XE50))") #<! period K- 
         },
     },

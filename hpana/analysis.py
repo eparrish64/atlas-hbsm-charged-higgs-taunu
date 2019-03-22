@@ -14,10 +14,11 @@ from . import log
 from . import samples
 from .samples.sample import Sample
 from .dataset_hists import dataset_hists
-
 from .samples import Higgs
 from .categories import TAUID_MEDIUM, ANTI_TAU, TAU_IS_TRUE, TAU_IS_LEP_OR_HAD, Category
 from .config import Configuration
+
+## ROOT
 import ROOT
 
 
@@ -33,8 +34,8 @@ class Analysis(object):
                  suffix=None,
                  compile_cxx=False,
                  root_conf_files = [],
-                 metTrig_eff_macros=["metTrigEff1516.cxx",],
-                 FFs_macros=["FFs_CR151617.cxx", "FFs_COMBINED151617.cxx"],
+                 metTrigEff_macros=["metTrigEff.cxx"],
+                 FFs_macros=["FFsCR_18.cxx", "FFsCOM_18.cxx"],
                  upsilon_macros=["CorrectUpsilon.cxx", "CorrectUpsilon_WCR.cxx", "CorrectUpsilon_QCD.cxx",],
                  ):
         # - - main configuration object 
@@ -42,10 +43,10 @@ class Analysis(object):
 
         self.suffix = suffix
         self.root_conf_files = root_conf_files
-        self.metTrig_eff_macros = metTrig_eff_macros
+        self.metTrigEff_macros = metTrigEff_macros
         self.FFs_macros = FFs_macros
         self.upsilon_macros = upsilon_macros
-        self.cxx_macros = self.metTrig_eff_macros + self.FFs_macros + self.upsilon_macros 
+        self.cxx_macros = self.metTrigEff_macros + self.FFs_macros + self.upsilon_macros 
 
         # - - loading and compiling cxx macros
         if compile_cxx:
@@ -87,14 +88,14 @@ class Analysis(object):
             self.config,
             name='DiBoson',
             label='DiBoson',
-            color=ROOT.kViolet)
+            color=ROOT.kBlue-10)
         
         self.ttbar = samples.TTbar(
             self.config,
             name='TTbar',
             label='t#bar{t}',
             pt_weighted=False,
-            color=ROOT.kYellow)
+            color=ROOT.kYellow-7)
 
         self.single_top = samples.Single_Top(
             self.config,
@@ -128,15 +129,15 @@ class Analysis(object):
         self.lepfakes = samples.LepFake(
             self.config, self.mc[:],
             name='LepFakes',
-            label='lep #rightarrow #tau',
-            color=ROOT.kGreen+3)
+            label='MisID l #rightarrow #tau',
+            color=ROOT.kAzure)
         
         # - - jets faking a tau
         self.qcd = samples.QCD(
             self.config, self.data, self.mc[:],
             name='QCD',
-            label='jet #rightarrow #tau',
-            color=ROOT.kAzure-9,
+            label='MisID j #rightarrow #tau',
+            color=ROOT.kMagenta+2,
             correct_upsilon=True)
 
         self.backgrounds = [
@@ -158,7 +159,13 @@ class Analysis(object):
         self._workers=[]
 
     def compile_cxx(self):
-        log.info("Loading & compiling cxx macros ...")
+        ostring = "**"*20 + "... Loading & compiling cxx macros ..." +"**"*20
+        log.info(ostring)
+        log.info("\t FFs macros: %r"%self.FFs_macros)
+        log.info("\t Upsilon correction macros: %r"%self.upsilon_macros)
+        log.info("\t MET trigger efficiency macros: %r"%self.metTrigEff_macros)
+        log.info("*"*len(ostring))
+
         macros = [os.path.join(Analysis.__HERE, "cxxmacros", cm) for cm in self.cxx_macros]
         for cm in macros:
             ROOT.gROOT.ProcessLine(".L %s"%cm)
@@ -426,12 +433,6 @@ class Analysis(object):
         for cr in tau_control_regions:
             cr.tauid = tauid
             cr.truth_tau = TAU_IS_LEP_OR_HAD
-
-            ## - - not MET trigger for FF_CR_MULTIJET (trigger efficiency is applied)
-            if "MULTIJET" in cr.name.upper():
-                mc_trigger = ROOT.TCut("")
-            else:
-                mc_trigger = trigger
                 
         for acr in antitau_control_regions:
             acr.tauid = antitau
@@ -467,12 +468,12 @@ class Analysis(object):
             for mc in self.mc:
                 mc_tau_workers += mc.workers(
                     fields=template_fields[:1], hist_templates=template_hist, systematics=systematics,
-                    categories=tau_control_regions, trigger=mc_trigger)
+                    categories=tau_control_regions, trigger=trigger)
 
                 # - - taus not passing nominal tau ID 
                 mc_antitau_workers += mc.workers(
                     fields=template_fields[:1], hist_templates=template_hist, systematics=systematics,
-                    categories=antitau_control_regions, trigger=mc_trigger)
+                    categories=antitau_control_regions, trigger=trigger)
 
             # add mc tau/antitau  workers to the list of all workers
             for w in mc_tau_workers:

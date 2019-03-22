@@ -91,7 +91,7 @@ class Sample(object):
             self.hist_decor.update(hist_decor)
         return self
 
-    def triggers(self, categories=[], dtype="MC"):
+    def triggers(self, data_streams=None, categories=[], dtype="MC"):
         """ trigger could be different for different selection categories, 
         and also it could be different for DATA and MC.
         Parameters
@@ -102,7 +102,7 @@ class Sample(object):
         """
         trigger_dict = {} 
         for cat in categories:
-            trigger_dict[cat.name] = self.config.trigger(dtype=dtype, category=cat)
+            trigger_dict[cat.name] = self.config.trigger(data_streams=data_streams, dtype=dtype, category=cat)
         return trigger_dict
     
     def cuts(self,
@@ -175,6 +175,8 @@ class Sample(object):
             ## make sure there's no weight applied twice 
             ws = set()
             for w in weight_fields:
+                if "MULTIJET" in category.name and "metTrigEff" in w.name:
+                    continue #<! Multijet Trigger is used for FFs MULTIJET CR 
                 ws.add(w.title)
             weights_dict[category.name] = list(ws)
 
@@ -239,7 +241,7 @@ class Sample(object):
         """
 
         if not systematics:
-            systematics = self.systematics[:1] #<! NOMINAL
+            systematics = self.config.systematics[:] #self.systematics[:1] #<! NOMINAL
         else: #<! sanity check 
             systematics = filter(lambda s: s.name in [st.name for st in systematics], self.systematics)
 
@@ -250,7 +252,7 @@ class Sample(object):
 
         # - - same trigger for all selection categories ?
         if not trigger:
-            triggers = self.triggers(categories)
+            triggers = self.triggers(categories=categories)
 
         # - - defensive copy 
         categories_cp = copy.deepcopy(categories)
@@ -268,10 +270,25 @@ class Sample(object):
                 if len(sts)>0:
                     continue
 
+            ## @FIXME 2018 triggers are not available in 2015-2017 samples (v06 ntuples)
+            if not isinstance(self, MC):
+                # - - defensive copy 
+                categories_cp = copy.deepcopy(categories)
+                if not trigger:
+                    if not "DATA2018" in ds.name: 
+                        triggers = self.triggers(data_streams=["2015", "2016", "2017"], categories=categories, dtype="DATA")
+                    else:
+                        triggers = self.triggers(data_streams=["2018"], categories=categories, dtype="DATA")
+
+                for category in categories_cp:
+                    category.cuts += trigger if trigger else triggers[category.name]
+                    if extra_cuts:
+                        category.cuts += extra_cuts
+
             # - - one worker per dataset
             # weights list per category
             weights = self.weights(categories=categories)
-
+            
             for category in categories_cp:
                 # - - lumi, MC and extra weights  
                 if weighted:

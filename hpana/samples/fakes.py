@@ -11,7 +11,7 @@ from collections import OrderedDict
 import ROOT
 
 # local
-from hpana.samples.sample import Sample
+from hpana.samples.sample import Sample, MC
 from hpana.containers import Histset, HistWorker
 from hpana.dataset_hists import dataset_hists
 from hpana.systematics import Systematic, Variation
@@ -116,7 +116,7 @@ class QCD(Sample):
         """ FF weights for QCD need special treatment.
         """
         if not categories:
-            categories = self.config.categories
+            categories = self.config.categories+self.config.ff_cr_regions
             
         ff_weights = {"NOMINAL": {}}
         for category in categories:
@@ -241,9 +241,9 @@ class QCD(Sample):
             categories = self.config.categories
 
         if not trigger:
-            data_triggers = self.data.triggers(categories, dtype="DATA")
-            mc_triggers = self.mc[0].triggers(categories, dtype="MC")
-            
+            data_triggers = self.data.triggers(categories=categories, data_streams=self.data.streams, dtype="DATA")
+            mc_triggers = self.mc[0].triggers(categories=categories, data_streams=self.data.streams, dtype="MC")
+
         # - - - - tauID = ANTITAU * FF
         tauid = kwargs.pop("tauid", self.tauid)
 
@@ -312,6 +312,21 @@ class QCD(Sample):
         # - - - - DATA workers
         data_workers = []
         for ds in self.data.datasets:
+            ## @FIXME 2018 triggers are not available in 2015-2017 samples (v06 ntuples)
+            if not isinstance(self, MC):
+                # - - defensive copy 
+                data_categories = copy.deepcopy(categories)
+                if not trigger:
+                    if not "DATA2018" in ds.name: 
+                        triggers = self.triggers(data_streams=["2015", "2016", "2017"], categories=data_categories, dtype="DATA")
+                    else:
+                        triggers = self.triggers(data_streams=["2018"], categories=data_categories, dtype="DATA")
+
+                for data_category in data_categories:
+                    data_category.tauid = tauid
+                    data_category.truth_tau = None
+                    data_category.cuts += trigger if trigger else triggers[data_category.name]
+
             # - - - - one worker per systematic per dataset
             sname = self.name
             worker = HistWorker(

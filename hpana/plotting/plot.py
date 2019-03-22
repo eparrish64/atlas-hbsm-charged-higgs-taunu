@@ -355,53 +355,43 @@ def fold_overflow(hist):
 ##----------------------------------------------------------------------------
 ##
 def label_plot(pad, 
-               category=None,
-               data_info=None, 
-               atlas_label=None,
-               textsize=22):
+               category="",
+               data_info="#sqrt{13} TeV Data", 
+               atlas_label=ATLAS_LABEL,
+               textsize=20):
     """ to create different labels for the plost
     """
 
-    rlabel, dlabel, alabel = "", "", ""
-    # draw the category label
-    if category:
-        rlabel = ROOT.TLatex(
-            pad.GetLeftMargin() + 0.45,
-            1 - pad.GetTopMargin() - 0.075,
-            '#bf{%s}'%category)
-        rlabel.SetNDC()
-        rlabel.SetTextFont(43)
-        rlabel.SetTextSize(textsize-2)
-        rlabel.SetTextAlign(31)
-        #rlabel.Draw()
+    ## selection region label    
+    rlabel = ROOT.TLatex(
+        pad.GetLeftMargin() + 0.05,
+        1 - pad.GetTopMargin() - 0.16,
+        '#bf{%s}'%category)
+    rlabel.SetNDC()
+    rlabel.SetTextFont(43)
+    rlabel.SetTextSize(textsize-2)
+    rlabel.SetTextAlign(ROOT.kHAlignLeft)
     
-    # draw the luminosity label
-    if data_info is not None:
-        dlabel = ROOT.TLatex(
-            1. - pad.GetRightMargin(),
-            1. - pad.GetTopMargin(),
-            str(data_info))
-        dlabel.SetNDC()
-        dlabel.SetTextFont(43)
-        dlabel.SetTextSize(textsize)
-        dlabel.SetTextAlign(31)
-        #dlabel.Draw()
+    ## lumi label
+    dlabel = ROOT.TLatex(
+        pad.GetLeftMargin() + 0.05,
+        1 - pad.GetTopMargin() - 0.12,
+        str(data_info))
+    dlabel.SetNDC()
+    dlabel.SetTextFont(43)
+    dlabel.SetTextSize(textsize-2)
+    dlabel.SetTextAlign(ROOT.kHAlignLeft)
             
-    # # draw the ATLAS label
-    if atlas_label:
-        alabel = ROOT.TLatex(
-            pad.GetLeftMargin() + 0.25,
-            1 - pad.GetTopMargin() - 0.075,
-            '#bf{#it{%s}}'%ATLAS_LABEL)
-        alabel.SetNDC()
-        alabel.SetTextFont(43)
-        alabel.SetTextSize(textsize+4)
-        alabel.SetTextAlign(31)
-        #alabel.Draw()
+    ## the ATLAS label
+    alabel = ROOT.TLatex(
+        pad.GetLeftMargin() + 0.05,
+        1 - pad.GetTopMargin() - 0.05,
+        '#bf{#it{%s}}'%atlas_label)
+    alabel.SetNDC()
+    alabel.SetTextFont(43)
+    alabel.SetTextSize(textsize+6)
+    alabel.SetTextAlign(ROOT.kHAlignLeft)
 
-    ## FIX ME: pad Draw doesn't update the pad, needed to return labels!
-    pad.Update()
-    pad.Modified()
     return [rlabel, dlabel, alabel]
 
 ##----------------------------------------------------------------------------
@@ -526,8 +516,8 @@ def uncertainty_band(hists_dict, overflow=True):
 ##----------------------------------------------------------------------------
 ##
 def create_canvas(show_ratio=True):
-    c = TCanvas("c", "canvas", 800, 800)
     if show_ratio:
+        c = TCanvas("c", "canvas", 800, 800)
         # - - - - Upper histogram plot is pad1
         pad1 = TPad("pad1", "pad1", 0, 0.3, 1, 1.0)
         pad1.SetBottomMargin(0.15)  #<! joins upper and lower plot
@@ -540,13 +530,12 @@ def create_canvas(show_ratio=True):
         pad2.SetBottomMargin(0.25)
         pad2.SetGridy()
         pad2.Draw()
-    else:
-        pad1 = TPad("pad1", "pad1", 0, 0.1, 1, 1.0)
-        pad1.SetBottomMargin(0.2)  #<! joins upper and lower plot
-        pad1.Draw()
+        return c, pad1, pad2 
 
-        pad2 = None
-    return c, pad1, pad2
+    c = TCanvas("c", "canvas", 700, 600)
+    pad1 = TPad("pad1", "pad1", 0, 0, 1, 1)
+    pad1.Draw()
+    return c, pad1, None
 
 ##----------------------------------------------------------------------------
 ##

@@ -229,7 +229,7 @@ class Weight(object):
         #   W_STR_FMT.format("n_muons", 
         #     "mu_0_sf_MUON_EFF_TrigStatUncertainty_1up_MuEffSF_HLT_mu24_imedium_QualTight_IsoNone"
         #     "*mu_0_sf_MUON_EFF_TrigStatUncertainty_1up_MuEffSF_HLT_mu50_QualTight_IsoNone"),
-        ),
+        # ),
 
     }  # W_MU
 

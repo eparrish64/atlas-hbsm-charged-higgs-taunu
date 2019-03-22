@@ -31,7 +31,8 @@ log.setLevel(ANA_ARGS.log)
 import ROOT
 ROOT.SetSignalPolicy(ROOT.kSignalFast)
 ROOT.gROOT.SetBatch(True)
-log.info("ROOT is in batch mode")
+ROOT.gROOT.SetStyle("ATLAS")
+log.debug("ROOT is in batch mode")
 
 # -------------------------------------------------------------
 # consts
@@ -46,9 +47,8 @@ config = Configuration(
     mc_campaign=ANA_ARGS.mc_campaign,
     db_version=ANA_ARGS.db_version)
 
-
 # - - - - instantiate the analysis
-analysis = Analysis(config, compile_cxx=not ANA_ARGS.no_cxx)
+analysis = Analysis(config, compile_cxx=not ANA_ARGS.no_cxx, FFs_macros=["FFsCOM_18.cxx", "FFsCR_18.cxx"], metTrigEff_macros=["metTrigEff.cxx"])
 
 # - - - - some checks on cmd args
 if ANA_ARGS.fields:
@@ -58,9 +58,9 @@ else:
 
 if ANA_ARGS.categories:
     categories = filter(
-        lambda c: c.name in ANA_ARGS.categories, config.categories)
+        lambda c: c.name in ANA_ARGS.categories, config.categories+ config.ff_cr_regions)
 else:
-    categories = config.categories
+    categories = config.categories 
 
 ## systematics
 all_systematics = config.systematics[:]  # <! common systematics
@@ -69,7 +69,7 @@ if ANA_ARGS.systematics:
     systematics = filter(
         lambda s: s.name in ANA_ARGS.systematics, all_systematics)
 elif ANA_ARGS.systs:
-    systematics = []# all_systematics
+    systematics = [] #all_systematics
 else:
     systematics = config.systematics[:1] #<! NOMINAL
 
@@ -101,8 +101,9 @@ def main():
         for worker in ana_workers:
             jobs.append(Job(dataset_hists, worker, write_hists=True, outdir=ANA_ARGS.outdir))
 
-        log.info("************** submitting %i jobs  ************" % len(jobs))
-        log.info("***********************************************")
+        ostr = "**"*20 + "... Submitting %i jobs ..."% len(jobs) + "**"*20 
+        log.info(ostr)
+        log.info("*"*len(ostr))
         run_pool(jobs, n_jobs=ANA_ARGS.ncpu)
 
     # - -  run on cluster
@@ -140,13 +141,15 @@ def main():
             # - - setup the submit dir
             os.system(
                 "mkdir -p {0}/jobs {0}/hists".format(ANA_ARGS.outdir))
-            log.info(
-                "************** submitting %i jobs to the cluster ************" % len(analysis.workers()))
-            log.info(
-                "**************************************************************")
 
-            os.system("mkdir -p %s %s/jobs/" %(ANA_ARGS.logsdir, ANA_ARGS.outdir))
+            ostr = "**"*20 + "... Submitting %i jobs ..."% len(ana_workers) + "**"*20 
+            log.info(ostr)
+            log.info("*"*len(ostr))
             for aw in ana_workers:
+                if ANA_ARGS.dry_run:
+                    print "--"*100
+                    print aw.name
+
                 jfile_name = "%s/jobs/%s.pbs" % (ANA_ARGS.outdir, aw.name)
 
                 # - - write the job submission script with right permissions
@@ -171,20 +174,14 @@ def main():
             from hpana.cluster.job_template import SLURM_JOB_TEMPLATE
 
             # - - setup the submit dir
-            os.system(
-                "mkdir -p {0}/jobs  {0}/logs {0}/hists".format(ANA_ARGS.outdir))
-            log.info(
-                "************** submitting %i jobs to the cluster ************" % len(ana_workers))
-            log.info(
-                "**************************************************************")
-
-            os.system("mkdir -p %s %s/jobs/" %
-                      (os.path.join(ANA_ARGS.outdir, ANA_ARGS.logsdir), ANA_ARGS.outdir))
+            os.system("mkdir -p {0}/jobs  {0}/logs {0}/hists".format(ANA_ARGS.outdir))
             submitfile_name = "%s/%s.sh" % (ANA_ARGS.outdir, "submitAllJobs")
-            submit_file = os.open(
-                submitfile_name, os.O_CREAT | os.O_WRONLY, 0755)
+            submit_file = os.open(submitfile_name, os.O_CREAT | os.O_WRONLY, 0755)
 
             # - -  create the job scripts and run them. Returns Analysis workers
+            ostr = "**"*20 + "... Submitting %i jobs ..."% len(ana_workers) + "**"*20 
+            log.info(ostr)
+            log.info("*"*len(ostr))
             for aw in ana_workers:
                 if ANA_ARGS.dry_run:
                     print "--"*100
@@ -206,6 +203,9 @@ def main():
                                  ANA_ARGS.outdir, ANA_ARGS.logsdir),
                              outdir=ANA_ARGS.outdir,
                              local_scratch=ANA_ARGS.local_scratch,
+                             cores=1,
+                             time="12:0:0",
+                             memory="2GB",
                              jobname=aw.name,  #<! important - jobname steers which worker used from pickled ana
                              payload=payload,
                              project=ANA_ARGS.rs_project

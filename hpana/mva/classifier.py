@@ -257,7 +257,11 @@ class SClassifier(GradientBoostingClassifier):
                 category_cp.tauid = ANTI_TAU
                 category_cp.truth_tau = None #<! not applicable to DATA   
                 cuts = category_cp.cuts 
-                selection = cuts.GetTitle()
+
+                ## add trigger
+                trigger = bkg.triggers(categories=[category_cp], data_streams=bkg.data.streams, dtype="DATA")[category_cp.name]
+
+                selection = (trigger + cuts).GetTitle()
                 log.debug("Cut: %r\n"%selection)
                 log.debug("Weight: %r\n"%ws)
 
@@ -305,6 +309,9 @@ class SClassifier(GradientBoostingClassifier):
                 pool = multiprocessing.Pool() 
                 pool_res = []
                 pool_ws = []
+
+                ## add trigger
+                trigger = bkg.triggers(categories=[category], data_streams=bkg.config.data_streams, dtype="MC")[category.name]
                 for ds in bkg.datasets:
                     log.debug("**"*30 + ds.name + "**"*30)
                     bfiles = ds.files
@@ -329,7 +336,7 @@ class SClassifier(GradientBoostingClassifier):
                     ws = ws + "*{}".format(lumi_weight)
                     pool_ws += [ws] #<! @NOTE each dataset has a different weight --> keep them to properly rename all to 'weight'
 
-                    selection = cuts.GetTitle()
+                    selection = (trigger + cuts).GetTitle()
                     log.debug("Cut: %r\n"%selection)
                     log.debug("Weight: %r\n"%ws)
                     kargs = {"treename": treename, "branches": branches+[ws], "selection": selection, "warn_missing_tree": True}    
@@ -360,7 +367,9 @@ class SClassifier(GradientBoostingClassifier):
         sig_dfs = []
         for sig in missing_sigs:
             log.info("Adding %s signal ..."%sig.name)
-            
+            ## add trigger
+            trigger = bkg.triggers(categories=[category], data_streams=sig.config.data_streams, dtype="MC")[category.name]            
+            cuts = category.cuts 
             if truth_match_tau:
                 cuts = category.cuts + TAU_IS_TRUE
             

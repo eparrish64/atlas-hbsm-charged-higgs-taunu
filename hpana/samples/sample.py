@@ -281,6 +281,7 @@ class Sample(object):
                         triggers = self.triggers(data_streams=["2018"], categories=categories, dtype="DATA")
 
                 for category in categories_cp:
+                    category.truth_tau = None
                     category.cuts += trigger if trigger else triggers[category.name]
                     if extra_cuts:
                         category.cuts += extra_cuts

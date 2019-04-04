@@ -209,7 +209,7 @@ def draw(var, category,
             backgrounds_hists_dict, overflow=overflow)
         
             backgrounds_error = ROOT.TGraphAsymmErrors()
-            for i in range(0, total_backgrounds.GetNbinsX()):
+            for i in range(1, total_backgrounds.GetNbinsX()+1):
                 tb_nom_cnt = total_backgrounds.GetBinContent(i)
                 backgrounds_error.SetPoint(i, total_backgrounds.GetXaxis().GetBinCenter(i), tb_nom_cnt)
 
@@ -264,7 +264,7 @@ def draw(var, category,
             low = (total_signal - low_band_signal) * signal_scale
             
             signal_error = ROOT.TGraphErrors()
-            for i in range(0, total_signal.GetNbinsX()):
+            for i in range(1, total_signal.GetNbinsX()+1):
                 signal_error.SetPoint(i, total_signal.GetXaxis().GetBinCenter(i), 
                                       total_total_signal.GetBinContent(i))
                 signal_error.SetPointError(i, 0, total_signal.GetBinError(i))
@@ -293,7 +293,7 @@ def draw(var, category,
             if isinstance(blind, tuple):
                 low, high = blind
                 # - - - - zero out bins in blind category
-                for i in range(0, data_hist.GetNbinsX()):
+                for i in range(1, data_hist.GetNbinsX()+1):
                     bin_low  = data_hist.GetBinLowEdge(i)
                     bin_high = bin_low + data_hist.GetBinWidth(i) 
                     if (low < bin_low <= high or low <= bin_high < high):
@@ -338,7 +338,7 @@ def draw(var, category,
         ratio_hist_low = ratio_hist(data_hist, total_backgrounds - low_band_backgrounds)
 
         ratio_error = ROOT.TGraphAsymmErrors()
-        for i in range(0, rhist.GetNbinsX()):
+        for i in range(1, rhist.GetNbinsX()+1):
             h_cnt = ratio_hist_high.GetBinContent(i)
             l_cnt = ratio_hist_low.GetBinContent(i)
             m_cnt = rhist.GetBinContent(i)
@@ -440,6 +440,7 @@ def draw(var, category,
         rhist.SetTitle("")
         rhist.SetMarkerSize(1)
         rhist.SetMarkerStyle(20)
+        rhist.GetYaxis().SetRangeUser(0.8, 1.2)
         rhist.Draw('SAME')
         if error_bars:
             ratio_error.Draw('SAME E2')

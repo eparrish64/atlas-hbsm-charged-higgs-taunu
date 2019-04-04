@@ -427,8 +427,9 @@ def uncertainty_band(hists_dict, overflow=True):
 
     ## retrieve the total nominal/syst hists and aggregate them if needed
     total_nom = hists_dict[samples[0]]["NOMINAL"].Clone()
-
-    for s in samples[:]:
+    
+    #skip first entry, as it is already accounted for by initial clone
+    for s in samples[1:]:
         total_nom.Add(hists_dict[s]["NOMINAL"])
 
     for syst in systematics:

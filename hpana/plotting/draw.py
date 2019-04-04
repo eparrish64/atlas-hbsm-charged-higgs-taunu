@@ -440,6 +440,7 @@ def draw(var, category,
         rhist.SetTitle("")
         rhist.SetMarkerSize(1)
         rhist.SetMarkerStyle(20)
+        rhist.GetYaxis().SetRangeUser(0.8, 1.2)
         rhist.Draw('SAME')
         if error_bars:
             ratio_error.Draw('SAME E2')

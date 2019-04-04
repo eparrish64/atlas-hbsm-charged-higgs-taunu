@@ -450,7 +450,7 @@ def uncertainty_band(hists_dict, overflow=True):
     var_low = {}
 
     ## include stat errors 
-    for i in range(0, total_nom.GetNbinsX()):
+    for i in range(1, total_nom.GetNbinsX()+1):
         bkey = "BIN%i"%i
         if not bkey in var_high:
             var_high[bkey] = []
@@ -503,14 +503,13 @@ def uncertainty_band(hists_dict, overflow=True):
     high_band = total_nom.Clone()
     high_band.Reset()
     low_band = high_band.Clone()
-    for i in range(0, high_band.GetNbinsX()):
+    for i in range(1, high_band.GetNbinsX()+1):
         bkey="BIN%i"%i
         sum_high = math.sqrt(sum([v**2 for v in var_high[bkey]]))
         sum_low = math.sqrt(sum([v**2 for v in var_low[bkey]]))
 
         high_band.SetBinContent(i, sum_high)
         low_band.SetBinContent(i, sum_low)
-
     return total_nom, high_band, low_band
             
 

@@ -627,6 +627,8 @@ CLF_TJ = Category("CLF_TAUJET",
                       NUM_JETS3,
                       NUM_BJETS1,
                       MET100,
+                      MT50,
+                      TAU_PT40,
                   ])
 
 CLF_TL = Category("CLF_TAULEP",

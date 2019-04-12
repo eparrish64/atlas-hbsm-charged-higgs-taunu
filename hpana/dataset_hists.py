@@ -342,13 +342,11 @@ def dataset_hists_direct(hist_worker,
                     # - - get the tree
                     tree = tfile.Get(tree_name)
                     # - - speed up by reading to memory only the branches that are required
-                    if n==0:
-                        branches = [br.GetName() for br in tree.GetListOfBranches()]
-                        keep_branches = filter(lambda b: b in branches, MEM_BRANCHES[channel])
+                    branches = [br.GetName() for br in tree.GetListOfBranches()]                    
+                    keep_branches = filter(lambda b: not b in VETO_BRANCHES[channel], branches)
                     tree.SetBranchStatus("*", 0)
                     for br in keep_branches:
                         tree.SetBranchStatus(br, 1)
-
 
                     # - - cache only the events that pass the selections
                     selection = category.cuts.GetTitle()

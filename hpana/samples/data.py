@@ -153,9 +153,9 @@ class Data(Sample):
                             stream, self.config.data_lumi[stream] / 1e3, data_lumi[stream] / 1e3))
                     self.config.data_lumi.update(data_lumi)
 
-        int_lumi = sum([self.config.data_lumi[st] for st in self.streams])
-        self.info = DataInfo(int_lumi / 1e3, self.config.energy)
-        log.info("\t Channel:{}; Streams: {}; Lumi: {}".format(self.config.channel, self.streams, int_lumi))
+        self.int_lumi = sum([self.config.data_lumi[st] for st in self.streams])
+        self.info = DataInfo(self.int_lumi / 1e3, self.config.energy)
+        log.info("\t Channel:{}; Streams: {}; Lumi: {}".format(self.config.channel, self.streams, self.int_lumi))
         log.info("\t Blind regions: {}".format(self.blind_regions))
         log.info("*"*len(ostring))
 
@@ -241,3 +241,21 @@ class Data(Sample):
             weighted=False,
             **kwargs)
         return _workers
+
+    def merge_hists(self, hist_set=[], histsdir=None, hists_file=None, write=False, **kwargs):
+        if write:
+            # - - output file
+            if not hists_file:
+                hists_file = self.config.hists_file
+
+            ## write lumi to hists-file 
+            oname = os.path.join(histsdir, hists_file)
+            tf = ROOT.TFile(oname, "UPDATE")
+            ln = ROOT.TNamed("lumi", str(self.int_lumi))
+            ln.Write()
+            tf.Close()
+
+        merged_hists = super(Data, self).merge_hists(hist_set=hist_set, histsdir=histsdir, hists_file=hists_file, write=write, **kwargs)
+
+        return merged_hists
+

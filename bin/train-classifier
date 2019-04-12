@@ -26,7 +26,7 @@ from hpana.analysis import Analysis
 from hpana.samples.sample  import Sample
 from hpana.samples.higgs import Higgs 
 from hpana.variables import CLF_FEATURES
-from hpana.categories import CLASSIFIER_CATEGORIES, Category_SR_TAUJET
+from hpana.categories import CLASSIFIER_CATEGORIES
 from hpana.cluster.parallel import run_pool, Job
 
 from hpana.mva.classifier import Classifier, SClassifier, train_model
@@ -49,9 +49,7 @@ log.info("ROOT is in batch mode")
 __HERE = os.path.dirname(os.path.abspath(__file__))
 
 ## - - build analysis main configuration object
-CONFIG = Configuration(CLF_ARGS.channel, db_version=CLF_ARGS.db_version)
-                    #    data_streams=CLF_ARGS.data_streams,
-                    #    )
+CONFIG = Configuration(CLF_ARGS.channel, db_version=CLF_ARGS.db_version, data_streams=CLF_ARGS.data_streams,)
 
 ## - - instantiate Analysis
 ANALYSIS  = Analysis(CONFIG, compile_cxx=True)
@@ -83,10 +81,6 @@ if CLF_ARGS.backend=="sklearn":
         import sklearn
     except ImportError:
         raise RuntimeError("Please install sklearn; (pip install sklearn)")
-
-    # ## - - turn off kfold splitting
-    # if CLF_ARGS.plot_correlations or CLF_ARGS.optimize_bdt or CLF_ARGS.scale_feats:
-    #     CLF_ARGS.kfolds = None
 
     ## - - prepare training Dataframe
     DFRAME = SClassifier.prepare_data(BKGS, SIGS, ALL_FEATS[CLF_ARGS.channel], data_lumi=CONFIG.data_lumi,
@@ -138,7 +132,7 @@ if CLF_ARGS.backend=="sklearn":
                 sdf = dframe[where]
                                     
                 log.info("Training in mass rage:%s on ntracks=%i, nevents=%i, and nfeatures=%i\n\t\tHyperparams: %r\n"%(
-                    mass_tag, ntracks, sdf.shape[0], sdf.shape[1], hyper_params))
+                    mass_tag, ntracks, sdf.shape[0], sdf.shape[1]-4, hyper_params))
 
                 ## - - instantiate the model
                 clf_name = SClassifier.MODEL_NAME_STR_FORMAT.format(

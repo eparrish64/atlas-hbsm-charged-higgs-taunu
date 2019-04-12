@@ -241,8 +241,13 @@ def draw(var, category,
             sig_hist = hists_dict[sig.name]["NOMINAL"]
             # - - - - scale signals if needed
             if scale_sig_to_bkg_sum:
-                bkg_hsum = reduce(lambda h1, h2: h1+h2, backgrounds_hists_nom)
-                sig_hist.Scale(bkg_hsum.Integral(0, -1)/sig_hist.Integral(0, -1))
+                bh_sum = 0
+                nbins = bkg_hist.GetNbinsX()
+                for _bh in backgrounds_hists_nom:
+                    bh_sum += _bh.Integral(0, nbins)
+                stot = sig_hist.Integral(0, nbins)
+                sig_hist.Scale(bh_sum/stot)
+
             if signal_scale!=1.:
                 sig_hist *= signal_scale
             init_label = sig.label
@@ -469,5 +474,3 @@ def draw(var, category,
     fig.Close()
     
     return 
-
-

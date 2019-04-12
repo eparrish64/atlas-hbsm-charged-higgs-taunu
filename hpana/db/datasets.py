@@ -354,7 +354,6 @@ class Database(dict):
                     rtag = tag.split("_")[-2].replace("r", "")
                     version = match.group("version")
                     tag_match = None
-
                     if tag_match:
                         reco_tag = int(tag_match.group('reco'))
                         if reco_tag in MC_CATEGORIES['mc15a']['reco']:
@@ -450,7 +449,9 @@ class Database(dict):
                             if m_ds.events!=0:
                                 m_ds.lumi_weight = m_ds.xsec_kfact_effic/float(m_ds.events)
                             self[uname] = m_ds
-         
+
+                        log.info(m_ds)
+
         # - - - - - - - - DATA
         log.info('--------------------------------> DATA')
         if data_path is not None:
@@ -506,6 +507,8 @@ class Database(dict):
                     d_ds.xsec_kfact_effic = 1.
 
                     self[name] = d_ds
+                    
+                    log.info(d_ds)
 
     def __setitem__(self, name, ds):
         super(Database, self).__setitem__(name, ds)

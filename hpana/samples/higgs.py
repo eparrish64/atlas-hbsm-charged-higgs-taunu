@@ -91,15 +91,20 @@ class Higgs(MC, Signal):
         }
     }
 
-    MASSES_DICT = {
+    MASS_REGIONS_DICT = {
         "taulep":TAULEP_SIGS,
         "taujet": TAUJET_SIGS,
     } 
 
-    MASSES = []
-    for mode in ["LOW", "INT", "HIGH"]:
-        MASSES += MASSES_DICT["taujet"][mode].keys() 
-    MASSES = sorted(MASSES)
+    ## flat masses dict
+    MASSES_DICT = {"taulep":{}, "taujet": {}}
+    for key in ["LOW", "INT", "HIGH"]:
+        for channel in ["taulep", "taujet"]:
+            for m, did in MASS_REGIONS_DICT[channel][key].iteritems():
+                MASSES_DICT[channel][m] = did
+
+    ## all masses 
+    MASSES = sorted(MASSES_DICT["taujet"])
 
     SAMPLE_PATTERN = {
         "LOW": "MadGraphPy8EvtGen_A14NNPDF30LO_HpL_H{}",
@@ -120,15 +125,17 @@ class Higgs(MC, Signal):
         ## check if this mass point is supported
         assert mass in Higgs.MASSES, "unsupported %r mass"%mass
 
+        self.config = config
+
         if not name:
             name = "Hplus{}".format(mass)
+            # name = Higgs.MASSES_DICT[self.config.channel][mass]     
         if label is None:
             if scale!=1:
                 label = '{1}#times H^+{0}'.format(mass, scale)
             else:
                 label = 'H^{{+}}{0}'.format(mass)
 
-        self.config = config
         self.name = name
         self.label=label
         

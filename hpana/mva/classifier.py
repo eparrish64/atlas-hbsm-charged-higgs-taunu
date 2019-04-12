@@ -258,11 +258,7 @@ class SClassifier(GradientBoostingClassifier):
                 category_cp.truth_tau = None #<! not applicable to DATA   
                 cuts = category_cp.cuts 
 
-                ## add trigger
-                trigger = bkg.triggers(categories=[category_cp], data_streams=bkg.data.streams, dtype="DATA")[category_cp.name]
-
-                selection = (trigger + cuts).GetTitle()
-                log.debug("Cut: %r\n"%selection)
+                log.debug("Cut: %r\n"%cuts.GetTitle())
                 log.debug("Weight: %r\n"%ws)
 
                 ## pool of workers 
@@ -272,6 +268,15 @@ class SClassifier(GradientBoostingClassifier):
                 log.debug(
                     "**"*30 + " Parallel processing %i datasets(%r)  for %s "%(len(bkg.data.datasets), bkg.data.streams, bkg.name) + "**"*30)
                 for ds in bkg.data.datasets:
+                    ##@FIXME missing 2018 triggers in 2015-2017 v06 ntuples 
+                    if "DATA2018" in ds.name:
+                        d_streams = ["2018"]
+                    else:
+                        d_streams = ["2015", "2016", "2017"]
+
+                    trigger = bkg.triggers(categories=[category_cp], data_streams=d_streams, dtype="DATA")[category_cp.name]
+                    selection = (trigger + cuts).GetTitle()
+                
                     bfiles = ds.files                        
                     if not bfiles:
                         log.warning("No root file is found for %s"%ds.name)

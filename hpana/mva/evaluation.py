@@ -73,86 +73,93 @@ class AppendJob(Process):
 ##--------------------------------------------------------------------------
 ## plot predicted signal and background scores 
 ##--------------------------------------------------------------------------
-def plot_scores(models, dframe=None, backgrounds=[], signals=[], 
-                outdir="", bins=None, plot_roc=True, overlay_rocs=False, label=None, outname=None):
+def plot_scores(models, 
+        dframe=None, 
+        backgrounds=[], 
+        signals=[], 
+        fold_var="event_number", 
+        n_tracks_var="tau_0_n_charged_tracks",
+        outdir="", 
+        bins=None, 
+        plot_roc=True, 
+        overlay_rocs=False, 
+        label=None, 
+        outname=None):
+
     """
     """
     b_dframe = dframe.loc[[bkg.name for bkg in backgrounds]]
     s_dframe = dframe.loc[[sig.name for sig in signals]]
     log.debug(30*"*" + " Testing Data Frame " + 30*"*")
     log.debug(dframe)
-    log.info("Signals: {0} || #events: {1} ; backgrounds: {2} || #events: {3}".format(
-        [s.name for s in signals], s_dframe.shape[0], [b.name for b in backgrounds], b_dframe.shape[0]))
 
     rocs = []
-    for mtag, tdict in models.iteritems():
-        ## evaluate based on the mass region that the model is trained on
-        masses = [int(m) for m in mtag.split("to")] 
-        r_signals = filter(lambda s: masses[0] <= s.mass <= masses[1], signals)
-        log.info("*"*80)
-        for sig in r_signals:
-            sm_df = dframe.loc[[sig.name]]
-            m_models = models[mtag]
+    for sig in signals:
+        sm_df = dframe.loc[[sig.name]]
+        s_scores = []
+        b_scores = []        
+        for m_model in models:
+            masses = m_model.mass_range
+            if not (masses[0] <= sig.mass <= masses[-1]):
+                continue
+
+            feats = m_model.features
+            b_df = b_dframe[(b_dframe[fold_var]%m_model.kfolds==m_model.fold_num) & (b_dframe[n_tracks_var]==m_model.ntracks)]
+            b_test = b_df[[ft.name for ft in feats ]]
+
+            s_df = sm_df[(sm_df[fold_var]%m_model.kfolds==m_model.fold_num) & (sm_df[n_tracks_var]==m_model.ntracks)]
+            s_test = s_df[[ft.name for ft in feats ]]
+
+            ## evaluate score 
+            b_score = m_model.predict_proba(b_test)[:, 1]
+            b_scores += [b_score]
+            s_score = m_model.predict_proba(s_test)[:, 1]
+            s_scores += [s_score]
+        if len(s_scores) < 1:
+            continue
             
-            s_scores = []
-            b_scores = []
-            for m_model in m_models:            
-                feats = m_model.features
-                b_df = b_dframe[(b_dframe["event_number"]%m_model.kfolds==m_model.fold_num) & (b_dframe["tau_0_n_charged_tracks"]==m_model.ntracks)]
-                b_test = b_df[[ft.name for ft in feats ]]
+        b_arr = np.concatenate(b_scores)
+        s_arr = np.concatenate(s_scores)
 
-                s_df = sm_df[(sm_df["event_number"]%m_model.kfolds==m_model.fold_num) & (sm_df["tau_0_n_charged_tracks"]==m_model.ntracks)]
-                s_test = s_df[[ft.name for ft in feats ]]
+        log.info("Evaluated mass %i, ntrack=%i, bkg events=%i, and sig events=%i"%(
+                sig.mass, m_model.ntracks, b_arr.shape[0], s_arr.shape[0]))
+        if bins is None:
+            bins = np.linspace(0, 1, 50)
 
-                ## evaluate score 
-                b_score = m_model.predict_proba(b_test)[:, 1]
-                b_scores += [b_score]
-                s_score = m_model.predict_proba(s_test)[:, 1]
-                s_scores += [s_score]
+        ## plot hists
+        plt.figure(10)
+        plt.hist(
+            [s_arr, b_arr], bins, log=True, density=True, histtype="stepfilled", color=['r', 'b'], alpha=0.85, label=[r'$H^+$[%iGeV]'%sig.mass, r"$\sum BKG$"])
+        plt.ylabel(r'$p.d.f$')
+        plt.xlabel('BDT score')
+        plt.legend(loc='upper right')
 
-            b_arr = np.concatenate(b_scores)
-            s_arr = np.concatenate(s_scores)
+        ## save plot
+        outname = os.path.join(outdir, "BDT_score_{}_{}.png".format(sig.name, m_model.name.replace(".pkl", "")))
+        plt.savefig(outname)
+        plt.close()
 
-            ## - - plot
-            log.info("Testing on mass %i, ntrack=%i, bkg events=%i, and sig events=%i"%(
-                    sig.mass, m_model.ntracks, b_arr.shape[0], s_arr.shape[0]))
-            if bins is None:
-                bins = np.linspace(0, 1, 50)
+        if plot_roc:
+            Y_score = np.concatenate([b_arr, s_arr])
+            b_true = np.zeros(b_arr.size)
+            s_true = np.ones(s_arr.size)
+            Y_true = np.concatenate([b_true, s_true])
 
-            ## plot hists
-            plt.figure(10)
-            plt.hist(
-                [s_arr, b_arr], bins, log=True, density=True, histtype="stepfilled", color=['r', 'b'], alpha=0.85, label=[r'$H^+$[%iGeV]'%sig.mass, r"$\sum BKG$"])
-            plt.ylabel(r'$p.d.f$')
-            plt.xlabel('BDT score')
-            plt.legend(loc='upper right')
-
-            ## save plot
-            outname = os.path.join(outdir, "BDT_score_{}_{}.png".format(sig.name, m_model.name.replace(".pkl", "")))
+            fpr_grd, tpr_grd, _ = roc_curve(Y_true, Y_score)
+            auc = roc_auc_score(Y_true, Y_score)
+            
+            rocs += [(m_model, fpr_grd, tpr_grd, auc)]
+            ## plot roc 
+            plt.figure(1)
+            plt.plot([0, 1], [0, 1], 'k--')
+            plt.plot(fpr_grd, tpr_grd, label="AUC = %.4f"%auc)
+            plt.ylabel('Signal efficiency ')
+            plt.xlabel('Background rejection ')
+            plt.title(r'ROC curve($H^+$[%iGeV])'%sig.mass)
+            plt.legend(loc='best')
+            outname = os.path.join(outdir, "ROC_{}_{}.png".format(sig.name, m_model.name.replace(".pkl", "") ))
             plt.savefig(outname)
             plt.close()
-
-            if plot_roc:
-                Y_score = np.concatenate([b_arr, s_arr])
-                b_true = np.zeros(b_arr.size)
-                s_true = np.ones(s_arr.size)
-                Y_true = np.concatenate([b_true, s_true])
-
-                fpr_grd, tpr_grd, _ = roc_curve(Y_true, Y_score)
-                auc = roc_auc_score(Y_true, Y_score)
-                
-                rocs += [(m_model, fpr_grd, tpr_grd, auc)]
-                ## plot roc 
-                plt.figure(1)
-                plt.plot([0, 1], [0, 1], 'k--')
-                plt.plot(fpr_grd, tpr_grd, label="AUC = %.4f"%auc)
-                plt.ylabel('Signal efficiency ')
-                plt.xlabel('Background rejection ')
-                plt.title(r'ROC curve($H^+$[%iGeV])'%sig.mass)
-                plt.legend(loc='best')
-                outname = os.path.join(outdir, "ROC_{}_{}.png".format(sig.name, m_model.name.replace(".pkl", "") ))
-                plt.savefig(outname)
-                plt.close()
 
     if overlay_rocs:
         fig = plt.figure(10)

@@ -11,6 +11,12 @@ __all__ = [
     "tau_0_n_charged_tracks",
     "tau_0_jet_bdt_score_trans"]
 
+## FIXME: tmp workaround for missing bjet p4 in (2015-2017) systematics 
+BJET_P4_STR = "((jet_0_b_tag_score>0.83)*jet_0_p4->{0}+"\
+    "(jet_0_b_tag_score<0.83 && jet_1_b_tag_score>0.83)*jet_1_p4->{0}+"\
+    "(jet_0_b_tag_score<0.83 && jet_1_b_tag_score<0.83 &&jet_2_b_tag_score>0.83)*jet_2_p4->{0})" 
+
+
 ##------------------------------------------------------------------------------------------
 ## 
 class Variable(object):
@@ -267,9 +273,7 @@ bjet_0_pt =  Variable(
     "bjet_0_pt",
     title='#font[52]{p}_{T}lead b-jet GeV',
     latex=r"$b-jet_{p_T}$",
-    tformula={
-        "mc16": "bjet_0_p4->Pt()",
-        "mc15": "bjet_0_pt",},
+    tformula=BJET_P4_STR.format("Pt()"),
     binning=(20, 0, 500),
     scale=1.,
     unit='GeV')
@@ -305,7 +309,7 @@ bjet_0_phi = Variable(
     "bjet_0_phi",
     title='#font[152]{#phi}(bj_{1})',
     tformula={
-        "mc16":"bjet_0_p4->Phi()",
+        "mc16":BJET_P4_STR.format("Phi()"),
         "mc15":"bjet_0_phi",},
     binning=(20, -3.2, 3.2))
 
@@ -399,7 +403,7 @@ bjet_0_met_dphi = Variable(
     title='#font[52]{#Delta#phi}(b-jet ,E^{miss}_{T})',
     latex=r"$\Delta\phi(b-jet ,E^{miss}_{T})$",
     tformula={
-        "mc16":"acos(cos(met_p4->Phi() - bjet_0_p4->Phi()))",
+        "mc16":"acos(cos(met_p4->Phi() - {}))".format(BJET_P4_STR.format("Phi()")),
         "mc15": "acos(cos(met_phi-bjet_0_phi))",},
     binning=(12, -1., 4))
 
@@ -408,7 +412,8 @@ bjet_0_tau_0_dr = Variable(
     title='#font[52]{#Delta}R(#tau, b-jet)',
     latex=r"$\Delta R(\tau, b-jet)$",
     tformula={
-        "mc16": "sqrt(acos(cos(tau_0_p4->Phi() - bjet_0_p4->Phi()))**2 + (tau_0_p4->Phi() - bjet_0_p4->Eta())**2)",
+        "mc16": "sqrt(acos(cos(tau_0_p4->Phi() - {0}))**2 + (tau_0_p4->Phi() - {1})**2)".format(
+            BJET_P4_STR.format("Phi()"), BJET_P4_STR.format("Eta()")),
         "mc15": "sqrt(acos(cos(tau_0_phi-bjet_0_phi))**2 + (tau_0_eta-bjet_0_eta)**2)",},
     binning=(20, 0, 6.4))
 
@@ -475,9 +480,9 @@ bjet_0_lep_0_dr = Variable(
     "bjet_0_lep_0_dr",
     title='#Delta#phi(l, b-jet)',
     latex=r"$\Delta\phi(\ell, b-jet)$",
-    tformula="sqrt(acos(cos(bjet_0_p4->Phi() - el_0_p4->Phi() - mu_0_p4->Phi()))**2 + (bjet_0_p4->Eta() - el_0_p4->Eta() - mu_0_p4->Eta())**2)",
+    tformula="sqrt(acos(cos({0} - el_0_p4->Phi() - mu_0_p4->Phi()))**2 + ({1} - el_0_p4->Eta() - mu_0_p4->Eta())**2)".format(
+        BJET_P4_STR.format("Phi()"), BJET_P4_STR.format("Eta()")),
     binning=(10, 0, 6.4))
-
 
 ##############################################
 #WIP: - - - - - - - - BDT scores
@@ -510,13 +515,13 @@ VARIABLES_TAUJET = [
     jet_0_pt,
     jet_0_eta,
     # jet_0_phi,
-    # jet_1_pt,
+    jet_1_pt,
 
-    # bjet_0_pt,
-    # bjet_0_phi,
+    bjet_0_pt,
+    bjet_0_phi,
     
-    # bjet_0_met_dphi,
-    # bjet_0_tau_0_dr,
+    bjet_0_met_dphi,
+    bjet_0_tau_0_dr,
     met_jet_dphi_ratio,
     # tau_met_jet_dphi_min,
 ]

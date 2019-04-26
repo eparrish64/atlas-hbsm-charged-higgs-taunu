@@ -91,7 +91,7 @@ class Sample(object):
             self.hist_decor.update(hist_decor)
         return self
 
-    def triggers(self, categories=[], dtype="MC"):
+    def triggers(self, data_streams=None, categories=[], dtype="MC"):
         """ trigger could be different for different selection categories, 
         and also it could be different for DATA and MC.
         Parameters
@@ -102,7 +102,7 @@ class Sample(object):
         """
         trigger_dict = {} 
         for cat in categories:
-            trigger_dict[cat.name] = self.config.trigger(dtype=dtype, category=cat)
+            trigger_dict[cat.name] = self.config.trigger(data_streams=data_streams, dtype=dtype, category=cat)
         return trigger_dict
     
     def cuts(self,
@@ -170,9 +170,16 @@ class Sample(object):
             categories = self.config.categories
         weights_dict = {}
 
+        ## In general weights might change from category to category 
         for category in categories:
-            weights_dict[category.name] = [w.title for w in weight_fields]
-        
+            ## make sure there's no weight applied twice 
+            ws = set()
+            for w in weight_fields:
+                if "MULTIJET" in category.name and "metTrigEff" in w.name:
+                    continue #<! Multijet Trigger is used for FFs MULTIJET CR 
+                ws.add(w.title)
+            weights_dict[category.name] = list(ws)
+
         return weights_dict
 
     @property
@@ -234,7 +241,7 @@ class Sample(object):
         """
 
         if not systematics:
-            systematics = self.systematics #<! NOMINAL
+            systematics = self.config.systematics[:] #self.systematics[:1] #<! NOMINAL
         else: #<! sanity check 
             systematics = filter(lambda s: s.name in [st.name for st in systematics], self.systematics)
 
@@ -245,7 +252,7 @@ class Sample(object):
 
         # - - same trigger for all selection categories ?
         if not trigger:
-            triggers = self.triggers(categories)
+            triggers = self.triggers(categories=categories)
 
         # - - defensive copy 
         categories_cp = copy.deepcopy(categories)
@@ -263,10 +270,26 @@ class Sample(object):
                 if len(sts)>0:
                     continue
 
+            ## @FIXME 2018 triggers are not available in 2015-2017 samples (v06 ntuples)
+            if not isinstance(self, MC):
+                # - - defensive copy 
+                categories_cp = copy.deepcopy(categories)
+                if not trigger:
+                    if not "DATA2018" in ds.name: 
+                        triggers = self.triggers(data_streams=["2015", "2016", "2017"], categories=categories, dtype="DATA")
+                    else:
+                        triggers = self.triggers(data_streams=["2018"], categories=categories, dtype="DATA")
+
+                for category in categories_cp:
+                    category.truth_tau = None
+                    category.cuts += trigger if trigger else triggers[category.name]
+                    if extra_cuts:
+                        category.cuts += extra_cuts
+
             # - - one worker per dataset
             # weights list per category
             weights = self.weights(categories=categories)
-
+            
             for category in categories_cp:
                 # - - lumi, MC and extra weights  
                 if weighted:
@@ -321,10 +344,7 @@ class Sample(object):
 
         return list(workers)
 
-    def hists(self, categories=[],
-              fields=[],
-              systematics=["NOMINAL"],
-              **kwargs):
+    def hists(self, categories=[], fields=[], systematics=[], **kwargs):
         """
         Parameters
         ----------
@@ -346,40 +366,25 @@ class Sample(object):
         if not categories:
             raise RuntimeError("no category is selected to produce hists for it")
         
-        # - - - - - - create a default canvas for the TTree.Draw
-        canvas = ROOT.TCanvas()
+        if not systematics:
+            systematics = self.systematics[:1] #<! NOMINAL
+        else: #<! sanity check 
+            systematics = filter(lambda s: s.name in [st.name for st in systematics], self.systematics)
 
-        hist_sets = []
         # - - prepare the workers
-        workers = self.workers(
-            categories=categories,
-            fields=fields,
-            systematics=systematics,
-            **kwargs)
+        workers = self.workers(categories=categories, fields=fields, **kwargs)
 
         log.info(
             "************** processing %s sample hists in parallel, njobs=%i ************"%(self.name, len(workers) ) )
         pool = multiprocessing.Pool(multiprocessing.cpu_count())
         results = [pool.apply_async(dataset_hists, (wk,)) for wk in workers]
+        hist_set = []
         for res in results:
-            hist_sets += res.get(3600) #<! without the timeout this blocking call ignores all signals.
+            hist_set += res.get(3600) #<! without the timeout this blocking call ignores all signals.
 
         # - - merge all the hists for this sample
-        merged_hist_set = []
-        for systematic in systematics:
-            for syst_var in systematic.variations:
-                for var in fields:
-                    for cat in categories:
-                        hists = filter(
-                            lambda hs: (hs.systematic==systematic and hs.variable==var.name and hs.category==cat.name), hist_sets)
-                        hsum = hists[0].hist
-                        for hs in hists[1:]:
-                            hsum.Add(hs.hist)
-                        outname = self.config.hist_name_template.format(self.name, cat, var)
-                        hsum.SetTitle(outname)
-                        hsum.SetName(outname)
-                        merged_hist_set.append(Histset(sample=self.name, category=cat.name, variable=var.name, hist=hsum) )
-        canvas.Close()
+        merged_hist_set = self.merge_hists(hist_set=hist_set, write=False)
+
         return merged_hist_set
     
     def write_hists(self, hist_set, hists_file, systematics=[], overwrite=True):

@@ -449,7 +449,7 @@ def fit_alpha(cr_hists, target_hists,
                     wj_hist = hs.hist
                 if "MULTIJET" in hs.category:    
                     mj_hist = hs.hist
-            assert mj_hist and wj_hist, "CR hists are not available"
+            assert mj_hist and wj_hist, "CR hists are not availabel"
             
             if wj_hist.Integral()==0 or mj_hist.Integral()==0:
                 log.warning(" one of the CRs hist is empty! skipping fitting in (ntracks=%s, pT=%s)bin"%(tkey, pkey))
@@ -586,56 +586,84 @@ def fit_alpha(cr_hists, target_hists,
 ##--------------------------------------------------------------------------
 def plot_cr_ffs(cr_ffs, cr_labels={},
                 jet_bdt_key="tauJetBDT_02", suffix="", pdir="", pname="FFs_inclusive_tracks_pT.png",
-                logy=True, logx=True,
+                logy=True, logx=True, formats=[".png"], data_info="#sqrt{13} TeV",
                 colors=[ROOT.kBlack, ROOT.kGreen, ROOT.kRed, ROOT.kBlue,]):
     """
     
     """
     canvas = ROOT.TCanvas("c", "c", 800, 700)
-    cr_ff_legend = ROOT.TLegend(0.6, 0.8, 0.9, 0.9)
+    cr_ff_legend = ROOT.TLegend(0.7, 0.7, 0.9, 0.9)
     
     # - - - - retrive hists 
-    hists = []
+    graphs = []
     for cr in cr_ffs.keys():
         for itk, bins in cr_ffs[cr][jet_bdt_key].iteritems():
             bin_keys = sorted([float(b) for b in bins.keys()])
-            hist = ROOT.TH1F("%s__%s"%(cr, itk), "", len(bins)-1, array.array("d", bin_keys))
-            for n, pt in enumerate(bin_keys):
-                ff = cr_ffs[cr][jet_bdt_key][itk]["%i"%pt]
-                hist.SetBinContent(n, float(ff))
-                hist.SetBinError(n, 0.001)
-            hists += [hist]
-            label = cr_labels[cr] if cr_labels else cr 
-            cr_ff_legend.AddEntry(hist, "%s (nprongs=%s)"%(itk, label), "L")
+            e_graph = ROOT.TGraphAsymmErrors(len(bins)-1)
+            for n in range(len(bin_keys)-1):
+                pt = bin_keys[n]
 
-    # - - - - plot them
-    while len(hists) > len(colors):
-        colors += [c+2 for c in colors]
-        
-    n = 0
-    for h, cl in zip(hists, colors):
-        h.SetMarkerColor(cl)
-        h.SetLineColor(cl)
-        if n==0:
-            h.SetMaximum(10)
-            h.SetMinimum(0.01)
-            h.Draw("")
-            h.GetYaxis().SetTitle("FF")
-            h.GetXaxis().SetTitle("#tau p_{T} GeV")
-        else:
-            h.Draw("SAME")
-        n += 1
-        
-    cr_ff_legend.Draw("SAME")
+                ## NOMINAL 
+                ff = float(cr_ffs[cr][jet_bdt_key][itk]["%i"%pt])
 
+                ## syst error (variation of LOOSE TAU)
+                ff_up = float(cr_ffs[cr][jet_bdt_key.replace("02", "01")][itk]["%i"%pt])
+                ff_dn = float(cr_ffs[cr][jet_bdt_key.replace("02", "03")][itk]["%i"%pt])
+
+                x_dumm = (bin_keys[n]+bin_keys[n+1])/2. #<! just to make plots look nicer 
+                e_graph.SetPoint(n, x_dumm, ff)
+                e_graph.SetPointError(n, x_dumm-pt, x_dumm-pt, abs(ff-ff_dn), abs(ff-ff_up))
+                
+            graphs += [e_graph]
+            label = cr_labels[cr] if cr_labels else cr
+            if "MULTIJET" in cr:
+                label = "Mj CR"
+            if "WJETS" in cr:
+                label = "Wj CR"
+
+            cr_ff_legend.AddEntry(e_graph, "%s (%sp)"%(label, itk), "LP")
+
+    ## set log scales before any plot is drwan !
     if logx:
         canvas.SetLogx()
     if logy:    
         canvas.SetLogy()
 
+    # - - - - plot them
+    while len(graphs) > len(colors):
+        colors += [c+2 for c in colors]
+        
+    n = 0
+    for gr, cl in zip(graphs, colors):
+        gr.SetMarkerStyle(20+n)
+        gr.SetMarkerSize(2)
+        gr.SetLineWidth(3)
+        gr.SetMarkerColor(cl)
+        gr.SetLineColor(cl)
+        if n==0:
+            gr.SetMaximum(10)
+            gr.SetMinimum(0.001)
+            gr.Draw("APSAME")
+            canvas.Update()
+            gr.SetTitle("")
+            gr.GetYaxis().SetTitle("Fake-Factor")
+            gr.GetXaxis().SetTitle("#tau p_{T} [GeV]")
+            canvas.Modified()
+        else:
+            gr.Draw("PSAME")
+        n += 1
+
+    cr_ff_legend.Draw("SAME")
+
+    region_label, data_label, atlas_label = label_plot(canvas, 
+        data_info=data_info, atlas_label="ATLAS INTERNAL")
+    data_label.Draw("SAME")
+    atlas_label.Draw("SAME")
+
     os.system("mkdir -p %s"%pdir)
     log.info(os.path.join(pdir, pname))
-    canvas.Print(os.path.join(pdir, pname))
+    for fmt in formats:
+        canvas.Print(os.path.join(pdir, pname+fmt))
     canvas.Close()
 
     return canvas 
@@ -665,7 +693,7 @@ def validate_template_fit(cr_hists_dict, target_hists_dict, chi2s,
             ## - - prep labels for the plots
             pad = canvas.GetPad(1)
             dinfo = " #sqrt{#font[52]{s}} = 13 TeV"
-            _, data_lable, atlas_lable, = label_plot(pad,
+            _, data_label, atlas_label, = label_plot(pad,
                                 data_info=dinfo,
                                 atlas_label="ATLAS Internal",
                                 textsize=15,)
@@ -674,7 +702,7 @@ def validate_template_fit(cr_hists_dict, target_hists_dict, chi2s,
             binning_label.SetNDC()
             binning_label.SetTextFont(43)
             binning_label.SetTextSize(15)
-            labels = [data_lable, atlas_lable, binning_label]
+            labels = [data_label, atlas_label, binning_label]
             
             ##--------------------------------------------------------
             # - - plot FF CR hists
@@ -793,7 +821,7 @@ def validate_template_fit(cr_hists_dict, target_hists_dict, chi2s,
 ## - - plot alpha
 ##--------------------------------------------------------------------------
 def plot_alpha(alphas, cr_ffs,
-               regions=[], pdir="ffplots", suffix=None,
+               regions=[], pdir="ffplots", suffix=None, data_info=None, formats=[".png"],logy=True, 
                colors=[ROOT.kRed, ROOT.kGreen, ROOT.kBlue, ROOT.kOrange, ROOT.kMagenta]):
     """plot alpha as a function of pT for 1p/3p taus
     """
@@ -805,108 +833,129 @@ def plot_alpha(alphas, cr_ffs,
     while len(regions) > len(colors):
         colors += [c+4 for c in colors]
     
+    alpha_graphs = []
+    comb_ff_graphs = []
+    a_legend = ROOT.TLegend(0.7, 0.7, 0.9, 0.9)
     tkeys = alphas.keys()
     for itk in tkeys: 
-        pt_bins = sorted([int(k) for k in alphas[itk].keys()])
-                
-        alpha_hists = []
-        comb_ff_hists = []
-        a_legend = ROOT.TLegend(0.7, 0.7, 0.9, 0.9)
+        pt_bins = sorted([int(k) for k in alphas[itk].keys()])                
         for ic, cat in enumerate(regions):
             log.info("\n****************** rQCD estimation (category:{0}, nTracks={1}) ******************".format(cat.name, itk))
-            alpha_h = ROOT.TH1F(
-                "alpha_%s_%s"%(cat, itk), "#alpha_{MJ}",len(pt_bins) - 1, array.array("d", pt_bins))
+            alpha_g = ROOT.TGraphAsymmErrors(len(pt_bins) - 1)
+            comb_ff_g = ROOT.TGraphAsymmErrors(len(pt_bins) - 1)
 
-            comb_ff_h = ROOT.TH1F(
-                "comb_ff_%s_%s"%(cat, itk), "#COM_{FF}",len(pt_bins) - 1, array.array("d", pt_bins))
-            for nbin, pt in enumerate(pt_bins[1:]):
+            for nbin in range(len(pt_bins)-1):
+                pt = pt_bins[nbin]
                 pkey = "%i"%pt
                 if not pkey in alphas[itk]:
-                    log.warning(" no alpha is fitted for %i bin! setting it to 0"%pt)
-                    alpha = 0.001
-                    alpha_err = 0.0001
-                    ff = 0.001
-                    ff_err = 0.0001
-                    continue
-                if not cat.name in alphas[itk][pkey]:
-                    continue
-                
-                alpha = alphas[itk][pkey][cat.name]["NOMINAL"]
-                alpha_up = alphas[itk][pkey][cat.name]["UP"]
-                alpha_down = alphas[itk][pkey][cat.name]["DOWN"]
-                alpha_h.SetBinContent(nbin+1, alpha)
-                alpha_h.SetBinError(nbin+1, alpha_up - alpha_down)
-                log.info("(pT, alpha): {}, {}".format(pkey, alpha))
+                    log.warning("No alpha is fitted for %s bin; combined FF is set to Mj FF!"%pkey)
+                    alpha = 1
+                    alpha_up = alpha_down = 0.001
+                else:
+                    if not cat.name in alphas[itk][pkey]:
+                        log.warning("Missing %s in %s; setting alpha to 1"%(cat.name, pkey)) 
+                        alpha = 1
+                        alpha_up = alpha_down = 0.001                    
+                    else:
+                        alpha = alphas[itk][pkey][cat.name]["NOMINAL"]
+                        alpha_up = abs(alpha-alphas[itk][pkey][cat.name]["UP"])
+                        alpha_down = abs(alpha-alphas[itk][pkey][cat.name]["DOWN"])
+
+                ## symmetric error 
+                symt_alpha_err = max(alpha_up, alpha_down)
+                # if logy:
+                #     symt_alpha_err = 0.434*symt_alpha_err/alpha 
 
                 ## - - ff_com = alpha * ff_mj + (1-alpha)ff_wj
-                ff = alpha*float(cr_ffs["FF_CR_MULTIJET"]["tauJetBDT_02"][itk][pkey]) +\
-                     (1-alpha)*float(cr_ffs["FF_CR_WJETS"]["tauJetBDT_02"][itk][pkey])
-                ff_up = alpha_up*float(cr_ffs["FF_CR_MULTIJET"]["tauJetBDT_02"][itk][pkey]) +\
-                     (1-alpha_up)*float(cr_ffs["FF_CR_WJETS"]["tauJetBDT_02"][itk][pkey])
-                ff_down = alpha_down*float(cr_ffs["FF_CR_MULTIJET"]["tauJetBDT_02"][itk][pkey]) +\
-                     (1-alpha_down)*float(cr_ffs["FF_CR_WJETS"]["tauJetBDT_02"][itk][pkey])
-                comb_ff_h.SetBinContent(nbin+1, ff)
-                comb_ff_h.SetBinError(nbin+1, ff_up-ff_down)
+                ff_mj_nom = float(cr_ffs["FF_CR_MULTIJET"]["tauJetBDT_02"][itk][pkey])
+                ff_wj_nom = float(cr_ffs["FF_CR_WJETS"]["tauJetBDT_02"][itk][pkey])
 
-            alpha_h.SetLineColor(colors[ic])
-            alpha_h.SetMarkerColor(colors[ic])
-            alpha_h.SetLineWidth(3)
-            alpha_h.GetYaxis().SetTitle("#alpha_{MJ}")
-            alpha_h.GetXaxis().SetTitle("p^{T}_{#tau} GeV")
-            alpha_hists.append(alpha_h)
+                ff_mj_up = float(cr_ffs["FF_CR_MULTIJET"]["tauJetBDT_01"][itk][pkey])
+                ff_wj_up = float(cr_ffs["FF_CR_WJETS"]["tauJetBDT_01"][itk][pkey])
 
-            alpha_h.GetYaxis().SetRangeUser(-3., 5)
-            a_legend.AddEntry(alpha_h, "%s"%cat.label, "L")
+                ff_mj_down = float(cr_ffs["FF_CR_MULTIJET"]["tauJetBDT_03"][itk][pkey])
+                ff_wj_down = float(cr_ffs["FF_CR_WJETS"]["tauJetBDT_03"][itk][pkey])
 
-            comb_ff_h.SetLineColor(colors[ic])
-            comb_ff_h.SetMarkerColor(colors[ic])
-            comb_ff_h.SetLineWidth(3)
-            comb_ff_h.GetYaxis().SetTitle("Fake-Factors")
-            comb_ff_h.GetYaxis().SetTitleOffset(0.8)
-            comb_ff_h.GetXaxis().SetTitle("p^{T}_{#tau} GeV")
+                ## error propagation 
+                ff = alpha*ff_mj_nom + (1-alpha)*ff_wj_nom 
+                ff_up = math.sqrt((ff_mj_nom - ff_wj_nom)**2 * alpha_up**2 + (alpha*ff_mj_up)**2 + ((1-alpha)*ff_wj_up)**2)
+                ff_down = math.sqrt((ff_mj_nom - ff_wj_nom)**2 * alpha_down**2 + (alpha*ff_mj_down)**2 + ((1-alpha)*ff_wj_down)**2)
 
-            comb_ff_h.GetYaxis().SetRangeUser(0.01, 1)
-            comb_ff_hists.append(comb_ff_h)
+                ## symmetric error 
+                symt_ff_err = max(ff_up, ff_down)
 
-        canvas = ROOT.TCanvas("c", "c", 800, 700)
-        ## - - prep labels for the plots
-        dinfo = " #sqrt{#font[52]{s}} = 13 TeV"
-        _, data_lable, atlas_lable, = label_plot(canvas,
-                                                 data_info=dinfo,
-                                                 atlas_label="ATLAS Internal",
-                                                 textsize=18,)
-        binning_label = ROOT.TLatex(canvas.GetLeftMargin() + 0.06, 1 - canvas.GetTopMargin() - 0.15,
-                                       "# of charged #tau-tracks = %s"%itk)
-        binning_label.SetNDC()
-        binning_label.SetTextFont(43)
-        binning_label.SetTextSize(18)
-        labels = [data_lable, atlas_lable, binning_label]
+                x_dumm = (pt_bins[nbin]+pt_bins[nbin+1])/2. #<! just to make plots look nicer 
+                alpha_g.SetPoint(nbin, x_dumm, alpha)
+                alpha_g.SetPointError(nbin, x_dumm-pt, x_dumm-pt, symt_alpha_err, symt_alpha_err)
 
-        for i, ah in enumerate(alpha_hists):
-            if i==0:
-                ah.Draw("E1")
-            else:
-                ah.Draw("SAME")
-        for label in labels:
-            label.Draw("SAME")
-        a_legend.Draw("SAME")
-        canvas.SetLogx()
-        a_outname = os.path.join(pdir, "ALPHA_inclusive_%s%s.png"%(itk, "_"+suffix if suffix else "") )
+                comb_ff_g.SetPoint(nbin, x_dumm, ff)
+                comb_ff_g.SetPointError(nbin, x_dumm-pt, x_dumm-pt, symt_ff_err, symt_ff_err)
+                log.info("(pT, alpha, FF): {}, {}, {}".format(x_dumm, alpha, ff))
+
+            alpha_graphs.append(alpha_g)            
+            comb_ff_graphs.append(comb_ff_g)
+            a_legend.AddEntry(alpha_g, "%s(%sp)"%(cat.label, itk), "LP")
+
+
+    canvas = ROOT.TCanvas("c", "c", 800, 700)
+    ## - - prep labels for the plots
+    cat_label, data_label, atlas_label, = label_plot(canvas, data_info=data_info)
+    labels = [data_label, atlas_label]
+    for cnt, ah in enumerate(alpha_graphs):
+        ah.SetLineColor(colors[cnt])
+        ah.SetMarkerColor(colors[cnt])
+        ah.SetMarkerStyle(21+cnt)
+        ah.SetMarkerSize(2)
+        ah.SetLineWidth(3)
+        ah.GetYaxis().SetTitle("#alpha_{MJ}")
+        ah.GetXaxis().SetTitle("p^{T}_{#tau} GeV")
+        if cnt==0:
+            ah.GetXaxis().SetRangeUser(30, 4000)
+            ah.Draw("AP")
+        else:
+            ah.Draw("PSAME")
+        ah.SetMaximum(6)
+        ah.SetMinimum(-3)
+            
+    for label in labels:
+        label.Draw("SAME")
+    a_legend.Draw("SAME")
+    canvas.SetLogx()
+    
+    for fmt in formats:
+        a_outname = os.path.join(pdir, "ALPHA_inclusive_%s%s"%( "_"+suffix if suffix else "", fmt) )
+        log.info("Saving %s ..."%a_outname)
         canvas.Print(a_outname)
-        canvas.Close()
+    canvas.Clear()
+    
 
-        ## - - another canvas with different y scale !
-        tcanvas = ROOT.TCanvas("c", "c", 800, 700)
-        for i, fh in enumerate(comb_ff_hists):
-            if i==0:
-                fh.Draw("E1")
-            else:
-                fh.Draw("E1 SAME")
-        tcanvas.SetLogy()
-        tcanvas.SetLogx()
-        for label in labels:
-            label.Draw("SAME")
-        a_legend.Draw("SAME")
-        ff_outname = os.path.join(pdir, "FFs_COM_inclusive_%s%s.png"%(itk, "_"+suffix if suffix else ""))
-        tcanvas.Print(ff_outname) 
-        tcanvas.Close()
+    ## plot combined Fake-Factors 
+    for cnt, fh in enumerate(comb_ff_graphs):
+        fh.SetLineColor(colors[cnt])
+        fh.SetMarkerColor(colors[cnt])
+        fh.SetMarkerSize(2)
+        fh.SetMarkerStyle(21+cnt)
+        fh.SetLineWidth(3)
+        fh.GetYaxis().SetTitle("Combined Fake-Factor")
+        fh.GetXaxis().SetTitle("p^{T}_{#tau} GeV")
+        if cnt==0:
+            # fh.SetMinimum(0.001)
+            fh.Draw("AP")
+        else:
+            fh.Draw("PSAME")
+        fh.GetXaxis().SetRangeUser(30, 4000)
+        fh.GetYaxis().SetRangeUser(-1, 1) #SetMaximum(1)
+    
+    canvas.SetLogy()
+    canvas.SetLogx()
+    for label in labels:
+        label.Draw("SAME")
+    a_legend.Draw("SAME")
+
+    for fmt in formats:
+        ff_outname = os.path.join(pdir, "FFs_COM_inclusive_%s%s"%( "_"+suffix if suffix else "", fmt))
+        log.info("Saving %s ..."%ff_outname)
+        canvas.Print(ff_outname) 
+    
+    canvas.Clear()
+    canvas.Close()

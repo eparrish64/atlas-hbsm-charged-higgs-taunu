@@ -5,7 +5,7 @@ import numpy as np
 
 # local
 from . import log
-from .mem_branches import MEM_BRANCHES
+from .mem_branches import MEM_BRANCHES, VETO_BRANCHES
 from .containers import Histset
 
 # ROOT
@@ -105,7 +105,6 @@ def dataset_hists(hist_worker,
                     continue
 
                 # - - prepares selection categories
-                # keep_branches = ["*"]
                 for n, category in enumerate(categories):
                     # - - get hists for the current category
                     cat_hists = filter(lambda hs: hs.category ==
@@ -114,14 +113,6 @@ def dataset_hists(hist_worker,
                     # - - get the tree
                     tree = tfile.Get(tree_name)
 
-                    # # - - speed up by reading to memory only the branches that are required
-                    # if n==0:
-                    #     branches = [br.GetName() for br in tree.GetListOfBranches()]
-                    #     keep_branches = filter(lambda b: b in branches, MEM_BRANCHES[channel])
-                    # tree.SetBranchStatus("*", 0)
-                    # for br in keep_branches:
-                    #     tree.SetBranchStatus(br, 1)
-
                     # - - cache only the events that pass the selections
                     selection = category.cuts.GetTitle()
                     tree.Draw(">>eventlist_%s" % category.name, selection)
@@ -129,7 +120,7 @@ def dataset_hists(hist_worker,
                     tree.SetEventList(eventlist)
 
                     # - - event weight
-                    # - - if weights is provided to the worker directly, then it's taken from systematic (the case for FFs weights)
+                    # - - if weights is not provided to the worker directly, then it's taken from systematic (the case for FFs weights)
                     eventweight = "1."
                     if weights:
                         eventweight = "*".join(weights[category.name])
@@ -247,13 +238,13 @@ def dataset_hists(hist_worker,
 ##--------------------------------------------------------------------------
 def dataset_hists_direct(hist_worker,
                   outdir="histsdir",
-                  clf_features=[],
                   clf_models={},
-                  kfolds=1, 
                   **kwargs):
     """ produces histograms for a dataset. 
     This static method is mainly used for parallel processing.
     """
+    from hpana.mva.evaluation import fill_scores_histogram
+
     channel = hist_worker.channel
     dataset = hist_worker.dataset
     fields = hist_worker.fields
@@ -350,9 +341,17 @@ def dataset_hists_direct(hist_worker,
 
                     # - - get the tree
                     tree = tfile.Get(tree_name)
+                    # - - speed up by reading to memory only the branches that are required
+                    branches = [br.GetName() for br in tree.GetListOfBranches()]                    
+                    keep_branches = filter(lambda b: not b in VETO_BRANCHES[channel], branches)
+                    tree.SetBranchStatus("*", 0)
+                    for br in keep_branches:
+                        tree.SetBranchStatus(br, 1)
+
                     # - - cache only the events that pass the selections
                     selection = category.cuts.GetTitle()
                     event_selection = ROOT.TTreeFormula("event_selection", selection, tree)
+
 
                     # - - event weight
                     # - - if weights is provided to the worker directly, then it's taken from systematic (the case for FFs weights)
@@ -367,50 +366,27 @@ def dataset_hists_direct(hist_worker,
                         eventweight = "(%s)*(%s)" % (eventweight, sw)
                     event_weight = ROOT.TTreeFormula("event_weight", eventweight, tree)
                     event_weight.SetQuickLoad(True)
-
-                    if clf_features:
-                        ## needed for kfold method training! use proper offset for evaluation 
-                        event_number = ROOT.TTreeFormula("event_number", "event_number", tree)
-                        clf_feats_tf = [ROOT.TTreeFormula(feat.name, feat.tformula, tree) for feat in clf_features]
-                        [form.SetQuickLoad(True) for form in clf_feats_tf]
-
-                    # - - loop over the events
-                    for i, event in enumerate(tree):
-                        # - - does the event pass the selections ?
-                        if not event_selection.EvalInstance():
-                            continue
-
-                        if i%1000==0:
-                            log.debug("---------------- event #: %i"%i)
-                        if clf_features:    
-                            event_num = int(event_number.EvalInstance())
-                    
-                            ## - - get prediction from each classifier
-                            for mass, rem_dict in clf_models.iteritems():
-                                if i%1000==0:
-                                    log.debug("----------------- %s"%mass)
-                                for rem, clf_dict in rem_dict.iteritems():
-                                    ## - - trained on all with rem!= event_numbr%kFOLDS --> evaluate on the complementary
-                                    if int(rem)!= event_num%kfolds: 
-                                        continue
-                                    if i%1000==0:
-                                       log.debug("kfolds:%i; rem: %s; clfs:%r"%(kfolds, rem, clf_dict)) 
-
-                                    ## - - set clf's features vector
-                                    feats = [f.EvalInstance() for f in clf_feats_tf]    
-                                    for name, clf in clf_dict.iteritems():
-                                        ifeats = np.array([feats])
-                                        score = clf.predict_proba(ifeats)[0][1]  #<! probability of belonging to class 1 (SIGNAL)
-                                        for hs in cat_hists:
-                                            hs.hist.Fill(score, event_weight.EvalInstance())
-                                            hs.hist.SetName("%s_category_%s_var_%s" %(outname, category.name, hs.variable))
-                                        if i%1000==0:
-                                            log.debug("%r : %r "%(ifeats, score))
-                        else:
-                            # - - fill the hists 
-                            for hs in cat_hists:
-                                hs.hist.Fill(hs.variable, event_weight.EvalInstance())
-                                hs.hist.SetName("%s_category_%s_var_%s" %(outname, category.name, var.name))
+                    if clf_models:
+                        for mtag in clf_models:
+                            m_hists =  filter(lambda hs: mtag in hs.variable, cat_hists )
+                            if len(m_hists)==0:
+                                continue
+                            hist_tmp = m_hists[0].hist
+                            hist_tmp.SetName("%s_category_%s_var_%s" %(outname, category.name, m_hists[0].variable))
+                            fill_scores_histogram(tree, clf_models[mtag], 
+                                hist_template=hist_tmp, event_selection=event_selection, event_weight=event_weight)                        
+                    else:
+                        # - - loop over the events
+                        for i, event in enumerate(tree):
+                            # - - does the event pass the selections ?
+                            if not event_selection.EvalInstance():
+                                continue
+                            if i%10000==0:
+                                log.debug("---------------- event #: %i"%i)
+                                # - - fill the hists 
+                                for hs in cat_hists:
+                                    hs.hist.Fill(hs.variable, event_weight.EvalInstance())
+                                    hs.hist.SetName("%s_category_%s_var_%s" %(outname, category.name, hs.variable))
                     tree.Delete()
         tfile.Close()                    
 

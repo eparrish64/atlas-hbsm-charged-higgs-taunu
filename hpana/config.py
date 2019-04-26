@@ -57,17 +57,19 @@ class Configuration(object):
             var.mc_camp = self.mc_camp
         return variables
 
-    def trigger(self, dtype="MC", category=None):
+    def trigger(self, data_streams=None, dtype="MC", category=None):
         """trigger should be unique per data taking year (stream),
         it's also different for DATA and MC.
         """
+        if data_streams is None:
+            data_streams = self.data_streams
         # - - check if it is a MULTIJET (aka QCD) control region
         if category:
             if ("MULTIJET" in category.name or "QCD" in category.name):
-                log.debug("applying multijet trigger for %s category" %
-                          category.name)
-                return get_mj_met_trigger(self.data_streams, dtype=dtype)
-        return get_trigger(self.channel, data_streams=self.data_streams, dtype=dtype)
+                log.debug("Applying multijet trigger for %s category" %category.name)
+                return get_mj_trigger(data_streams, dtype=dtype)
+                
+        return get_trigger(self.channel, data_streams=data_streams, dtype=dtype)
 
     @property
     def weight_fields(self):

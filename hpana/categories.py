@@ -86,7 +86,7 @@ TAU_3_TRACK = {
 }
 TAU_TRACKS = {
     "mc15": TCut("tau_0_n_tracks==1 || tau_0_n_tracks==3"),
-    "mc16": TCut("tau_0_n_charged_tracks==1 || tau_0_n_charged_tracks==3"),
+    "mc16": TCut("tau_0_n_charged_tracks==1"),
 }
 
 TAU_PT30 = {
@@ -538,7 +538,7 @@ CATEGORIES["taujet"] = [
     Category_TTBAR,
     Category_BVETO,
     Category_WJETS,
-    Category_TAUJET_PRESEL,
+    # Category_TAUJET_PRESEL,
 ]
 
 CATEGORIES["taulep"] = [
@@ -547,11 +547,11 @@ CATEGORIES["taulep"] = [
     Category_SR_TAUMU,
     Category_TAUEL_BVETO,
     Category_TAUMU_BVETO,
-    Category_SS_TAUEL,
-    Category_SS_TAUMU,
+    # Category_SS_TAUEL,
+    # Category_SS_TAUMU,
     Category_DILEP_BTAG,
     Category_ZEE,
-    Category_TAULEP_PRESEL,
+    # Category_TAULEP_PRESEL,
 ]
 
     
@@ -627,6 +627,8 @@ CLF_TJ = Category("CLF_TAUJET",
                       NUM_JETS3,
                       NUM_BJETS1,
                       MET100,
+                      MT50,
+                      TAU_PT40,
                   ])
 
 CLF_TL = Category("CLF_TAULEP",
@@ -736,7 +738,7 @@ MET_TRIG_EFF_CRs = [
 CUTFLOW = {
     "taujet": OrderedDict(
         [
-            ("cleanEvent",  CLEAN_EVT["mc16"]+TCut("tau_0_jet_bdt_score_trans>0.01&&n_pvx>0")),
+            ("cleanEvent",  CLEAN_EVT),
             ("trigger", {"mc16": ROOT.TCut("1>0"), "mc15": ROOT.TCut("1>0")}), #<! trigger is applied globally (just a place holder here)
             ("tauPt40", TAU_PT40),
             ("tauID", TAUID_MEDIUM),

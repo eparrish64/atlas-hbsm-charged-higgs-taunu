@@ -58,7 +58,7 @@ config = Configuration(
 analysis = Analysis(config, compile_cxx=True)
 
 # - - - - - - - - categories & systematics
-categories = config.categories
+categories = config.categories+config.ff_cr_regions
 if YIELDS_ARGS.categories:
     categories = filter(lambda c: c.name in YIELDS_ARGS.categories, categories)
 
@@ -184,8 +184,7 @@ if YIELDS_ARGS.cutflow:
         cutflow_selections, samples=samples, tauid=ROOT.TCut("1>0"), trigger=ROOT.TCut("1>0"))
 
     for sample in samples:
-        sample_hists = filter(lambda hs: hs.sample ==
-                              sample.name, cutflow_hist_sets)
+        sample_hists = filter(lambda hs: hs.sample==sample.name, cutflow_hist_sets)
 
         # - - - - make sure the order is correct
         events = []

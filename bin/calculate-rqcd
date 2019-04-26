@@ -39,7 +39,6 @@ from hpana.categories import (
 from hpana.dataset_hists import dataset_hists
 from hpana.config import Configuration
 from hpana.analysis import Analysis
-from hpana.trigger import get_mj_met_trigger
 from hpana.samples.fakes import QCD
 from hpana import log
 
@@ -55,7 +54,8 @@ log.setLevel(FFs_ARGS.log)
 import ROOT
 ROOT.SetSignalPolicy(ROOT.kSignalFast)
 ROOT.gROOT.SetBatch(True)
-log.info("ROOT is in batch mode")
+ROOT.gROOT.SetStyle("ATLAS")
+log.debug("ROOT is in batch mode")
 ROOT.gErrorIgnoreLevel = ROOT.kWarning #<! turn off useless ROOT Info messages (tons of them for Chi2 fit)
 
 ##------------------------------------------------------------------------------------
@@ -64,7 +64,7 @@ ROOT.gErrorIgnoreLevel = ROOT.kWarning #<! turn off useless ROOT Info messages (
 taujet_config = Configuration("taujet",
                               mc_campaign="mc16", data_streams=FFs_ARGS.data_streams, db_version=FFs_ARGS.db_version)
 taujet_analysis = Analysis(taujet_config, compile_cxx=True)
-taujet_analysis.data.blind = False #<! no blinding for FFs calcualtion
+taujet_analysis.data.blind = False #<! no blinding for FFs calculation
 
 taulep_config = Configuration("taulep",
                               mc_campaign="mc16", data_streams=FFs_ARGS.data_streams, db_version=FFs_ARGS.db_version)
@@ -79,15 +79,15 @@ COLORS = [ROOT.kRed, ROOT.kBlue, ROOT.kBlack, ROOT.kMagenta, ROOT.kOrange, ROOT.
 LOOSE_TAU = ROOT.TCut("tau_0_jet_bdt_loose==0")
 N_CHARGED_TRACKS = [1, 3] 
 TAU_PT_BINS = {
-    "1":[30, 35, 40, 45, 50, 60, 75, 90, 105, 120, 140, 160, 200, 300, 3500],
-    "3":[30, 35, 40, 50, 75, 100, 150, 200, 3500],
+    "1":[30, 35, 40, 45, 50, 60, 80, 100, 200, 3500],
+    "3":[30, 35, 40, 60, 80, 100, 3500],
 }
 
 ## - - - - CR and target selection regions
 TAULEP_TARGET_REGIONS = taulep_config.categories + taulep_config.ff_cr_regions
 TAUJET_TARGET_REGIONS = taujet_config.categories + taujet_config.ff_cr_regions
 TARGET_REGIONS = TAUJET_TARGET_REGIONS + TAULEP_TARGET_REGIONS
-FFS_CONTROL_REGIONS = taujet_config.ff_cr_regions + taulep_config.ff_cr_regions
+FFS_CONTROL_REGIONS = taulep_config.ff_cr_regions #+taujet_config.ff_cr_regions + 
 
 
 ## - - - - hist template for rQCD calculation
@@ -170,9 +170,8 @@ if __name__=="__main__":
             "validation_plots":FFs_ARGS.validation_plots,}
 
         ffs_workers = []
-        ## taujet
-        mj_met_trig = get_mj_met_trigger(FFs_ARGS.data_streams)
-        ffs_workers += taujet_analysis.ffs_workers(control_regions=[], trigger=mj_met_trig, **kparams)
+        # ## taujet
+        # ffs_workers += taujet_analysis.ffs_workers(control_regions=[], **kparams)
         
         ## taulep
         ffs_workers += taulep_analysis.ffs_workers(control_regions=[], **kparams)
@@ -199,7 +198,10 @@ if __name__=="__main__":
     ## validation plots
     if FFs_ARGS.validation_plots:
         plot_cr_ffs(cr_ffs,
-                    pdir=FFs_ARGS.pdir, pname="FFs_inclusive_tracks_pT_%s.png"%FFs_ARGS.ffs_cr_cache.replace(".yml", ""))
+                    pdir=FFs_ARGS.pdir,
+                    data_info=taujet_analysis.data.info, 
+                    pname="FFs_inclusive_tracks_pT_%s"%FFs_ARGS.ffs_cr_cache.replace(".yml", ""), 
+                    formats=[".png", ".pdf", ".eps"])
         
     
     ## fit alpha (aka rQCD)
@@ -266,10 +268,12 @@ if __name__=="__main__":
                                validation_plots=FFs_ARGS.validation_plots)
         if FFs_ARGS.validation_plots:
             tj_regions = [Category_BVETO, Category_SR_TAUJET]
-            plot_alpha(alphas, cr_ffs, regions=tj_regions, pdir=FFs_ARGS.pdir, suffix="taujet", colors=COLORS)
+            plot_alpha(
+                alphas, cr_ffs, regions=tj_regions, pdir=FFs_ARGS.pdir, formats=[".png", ".pdf", ".eps"], suffix="taujet", data_info=taujet_analysis.data.info, colors=COLORS)
 
             tl_regions = [Category_SS_TAUEL, Category_SS_TAUMU, Category_SR_TAULEP]
-            plot_alpha(alphas, cr_ffs, regions=tl_regions, pdir=FFs_ARGS.pdir, suffix="taulep", colors=COLORS)
+            plot_alpha(
+                alphas, cr_ffs, regions=tl_regions, pdir=FFs_ARGS.pdir, formats=[".png", ".pdf", ".eps"], suffix="taulep", data_info=taulep_analysis.data.info, colors=COLORS)
     
 end_time = time.time()
 elapsed_time = (end_time - start_time)/60.

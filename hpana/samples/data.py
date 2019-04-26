@@ -43,12 +43,12 @@ class DataInfo():
 
     def __str__(self):
         if self.mode == 'root':
-            label = '#scale[0.7]{#int} L dt = %.1f fb^{-1}  ' % self.lumi
+            label = '#scale[0.7]{#int} L dt = %.1f fb^{-1};  ' % self.lumi
             label += '#sqrt{#font[52]{s}} = '
             label += '+'.join(map(lambda e: '%d TeV' % e,
                                   sorted(set(self.energies))))
         else:
-            label = '$\int L dt = %.1f$ fb$^{-1}$ ' % self.lumi
+            label = '$\int L dt = %.1f$ fb$^{-1}$; ' % self.lumi
             label += '$\sqrt{s} =$ '
             label += '$+$'.join(map(lambda e: '%d TeV' % e,
                                     sorted(set(self.energies))))
@@ -87,9 +87,10 @@ class Data(Sample):
             assert st in Data.STREAMS, "{0} stream not found in {1}".format(
                 st, Data.STREAMS)
         self.streams = streams
-        self.data_runs = []
-        self.good_runs = []
-        log.info("DATA STREAMS: {}".format(self.streams))
+        self.data_runs = {}
+        self.good_runs = {}
+        ostring = "**"*24 +"... Instantiating Data ..." + "**"*24 
+        log.info(ostring)
 
         # - - - - blind streams and regions
         self.blind = blind
@@ -107,11 +108,13 @@ class Data(Sample):
         else:
             self.datasets = []
             for stream in self.streams:
+                if not stream in self.data_runs:
+                    self.data_runs[stream] = []
                 dsprefix = "DATA%s_" % stream
                 for dk in self.config.database.keys():
                     if dk.startswith(dsprefix):
                         self.datasets.append(self.config.database[dk])
-                        self.data_runs += [(int(self.config.database[dk].id))]
+                        self.data_runs[stream] += [(int(self.config.database[dk].id))]
 
         if len(self.datasets) > 1:
             # - - - - update the data lumi based on the existing data runs
@@ -121,6 +124,10 @@ class Data(Sample):
             good_run_lines = []
             for grl in self.grls:
                 stream = grl.split("_")[1]  # <! keep the name pattern
+                if stream not in self.streams:
+                    continue                    
+                if not stream in self.good_runs:
+                    self.good_runs[stream] = []
                 data_lumi[stream] = 0
                 grlf = os.path.join(Data.__HERE, grl)
                 with open(grlf, "r") as grl_file:
@@ -131,30 +138,39 @@ class Data(Sample):
                 for grun_line in good_run_lines:
                     # - - add 00 prefix
                     grun = int(grun_line.split(",")[0])  # <! ,Run
-                    if (grun in self.data_runs):
+                    if (grun in self.data_runs[stream]):
                         # <! ,Prescale Corrected
                         glumi = float(grun_line.split(",")[6])
-                        self.good_runs += [(grun, glumi)]
+                        self.good_runs[stream] += [(grun, glumi)]
                         data_lumi[stream] += glumi
+                    else:
+                        log.warning("\tMissing {0} good-run with {1} [pb^-1] lumi for DATA {2}!".format(
+                            grun, float(grun_line.split(",")[6]), stream)) 
+
                 if (data_lumi[stream] != self.config.data_lumi[stream]):
-                    log.warning(
+                    log.debug(
                         "default LUMI for %s is %0.4f and calculated one is %0.4f; updating the default" % (
                             stream, self.config.data_lumi[stream] / 1e3, data_lumi[stream] / 1e3))
                     self.config.data_lumi.update(data_lumi)
 
-        int_lumi = sum([self.config.data_lumi[st] for st in self.streams])
-        self.info = DataInfo(int_lumi / 1e3, self.config.energy)
+        self.int_lumi = sum([self.config.data_lumi[st] for st in self.streams])
+        self.info = DataInfo(self.int_lumi / 1e3, self.config.energy)
+        log.info("\t Channel:{}; Streams: {}; Lumi: {}".format(self.config.channel, self.streams, self.int_lumi))
+        log.info("\t Blind regions: {}".format(self.blind_regions))
+        log.info("*"*len(ostring))
+
 
     def get_lumi_block(self, start_run, end_run):
-        """calcualte lumi for the given stram for the runs in a specific range (including both ends).
+        """calculate lumi for the given stream for the runs in a specific range (including both ends).
         """
         lumi = 0
-        for grun in self.good_runs:
-            if (start_run <= grun[0] <= end_run):
-                lumi += grun[1]
+        for stream, grun_list in self.good_runs.iteritems():
+            for grun in grun_list:
+                if (start_run <= grun[0] <= end_run):
+                    lumi += grun[1]
         return lumi
 
-    def triggers(self, categories=[], dtype="DATA"):
+    def triggers(self, data_streams=None, categories=[], dtype="DATA"):
         """ trigger could be different for different selection categories.
         Parameters
         -----------
@@ -164,8 +180,7 @@ class Data(Sample):
 
         trigger_dict = {}
         for cat in categories:
-            trigger_dict[cat.name] = self.config.trigger(
-                dtype=dtype, category=cat)
+            trigger_dict[cat.name] = self.config.trigger(data_streams=data_streams, dtype=dtype, category=cat)
 
         return trigger_dict
 
@@ -197,10 +212,7 @@ class Data(Sample):
                 Category(name, cuts_list=cuts_list, mc_camp=self.config.mc_camp))
 
         field = kwargs.pop("field", self.config.variables[0])
-        hists = self.hists(categories=categories,
-                           fields=[field],
-                           systematics=["NOMINAL"],
-                           **kwargs)
+        hists = self.hists(categories=categories, fields=[field], **kwargs)
 
         return hists
 
@@ -229,3 +241,21 @@ class Data(Sample):
             weighted=False,
             **kwargs)
         return _workers
+
+    def merge_hists(self, hist_set=[], histsdir=None, hists_file=None, write=False, **kwargs):
+        if write:
+            # - - output file
+            if not hists_file:
+                hists_file = self.config.hists_file
+
+            ## write lumi to hists-file 
+            oname = os.path.join(histsdir, hists_file)
+            tf = ROOT.TFile(oname, "UPDATE")
+            ln = ROOT.TNamed("lumi", str(self.int_lumi))
+            ln.Write()
+            tf.Close()
+
+        merged_hists = super(Data, self).merge_hists(hist_set=hist_set, histsdir=histsdir, hists_file=hists_file, write=write, **kwargs)
+
+        return merged_hists
+

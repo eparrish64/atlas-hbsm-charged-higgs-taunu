@@ -430,7 +430,7 @@ VETO_BRANCHES["taujet"] = [
 
 	"jet_0",
 	"jet_0_b_tag_quantile",
-	"jet_0_b_tag_score",
+	# "jet_0_b_tag_score",
 	"jet_0_b_tagged",
 	"jet_0_btag_discriminant_MV2c10",
 	"jet_0_btag_discriminant_MV2c100",
@@ -449,7 +449,7 @@ VETO_BRANCHES["taujet"] = [
 
 	"jet_1",
 	"jet_1_b_tag_quantile",
-	"jet_1_b_tag_score",
+	# "jet_1_b_tag_score",
 	"jet_1_b_tagged",
 	"jet_1_btag_discriminant_MV2c10",
 	"jet_1_btag_discriminant_MV2c100",
@@ -468,7 +468,7 @@ VETO_BRANCHES["taujet"] = [
 
 	"jet_2",
 	"jet_2_b_tag_quantile",
-	"jet_2_b_tag_score",
+	# "jet_2_b_tag_score",
 	"jet_2_b_tagged",
 	"jet_2_btag_discriminant_MV2c10",
 	"jet_2_btag_discriminant_MV2c100",
@@ -644,7 +644,7 @@ VETO_BRANCHES["taulep"] = [
 	"event_clean_EC_TightBad",
 
 	"jet_0_b_tag_quantile",
-	"jet_0_b_tag_score",
+	# "jet_0_b_tag_score",
 	"jet_0_b_tagged",
 	"jet_0_btag_discriminant_MV2c10",
 	"jet_0_btag_discriminant_MV2c100",
@@ -663,7 +663,7 @@ VETO_BRANCHES["taulep"] = [
 	"jet_0",
 
 	"jet_1_b_tag_quantile",
-	"jet_1_b_tag_score",
+	# "jet_1_b_tag_score",
 	"jet_1_b_tagged",
 	"jet_1_btag_discriminant_MV2c10",
 	"jet_1_btag_discriminant_MV2c100",
@@ -682,7 +682,7 @@ VETO_BRANCHES["taulep"] = [
 	"jet_1",
 
 	"jet_2_b_tag_quantile",
-	"jet_2_b_tag_score",
+	# "jet_2_b_tag_score",
 	"jet_2_b_tagged",
 	"jet_2_btag_discriminant_MV2c10",
 	"jet_2_btag_discriminant_MV2c100",

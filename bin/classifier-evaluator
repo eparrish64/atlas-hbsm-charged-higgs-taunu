@@ -1,0 +1,51 @@
+#! /usr/bin/env python
+"""
+simple script for submitting jobs to a cluster.
+"""
+ 
+
+if __name__=="__main__":
+        import sys, os
+        import socket
+        import time
+        import cPickle
+        import dill 
+
+        from hpana.dataset_hists import dataset_hists_direct
+        from hpana.mva.evaluation import get_models 
+
+        print "Script args: ", sys.argv
+
+        if 'cedar' in socket.gethostname():
+            jobname = os.getenv("SLURM_JOB_NAME")
+        else:
+            jobname = os.getenv("PBS_JOBNAME")
+
+        ## load analysis
+        with open(sys.argv[1], "rb") as pfile:
+            ana = dill.load(pfile)
+
+        # - - - - load cxx macros
+        ana.compile_cxx()
+        workers = filter(lambda w: w.name==jobname, ana.getWorkers())
+        
+        if len(workers) < 1:
+            raise RuntimeError("no worker with name %s is assigned for the job"%jobname)
+
+        if len(workers) > 1:
+            raise RuntimeError("%i workers with the same name %s are assigned the job"%(len(workers), jobname))        
+
+        worker = workers[0]
+        print "WORKER: ", worker
+ 
+        ## load trained models 
+        pmodels = get_models(sys.argv[2].split(",")) 
+
+        print "Trained Models: ", pmodels
+
+
+        # - - get the hists 
+        start_time = time.time()
+        dataset_hists_direct(worker, clf_models=pmodels, write_hists=True, outdir="./")
+        end_time = time.time()
+        print "Execution Time:\t  %0.2f"%(end_time - start_time)

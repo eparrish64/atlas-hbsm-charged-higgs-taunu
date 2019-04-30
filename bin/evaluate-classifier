@@ -2,49 +2,14 @@
 
 ## stdl
 import sys, os, re, gc, glob, argparse
-import cPickle
+import cPickle, dill
 
 ## - -  parse ana args (needed before ROOT)
-from hpana.cmd import get_clf_parser 
-clf_parser = get_clf_parser()
+from hpana.cmd import get_evalclf_parser 
+eclf_parser = get_evalclf_parser()
 
-clf_parser.add_argument('--files', nargs='+', 
-                    help='ntuples to append clf score to them')
 
-clf_parser.add_argument('--models', '-w', nargs="+",
-                        help='path to xml or pickled trained models')
-
-clf_parser.add_argument("--mtype", choices=["keras", "bdt"], default="bdt",
-                        help="TMVA Method type")
-
-clf_parser.add_argument("--fields", nargs="+",
-                    help="list of the variables that you want to analyze")
-
-clf_parser.add_argument("--categories", nargs="+",
-                    help="list of the categories that you want to analyze")
-
-clf_parser.add_argument("--systematics", nargs="+",
-                    help="list of the systematics that you want to analyze")
-
-clf_parser.add_argument("--systs", "-s", action="store_true",
-                    help="process all systematics")
-
-clf_parser.add_argument("--samples", nargs="+",
-                            help="list of samples to process")
-
-clf_parser.add_argument("--merge-hists", action="store_true",
-                            help="merge histograms")
-
-clf_parser.add_argument("--append", action="store_true",
-                            help="append clf scores to TTrees")
-
-clf_parser.add_argument("--direct", action="store_true",
-                            help="calculate clf scores on the fly")
-
-clf_parser.add_argument("--plot-scores", action="store_true",
-                            help="calculate and plot clf scores directly from np arrays")
-
-CLF_ARGS = clf_parser.parse_args()
+ECLF_ARGS = eclf_parser.parse_args()
 
 
 ## local
@@ -59,7 +24,7 @@ from hpana.mva.evaluation import AppendJob, plot_scores, get_models, evaluate_sc
 
 ## setup logger
 from hpana import log
-log.setLevel(CLF_ARGS.log)
+log.setLevel(ECLF_ARGS.log)
  
 ## Setup ROOT
 import ROOT
@@ -70,16 +35,28 @@ ROOT.gROOT.SetBatch(True)
 #-----------------------------------------------
 # consts
 #-----------------------------------------------
+TMP_DATASETS = [ 
+    "LepFakes.Wtaunu.Sherpa_221_NNPDF30NNLO_Wtaunu_MAXHTPTV140_280_BFilter_9364__001",
+    "LepFakes.Ztautau.Sherpa_221_NNPDF30NNLO_Ztautau_MAXHTPTV500_1000_9364",
+    "Wtaunu.Sherpa_221_NNPDF30NNLO_Wtaunu_MAXHTPTV280_500_CVetoBVeto_9364",
+    "Wtaunu.Sherpa_221_NNPDF30NNLO_Wtaunu_MAXHTPTV1000_E_CMS_9364",
+    "Wtaunu.Sherpa_221_NNPDF30NNLO_Wtaunu_MAXHTPTV140_280_BFilter_9364__001",
+    "Wtaunu.Sherpa_221_NNPDF30NNLO_Wtaunu_MAXHTPTV500_1000_9364",
+    "Ztautau.Sherpa_221_NNPDF30NNLO_Ztautau_MAXHTPTV500_1000_9364",
+]
+
+__HERE = os.path.dirname(os.path.abspath(__file__))
+
 COPY_FILE = True
 USE_FASTBDT = False
-kFOLDS = CLF_ARGS.kfolds
+kFOLDS = ECLF_ARGS.kfolds
 METHOD_TYPE = TMVA.Types.kBDT #<! TMVA method 
 
-if CLF_ARGS.backend=="tmva":
+if ECLF_ARGS.backend=="tmva":
     ## initialize TMVA
     ROOT.TMVA.Tools.Instance()
     ROOT.TMVA.PyMethodBase.PyInitialize()
-if CLF_ARGS.mtype=="keras":
+if ECLF_ARGS.mtype=="keras":
     METHOD_TYPE = TMVA.Types.kPyKeras
     ## - -  Select Theano as backend for Keras
     os.environ['KERAS_BACKEND'] = 'theano'
@@ -91,112 +68,198 @@ if CLF_ARGS.mtype=="keras":
 ##-----------------------------------------------
 ## main driver
 ##-----------------------------------------------
-if __name__=='__main__':
+def main():
     import time
     itime = time.time()
-    if not CLF_ARGS.models:
+    if not ECLF_ARGS.models:
         raise IOError('Path to trained models pls ?')        
-    models = get_models(CLF_ARGS.models)
 
     ## - - setup outdir
-    os.system("mkdir -p %s"%CLF_ARGS.outdir)
+    os.system("mkdir -p %s"%ECLF_ARGS.outdir)
 
-    if CLF_ARGS.plot_scores:
+    if ECLF_ARGS.plot_scores:
+        models = get_models(ECLF_ARGS.models)
         # - -  build analysis main configuration object
-        config = Configuration(CLF_ARGS.channel, data_streams=CLF_ARGS.data_streams, db_version=CLF_ARGS.db_version)
+        config = Configuration(ECLF_ARGS.channel, data_streams=ECLF_ARGS.data_streams, db_version=ECLF_ARGS.db_version)
         
         # - -  instantiate the analysis
         analysis = Analysis(config, compile_cxx=True)
 
         ## - - prepare testing dataFrame 
         backgrounds =  filter(lambda b: not b.name in ["LepFakes"], analysis.backgrounds)
-        if CLF_ARGS.bkg:
-            backgrounds = filter(lambda b: b.name in CLF_ARGS.bkg, backgrounds)
+        if ECLF_ARGS.bkg:
+            backgrounds = filter(lambda b: b.name in ECLF_ARGS.bkg, backgrounds)
 
         signals = analysis.get_signals()
-        if CLF_ARGS.sig:
-            signals = filter(lambda s: s.name in CLF_ARGS.sig, signals)
-        if CLF_ARGS.mass_range:
-            signals = filter(lambda s:int(CLF_ARGS.mass_range[0]) <= s.mass <= int(CLF_ARGS.mass_range[1]), signals)   
+        if ECLF_ARGS.sig:
+            signals = filter(lambda s: s.name in ECLF_ARGS.sig, signals)
+        if ECLF_ARGS.mass_range:
+            signals = filter(lambda s:int(ECLF_ARGS.mass_range[0]) <= s.mass <= int(ECLF_ARGS.mass_range[1]), signals)   
     
-        dframe = SClassifier.prepare_data(backgrounds, signals, ALL_FEATS[CLF_ARGS.channel], data_lumi=config.data_lumi,
-                                      channel=CLF_ARGS.channel, branches=BRANCHES[CLF_ARGS.channel], train_data=CLF_ARGS.train_data)
+        dframe = SClassifier.prepare_data(backgrounds, signals, ALL_FEATS[ECLF_ARGS.channel], data_lumi=config.data_lumi,
+                                      channel=ECLF_ARGS.channel, branches=BRANCHES[ECLF_ARGS.channel], train_data=ECLF_ARGS.train_data)
 
         jobs = []
         for mtag, trained_models in models.iteritems():
-            jobs += [Job(plot_scores, trained_models, dframe=dframe, backgrounds=backgrounds, signals=signals, outdir=CLF_ARGS.outdir)]
+            jobs += [Job(plot_scores, trained_models, dframe=dframe, backgrounds=backgrounds, signals=signals, outdir=ECLF_ARGS.outdir)]
 
-        if CLF_ARGS.parallel:
+        if ECLF_ARGS.parallel:
             log.info("************** submitting %i jobs  ************" % len(jobs))
             log.info("***********************************************")
-            run_pool(jobs, n_jobs=CLF_ARGS.ncpu)
+            run_pool(jobs, n_jobs=ECLF_ARGS.ncpu)
         else:
             run_pool(jobs, n_jobs=1)
 
-    if CLF_ARGS.direct:
+    if ECLF_ARGS.direct:
         # - -  build analysis main configuration object
-        config = Configuration(CLF_ARGS.channel, data_streams=CLF_ARGS.data_streams, db_version=CLF_ARGS.db_version)
+        config = Configuration(ECLF_ARGS.channel, data_streams=ECLF_ARGS.data_streams, db_version=ECLF_ARGS.db_version)
 
         # - -  instantiate the analysis
         analysis = Analysis(config, compile_cxx=True)
 
         # # - -  some checks on cmd args
-        if CLF_ARGS.fields:
-            fields = filter(lambda v: v.name in CLF_ARGS.fields, BDT_SCORES[CLF_ARGS.channel])
+        if ECLF_ARGS.fields:
+            fields = filter(lambda v: v.name in ECLF_ARGS.fields, BDT_SCORES[ECLF_ARGS.channel])
         else:
-            fields = BDT_SCORES[CLF_ARGS.channel]
+            fields = BDT_SCORES[ECLF_ARGS.channel]
 
-        if CLF_ARGS.categories:
+        if ECLF_ARGS.categories:
             categories = filter(
-                lambda c: c.name in CLF_ARGS.categories, config.categories)
+                lambda c: c.name in ECLF_ARGS.categories, config.categories)
         else:
             categories = config.categories
 
         ## systematics
         all_systematics = config.systematics[:]  # <! common systematics
         all_systematics += analysis.qcd.systematics  # <! QCD fakes only
-        if CLF_ARGS.systematics:
+        if ECLF_ARGS.systematics:
             systematics = filter(
-                lambda s: s.name in CLF_ARGS.systematics, all_systematics)
-        elif CLF_ARGS.systs:
+                lambda s: s.name in ECLF_ARGS.systematics, all_systematics)
+        elif ECLF_ARGS.systs:
             systematics = []# all_systematics
         else:
             systematics = config.systematics[:1] #<! NOMINAL
 
         # - -  if you wish to look at specific samples
-        if CLF_ARGS.samples:
-            samples = filter(lambda s: s.name in CLF_ARGS.samples, analysis.samples)
+        if ECLF_ARGS.samples:
+            samples = filter(lambda s: s.name in ECLF_ARGS.samples, analysis.samples)
         else:
             samples = analysis.samples #get_signals()
 
-        if CLF_ARGS.parallel:
+        ## multicore processing 
+        if ECLF_ARGS.parallel:
+            models = get_models(ECLF_ARGS.models)
             ## prepare hist workers 
             analysis.setWorkers(samples=samples, fields=fields, categories=categories, systematics=systematics)
             ana_workers = analysis.getWorkers()
 
             jobs = []
             for w in ana_workers:
-                jobs.append(Job(dataset_hists_direct, w, clf_models=models, write_hists=True, outdir=CLF_ARGS.outdir))
+                jobs.append(Job(dataset_hists_direct, w, clf_models=models, write_hists=True, outdir=ECLF_ARGS.outdir))
 
             log.info("************** submitting %i jobs  ************" % len(jobs))
             log.info("***********************************************")
-            run_pool(jobs, n_jobs=CLF_ARGS.ncpu)
+            run_pool(jobs, n_jobs=ECLF_ARGS.ncpu)
+
+        ## submit to the batch system 
+        if ECLF_ARGS.cluster:
+            ## retry failed jobs ?
+            if ECLF_ARGS.retry:
+                # submitted_jobs = set([j.split("/")[-1].split("-")[-1] for j in glob.glob("%s/jobs/submitted*"%ECLF_ARGS.outdir)])
+                submitted_jobs = set([j.split("/")[-1].replace(".slurm", "") for j in glob.glob("%s/jobs/*.slurm"%ECLF_ARGS.outdir)])
+                completed_jobs = set([j.split("/")[-1].split("-")[-1] for j in glob.glob("%s/jobs/done*"%ECLF_ARGS.outdir)])
         
-        if CLF_ARGS.merge_hists:
+                failed_jobs = []
+                for j in submitted_jobs:
+                    if not j in completed_jobs:
+                            if not j in failed_jobs:
+                                failed_jobs += [j]
+
+                log.warning("Following %i jobs are failed; you have to resubmit them"%len(failed_jobs))
+                submit_file = open("%s/submit_%i_failed.sh"%(ECLF_ARGS.outdir, len(failed_jobs)), "w")
+
+                for j in failed_jobs:
+                    log.info("updating job script for %s"%j) 
+                    submit_file.write("sbatch %s/jobs/%s.slurm \n"%(ECLF_ARGS.outdir, j))
+                submit_file.close()
+                return 
+                
+            ## setup the submit dir
+            os.system("mkdir -p {0}/jobs  {0}/logs {0}/hists".format(ECLF_ARGS.outdir))
+            submitfile_name = "%s/%s.sh" % (ECLF_ARGS.outdir, "submitAllJobs")
+            submit_file = os.open(submitfile_name, os.O_CREAT | os.O_WRONLY, 0755)
+
+            analysis.setWorkers(samples=samples, fields=fields, categories=categories, systematics=systematics)
+            ana_workers = analysis.getWorkers()
+            ## pickle the analysis: IF YOU DONT WANT TO SHIP THE WHOLE CODE TO THE NODES.
+            with open(ECLF_ARGS.pickled_analysis, "wb") as pfile:
+                dill.dump(analysis, pfile)
+
+            if ECLF_ARGS.rs_manager=="SLURM":
+                from hpana.cluster.job_template import SLURM_JOB_TEMPLATE
+
+                for aw in ana_workers:
+                    if ECLF_ARGS.dry_run:
+                        print "--"*100
+                        print aw.name
+                        continue
+                    # if not ".".join(aw.name.split(".")[:-1]) in TMP_DATASETS:
+                    #     continue
+                        
+                    ## payload for container
+                    payload = "source {job_script} {script_path} {pickled_analysis} {models}".format(
+                        job_script=os.path.join(__HERE, "slurm_job_evalclf.sh"),
+                        script_path=os.path.join(__HERE, "classifier-evaluator"),
+                        pickled_analysis=os.path.abspath(ECLF_ARGS.pickled_analysis),
+                        models=",".join([os.path.abspath(m) for m in ECLF_ARGS.models]),
+                    )
+
+                    ## write the job submission script with right permissions
+                    jfile_name = "%s/jobs/%s.slurm" % (ECLF_ARGS.outdir, aw.name)
+                    jfile = os.open(jfile_name, os.O_CREAT | os.O_WRONLY, 0755)
+                    os.write(jfile,
+                            SLURM_JOB_TEMPLATE.format(
+                                logsdir=os.path.join(
+                                    ECLF_ARGS.outdir, ECLF_ARGS.logsdir),
+                                outdir=ECLF_ARGS.outdir,
+                                local_scratch=ECLF_ARGS.local_scratch,
+                                cores=1,
+                                time="4:0:0",
+                                memory="3GB",
+                                jobname=aw.name,  #<! important - jobname steers which worker used from pickled ana
+                                payload=payload,
+                                project=ECLF_ARGS.rs_project
+                            )
+                            )
+
+                    os.close(jfile)
+
+                    ## write submission to file to be used outside container
+                    log.info("Writing to %s for job %s ..." %
+                            (submitfile_name, aw.name))
+                    os.write(submit_file, "sbatch %s\n" % jfile_name)
+
+                os.close(submit_file)
+                log.warning("Submission not supported from within container.")
+                log.warning("Please launch outside container via:")
+                log.warning("\t sh {0}".format(submitfile_name))        
+
+        if ECLF_ARGS.merge_hists:
             log.info(
                 "************** merging histograms  ************")
             log.info(
                 "***********************************************")
-            analysis.merge_hists(samples=samples, histsdir=CLF_ARGS.outdir, overwrite=True, write=True)
+            analysis.merge_hists(samples=samples, histsdir=ECLF_ARGS.outdir, overwrite=True, write=True)
 
-    if CLF_ARGS.append:
+
+    if ECLF_ARGS.append:
         ## sort files based on size to start the heavier ones sooner.
-        CLF_ARGS.files.sort(key=lambda f: os.path.getsize(f), reverse=True)
-        jobs = [AppendJob(f, models, copy_file=COPY_FILE, outdir=CLF_ARGS.outdir) for f in CLF_ARGS.files]
+        ECLF_ARGS.files.sort(key=lambda f: os.path.getsize(f), reverse=True)
+        jobs = [AppendJob(f, models, copy_file=COPY_FILE, outdir=ECLF_ARGS.outdir) for f in ECLF_ARGS.files]
 
         st = time.time()
         ## run a pool of jobs
-        if CLF_ARGS.parallel or len(jobs)> 1:
+        if ECLF_ARGS.parallel or len(jobs)> 1:
             run_pool(jobs, n_jobs=-1)
         else:
             ## processing one file only (also for PBS, CONDOR Batch)
@@ -207,3 +270,6 @@ if __name__=='__main__':
     elapsed_time = (ftime - itime)
     log.info("\n****************** elapsed time: %i sec ******************" % elapsed_time)
 
+
+if __name__=='__main__':
+    main()

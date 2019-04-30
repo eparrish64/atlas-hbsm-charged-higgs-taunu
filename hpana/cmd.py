@@ -71,18 +71,6 @@ def get_ana_parser(base_parser=None):
     ana_parser.add_argument("--samples", nargs="+",
                             help="list of samples to process")
 
-    ana_parser.add_argument("--local-scratch", type=str, choices=["tmp", "scratch"], default="tmp",
-                            help="name of the local scratch disk on the nodes")
-
-    ana_parser.add_argument("--outdir", type=str, default="submitdir",
-                            help="where to put the job scripts and the proccessed histograms")
-
-    ana_parser.add_argument("--logsdir", type=str, default="logs",
-                            help="where to put the log files")
-    
-    ana_parser.add_argument("--pickled-analysis", type=str, default="ANALYSIS.pkl",
-                            help="main analysis object pickled to be shipped to the worker nodes")
-
     ana_parser.add_argument("--cache-ff", action="store_true",
                             help="cache fake factors")
                             
@@ -95,8 +83,20 @@ def get_ana_parser(base_parser=None):
     ana_parser.add_argument("--merge-hists", action="store_true",
                             help="merge histograms")
 
+    ana_parser.add_argument("--outdir", type=str, default="submitdir",
+                            help="where to put the job scripts and the proccessed histograms")
+
     ana_parser.add_argument("--cluster", action="store_true",
                             help="if you wnat to submit jobs to the cluster")
+
+    ana_parser.add_argument("--local-scratch", type=str, choices=["tmp", "scratch"], default="tmp",
+                            help="name of the local scratch disk on the nodes")
+
+    ana_parser.add_argument("--logsdir", type=str, default="logs",
+                            help="where to put the log files")
+    
+    ana_parser.add_argument("--pickled-analysis", type=str, default="ANALYSIS.pkl",
+                            help="main analysis object pickled to be shipped to the worker nodes")
 
     ana_parser.add_argument("--dry-run", action="store_true",
                             help="if you just want to see the scripts that will be submitted to the cluster")
@@ -332,13 +332,60 @@ def get_clf_parser():
     clf_parser.add_argument("--logsdir", type=str, default="logs",
                             help="where to put the log files")
     
-    clf_parser.add_argument("--rs-manager", type=str,default="SLURM", choices=["TORQUE", "SLURM"],
+    clf_parser.add_argument("--rs-manager", type=str, default="SLURM", choices=["TORQUE", "SLURM"],
                             help="the resource manager on your cluster")
 
-    clf_parser.add_argument("--rs-project", type=str,default="ctb-stelzer", choices=["ctb-stelzer", "def-doneil"],
+    clf_parser.add_argument("--rs-project", type=str, default="ctb-stelzer", choices=["ctb-stelzer", "def-doneil"],
                             help="the resource manager on your cluster")
 
     clf_parser.add_argument("--retry", action="store_true",
                             help="retry failed jobs", )
     
     return clf_parser
+
+def get_evalclf_parser(base_parser=None):
+    if base_parser is None:
+        evalclf_parser = get_clf_parser()
+    else:
+        evalclf_parser = base_parser
+
+    evalclf_parser.add_argument('--files', nargs='+', 
+                        help='ntuples to append clf score to them')
+
+    evalclf_parser.add_argument('--models', '-w', nargs="+",
+                            help='path to xml or pickled trained models')
+
+    evalclf_parser.add_argument("--mtype", choices=["keras", "bdt"], default="bdt",
+                            help="TMVA Method type")
+
+    evalclf_parser.add_argument("--fields", nargs="+",
+                        help="list of the variables that you want to analyze")
+
+    evalclf_parser.add_argument("--categories", nargs="+",
+                        help="list of the categories that you want to analyze")
+
+    evalclf_parser.add_argument("--systematics", nargs="+",
+                        help="list of the systematics that you want to analyze")
+
+    evalclf_parser.add_argument("--systs", "-s", action="store_true",
+                        help="process all systematics")
+
+    evalclf_parser.add_argument("--samples", nargs="+",
+                                help="list of samples to process")
+
+    evalclf_parser.add_argument("--merge-hists", action="store_true",
+                                help="merge histograms")
+
+    evalclf_parser.add_argument("--append", action="store_true",
+                                help="append clf scores to TTrees")
+
+    evalclf_parser.add_argument("--direct", action="store_true",
+                                help="calculate clf scores on the fly")
+
+    evalclf_parser.add_argument("--plot-scores", action="store_true",
+                                help="calculate and plot clf scores directly from np arrays")
+
+    evalclf_parser.add_argument("--pickled-analysis", type=str, default="ANALYSIS.pkl",
+                            help="main analysis object pickled to be shipped to the worker nodes")
+
+    return evalclf_parser

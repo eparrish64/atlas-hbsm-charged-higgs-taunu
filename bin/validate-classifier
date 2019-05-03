@@ -1,13 +1,19 @@
 #! /usr/bin/env python 
 
 """ Script for validating different classifier inputs
+>>> Usage: validate-classifier --channel taulep --train-data TRAIN_DATA_TL_CLF_TL_26042019.pkl --plot-correlations --plot-weights --plot-sample-size  --rank-feats --outdir mva_tl_CLF_TL_26042019/ --models mva_tl_CLF_TL_26042019/model_GB200_channel_taulep_mass_*fold_0*
 """
+
 ## stdlib 
 import os, time
 
 ## - -  parse ana args (needed before ROOT)
 from hpana.cmd import get_clf_parser 
 clf_parser = get_clf_parser()
+clf_parser.add_argument("--models", nargs="+", 
+    help="pickled models")
+clf_parser.add_argument("--plot-weights", action="store_true")
+clf_parser.add_argument("--plot-sample-size", action="store_true")
 CLF_ARGS = clf_parser.parse_args()
 
 ## local
@@ -15,6 +21,7 @@ from hpana.config import Configuration
 from hpana.analysis import Analysis
 from hpana.mva.classifier import SClassifier
 from hpana.mva import N_TRACKS, FOLD_CUT_STR, TRAINING_MASS_BINS, BRANCHES, ALL_FEATS
+from hpana.mva.evaluation import get_models
 from hpana.mva.input_validation import plot_sig_dist, plot_weights, features_ranking, features_correlation 
 
 ## - - set log level
@@ -63,16 +70,27 @@ if __name__=="__main__":
     DFRAME = SClassifier.prepare_data(BKGS, SIGS, ALL_FEATS[CLF_ARGS.channel], data_lumi=CONFIG.data_lumi,
                                       channel=CLF_ARGS.channel, branches=BRANCHES[CLF_ARGS.channel], train_data=CLF_ARGS.train_data)
 
-    ## if CLF_ARGS.plt_evts_dist:
-    plot_sig_dist(DFRAME, signals=SIGS, outdir=CLF_ARGS.outdir)
+    if CLF_ARGS.plot_sample_size:
+        plot_sig_dist(DFRAME, signals=SIGS, outdir=CLF_ARGS.outdir)
 
-    ## if CLF_ARGS.plot_weights:
-    plot_weights(DFRAME, outdir=CLF_ARGS.outdir) 
-
+    if CLF_ARGS.plot_weights:
+        plot_weights(DFRAME, outdir=CLF_ARGS.outdir) 
 
     ## correlation matrix ?
     if CLF_ARGS.plot_correlations :
-        p_title = r"Correlation Matrix: $ %i \leq m_{H^+} \leq %i [GeV]$"%(signal_masses[0], signal_masses[-1])
-        features_correlation(X_train, CLF_FEATURES[CLF_ARGS.channel], outname=clf_name.replace(".pkl", ""), outdir=CLF_ARGS.outdir, title=p_title)
+        models = get_models(CLF_ARGS.models)
+        for masses in TRAINING_MASS_BINS["NOM"]:
+            mtag = "%ito%i"%(masses[0], masses[-1])
+            for model in models[mtag]:
+                p_title = r"Correlation Matrix: $ %i \leq m_{H^+} \leq %i [GeV]$"%(model.mass_range[0], model.mass_range[-1])
+                # oname = "features_correlation_%s_channel_mass_region_%sto%s"%(CLF_ARGS.channel, signal_masses[0], signal_masses[-1])
 
-    
+                features_correlation(model, outdir=CLF_ARGS.outdir, title=p_title)
+
+    ## features ranking ?
+    if CLF_ARGS.rank_feats:
+        models = get_models(CLF_ARGS.models)
+        for masses in TRAINING_MASS_BINS["NOM"]:
+            mtag = "%ito%i"%(masses[0], masses[-1])
+            for model in models[mtag]:
+                features_ranking(model, outdir=CLF_ARGS.outdir,)

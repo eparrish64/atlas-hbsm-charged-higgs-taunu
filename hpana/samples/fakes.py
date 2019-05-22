@@ -75,8 +75,7 @@ class QCD(Sample):
     # - - - - correction factor for tau polarization variable (using Inverse Smirnov transformation)
     UPSILON_CORRECTED = {
         "mc15": "CorrectUpsilon({0}, tau_0_n_tracks)", #< Y, ntracks
-        "mc16": "CorrectUpsilon("\
-        "((tau_0_n_charged_tracks==1)*tau_0_upsilon_pt_based+ 999*(tau_0_n_charged_tracks!=1)), tau_0_n_charged_tracks)", #< Y, ntracks
+        "mc16": "CorrectUpsilon_QCD(tau_0_upsilon_pt_based, tau_0_n_charged_tracks)"
     }
     
     @staticmethod
@@ -231,6 +230,7 @@ class QCD(Sample):
 
         # - - - - correct tau polarization for fakes
         if self.correct_upsilon:
+            fields = copy.deepcopy(fields)
             log.debug("correcting upsilon for %s sample"%self.name)
             for field in fields:
                 if field.name=="tau_0_upsilon":

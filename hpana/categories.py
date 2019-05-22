@@ -86,7 +86,7 @@ TAU_3_TRACK = {
 }
 TAU_TRACKS = {
     "mc15": TCut("tau_0_n_tracks==1 || tau_0_n_tracks==3"),
-    "mc16": TCut("tau_0_n_charged_tracks==1"),
+    "mc16": TCut("tau_0_n_charged_tracks==1 ||tau_0_n_charged_tracks==3"),
 }
 
 TAU_PT30 = {
@@ -103,11 +103,11 @@ TAU_ETA = {
 }
 
 ## tau truth lable
-TAU_IS_TRUE = TCut("true_tau_0_isTau")
+TAU_IS_TRUE = TCut("true_tau_0_isHadTau")
 TAU_IS_LEP = TCut("true_tau_0_isMuon || true_tau_0_isEle")
 TAU_IS_EL = TCut("true_tau_0_isEle")
-TAU_IS_EL_OR_HAD = TCut("true_tau_0_isTau || true_tau_0_isEle")
-TAU_IS_LEP_OR_HAD = TCut("true_tau_0_isTau || true_tau_0_isEle || true_tau_0_isMuon")
+TAU_IS_EL_OR_HAD = TCut("true_tau_0_isHadTau || true_tau_0_isEle")
+TAU_IS_LEP_OR_HAD = TCut("true_tau_0_isHadTau || true_tau_0_isEle || true_tau_0_isMuon")
 
 ## tau jet parton label 
 TAU_IS_LIGHT_QUARK = TCut("true_tau_0_jet_pdgId>0 && true_tau_0_jet_pdgId <4")
@@ -125,7 +125,7 @@ ANTI_TAU = TCut("tau_0_jet_bdt_score_trans > 0.02 && tau_0_jet_bdt_loose==0")
 VETO_TAU = ROOT.TCut("n_taus==0")
 TAU_EL_OLR_PASS = {
     "mc15": TCut("tau_0_ele_olr_pass==1"),
-    "mc16": TCut("tau_0_ele_olr_pass==1"),
+    "mc16": TCut("tau_0_ele_olr_pass==1&&tau_0_ele_bdt_tight==1"),
 }
 
 TAU_BASE = {}
@@ -238,6 +238,10 @@ BJET_PT25 = {
     "mc16": TCut("bjet_0_p4->Pt() > 25"),
 }
 
+## negative MC weights 
+NEGATIVE_MC_WEIGHT = ROOT.TCut("weight_mc<0")
+POSITIVE_MC_WEIGHT = ROOT.TCut("weight_mc>=0")
+
 #WIP! - - - - BDT scores for partial blinding 
 
 
@@ -322,7 +326,6 @@ Category_SR_TAUJET = Category(
         MET150,
         MT50,
         NUM_BJETS1,
-        
     ],
 )
 
@@ -547,8 +550,8 @@ CATEGORIES["taulep"] = [
     Category_SR_TAUMU,
     Category_TAUEL_BVETO,
     Category_TAUMU_BVETO,
-    # Category_SS_TAUEL,
-    # Category_SS_TAUMU,
+    Category_SS_TAUEL,
+    Category_SS_TAUMU,
     Category_DILEP_BTAG,
     Category_ZEE,
     # Category_TAULEP_PRESEL,
@@ -582,14 +585,14 @@ FF_CR_WJETS = Category(
         ROOT.TCut("n_electrons==1"),
         ROOT.TCut("el_0_p4->Pt() > 26"),
         # - - trigger matched electron
-        ROOT.TCut( 
-            "(el_0_trig_HLT_e24_lhmedium_L1EM20VH==1 && run_number <= 288000)" #<! 2015
-            "|| (el_0_trig_HLT_e26_lhtight_nod0_ivarloose==1 && run_number > 288000)" #<! 2016
+        ROOT.TCut("el_0_trig_trigger_matched==1"
+            # "(el_0_trig_HLT_e24_lhmedium_L1EM20VH==1 && run_number <= 288000)" #<! 2015
+            # "|| (el_0_trig_HLT_e26_lhtight_nod0_ivarloose==1 && run_number > 288000)" #<! 2016
             #"||(el_0_trig_trigger_matched==1 && HLT_e26_lhtight_nod0_ivarloose==1 && run_number > 288000)"
         ),
-        #EL_BASE,
-        #TAU_BASE,
-        ROOT.TCut("n_taus==1"), 
+        EL_BASE,
+        TAU_BASE,
+        # ROOT.TCut("n_taus==1"), 
         BVETO,
         W_LEP_MT_60,
         W_LEP_MT_MAX160,

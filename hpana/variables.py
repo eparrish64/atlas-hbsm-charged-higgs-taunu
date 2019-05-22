@@ -162,8 +162,11 @@ tau_0_pt = Variable(
         "mc16": "tau_0_p4->Pt()",
         "mc15": "0.001*tau_0_pt"},
     binning=(200, 0, 1000),
-    # bins=[30, 35, 40, 45, 50, 60, 80, 100, 200, 3500],
-    plot_bins=range(40, 100, 20) + range(100, 300, 50) + range(300, 500, 100),
+    plot_bins={
+        "COMMON": range(40, 100, 20) + range(100, 300, 50) + range(300, 500, 100),
+        "FF_CR_MULTIJET": [30, 35, 40, 45, 50, 60, 80, 100, 200, 3500],
+        "FF_CR_WJETS": [30, 35, 40, 45, 50, 60, 80, 100, 200, 3500],
+    },
     unit='GeV',
     scale=1.)
 
@@ -173,7 +176,8 @@ tau_0_eta = Variable(
     tformula={
         "mc16": "tau_0_p4->Eta()",
         "mc15": "tau_0_eta"},
-    binning=(60, -3., 3.))
+    binning=(120, -3., 3.),
+    plot_bins=np.arange(-2.5, 2.5, 0.1))
 
 tau_0_phi = Variable(
     "tau_0_phi" , 
@@ -203,10 +207,11 @@ tau_0_upsilon = Variable(
     latex=r"$\tau_{\Upsilon}$",
     tformula = {
         "mc15": '(tau_0_n_tracks==1)*(2.0*tau_0_allTrk_pt/tau_0_pt-1) + -111*(tau_0_n_tracks!=1)',
-        "mc16": "((tau_0_n_charged_tracks==1)*tau_0_upsilon_pt_based+ -111*(tau_0_n_charged_tracks!=1))"
+        "mc16": '(tau_0_n_charged_tracks==1)*(2.0*tau_0_allTrk_pt/tau_0_p4->Pt()-1) + -111*(tau_0_n_charged_tracks!=1)',
+        # "mc16": "((tau_0_n_charged_tracks==1)*tau_0_upsilon_pt_based+ -111*(tau_0_n_charged_tracks!=1))"
     },
-    binning=(100, -2, 2.0),
-    plot_bins=np.arange(-1, 2, 0.2))
+    binning=(1000, -2., 2.0),
+    plot_bins=np.arange(-1., 2., 0.1))
 
 tau_0_jet_bdt_score = Variable(
     "tau_0_jet_bdt_score",
@@ -332,7 +337,7 @@ met_et = Variable(
         "mc16":"met_p4->Et()",
         "mc15": "met_et"},
     binning=(1000, 0, 1000),
-    bins=range(0, 200, 20) + range(200, 400, 50),
+    plot_bins=range(140, 300, 20) + range(300, 500, 50),
     scale=1.,
     unit='GeV')
 
@@ -371,7 +376,8 @@ tau_0_met_dphi = Variable(
     "tau_0_met_dphi",
     title='#Delta#phi(#tau, E^{miss}_{T})',
     latex=r"$\Delta\phi(\tau, E^{miss}_{T})$",
-    binning=(20, -math.pi, math.pi))
+    binning=(800, -4, 4),
+    plot_bins=np.arange(-1.5, 1.5, 0.2))
 
 tau_0_met_mt = Variable(
     "tau_0_met_mt",
@@ -379,9 +385,11 @@ tau_0_met_mt = Variable(
     latex=r"$m_{T}(\tau, E^{miss}_{T})$",
     binning=(3000, 0, 3000), #<! fine binning needed for WS (rebin for plotting)
     plot_bins={
-        "COMMON": range(40, 100, 5) + range(100, 300, 20) + range(300, 500, 50),
+        "COMMON": range(40, 100, 10) + range(100, 300, 20) + range(300, 500, 50),
         "TTBAR": range(0, 100, 5),
         "WJETS": range(0, 100, 5),
+        "FF_CR_MULTIJET": range(50, 200, 15) + range(200, 500, 50),
+        "FF_CR_WJETS": range(50, 200, 15) + range(200, 500, 50),
     },        
     scale=1.,
     unit='GeV')
@@ -397,7 +405,8 @@ met_jet_dphi_ratio = Variable(
     tformula="(TMath::Pi() - fabs( fabs( tau_0_p4->Phi() - met_p4->Phi() ) - TMath::Pi() ))/ "\
     "(1 + TMath::Pi() - fabs( fabs( jet_0_p4->Phi() - met_p4->Phi() ) - TMath::Pi() )"\
     "+ TMath::Pi() - fabs( fabs( jet_1_p4->Phi() - met_p4->Phi() ) - TMath::Pi() ))",
-    binning = (20, 0, 1),   
+    binning = (400, -2, 2),
+    plot_bins=np.arange(0, 2, 0.2),   
 )
 
 tau_met_jet_dphi_min = Variable(
@@ -490,7 +499,7 @@ lep_0_met_mt = Variable(
     title='m_{T}(l, E^{miss}_{T})GeV',
     latex=r"$m_{T}(\ell, E^{miss}_{T}$)",
     binning=(1000, 0, 1000),
-    plot_bins=range(0, 500, 10),
+    plot_bins=range(60, 160, 5),
     tformula="sqrt(2 * (el_0_p4->Pt() + mu_0_p4->Pt()) * met_p4->Et() * (1 - cos(met_p4->Phi() - el_0_p4->Phi() - mu_0_p4->Phi() ) ) )", 
     unit='GeV')
 
@@ -518,8 +527,8 @@ VARIABLES_TAUJET = [
     tau_0_pt,
     tau_0_eta,
     # tau_0_phi, 
-    # tau_0_n_charged_tracks,
-    # tau_0_q, 
+    tau_0_n_charged_tracks,
+    tau_0_q, 
     tau_0_upsilon,
     
     met_et,
@@ -553,8 +562,8 @@ VARIABLES_TAUJET = [
 VARIABLES_TAULEP = [
     tau_0_pt,
     tau_0_eta,
-    # tau_0_n_charged_tracks,
-    # tau_0_q, 
+    tau_0_n_charged_tracks,
+    tau_0_q, 
     tau_0_upsilon,
 
     # el_0_pt,
@@ -565,7 +574,7 @@ VARIABLES_TAULEP = [
     tau_0_met_mt,
     tau_0_met_dphi,
     lep_0_met_mt,
-    # lep_0_met_dphi,
+    lep_0_met_dphi,
     tau_0_lep_0_mass,
 
     n_jets,
@@ -574,12 +583,12 @@ VARIABLES_TAULEP = [
     # jet_0_eta,
     # jet_1_pt,
 
-    # bjet_0_pt,
+    bjet_0_pt,
     
-    # bjet_0_met_dphi,
-    # bjet_0_tau_0_dr,
+    bjet_0_met_dphi,
+    bjet_0_tau_0_dr,
     bjet_0_lep_0_dr,
-    # tau_0_lep_0_dr,
+    tau_0_lep_0_dr,
     met_jet_dphi_ratio,
 ]
 
@@ -659,7 +668,7 @@ clf_score_GB200_mass_80to120 = Variable(
     "clf_score_GB200_mass_80to120",    
     title='BDT score', #90 to 120 [GeV]',
     binning=(1000, 0, 1), 
-    plot_bins=np.arange(0, 1, 0.05),
+    plot_bins=np.arange(0, 1, 0.1),
 )
 clf_score_GB200_mass_130to160 = Variable(
     "clf_score_GB200_mass_130to160",    

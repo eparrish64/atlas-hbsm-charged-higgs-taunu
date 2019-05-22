@@ -63,6 +63,22 @@ class Sample(object):
         "Sherpa_221_NNPDF30NNLO_Zmumu_MAXHTPTV140_280_CVetoBVeto",
         "Sherpa_221_NNPDF30NNLO_Zmumu_MAXHTPTV70_140_BFilter",
         "Sherpa_221_NNPDF30NNLO_Zmumu_MAXHTPTV70_140_CVetoBVeto",
+
+        "Sherpa_221_NNPDF30NNLO_Ztautau_MAXHTPTV70_140_BFilter",
+        "Sherpa_221_NNPDF30NNLO_Ztautau_MAXHTPTV70_140_CFilterBVeto",
+        "Sherpa_221_NNPDF30NNLO_Wmunu_MAXHTPTV280_500_BFilter_9364",
+        "Sherpa_221_NNPDF30NNLO_Ztautau_MAXHTPTV280_500_CVetoBVeto",
+        "Sherpa_221_NNPDF30NNLO_Ztautau_MAXHTPTV140_280_CVetoBVeto",
+        "Sherpa_221_NNPDF30NNLO_Wtaunu_MAXHTPTV140_280_BFilter",
+        "Sherpa_221_NNPDF30NNLO_Ztautau_MAXHTPTV140_280_CFilterBVeto",
+        "Sherpa_221_NNPDF30NNLO_Wtaunu_MAXHTPTV140_280_CVetoBVeto",
+        "Sherpa_221_NNPDF30NNLO_Wtaunu_MAXHTPTV280_500_BFilter",
+        "Sherpa_221_NNPDF30NNLO_Wtaunu_MAXHTPTV140_280_CFilterBVeto",
+        "Sherpa_221_NNPDF30NNLO_Wtaunu_MAXHTPTV280_500_CVetoBVeto",
+        "Sherpa_221_NNPDF30NNLO_Ztautau_MAXHTPTV280_500_BFilter",
+        "Sherpa_221_NNPDF30NNLO_Wtaunu_MAXHTPTV1000_E_CMS",
+        "Sherpa_221_NNPDF30NNLO_Wtaunu_MAXHTPTV500_1000",
+        "Sherpa_221_NNPDF30NNLO_Ztautau_MAXHTPTV500_1000",
     ]
 
 
@@ -203,11 +219,8 @@ class Sample(object):
         for cat in categories:
             hcat = filter(lambda hs: hs.category==cat.name, hist_set)
             hist = hcat[0].hist
-            # - - add the events from overflow bin too 
-            nbins = hist.GetNbinsX() + 2
-            nevents[cat.name] = hist.Integral(0, nbins)
-            log.info("# of events from %s tree of %s sample in category %s: %0.4f"%(
-                systematic, self.name, cat.name, nevents[cat.name]))
+            nevents[cat.name] = hist.Integral()
+            log.info("# of events for %s sample in category %s: %0.4f"%(self.name, cat.name, nevents[cat.name]))
         
         return nevents
 
@@ -313,7 +326,7 @@ class Sample(object):
 
             ## speeding up the analysis by submitting one job per systematic for heavy datasets 
             if ds.ds in Sample.HEAVY_DATASETS and len(systematics)>1:
-               for syst in systematics:
+                for syst in systematics:
                     worker = HistWorker(
                         name="%s.%s.%s"%(self.name, ds.name, syst.name),
                         sample=self.name,

@@ -36,7 +36,7 @@ class Analysis(object):
                  root_conf_files = [],
                  metTrigEff_macros=["metTrigEff.cxx"],
                  FFs_macros=["FFsCR_18.cxx", "FFsCOM_18.cxx"],
-                 upsilon_macros=["CorrectUpsilon.cxx", "CorrectUpsilon_WCR.cxx", "CorrectUpsilon_QCD.cxx",],
+                 upsilon_macros=["CorrectUpsilon_WCR.cxx", "CorrectUpsilon_QCD.cxx",],
                  ):
         # - - main configuration object 
         self.config = config 
@@ -141,9 +141,9 @@ class Analysis(object):
             correct_upsilon=True)
 
         self.backgrounds = [
+            self.qcd,
             self.ttbar,
             self.single_top,
-            self.qcd,
             self.wtaunu,
             self.lepfakes,
             self.ztautau,
@@ -153,7 +153,17 @@ class Analysis(object):
         # - - signals 
         self.signals = self.get_signals() 
         
-        self.samples = [self.qcd, self.lepfakes] + self.mc  + self.signals + [self.data]  
+        self.samples = [
+            self.qcd, 
+            self.lepfakes,
+            self.ttbar,
+            self.single_top,
+            self.wtaunu,
+            self.ztautau,
+            self.diboson,
+        ]
+
+        self.samples += self.signals + [self.data]  
         
         # ---- stored workers
         self._workers=[]

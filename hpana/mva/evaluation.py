@@ -13,6 +13,7 @@ import numpy as np
 import cPickle
 
 ## local
+from hpana.samples.fakes import QCD
 from hpana import log 
 from hpana.mva import plt, XML_FILE_PATTERN, PKL_FILE_PATTERN 
 
@@ -294,7 +295,7 @@ def setup_tformulas(tree, features):
 ##-----------------------------------------------
 ## 
 ##-----------------------------------------------
-def fill_scores_histogram(tree, models, hist_template=None, event_selection=None, event_weight=None):
+def fill_scores_histogram(tree, models, hist_template=None, event_selection=None, event_weight=None, correct_upsilon=False):
     """ evaluate scores from a model on a tree and fill a histogram
     Parameters
     ----------
@@ -318,10 +319,16 @@ def fill_scores_histogram(tree, models, hist_template=None, event_selection=None
     log.debug("---------------- models:\n %r"%models)
 
     event_number = ROOT.TTreeFormula("event_number", "event_number", tree)
-    clf_feats_tf = [ROOT.TTreeFormula(feat.name, feat.tformula, tree) for feat in models[0].features]
+
+    clf_feats_tf = []
+    for feat in models[0].features:
+        if correct_upsilon and "upsilon" in feat.name.lower():
+            clf_feats_tf.append(ROOT.TTreeFormula(feat.name, QCD.UPSILON_CORRECTED["mc16"], tree))
+        else:
+            clf_feats_tf.append(ROOT.TTreeFormula(feat.name, feat.tformula, tree))
     for f_tf in clf_feats_tf:
         f_tf.SetQuickLoad(True)
-
+        
     ## - - cache Tree block by block 
     tree.SetCacheSize(32*2**20)
     tree.SetCacheLearnEntries()

@@ -82,6 +82,23 @@ class Weight(object):
                 "n_taus", "tau_0_sf_TAUS_TRUEHADTAU_EFF_ELEOLR_TOTAL_1down_TauEffSF_HadTauEleOLR_tauhad"),
         ),
 
+        "tau_0_sf_NOMINAL_TauEffSF_MediumEleBDT_electron":(
+            W_STR_FMT.format(
+                "n_taus", "tau_0_sf_NOMINAL_TauEffSF_MediumEleBDT_electron"),
+        ),
+
+        "tau_0_sf_NOMINAL_TauEffSF_HadTauEleOLR_tauhad":(
+            W_STR_FMT.format(
+                "n_taus", "tau_0_sf_NOMINAL_TauEffSF_HadTauEleOLR_tauhad"),
+        ),
+
+        "tau_0_sf_NOMINAL_TauEffSF_selection":(
+            W_STR_FMT.format(
+                "n_taus", "tau_0_sf_NOMINAL_TauEffSF_selection"),
+        ),
+
+
+
         "tau_0_sf_NOMINAL_TauEffSF_reco": (
             W_STR_FMT.format("n_taus", "tau_0_sf_NOMINAL_TauEffSF_reco"),
 

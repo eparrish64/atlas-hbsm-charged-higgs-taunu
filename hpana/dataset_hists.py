@@ -371,10 +371,15 @@ def dataset_hists_direct(hist_worker,
                             m_hists =  filter(lambda hs: mtag in hs.variable, cat_hists )
                             if len(m_hists)==0:
                                 continue
+                            ##FIXME: quick fix for upsilon correction for QCD fakes; there should be a better way to do it
+                            correct_upsilon = False
+                            if m_hists[0].sample.startswith("QCD"):
+                                correct_upsilon = True
+                                
                             hist_tmp = m_hists[0].hist
                             hist_tmp.SetName("%s_category_%s_var_%s" %(outname, category.name, m_hists[0].variable))
                             fill_scores_histogram(tree, clf_models[mtag], 
-                                hist_template=hist_tmp, event_selection=event_selection, event_weight=event_weight)                        
+                                hist_template=hist_tmp, event_selection=event_selection, event_weight=event_weight, correct_upsilon=correct_upsilon)                        
                     else:
                         # - - loop over the events
                         for i, event in enumerate(tree):

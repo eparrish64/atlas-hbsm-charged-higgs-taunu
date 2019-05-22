@@ -17,7 +17,7 @@ import ROOT
 ## local
 from hpana.samples.sample import Histset
 from hpana.samples.fakes import QCD 
-from hpana.categories import Category
+from hpana.categories import Category, ANTI_TAU
 from hpana.variables import rQCD_VARS
 from hpana.plotting.plot import label_plot
 from . import log 
@@ -28,7 +28,7 @@ from . import log
 ##--------------------------------------------------------------------------
 def calculate_chi2(target_hist, template_hist, min_evts=10):
     """
-    perform Chi squared test  
+    Chi squared/ndf  
     """
     chi2 = 0
     nbins = target_hist.GetNbinsX()
@@ -47,7 +47,7 @@ def calculate_chi2(target_hist, template_hist, min_evts=10):
             continue
         chi2 += ((tr_cont-tm_cont)**2)/(tr_err**2 + tm_err**2)
         
-    return math.sqrt(chi2/nbins)
+    return chi2/nbins
 
 
 ##--------------------------------------------------------------------------
@@ -66,7 +66,13 @@ def chi2_error(chi2_graph, template_bins=20):
     xmin = xarr[xmin_index]
     ymax = max(yarr)
 
+    ##  See this paper: https://arxiv.org/pdf/1012.3754.pdf
+    ## large number of bins 
     std = math.sqrt(2./template_bins)
+
+    ## small number of bins 
+    # std = (2./template_bins)
+
     err_up = std
     for n in range(xmin_index+1, len(xarr)):
         if err_up < (xarr[n]- xmin):
@@ -106,7 +112,7 @@ def fake_sources(samples, category, ftypes={}, tauid=None, antitau=None):
             events[sample.name] = {}
         events[sample.name]["TAU"] = sample.events(categories=categories, tauid=tauid, truth_match_tau=ROOT.TCut("1.>0")) 
         events[sample.name]["ANTITAU"] = sample.events(
-            categories=categories, tauid=ROOT.TCut("tau_0_jet_bdt_loose==0"), truth_match_tau=ROOT.TCut("1.>0"))
+            categories=categories, tauid=ANTI_TAU, truth_match_tau=ROOT.TCut("1.>0"))
 
     merged_events = {}
     for cat in categories:
@@ -191,9 +197,9 @@ def get_cr_ffs(hist_sets,
             data_mc_tau_h.Add(mc_tau_hsum, -1)
             data_mc_antitau_h.Add(mc_antitau_hsum, -1)
         
-        log.info("TAU events; DATA: {}, MC: {}".format(
+        log.info("Region:{}; TAU events; DATA: {}, MC: {}".format(cr_name,
             data_tau_hsum.Integral(), mc_tau_hsum.Integral() if subtract_mc else "NAN") )
-        log.info("ANTITAU events; DATA: {}, MC: {}".format(
+        log.info("Region:{}; ANTITAU events; DATA: {}, MC: {}".format(cr_name, 
             data_antitau_hsum.Integral(), mc_antitau_hsum.Integral() if subtract_mc else "NAN") )
 
         htmp_tau = data_mc_tau_h.Clone()
@@ -642,12 +648,12 @@ def plot_cr_ffs(cr_ffs, cr_labels={},
         gr.SetLineColor(cl)
         if n==0:
             gr.SetMaximum(10)
-            gr.SetMinimum(0.001)
+            gr.SetMinimum(0.01)
             gr.Draw("APSAME")
             canvas.Update()
             gr.SetTitle("")
             gr.GetYaxis().SetTitle("Fake-Factor")
-            gr.GetXaxis().SetTitle("#tau p_{T} [GeV]")
+            gr.GetXaxis().SetTitle("p^{#tau}_{T} [GeV]")
             canvas.Modified()
         else:
             gr.Draw("PSAME")
@@ -656,7 +662,7 @@ def plot_cr_ffs(cr_ffs, cr_labels={},
     cr_ff_legend.Draw("SAME")
 
     region_label, data_label, atlas_label = label_plot(canvas, 
-        data_info=data_info, atlas_label="ATLAS INTERNAL")
+        data_info=data_info, atlas_label="")
     data_label.Draw("SAME")
     atlas_label.Draw("SAME")
 
@@ -672,7 +678,7 @@ def plot_cr_ffs(cr_ffs, cr_labels={},
 ## - - template fit validation plots
 ##--------------------------------------------------------------------------
 def validate_template_fit(cr_hists_dict, target_hists_dict, chi2s,
-                          ntracks=[1, 3], fitting_bins=[], target_regions=[], shape_vars=[], pdir="ffplots"):
+                          ntracks=[1, 3], fitting_bins=[], target_regions=[], shape_vars=[], pdir="ffplots", formats=[".png", ".pdf"]):
     """
     """
 
@@ -695,10 +701,10 @@ def validate_template_fit(cr_hists_dict, target_hists_dict, chi2s,
             dinfo = " #sqrt{#font[52]{s}} = 13 TeV"
             _, data_label, atlas_label, = label_plot(pad,
                                 data_info=dinfo,
-                                atlas_label="ATLAS Internal",
+                                atlas_label="",
                                 textsize=15,)
             binning_label = ROOT.TLatex(pad.GetLeftMargin() + 0.02, 1 - pad.GetTopMargin() - 0.15,
-                                       "%ip; %i GeV < p^{T}_{#tau} < %i GeV"%(itk, int(pt_bins[n-1]), int(pt_bins[n])))
+                                       "%ip; %i GeV < p^{#tau}_{T} < %i GeV"%(itk, int(pt_bins[n-1]), int(pt_bins[n])))
             binning_label.SetNDC()
             binning_label.SetTextFont(43)
             binning_label.SetTextSize(15)
@@ -717,13 +723,17 @@ def validate_template_fit(cr_hists_dict, target_hists_dict, chi2s,
             mj_hist.Sumw2()
             wj_hist.Sumw2()
 
-            ymax = 2.* max(mj_hist.GetMaximum(), wj_hist.GetMaximum())
+            ymax = 1.5* max(mj_hist.GetMaximum(), wj_hist.GetMaximum())
             mj_hist.GetYaxis().SetRangeUser(0, ymax)
             wj_hist.GetYaxis().SetRangeUser(0, ymax)
             
             wj_hist.SetMarkerColor(ROOT.kRed)
             wj_hist.SetLineColor(ROOT.kRed)
             wj_hist.GetXaxis().SetTitle(var.title)
+            if itk==3:
+                wj_hist.GetXaxis().SetRangeUser(0, 0.25)
+                mj_hist.GetXaxis().SetRangeUser(0, 0.25)
+
             wj_hist.GetYaxis().SetTitle("fraction of events")
             cr_legend.AddEntry(wj_hist, "W-jets CR", "P")
 
@@ -754,7 +764,7 @@ def validate_template_fit(cr_hists_dict, target_hists_dict, chi2s,
                 tr_legend = ROOT.TLegend(0.6, 0.8, 0.9, 0.9) 
                 target_hist, target_fit = target_hists_dict[tkey][pkey][cat]
 
-                tr_ymax = 2.* target_hist.GetMaximum()
+                tr_ymax = 1.5* target_hist.GetMaximum()
                 target_fit.GetYaxis().SetRangeUser(0, tr_ymax)
                 target_fit.SetMarkerColor(ROOT.kRed)
                 target_fit.SetLineColor(ROOT.kRed)
@@ -763,10 +773,20 @@ def validate_template_fit(cr_hists_dict, target_hists_dict, chi2s,
                 target_hist.SetMarkerColor(ROOT.kBlack)
                 target_hist.SetLineColor(ROOT.kBlack)
                 target_fit.GetXaxis().SetTitle(var.title)
-                target_fit.GetYaxis().SetTitle("fraction of events")
+                target_fit.GetYaxis().SetTitle("Normalized Events")
                 target_hist.Draw("SAME")
 
-                tr_legend.AddEntry(target_hist, "%s region"%cat, "P")
+                if itk==3:
+                    target_fit.GetXaxis().SetRangeUser(0, 0.25)
+                    target_hist.GetXaxis().SetRangeUser(0, 0.25)
+
+                lg = "%s region"%cat
+                if cat=="SR_TAUJET":
+                    lg = "#tau-jet"
+                if cat=="SR_TAULEP":
+                    lg = "#tau-lep"
+
+                tr_legend.AddEntry(target_hist, lg, "P")
                 tr_legend.AddEntry(target_fit, "fit", "L")
 
                 # - - add legends, labels and save canvas
@@ -777,19 +797,22 @@ def validate_template_fit(cr_hists_dict, target_hists_dict, chi2s,
                 ##--------------------------------------------------------
                 # - - plot chi2
                 ##--------------------------------------------------------
+
                 canvas.cd(3)
+                a_legend = ROOT.TLegend(0.6, 0.8, 0.9, 0.9) 
+
                 chi2_graph = chi2s[tkey][pkey][cat]
-                ci_ymax = 2 * max(chi2_graph.GetY())
-                chi2_graph.SetLineWidth(3)
+                ci_ymax = 1.3 * max(chi2_graph.GetY())
+                ci_ymin = min(chi2_graph.GetY())
+                chi2_graph.SetLineWidth(4)
                 chi2_graph.SetLineColor(ROOT.kBlack)
                 chi2_graph.GetYaxis().SetRangeUser(0, ci_ymax)
                 chi2_graph.Draw("AL")
                 chi2_graph.GetXaxis().SetTitle("#alpha_{MJ}")
-                chi2_graph.GetYaxis().SetTitle("#chi^{2}/ndf")
+                chi2_graph.GetYaxis().SetTitle("#chi^{2}/n.d.f")
 
                 for label in labels:
                     label.Draw("SAME")
-                tr_legend.Draw("SAME")
 
                 # - - find up/dn error on the Chi2 min and draw a line there
                 xmin, err_up, err_dn =  chi2_error(chi2_graph)
@@ -802,17 +825,24 @@ def validate_template_fit(cr_hists_dict, target_hists_dict, chi2s,
 
                 tline_up = ROOT.TLine(xmin+err_up, 0, xmin+err_up, ymax)
                 tline_up.SetLineColor(ROOT.kRed)
-                tline_up.SetLineWidth(2)
-                tline_up.SetLineStyle(10)
+                tline_up.SetLineWidth(3)
+                tline_up.SetLineStyle(4)
                 tline_up.Draw("SAME")
                 
                 tline_dn = ROOT.TLine(xmin-err_dn, 0, xmin-err_dn, ymax)
                 tline_dn.SetLineColor(ROOT.kRed)
-                tline_dn.SetLineWidth(2)
-                tline_dn.SetLineStyle(10)
+                tline_dn.SetLineWidth(3)
+                tline_dn.SetLineStyle(4)
                 tline_dn.Draw("SAME")
 
-                canvas.Print(os.path.join(pdir, "FFs_FIT_%s_%s_%i_%s.png"%(cat, tkey, pt_bins[n-1], pkey) ) )
+                a_legend.AddEntry(chi2_graph, "#chi^{2}/n.d.f=%0.2f"%(ci_ymin), "L")
+                a_legend.AddEntry(tline, "#alpha_{MJ}=%0.2f"%(xmin), "L")
+                a_legend.AddEntry(tline_up, "#pm#sigma", "L")
+                a_legend.Draw("SAME")
+
+                outname = os.path.join(pdir, "FFs_FIT_%s_%s_%i_%s"%(cat, tkey, pt_bins[n-1], pkey))
+                for fmt in formats:
+                    canvas.Print(outname+fmt) 
                 
     return canvas 
 
@@ -861,8 +891,8 @@ def plot_alpha(alphas, cr_ffs,
                         alpha_up = abs(alpha-alphas[itk][pkey][cat.name]["UP"])
                         alpha_down = abs(alpha-alphas[itk][pkey][cat.name]["DOWN"])
 
-                ## symmetric error 
-                symt_alpha_err = max(alpha_up, alpha_down)
+                ## symmetric error (too large errors --> not beautiful plots --> drop them from plots)
+                symt_alpha_err = 0.001 # max(alpha_up, alpha_down)
                 # if logy:
                 #     symt_alpha_err = 0.434*symt_alpha_err/alpha 
 
@@ -870,11 +900,11 @@ def plot_alpha(alphas, cr_ffs,
                 ff_mj_nom = float(cr_ffs["FF_CR_MULTIJET"]["tauJetBDT_02"][itk][pkey])
                 ff_wj_nom = float(cr_ffs["FF_CR_WJETS"]["tauJetBDT_02"][itk][pkey])
 
-                ff_mj_up = float(cr_ffs["FF_CR_MULTIJET"]["tauJetBDT_01"][itk][pkey])
-                ff_wj_up = float(cr_ffs["FF_CR_WJETS"]["tauJetBDT_01"][itk][pkey])
+                ff_mj_up = abs(ff_mj_nom - float(cr_ffs["FF_CR_MULTIJET"]["tauJetBDT_01"][itk][pkey]))
+                ff_wj_up = abs(ff_wj_nom - float(cr_ffs["FF_CR_WJETS"]["tauJetBDT_01"][itk][pkey]))
 
-                ff_mj_down = float(cr_ffs["FF_CR_MULTIJET"]["tauJetBDT_03"][itk][pkey])
-                ff_wj_down = float(cr_ffs["FF_CR_WJETS"]["tauJetBDT_03"][itk][pkey])
+                ff_mj_down = abs(ff_mj_nom - float(cr_ffs["FF_CR_MULTIJET"]["tauJetBDT_03"][itk][pkey]))
+                ff_wj_down = abs(ff_wj_nom - float(cr_ffs["FF_CR_WJETS"]["tauJetBDT_03"][itk][pkey]))
 
                 ## error propagation 
                 ff = alpha*ff_mj_nom + (1-alpha)*ff_wj_nom 
@@ -897,7 +927,7 @@ def plot_alpha(alphas, cr_ffs,
             a_legend.AddEntry(alpha_g, "%s(%sp)"%(cat.label, itk), "LP")
 
 
-    canvas = ROOT.TCanvas("c", "c", 800, 700)
+    canvas = ROOT.TCanvas("c", "c", 800, 600)
     ## - - prep labels for the plots
     cat_label, data_label, atlas_label, = label_plot(canvas, data_info=data_info)
     labels = [data_label, atlas_label]
@@ -907,47 +937,47 @@ def plot_alpha(alphas, cr_ffs,
         ah.SetMarkerStyle(21+cnt)
         ah.SetMarkerSize(2)
         ah.SetLineWidth(3)
-        ah.GetYaxis().SetTitle("#alpha_{MJ}")
-        ah.GetXaxis().SetTitle("p^{T}_{#tau} GeV")
         if cnt==0:
-            ah.GetXaxis().SetRangeUser(30, 4000)
             ah.Draw("AP")
         else:
             ah.Draw("PSAME")
-        ah.SetMaximum(6)
-        ah.SetMinimum(-3)
+        canvas.SetLogx() #<! CALL IT BEFORE DOING ANYTHING WITH AXIS RANGE!
+        ah.GetYaxis().SetTitle("#alpha_{MJ}")
+        ah.GetXaxis().SetTitle("p^{#tau}_{T} [GeV]")
+        ah.GetXaxis().SetRangeUser(30, 4000)
+        ah.GetYaxis().SetRangeUser(-1, 3) 
             
     for label in labels:
         label.Draw("SAME")
     a_legend.Draw("SAME")
-    canvas.SetLogx()
     
     for fmt in formats:
         a_outname = os.path.join(pdir, "ALPHA_inclusive_%s%s"%( "_"+suffix if suffix else "", fmt) )
         log.info("Saving %s ..."%a_outname)
         canvas.Print(a_outname)
     canvas.Clear()
-    
+    canvas.Close()
 
+    canvas = ROOT.TCanvas("c", "c", 800, 600)
     ## plot combined Fake-Factors 
+    ym = 0
     for cnt, fh in enumerate(comb_ff_graphs):
         fh.SetLineColor(colors[cnt])
         fh.SetMarkerColor(colors[cnt])
         fh.SetMarkerSize(2)
         fh.SetMarkerStyle(21+cnt)
         fh.SetLineWidth(3)
-        fh.GetYaxis().SetTitle("Combined Fake-Factor")
-        fh.GetXaxis().SetTitle("p^{T}_{#tau} GeV")
         if cnt==0:
-            # fh.SetMinimum(0.001)
             fh.Draw("AP")
         else:
             fh.Draw("PSAME")
+        canvas.SetLogx()
+        fh.GetYaxis().SetTitle("Combined Fake-Factor")
+        fh.GetXaxis().SetTitle("p^{#tau}_{T} [GeV]")
         fh.GetXaxis().SetRangeUser(30, 4000)
-        fh.GetYaxis().SetRangeUser(-1, 1) #SetMaximum(1)
-    
-    canvas.SetLogy()
-    canvas.SetLogx()
+        fh.GetYaxis().SetRangeUser(0, 0.5) 
+        
+    # canvas.SetLogy()
     for label in labels:
         label.Draw("SAME")
     a_legend.Draw("SAME")

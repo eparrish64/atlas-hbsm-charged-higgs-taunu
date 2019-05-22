@@ -23,8 +23,10 @@ FFs_ARGS = ffs_parser.parse_args()
 
 ## local
 from hpana.rqcd import get_cr_ffs, fit_alpha, prep_ff_hists, fake_sources, plot_cr_ffs, plot_alpha 
-from hpana.variables import rQCD_VARS, FFS_TEMPLATE_VARS, tau_0_jet_width, tau_0_jet_bdt_score_trans
+from hpana.variables import rQCD_VARS, FFS_TEMPLATE_VARS, tau_0_jet_width, tau_0_jet_bdt_score_trans, tau_0_upsilon
 from hpana.categories import (
+    ANTI_TAU,
+    TAUID_MEDIUM,
     FAKE_TAU_SOURCE,
     FF_CR_MULTIJET,
     FF_CR_WJETS,
@@ -61,13 +63,13 @@ ROOT.gErrorIgnoreLevel = ROOT.kWarning #<! turn off useless ROOT Info messages (
 ##------------------------------------------------------------------------------------
 ## - - build both taujet and taulep analyses (FF CR s are for different channels)
 ##------------------------------------------------------------------------------------
-taujet_config = Configuration("taujet",
-                              mc_campaign="mc16", data_streams=FFs_ARGS.data_streams, db_version=FFs_ARGS.db_version)
+taujet_config = Configuration(
+    "taujet", mc_campaign="mc16", data_streams=FFs_ARGS.data_streams, db_version=FFs_ARGS.db_version)
 taujet_analysis = Analysis(taujet_config, compile_cxx=True)
 taujet_analysis.data.blind = False #<! no blinding for FFs calculation
 
-taulep_config = Configuration("taulep",
-                              mc_campaign="mc16", data_streams=FFs_ARGS.data_streams, db_version=FFs_ARGS.db_version)
+taulep_config = Configuration(
+    "taulep", mc_campaign="mc16", data_streams=FFs_ARGS.data_streams, db_version=FFs_ARGS.db_version)
 taulep_analysis = Analysis(taulep_config, compile_cxx=True)
 taulep_analysis.data.blind = False
 
@@ -76,7 +78,7 @@ taulep_analysis.data.blind = False
 ## - - consts 
 ##------------------------------------------------------------------------------------
 COLORS = [ROOT.kRed, ROOT.kBlue, ROOT.kBlack, ROOT.kMagenta, ROOT.kOrange, ROOT.kGreen]
-LOOSE_TAU = ROOT.TCut("tau_0_jet_bdt_loose==0")
+LOOSE_ANTITAU = ROOT.TCut("tau_0_jet_bdt_loose==0")
 N_CHARGED_TRACKS = [1, 3] 
 TAU_PT_BINS = {
     "1":[30, 35, 40, 45, 50, 60, 80, 100, 200, 3500],
@@ -87,7 +89,7 @@ TAU_PT_BINS = {
 TAULEP_TARGET_REGIONS = taulep_config.categories + taulep_config.ff_cr_regions
 TAUJET_TARGET_REGIONS = taujet_config.categories + taujet_config.ff_cr_regions
 TARGET_REGIONS = TAUJET_TARGET_REGIONS + TAULEP_TARGET_REGIONS
-FFS_CONTROL_REGIONS = taulep_config.ff_cr_regions #+taujet_config.ff_cr_regions + 
+FFS_CONTROL_REGIONS = taulep_config.ff_cr_regions + taujet_config.ff_cr_regions 
 
 
 ## - - - - hist template for rQCD calculation
@@ -115,7 +117,7 @@ if __name__=="__main__":
         all_events = {}
         regions = ["SR_TAUJET", "SR_TAULEP", "FF_CR_MULTIJET", "FF_CR_WJETS"]
         fnames = ["electron", "lquark", "cquark", "bquark", "gluon", "other", "tau"]
-        
+
         ## taujet SR (MAKE SURE U R NOT VETOING LEPS, INDEED YOU HAVE TO LET ONE LEP GOES THROUGH!)
         taujet_SR = filter(lambda c: c.name=="SR_TAUJET", taujet_config.categories)[0]
         all_events.update(fake_sources(
@@ -148,7 +150,155 @@ if __name__=="__main__":
         with open("fakes_sources.TXT", "a") as ofile:        
             ofile.write("{0}\n\n".format(tabulate(rows, headers=regions)))
             ofile.write("{0}\n\n".format(tabulate(rows, headers=regions, tablefmt="latex")))
+
+    ##------------------------------------------------------------------------------------
+    ## - - Correcting tau polarization observable (different shape for anti-tau and tau)
+    ##------------------------------------------------------------------------------------
+    if FFs_ARGS.correct_upsilon:
+        hists = []
+        cr_regions = []
+        cdfs = {}
+        fits = {}
+        upsilon_corrected = {}
+        tau_0_upsilon.binning = (1000, -1, 2)
+        ufile = open(FFs_ARGS.upsilon_correction_cache, "w")
+        ufile.write("//! Upsilon Correction Macro\n")
+
+        ## get tau and anti-tau distributions 
+        for ana in [taujet_analysis, taulep_analysis]:
+            cr = ana.config.ff_cr_regions[0]
+            cr_regions += [cr]
+            samples = filter(lambda s: s.name=="Data", ana.samples) #<! no need to include MC
+            tau_cr = copy.deepcopy(cr)
+            tau_cr.tauid = TAUID_MEDIUM + ROOT.TCut("tau_0_n_charged_tracks==1") #<! 1-prong only
+            tau_cr.name = tau_cr.name +"_TAU"
+
+            antitau_cr = copy.deepcopy(cr)
+            antitau_cr.tauid = ANTI_TAU + ROOT.TCut("tau_0_n_charged_tracks==1")
+            antitau_cr.name = antitau_cr.name +"_ANTITAU"
+
+            hists += ana.hists(categories=[tau_cr, antitau_cr], samples=samples, fields=[tau_0_upsilon])
         
+        ## plot them 
+        canvas = ROOT.TCanvas()
+        legend = ROOT.TLegend(0.7, 0.8, 0.9, 0.9)        
+        cdf_leg = ROOT.TLegend(0.7, 0.3, 0.9, 0.4)
+        for cr in cr_regions:
+            if not cr.name in cdfs:
+                cdfs[cr.name] = {"TAU":  [], "ANTITAU": []}
+            if not cr.name in fits:
+                fits[cr.name] = {"TAU":  [], "ANTITAU": []}
+            if not cr.name in upsilon_corrected:
+                upsilon_corrected[cr.name] = []
+
+            tau_hist = filter(lambda h: h.category==cr.name+"_TAU", hists)[0].hist.Clone()
+            antitau_hist = filter(lambda h: h.category==cr.name+"_ANTITAU", hists)[0].hist.Clone()
+            
+            tau_hist.Scale(1./tau_hist.Integral())
+            antitau_hist.Scale(1./antitau_hist.Integral())
+
+            tau_hist.SetMarkerColor(ROOT.kBlack)
+            antitau_hist.SetMarkerColor(ROOT.kRed)
+            tau_hist.SetLineColor(ROOT.kBlack)
+            antitau_hist.SetLineColor(ROOT.kRed)
+
+            tau_hist.GetYaxis().SetTitle("Normalized Events")
+            tau_hist.GetXaxis().SetTitle(tau_0_upsilon.title)
+
+            legend.AddEntry(tau_hist, "MED #tau", "P")
+            legend.AddEntry(antitau_hist, "anti-#tau", "P")
+
+            tau_hist.Draw("P")
+            antitau_hist.Draw("SAME P")
+            legend.Draw("SAME")
+
+            outname = "%s/Upsilon_distribution_%s"%(FFs_ARGS.pdir, cr.name)
+            canvas.Print(outname+".png")
+            legend.Clear()
+            canvas.Clear()
+
+            ## calculate cumulative distribution functions
+            tau_int = tau_hist.Integral("width")
+            antitau_int = antitau_hist.Integral("width")
+            for cnt in range(0, tau_hist.GetNbinsX()-1):
+                cdfs[cr.name]["TAU"].append((tau_hist.GetBinLowEdge(cnt+1), tau_hist.Integral(0, cnt+1))) 
+                cdfs[cr.name]["ANTITAU"].append((antitau_hist.GetBinLowEdge(cnt+1), antitau_hist.Integral(0, cnt+1)))
+
+            tau_cdf = ROOT.TGraph(len(cdfs[cr.name]["TAU"]), 
+                array.array("d", [it[0] for it in cdfs[cr.name]["TAU"]]), array.array("d", [it[1] for it in cdfs[cr.name]["TAU"]]))
+            antitau_cdf = ROOT.TGraph(len(cdfs[cr.name]["ANTITAU"]), 
+                array.array("d", [it[0] for it in cdfs[cr.name]["ANTITAU"]]), array.array("d", [it[1] for it in cdfs[cr.name]["ANTITAU"]]))
+            
+            tau_cdf.SetMarkerColor(ROOT.kBlack)
+            tau_cdf.SetLineColor(ROOT.kBlack)
+            tau_cdf.SetLineWidth(2)
+            antitau_cdf.SetMarkerColor(ROOT.kRed)
+            antitau_cdf.SetLineColor(ROOT.kRed)
+            antitau_cdf.SetLineWidth(2)
+            tau_cdf.GetYaxis().SetTitle("CDF")
+            tau_cdf.GetXaxis().SetTitle(tau_0_upsilon.title)
+
+            cdf_leg.AddEntry(tau_cdf, "MED #tau", "L")
+            cdf_leg.AddEntry(antitau_cdf, "anti-#tau", "L")
+
+            tau_cdf.Draw("AC")
+            antitau_cdf.Draw("SAME")
+            cdf_leg.Draw("SAME")
+            cdf_outname = "%s/Upsilon_CDF_distribution_%s"%(FFs_ARGS.pdir, cr.name)
+            canvas.Print(cdf_outname+".png")
+            canvas.Clear()
+            cdf_leg.Clear()
+
+            ## Smirnov transform: https://en.wikipedia.org/wiki/Inverse_transform_sampling
+            ## Y_corr = CDF^-1 (CDF_tau(Y))
+
+            ## @FIXME: more elegant way would be to do a fit
+            # tau_func1 = ROOT.TF1("tau_func1", "pol3", -1, 0.9)
+            # tau_func2 = ROOT.TF1("tau_func2", "pol2", 0.9, 1.2)
+            # tau_func3 = ROOT.TF1("tau_func3", "pol2", 1.2, 2)
+            # tau_cdf.Fit(tau_func1, "R")
+            # tau_cdf.Fit(tau_func2, "R+")
+            # tau_cdf.Fit(tau_func3, "R+")
+
+            # fit = tau_cdf.GetFunction("tau_func1")
+            # fit.SetMarkerColor(ROOT.kBlue)
+            # fit.SetLineColor(ROOT.kBlue)
+            # fit.Draw("SAME")
+            
+
+            ## direct calculation 
+            nbins = len(cdfs[cr.name]["TAU"])
+            Ymin = tau_hist.GetBinLowEdge(0)
+            Ymax = tau_hist.GetBinLowEdge(nbins)
+
+            ufile.write("//! Smirnov transform derived from %s control region\n"%cr.name)
+            ufile.write("const float CorrectedUpsilon_%s[%i] = {\n"%(cr.name, nbins))                        
+
+            for bn in range(0, nbins):            
+                _yi = cdfs[cr.name]["ANTITAU"][bn][1]
+                cnt = 0
+                while(cdfs[cr.name]["TAU"][cnt][1] < _yi and cnt < nbins-1):
+                    cnt += 1
+                y_corr = Ymin + float(cnt)*(Ymax-Ymin)/float(nbins)
+                upsilon_corrected[cr.name].append(y_corr)
+                ufile.write("\t %.4f,\n"%y_corr)
+            ufile.write("};\n\n")
+
+        ufile.write("float CorrectUpsilon(float upsilon, int ntracks, int ff_region){\n")
+        ufile.write("\t if (ntracks!=1)\n")
+        ufile.write("\t\t return upsilon;\n")
+
+        ufile.write("\t int bin = (upsilon/(%.4f-(%.4f))) * %i;\n"%(Ymax, Ymin, nbins))
+        ufile.write("\t if (ff_region==0)\n")
+        ufile.write("\t\t return (upsilon<1.500) ? CorrectedUpsilon_%s[bin] : -2 ;\n"%cr_regions[0].name)
+        ufile.write("\t else if (ff_region==1)\n")
+        ufile.write("\t\treturn (upsilon<1.500) ? CorrectedUpsilon_%s[bin] : -2 ;\n"%cr_regions[1].name)
+        ufile.write("\t else\n")
+        ufile.write("\t\t return upsilon;\n")
+        ufile.write("}\n")
+        ufile.close()
+
+
     ##------------------------------------------------------------------------------------
     ## - - Fake Factors for the corresponding control regions
     ##------------------------------------------------------------------------------------
@@ -166,12 +316,12 @@ if __name__=="__main__":
             "n_charged_tracks": N_CHARGED_TRACKS,
             "cache_file": FFs_ARGS.ffs_cr_cache,
             "subtract_mc": True,
-            "antitau": LOOSE_TAU,
+            "antitau": LOOSE_ANTITAU,
             "validation_plots":FFs_ARGS.validation_plots,}
 
         ffs_workers = []
-        # ## taujet
-        # ffs_workers += taujet_analysis.ffs_workers(control_regions=[], **kparams)
+        ## taujet
+        ffs_workers += taujet_analysis.ffs_workers(control_regions=[], **kparams)
         
         ## taulep
         ffs_workers += taulep_analysis.ffs_workers(control_regions=[], **kparams)
@@ -221,7 +371,7 @@ if __name__=="__main__":
             ## - - set tauID to loose tau 
             tj_cats = copy.deepcopy(TAUJET_TARGET_REGIONS)
             for cat in tj_cats:
-                cat.tauid = LOOSE_TAU
+                cat.tauid = LOOSE_ANTITAU
                 
             taujet_hists = taujet_analysis.hists(
                 fields=rQCD_VARS.values(), categories=tj_cats, samples=TAUJET_SAMPLES,
@@ -231,7 +381,7 @@ if __name__=="__main__":
             ## - - set tauID to loose tau 
             tl_cats = copy.deepcopy(TAULEP_TARGET_REGIONS)
             for cat in tl_cats:
-                cat.tauid = LOOSE_TAU
+                cat.tauid = LOOSE_ANTITAU
                 
             taulep_hists = taulep_analysis.hists(
                 fields=rQCD_VARS.values(), categories=tl_cats, samples=TAULEP_SAMPLES,

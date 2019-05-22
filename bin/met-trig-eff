@@ -279,7 +279,7 @@ def draw_fits(fit_funcs, fit_params,
     """ Given a dict of hists, fit funcs draw them 
     """
     os.system("mkdir -p %s"%pdir)
-    canvas = ROOT.TCanvas("c", "c", 800, 700)
+    canvas = ROOT.TCanvas("c", "c", 1000, 800)
     for year, fits in fit_funcs.iteritems():
         triggers = fits.keys()
         variations = filter(lambda var: var.name in fit_funcs[year][triggers[0]].keys(), MET_TRIG_EFF_CRs)

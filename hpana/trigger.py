@@ -20,7 +20,7 @@ TRIGGERS = {
             "2015": "(run_number <= 284484 && (HLT_xe70_tc_lcw || HLT_xe70_mht))",
 
             "2016": "(run_number >= 296939 && (HLT_xe90_mht_L1XE50 || HLT_xe80_tc_lcw_L1XE50) && run_number <= 302872)" #<! period A-C
-                        "||(run_number > 302872 && HLT_xe110_mht_L1XE50)", #<! period D-
+                       "||(run_number > 302872 && HLT_xe110_mht_L1XE50 && run_number < 311481)", #<! period D-
 
             # "2017": ("((run_number >= 325713 && run_number <= 328393) && HLT_xe90_pufit_L1XE50)" #<! period B (prescaled!)
             #          "|| ((run_number >= 329385 && run_number <= 330470) && HLT_xe100_pufit_L1XE55)" #<! period C (prescaled!)

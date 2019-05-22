@@ -48,7 +48,17 @@ config = Configuration(
     db_version=ANA_ARGS.db_version)
 
 # - - - - instantiate the analysis
-analysis = Analysis(config, compile_cxx=not ANA_ARGS.no_cxx, FFs_macros=["FFsCOM_18.cxx", "FFsCR_18.cxx"], metTrigEff_macros=["metTrigEff.cxx"])
+analysis = Analysis(config, 
+    compile_cxx=not ANA_ARGS.no_cxx, 
+    # FFs_macros=["FFsCOM_18.cxx", "FFsCR15161718.cxx"], 
+    FFs_macros=["FFsCOM_v06.cxx", "FFsCR_v06.cxx"], 
+    metTrigEff_macros=["metTrigEff.cxx"], 
+    upsilon_macros=["CorrectUpsilon_WCR.cxx", "CorrectUpsilon_QCD.cxx",]
+    )
+
+# ## unblind DATA!!!
+# analysis.data.blind_regions = []
+# analysis.data.blind_streams=[]
 
 # - - - - some checks on cmd args
 if ANA_ARGS.fields:
@@ -58,7 +68,7 @@ else:
 
 if ANA_ARGS.categories:
     categories = filter(
-        lambda c: c.name in ANA_ARGS.categories, config.categories+ config.ff_cr_regions)
+        lambda c: c.name in ANA_ARGS.categories, config.categories+ config.ff_cr_regions+ config.clf_regions)
 else:
     categories = config.categories 
 

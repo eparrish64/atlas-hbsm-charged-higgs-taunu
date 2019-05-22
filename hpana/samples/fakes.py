@@ -115,7 +115,7 @@ class QCD(Sample):
         """ FF weights for QCD need special treatment.
         """
         if not categories:
-            categories = self.config.categories+self.config.ff_cr_regions
+            categories = self.config.categories + self.config.ff_cr_regions + self.config.clf_regions
             
         ff_weights = {"NOMINAL": {}}
         for category in categories:

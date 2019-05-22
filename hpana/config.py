@@ -172,3 +172,10 @@ class Configuration(object):
             for c in cr:
                 c.mc_camp = self.mc_camp
         return FF_CR_REGIONS[self.channel]
+
+    @property
+    def clf_regions(self):
+        if isinstance(CLASSIFIER_CATEGORIES[self.channel], (list, tuple)):
+            return CLASSIFIER_CATEGORIES[self.channel]
+        else:
+            return [CLASSIFIER_CATEGORIES[self.channel]]

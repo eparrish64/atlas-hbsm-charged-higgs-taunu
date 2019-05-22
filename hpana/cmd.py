@@ -210,7 +210,11 @@ def get_ffs_parser(base_parser=None):
 
     ffs_parser.add_argument('--pdir', '-pd', default="./ffplots",
                                  help='where to put the plots', )
+    ffs_parser.add_argument("--correct-upsilon", "-cu", action="store_true",
+                            help="correct upslion distribution for QCD fakes")                                 
     
+    ffs_parser.add_argument("--upsilon-correction-cache", "-ucc", default="CorrectUpsilon.cxx", 
+                            help= "macro to cache corrected upsilon")
     return ffs_parser
 
 ##--------------------------------------------------------------------------------------------------

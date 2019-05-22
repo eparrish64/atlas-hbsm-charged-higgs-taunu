@@ -207,11 +207,10 @@ tau_0_upsilon = Variable(
     latex=r"$\tau_{\Upsilon}$",
     tformula = {
         "mc15": '(tau_0_n_tracks==1)*(2.0*tau_0_allTrk_pt/tau_0_pt-1) + -111*(tau_0_n_tracks!=1)',
-        "mc16": '(tau_0_n_charged_tracks==1)*(2.0*tau_0_allTrk_pt/tau_0_p4->Pt()-1) + -111*(tau_0_n_charged_tracks!=1)',
-        # "mc16": "((tau_0_n_charged_tracks==1)*tau_0_upsilon_pt_based+ -111*(tau_0_n_charged_tracks!=1))"
+        "mc16": "tau_0_upsilon_pt_based",
     },
     binning=(1000, -2., 2.0),
-    plot_bins=np.arange(-1., 2., 0.1))
+    plot_bins=np.arange(-1., 1.1, 0.04))
 
 tau_0_jet_bdt_score = Variable(
     "tau_0_jet_bdt_score",

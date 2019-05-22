@@ -171,6 +171,21 @@ class Higgs(MC, Signal):
             hist_templates=None,
             **kwargs):
 
+        ## signals only in signla regions (or classifier training region)
+        categories = filter(lambda c: "SR_" in c.name or "CLF" in c.name, categories)
+
+        ## reweighting only in high mass
+        if self.mass < 200:
+            return super(Higgs, self).workers(categories=categories,
+                    fields=fields,
+                    systematics=systematics,
+                    trigger=trigger,
+                    extra_cuts=extra_cuts,
+                    extra_weight=extra_weight,
+                    weighted=weighted,
+                    hist_templates=hist_templates,
+                    **kwargs)
+
         weighted_workers = super(Higgs, self).workers(categories=categories,
                 fields=fields,
                 systematics=systematics,
@@ -210,6 +225,10 @@ class Higgs(MC, Signal):
         final.Scale(norm)
         so the shape of the histogram is from the unweighted events, but the normalization is from the weighted events
         """
+
+        ## reweighting only in high mass
+        if self.mass < 200:
+            return super(Higgs, self).merge_hists(hist_set=hist_set, histsdir=histsdir, hists_file=hists_file, write=write, **kwargs)
 
         if len(hist_set)==0:
             log.info("reading dataset hists from %s"%histsdir)
@@ -327,7 +346,6 @@ class Higgs(MC, Signal):
             n_hs = Histset(sample=self.name, category=uw_hs.category, variable=uw_hs.variable, systematic=uw_hs.systematic, hist=final_hist.Clone())
             norm_hset.append(n_hs)
 
-            print uw_hist.Integral(), w_hist.Integral(), final_hist.Integral()
             if write:
                 # - - write it now
                 rdir = "%s"%(uw_hs.systematic)

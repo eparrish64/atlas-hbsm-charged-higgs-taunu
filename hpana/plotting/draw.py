@@ -49,6 +49,7 @@ def draw(var, category,
          integral_in_legends=False,
          ttbar_norm_factor=1,
          wtaunu_norm_factor=1,
+         blind_range=(),
          ):
     """
     Parameters
@@ -162,7 +163,16 @@ def draw(var, category,
                 if wtaunu_norm_factor!=1 and sample.name=="Wtaunu":
                     s_hist.Scale(wtaunu_norm_factor)
 
+                ## blind data in a given range 
+                if sample.name==data.name:
+                    if not blind and len(blind_range) > 1:
+                        d_hist = s_hist.Clone()
+                        for bn in range(d_hist.FindBin(blind_range[0]), d_hist.FindBin(blind_range[-1])):
+                            d_hist.SetBinContent(bn, 0)
+                        s_hist =  d_hist
+                        
                 hists_dict[sample.name][syst_var.name] = s_hist
+
 
 
     log.debug("Retrieved histograms %r"%hists_dict)
@@ -445,7 +455,7 @@ def draw(var, category,
         rhist.SetTitle("")
         rhist.SetMarkerSize(1)
         rhist.SetMarkerStyle(20)
-        rhist.GetYaxis().SetRangeUser(0.8, 1.2)
+        rhist.GetYaxis().SetRangeUser(.5, 1.5)
         rhist.Draw('SAME')
         if error_bars:
             ratio_error.Draw('SAME E2')

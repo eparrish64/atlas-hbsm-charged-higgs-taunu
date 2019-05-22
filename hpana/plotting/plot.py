@@ -10,7 +10,7 @@ from hpana import log
 ## ROOT
 import ROOT
 from ROOT import TCanvas, TPad, TH1F, TLine
-ATLAS_LABEL = 'ATLAS Internal'
+ATLAS_LABEL = ''
 
 __all__= [
     'SimplePlot',
@@ -469,7 +469,7 @@ def uncertainty_band(hists_dict, overflow=True):
         total_min = total_high.Clone()
         
         for syst in systematics:
-            for i in range(0, total_nom.GetNbinsX()):
+            for i in range(0, total_nom.GetNbinsX()+1):
                 bkey = "BIN%i"%i
             
                 ## get bin variation 

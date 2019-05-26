@@ -163,7 +163,7 @@ tau_0_pt = Variable(
         "mc15": "0.001*tau_0_pt"},
     binning=(200, 0, 1000),
     plot_bins={
-        "COMMON": range(40, 100, 20) + range(100, 300, 50) + range(300, 500, 100),
+        "COMMON": range(40, 300, 10) + range(300, 500, 50),
         "FF_CR_MULTIJET": [30, 35, 40, 45, 50, 60, 80, 100, 200, 3500],
         "FF_CR_WJETS": [30, 35, 40, 45, 50, 60, 80, 100, 200, 3500],
     },
@@ -203,7 +203,7 @@ tau_0_q = Variable(
 ## - - only defined for 1 prong taus
 tau_0_upsilon = Variable(
     "tau_0_upsilon", 
-    title='#font[52]{#Upsilon}',
+    title='#font[52]{#Upsilon_{#tau}}',
     latex=r"$\tau_{\Upsilon}$",
     tformula = {
         "mc15": '(tau_0_n_tracks==1)*(2.0*tau_0_allTrk_pt/tau_0_pt-1) + -111*(tau_0_n_tracks!=1)',
@@ -452,10 +452,11 @@ lep_0_pt = Variable(
 
 tau_0_lep_0_mass = Variable(
     "tau_0_lep_0_mass", 
-    title='#font[52]{m}_{ll} GeV',
+    title='#font[52]{m}_{#tau e} GeV',
     latex=r"$m_{ll}$",
     tformula="sqrt((tau_0_p4->E()+el_0_p4->E())**2 - ((tau_0_p4->Px()+el_0_p4->Px())**2 + (tau_0_p4->Py()+el_0_p4->Py())**2 + (tau_0_p4->Pz()+el_0_p4->Pz())**2))",
     binning=(120, 40, 160),
+    plot_bins=range(60, 160, 10),
     unit='GeV',
     scale=1.)
 

@@ -50,6 +50,7 @@ def draw(var, category,
          ttbar_norm_factor=1,
          wtaunu_norm_factor=1,
          blind_range=(),
+         ratio_range=(0, 2),
          ):
     """
     Parameters
@@ -89,7 +90,7 @@ def draw(var, category,
         hfile = ROOT.TFile(hists_file, "READ")
 
     # - - - - - - - - insantiate the legend
-    legend = ROOT.TLegend(0.65, 0.75, 0.92, 0.92)
+    legend = ROOT.TLegend(0.6, 0.75, 0.92, 0.92)
     legend.SetNColumns(2)
     legend.SetBorderSize(0)
     legend.SetFillColor(0)
@@ -254,8 +255,8 @@ def draw(var, category,
                 bh_sum = 0
                 nbins = bkg_hist.GetNbinsX()
                 for _bh in backgrounds_hists_nom:
-                    bh_sum += _bh.Integral(0, nbins)
-                stot = sig_hist.Integral(0, nbins)
+                    bh_sum += _bh.Integral(1, nbins+1)
+                stot = sig_hist.Integral(1, nbins+1)                
                 sig_hist.Scale(bh_sum/stot)
 
             if signal_scale!=1.:
@@ -348,7 +349,7 @@ def draw(var, category,
 
         rhist = ratio_hist(data_hist, total_backgrounds)
         rhist.GetXaxis().SetTitle(var.title)
-        rhist.GetYaxis().SetTitle('Data/Sum bkg')
+        rhist.GetYaxis().SetTitle('Data/Model')
         ratio_hist_high = ratio_hist(data_hist, total_backgrounds + high_band_backgrounds)
         ratio_hist_low = ratio_hist(data_hist, total_backgrounds - low_band_backgrounds)
 
@@ -371,9 +372,10 @@ def draw(var, category,
 
         ratio_error.SetMarkerColor(ROOT.kMagenta+2)
         ratio_error.SetMarkerSize(2)
-        ratio_error.SetFillColor(ROOT.kMagenta+2)
-        ratio_error.SetFillStyle(3001)
-            
+        ratio_error.SetFillColor(ROOT.kRed+2)
+        ratio_error.SetFillStyle(3003)
+        rhist.GetYaxis().SetNdivisions(303)
+
     # - - - - - - - - add lumi, category , ... labels 
     extra_info += label_plot(main_pad,
                              category=category.label,
@@ -383,7 +385,7 @@ def draw(var, category,
     # - - - - - - - - set y axis limit
     ymin = 0 
     ymax = 0
-    offset_fact = 1.5
+    offset_fact = 1.7
     if logy:
         offset_fact = 1000.
     if ylimits:
@@ -409,11 +411,30 @@ def draw(var, category,
             h.SetMinimum(ymin)
             h.SetMaximum(ymax)            
             h.Draw("HIST")
+
+            ## smart Y title 
+            ytitle = "Events"
+            htmp = backgrounds_hists_nom[0]
+            nbins = htmp.GetNbinsX()
+
+            ## equi-distance binning ?
+            if nbins-1==(htmp.GetBinLowEdge(nbins)-htmp.GetBinLowEdge(1))/htmp.GetBinWidth(1):
+                ytitle += "/%0.2f"%htmp.GetBinWidth(1)
+                if var.unit:
+                    ytitle += var.unit
+            h.GetYaxis().SetTitle(ytitle)
+
             if not show_ratio:
-                h.GetYaxis().SetTitle("# of events")
                 h.GetXaxis().SetTitle(var.title)
                 main_pad.Modified(); fig.Update()
-                
+
+            # h.GetYaxis().SetLabelFont(43)
+            # h.GetYaxis().SetLabelSize(16)
+            # h.GetYaxis().SetLabelOffset(0.01)
+            # h.GetYaxis().SetTitleFont(43)
+            # h.GetYaxis().SetTitleSize(16)
+            # h.GetYaxis().SetTitleOffset(1.8)
+    
     # - -  add on the signals
     if signals:
         main_pad.cd()
@@ -455,7 +476,7 @@ def draw(var, category,
         rhist.SetTitle("")
         rhist.SetMarkerSize(1)
         rhist.SetMarkerStyle(20)
-        rhist.GetYaxis().SetRangeUser(.5, 1.5)
+        rhist.GetYaxis().SetRangeUser(*ratio_range)
         rhist.Draw('SAME')
         if error_bars:
             ratio_error.Draw('SAME E2')

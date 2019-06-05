@@ -67,7 +67,7 @@ SLURM_JOB_TEMPLATE ="""\
 source /project/atlas/Tier3/AtlasUserSiteSetup.sh
 
 #directly executed after container setup
-export ALRB_CONT_POSTSETUP="pwd; whoami; date; hostname -f; date -u;"
+export ALRB_CONT_POSTSETUP="pwd; whoami; date; hostname -f; date -u"
 
 #export variables needed within Container environment - SINGULARITYENV_ affix needed
 export SINGULARITYENV_SLURM_SUBMIT_DIR=${{SLURM_SUBMIT_DIR}}

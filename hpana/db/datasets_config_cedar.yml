@@ -3,12 +3,12 @@
   common:
     grl: ""
   taujet:
-    mc_path: /project/6024950/sbahrase/SAMPLES/HBSM/nTuples/v06/taujet/mc16/
+    mc_path: /project/6024950/sbahrase/SAMPLES/HBSM/nTuples/v06Full/taujet/mc16/
     mc_prefix: #"group.phys-higgs.TJ.mc16"
     mc_pattern: '*.BSM_Hptaunu.root*' #[!*.nn]'  
     mc_treename: 'NOMINAL'
     mc_sampletype:
-    data_path: /project/6024950/sbahrase/SAMPLES/HBSM/nTuples/v06/taujet/data/
+    data_path: /project/6024950/sbahrase/SAMPLES/HBSM/nTuples/v06Full/taujet/data/
     data_prefix: 
     data_pattern: '*.BSM_Hptaunu.root*' #'*hist-output*[!*.nn]' 
     data_treename: 'NOMINAL'

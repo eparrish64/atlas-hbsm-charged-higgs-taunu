@@ -53,36 +53,29 @@ data = analysis.data
 if PLOTTING_ARGS.fields:
     fields = filter(lambda v: v.name in PLOTTING_ARGS.fields , config.variables+BDT_SCORES[PLOTTING_ARGS.channel])
 else:
-    fields = config.variables
+    fields = config.variables # BDT_SCORES[PLOTTING_ARGS.channel] #      
 
 if PLOTTING_ARGS.categories:
     categories = filter(
-        lambda c: c.name in PLOTTING_ARGS.categories, config.categories+config.ff_cr_regions)
+        lambda c: c.name in PLOTTING_ARGS.categories, config.categories+config.ff_cr_regions+config.clf_regions)
 else:
     categories = config.categories
 
-## systematics
-all_systematics = config.systematics[:]  # <! common systematics
-all_systematics += analysis.qcd.systematics  # <! QCD fakes only
-if PLOTTING_ARGS.systematics:
-    systematics = filter(
-        lambda s: s.name in PLOTTING_ARGS.systematics, all_systematics)
-elif PLOTTING_ARGS.systs:
-    systematics = all_systematics
-else:
-    systematics = config.systematics[:1] #<! NOMINAL
-
 if PLOTTING_ARGS.no_data:
     data = None
+# data.unblind = True
+# data.blind_streams=[]
+# data.blind_regions=[]
 
 ## draw parameters 
 params = {
     "hists_file":PLOTTING_ARGS.hists_file,
     "backgrounds":backgrounds,
     "data":data,
+    # "blind": False,
     "signals":signals,
     "signal_scale":1,
-    "systematics":systematics,
+    "systematics":PLOTTING_ARGS.systs,
     "output_dir":PLOTTING_ARGS.pdir,
     "logy":PLOTTING_ARGS.logy,
     "logx":False,
@@ -92,6 +85,8 @@ params = {
     "bin_optimization":False,
     "scale_sig_to_bkg_sum":True,
     "output_formats": PLOTTING_ARGS.fmt,
+    "ratio_range": (0.5, 1.5),
+    # "blind_range":(0.5, 1),
 }
 
 ## setup the output directory for the plots
@@ -112,8 +107,9 @@ for var in fields:
 
     for cat in categories:
         ## signals are very tiny in control regions --> drop them from plots
-        if not "SR_" in cat.name:
+        if not "SR_" in cat.name or "CLF" in cat.name:
             jparams["signals"] = []
+            jparams["blind_range"] = ()
 
         jobs += [Job(draw, var, cat, **jparams)]
 run_pool(jobs, n_jobs=-1)

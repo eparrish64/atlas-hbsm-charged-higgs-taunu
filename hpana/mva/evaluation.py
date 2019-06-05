@@ -80,12 +80,15 @@ def plot_scores(models,
         signals=[], 
         fold_var="event_number", 
         n_tracks_var="tau_0_n_charged_tracks",
+        train_score=True,
         outdir="", 
         bins=None, 
         plot_roc=True, 
         overlay_rocs=False, 
         label=None, 
-        outname=None):
+        outname=None,
+        formats=[".png"],
+        inclusive_trks=False):
 
     """
     """
@@ -97,7 +100,9 @@ def plot_scores(models,
     rocs = []
     for sig in signals:
         sm_df = dframe.loc[[sig.name]]
-        s_scores = []
+        s_train_scores = []
+        b_train_scores = []
+        s_scores = []        
         b_scores = []        
         for m_model in models:
             masses = m_model.mass_range
@@ -105,10 +110,32 @@ def plot_scores(models,
                 continue
 
             feats = m_model.features
-            b_df = b_dframe[(b_dframe[fold_var]%m_model.kfolds==m_model.fold_num) & (b_dframe[n_tracks_var]==m_model.ntracks)]
-            b_test = b_df[[ft.name for ft in feats ]]
+            ## evaluate on the training samples
+            if train_score:
+                if inclusive_trks:
+                    b_train_df = b_dframe[(b_dframe[fold_var]%m_model.kfolds!=m_model.fold_num)]
+                    s_train_df = sm_df[(sm_df[fold_var]%m_model.kfolds!=m_model.fold_num)]
+                else:
+                    b_train_df = b_dframe[(b_dframe[fold_var]%m_model.kfolds!=m_model.fold_num) & (b_dframe[n_tracks_var]==m_model.ntracks)]
+                    s_train_df = sm_df[(sm_df[fold_var]%m_model.kfolds!=m_model.fold_num) & (sm_df[n_tracks_var]==m_model.ntracks)]
 
-            s_df = sm_df[(sm_df[fold_var]%m_model.kfolds==m_model.fold_num) & (sm_df[n_tracks_var]==m_model.ntracks)]
+                b_train = b_train_df[[ft.name for ft in feats ]]
+                s_train = s_train_df[[ft.name for ft in feats ]]
+
+                b_tr_score = m_model.predict_proba(b_train)[:, 1]
+                b_train_scores += [b_tr_score]
+                s_tr_score = m_model.predict_proba(s_train)[:, 1]
+                s_train_scores += [s_tr_score]
+
+            ## evaluate on unseen samples
+            if inclusive_trks:
+                b_df = b_dframe[(b_dframe[fold_var]%m_model.kfolds==m_model.fold_num)]
+                s_df = sm_df[(sm_df[fold_var]%m_model.kfolds==m_model.fold_num)]
+            else:
+                b_df = b_dframe[(b_dframe[fold_var]%m_model.kfolds==m_model.fold_num) & (b_dframe[n_tracks_var]==m_model.ntracks)]
+                s_df = sm_df[(sm_df[fold_var]%m_model.kfolds==m_model.fold_num) & (sm_df[n_tracks_var]==m_model.ntracks)]
+
+            b_test = b_df[[ft.name for ft in feats ]]
             s_test = s_df[[ft.name for ft in feats ]]
 
             ## evaluate score 
@@ -116,28 +143,44 @@ def plot_scores(models,
             b_scores += [b_score]
             s_score = m_model.predict_proba(s_test)[:, 1]
             s_scores += [s_score]
+
         if len(s_scores) < 1:
             continue
             
         b_arr = np.concatenate(b_scores)
         s_arr = np.concatenate(s_scores)
 
+        if train_score:
+            b_train_arr = np.concatenate(b_train_scores)
+            s_train_arr = np.concatenate(s_train_scores)
+
         log.info("Evaluated mass %i, ntrack=%i, bkg events=%i, and sig events=%i"%(
                 sig.mass, m_model.ntracks, b_arr.shape[0], s_arr.shape[0]))
         if bins is None:
             bins = np.linspace(0, 1, 50)
 
+        arrs = [s_arr, b_arr]
+        color = ['r', 'b']
+        label = [r'$H^+$[%iGeV]'%sig.mass, r"$\sum BKG$"]
+        if train_score:
+            arrs += [s_train_arr, b_train_arr]
+            color += ['purple', 'black']
+            label += [r'train-$H^+$[%iGeV]'%sig.mass, r"train-$\sum BKG$"]
+
         ## plot hists
         plt.figure(10)
-        plt.hist(
-            [s_arr, b_arr], bins, log=True, density=True, histtype="stepfilled", color=['r', 'b'], alpha=0.85, label=[r'$H^+$[%iGeV]'%sig.mass, r"$\sum BKG$"])
+        plt.hist(arrs, bins, log=True, density=True, color=color, alpha=0.85, histtype="step", label=label) 
         plt.ylabel(r'$p.d.f$')
         plt.xlabel('BDT score')
-        plt.legend(loc='upper right')
+        plt.legend(loc='lower center')
+
+        # bottom, top = plt.ylim()
+        # plt.ylim(top=5*top)
 
         ## save plot
-        outname = os.path.join(outdir, "BDT_score_{}_{}.png".format(sig.name, m_model.name.replace(".pkl", "")))
-        plt.savefig(outname)
+        outname = os.path.join(outdir, "BDT_score_{}_{}".format(sig.name, m_model.name.replace(".pkl", "")))
+        for fmt in formats:
+            plt.savefig(outname+fmt)
         plt.close()
 
         if plot_roc:
@@ -147,19 +190,33 @@ def plot_scores(models,
             Y_true = np.concatenate([b_true, s_true])
 
             fpr_grd, tpr_grd, _ = roc_curve(Y_true, Y_score)
-            auc = roc_auc_score(Y_true, Y_score)
-            
+            auc = roc_auc_score(Y_true, Y_score)            
             rocs += [(m_model, fpr_grd, tpr_grd, auc)]
+
+            if train_score:
+                Y_train_score = np.concatenate([b_train_arr, s_train_arr])
+                b_train_true = np.zeros(b_train_arr.size) #<! bkg 0
+                s_train_true = np.ones(s_train_arr.size) #<! sig 1
+                Y_train_true = np.concatenate([b_train_true, s_train_true])
+
+                fpr_train_grd, tpr_train_grd, _ = roc_curve(Y_train_true, Y_train_score)
+                auc_train = roc_auc_score(Y_train_true, Y_train_score)            
+        
             ## plot roc 
             plt.figure(1)
             plt.plot([0, 1], [0, 1], 'k--')
             plt.plot(fpr_grd, tpr_grd, label="AUC = %.4f"%auc)
+            if train_score:
+                plt.plot(fpr_train_grd, tpr_train_grd, label="train-AUC = %.4f"%auc_train, color="r")
+
             plt.ylabel('Signal efficiency ')
             plt.xlabel('Background rejection ')
             plt.title(r'ROC curve($H^+$[%iGeV])'%sig.mass)
             plt.legend(loc='best')
-            outname = os.path.join(outdir, "ROC_{}_{}.png".format(sig.name, m_model.name.replace(".pkl", "") ))
-            plt.savefig(outname)
+
+            outname = os.path.join(outdir, "ROC_{}_{}".format(sig.name, m_model.name.replace(".pkl", "")))
+            for fmt in formats:
+                plt.savefig(outname+fmt)
             plt.close()
 
     if overlay_rocs:
@@ -361,7 +418,7 @@ def fill_scores_histogram(tree, models, hist_template=None, event_selection=None
                 score = model.predict_proba(ifeats)[0][1]  #<! probability of belonging to class 1 (SIGNAL)
                 hist_template.Fill(score, e_weight)
 
-            if entry%20000==0:
+            if entry%100000==0:
                 log.debug("%r : %r "%(ifeats, score))
 
     

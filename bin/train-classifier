@@ -122,16 +122,16 @@ if CLF_ARGS.backend=="sklearn":
         log.debug(30*"*" + " Training Data Frame " + 30*"*")
         log.debug(dframe)
 
-        ## training separately for 1p and 3p taus (do not include QCD fakes for 1p training)
-        for ntracks in N_TRACKS:
+        ## training separately for 1p and 3p taus or inclusively(do not include QCD fakes for 1p training)
+        if CLF_ARGS.inc_trks:
+            ntracks = 13 #<! a dummy value for consistency 
             for rem in range(CLF_ARGS.kfolds): #<@NOTE 1 obviously is all
-                if CLF_ARGS.kfolds==1:
-                    where = (dframe["tau_0_n_charged_tracks"]==ntracks)
-                else:
-                    where = (dframe["event_number"]%CLF_ARGS.kfolds!=rem) & (dframe["tau_0_n_charged_tracks"]==ntracks)
+                where = ""
+                if CLF_ARGS.kfolds>1:
+                    where = (dframe["event_number"]%CLF_ARGS.kfolds!=rem)
                 sdf = dframe[where]
                                     
-                log.info("Training in mass rage:%s on ntracks=%i, nevents=%i, and nfeatures=%i\n\t\tHyperparams: %r\n"%(
+                log.info("Training in mass range:%s on ntracks=%i, nevents=%i, and nfeatures=%i\n\t\tHyperparams: %r\n"%(
                     mass_tag, ntracks, sdf.shape[0], sdf.shape[1]-4, hyper_params))
 
                 ## - - instantiate the model
@@ -154,6 +154,38 @@ if CLF_ARGS.backend=="sklearn":
                     log.info("Saving %s model to disk ..."%mpath)
                     with open(mpath, "w") as mcache:
                         cPickle.dump(sclf, mcache, protocol=2)
+        else:
+            for ntracks in N_TRACKS:
+                for rem in range(CLF_ARGS.kfolds): #<@NOTE 1 obviously is all
+                    if CLF_ARGS.kfolds==1:
+                        where = (dframe["tau_0_n_charged_tracks"]==ntracks)
+                    else:
+                        where = (dframe["event_number"]%CLF_ARGS.kfolds!=rem) & (dframe["tau_0_n_charged_tracks"]==ntracks)
+                    sdf = dframe[where]
+                                        
+                    log.info("Training in mass range:%s on ntracks=%i, nevents=%i, and nfeatures=%i\n\t\tHyperparams: %r\n"%(
+                        mass_tag, ntracks, sdf.shape[0], sdf.shape[1]-4, hyper_params))
+
+                    ## - - instantiate the model
+                    clf_name = SClassifier.MODEL_NAME_STR_FORMAT.format(
+                        "GB%i"%hyper_params["n_estimators"],CLF_ARGS.channel, mass_tag, ntracks, CLF_ARGS.kfolds, rem, len(feats))
+                    sclf = SClassifier(CLF_ARGS.channel, 
+                        train_df=sdf, name=clf_name, features=feats, weight_sample=False, mass_range=signal_masses, kfolds=CLF_ARGS.kfolds, fold_num=rem, **hyper_params)
+                    models += [sclf]
+
+                    ## - - assign the job
+                    if CLF_ARGS.train_bdt and CLF_ARGS.parallel:
+                        jobs.append(Job(train_model, sclf, weight_sample=False, balanced=True, scale_features=False, outdir=CLF_ARGS.outdir))
+
+                    ## pickle the model                        
+                    mpath = os.path.join(CLF_ARGS.outdir, sclf.name)
+                    if os.path.isfile(mpath):
+                        log.warning("Found %s model; skipping the preparation..."%mpath)
+                        continue
+                    else:
+                        log.info("Saving %s model to disk ..."%mpath)
+                        with open(mpath, "w") as mcache:
+                            cPickle.dump(sclf, mcache, protocol=2)
                                     
     
     if CLF_ARGS.train_bdt:

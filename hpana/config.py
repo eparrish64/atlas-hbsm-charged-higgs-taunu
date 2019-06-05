@@ -29,12 +29,17 @@ class Configuration(object):
     """
 
     def __init__(self, channel,
-                 year="2018",
-                 mc_campaign=MC_CAMPAIGN,
-                 cache_dir=CACHE_DIR,
-                 norm_field=NORM_FIELD,
-                 db_version="18v01",
-                 data_streams=("2015", "2016", )):
+                year="2018",
+                mc_campaign=MC_CAMPAIGN,
+                cache_dir=CACHE_DIR,
+                norm_field=NORM_FIELD,
+                db_version="18v01",
+                data_streams=("2015", "2016"),
+                FFs_macros=["FFsCOM.cxx", "FFsCR.cxx"], 
+                metTrigEff_macros=["metTrigEff.cxx"], 
+                upsilon_macros=["CorrectUpsilon.cxx"],                
+                root_conf_files = [],
+                ):
         self.channel = channel
         self.cache_dir = cache_dir
         self.db_version = db_version
@@ -42,6 +47,10 @@ class Configuration(object):
         self.mc_camp = mc_campaign
         self.data_streams = data_streams
         self.year = year
+        self.FFs_macros = FFs_macros
+        self.metTrigEff_macros = metTrigEff_macros
+        self.upsilon_macros = upsilon_macros
+        self.root_conf_files = root_conf_files
 
         # - - - - DATA luminosity dictionary (keys are data streams)
         self.data_lumi = LUMI
@@ -86,6 +95,8 @@ class Configuration(object):
     @property
     def categories(self):
         cats = CATEGORIES[self.channel] #+ self.ff_cr_regions
+        # if self.channel=="taulep":
+        #     cats += self.met_trigeff_regions
         for c in cats:
             c.mc_camp = self.mc_camp
         return cats
@@ -179,3 +190,9 @@ class Configuration(object):
             return CLASSIFIER_CATEGORIES[self.channel]
         else:
             return [CLASSIFIER_CATEGORIES[self.channel]]
+
+    @property
+    def met_trigeff_regions(self):
+        if self.channel=="taulep":
+            return [MET_TRIG_EFF_CR_NOM]
+        return []

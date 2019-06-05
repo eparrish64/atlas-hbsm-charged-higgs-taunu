@@ -30,36 +30,26 @@ class Analysis(object):
     """
     __HERE = os.path.dirname(os.path.abspath(__file__))
     
-    def __init__(self, config,
-                 suffix=None,
-                 compile_cxx=False,
-                 root_conf_files = [],
-                 metTrigEff_macros=["metTrigEff.cxx"],
-                 FFs_macros=["FFsCR_18.cxx", "FFsCOM_18.cxx"],
-                 upsilon_macros=["CorrectUpsilon_WCR.cxx", "CorrectUpsilon_QCD.cxx",],
-                 ):
+    def __init__(self, config, suffix=None, compile_cxx=False,):
         # - - main configuration object 
         self.config = config 
-
         self.suffix = suffix
-        self.root_conf_files = root_conf_files
-        self.metTrigEff_macros = metTrigEff_macros
-        self.FFs_macros = FFs_macros
-        self.upsilon_macros = upsilon_macros
-        self.cxx_macros = self.metTrigEff_macros + self.FFs_macros + self.upsilon_macros 
+        self.cxx_macros = self.config.metTrigEff_macros + self.config.FFs_macros + self.config.upsilon_macros 
 
         # - - loading and compiling cxx macros
         if compile_cxx:
             self.compile_cxx()
             # - - copy root config files to working dir
-            for rf in [os.path.join(Analysis.__HERE, "cxxmacros", rc) for rc in self.root_conf_files]:
+            for rf in [os.path.join(Analysis.__HERE, "cxxmacros", rc) for rc in self.config.root_conf_files]:
                 os.system("cp %s %s"%(rf, os.getcwd()))
-                    
+
+        ## analysis samples            
         self.wtaunu = samples.Sh_Wtaunu(
             self.config,
             name='Wtaunu',
             label='W#rightarrow#tau#nu',
             color=16)
+
         self.wlnu = samples.Sh_Wlnu(
             self.config,
             name='Wlnu',
@@ -141,8 +131,8 @@ class Analysis(object):
             correct_upsilon=True)
 
         self.backgrounds = [
-            self.qcd,
             self.ttbar,
+            self.qcd,
             self.single_top,
             self.wtaunu,
             self.lepfakes,
@@ -160,10 +150,10 @@ class Analysis(object):
             self.single_top,
             self.wtaunu,
             self.ztautau,
-            self.diboson,
+            self.diboson,            
         ]
 
-        self.samples += self.signals + [self.data]  
+        self.samples +=self.signals + [self.data] 
         
         # ---- stored workers
         self._workers=[]
@@ -171,9 +161,9 @@ class Analysis(object):
     def compile_cxx(self):
         ostring = "**"*20 + "... Loading & compiling cxx macros ..." +"**"*20
         log.info(ostring)
-        log.info("\t FFs macros: %r"%self.FFs_macros)
-        log.info("\t Upsilon correction macros: %r"%self.upsilon_macros)
-        log.info("\t MET trigger efficiency macros: %r"%self.metTrigEff_macros)
+        log.info("\t FFs macros: %r"%self.config.FFs_macros)
+        log.info("\t Upsilon correction macros: %r"%self.config.upsilon_macros)
+        log.info("\t MET trigger efficiency macros: %r"%self.config.metTrigEff_macros)
         log.info("*"*len(ostring))
 
         macros = [os.path.join(Analysis.__HERE, "cxxmacros", cm) for cm in self.cxx_macros]
@@ -352,6 +342,7 @@ class Analysis(object):
         cutflow_hist_sets = []
         
         field = kwargs.pop("field", self.config.variables[0])
+
         if not samples:
             samples = self.samples
 
@@ -365,7 +356,7 @@ class Analysis(object):
             if name.upper()=="TRIGGER":
                 cut = {self.config.mc_camp: self.config.trigger(dtype="MC") }
             cuts_list += [cut]
-            categories.append(Category(name, cuts_list=cuts_list, mc_camp=self.config.mc_camp))
+            categories.append(Category(name, cuts_list=cuts_list, tauid=None, mc_camp=self.config.mc_camp))
 
         if sim_samples:    
             cutflow_hist_sets += self.hists(

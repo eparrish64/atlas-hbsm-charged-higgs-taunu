@@ -9,6 +9,7 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.ensemble import GradientBoostingClassifier
 
 ## local 
+from hpana import log
 from hpana.mva import GB_HYPERPARAMS, N_OPT_CORES
 from hpana.mva import plt
 
@@ -90,24 +91,40 @@ def get_hparams(channel, mass_range=(), bin_scheme="NOM", model_type="GB"):
     hparams_GB = {
         "taujet": {
             "NOM": {
-                "80to120": {'n_estimators': 200, 'learning_rate': 0.1, 'max_depth': 20, 'min_samples_leaf': 0.01},
-                "130to160": {'n_estimators': 200, 'learning_rate': 0.1, 'max_depth': 20, 'min_samples_leaf': 0.01},
-                "170to190": {'n_estimators': 200, 'learning_rate': 0.1, 'max_depth': 20, 'min_samples_leaf': 0.01},
-                "200to400": {'n_estimators': 200, 'learning_rate': 0.1, 'max_depth': 20, 'min_samples_leaf': 0.01},
-                "500to3000": {'n_estimators': 200, 'learning_rate': 0.1, 'max_depth': 20, 'min_samples_leaf': 0.01},
+                "80to120": {'n_estimators': 100, 'learning_rate': 0.1, 'max_depth':10, 'min_samples_leaf':0.005, 'min_samples_split':0.01},
+                "130to160": {'n_estimators': 100, 'learning_rate': 0.1, 'max_depth':10, 'min_samples_leaf':0.005, 'min_samples_split':0.01},
+                "170to190": {'n_estimators': 100, 'learning_rate': 0.1, 'max_depth':10, 'min_samples_leaf':0.005, 'min_samples_split':0.01},
+                "200to400": {'n_estimators': 200, 'learning_rate': 0.1, 'max_depth':20, 'min_samples_leaf':0.002, 'min_samples_split':0.004},
+                "500to3000": {'n_estimators': 200, 'learning_rate': 0.1, 'max_depth':20, 'min_samples_leaf':0.001, 'min_samples_split':0.002},
             },
+
+            "ALT": {
+                "80to160": {'n_estimators': 100, 'learning_rate': 0.1, 'max_depth':10, 'min_samples_leaf':0.005, 'min_samples_split':0.01},
+                "170to400": {'n_estimators': 100, 'learning_rate': 0.1, 'max_depth':10, 'min_samples_leaf':0.005, 'min_samples_split':0.01},
+                "500to1000": {'n_estimators': 200, 'learning_rate': 0.1, 'max_depth':20, 'min_samples_leaf':0.002, 'min_samples_split':0.004},
+                "1200to3000": {'n_estimators': 200, 'learning_rate': 0.1, 'max_depth':20, 'min_samples_leaf':0.001, 'min_samples_split':0.002},
+            },
+
             "UP_DOWN":{},
             "SINGLE":{},
 
         },
         "taulep": {
             "NOM": {
-                "80to120": {'n_estimators': 200, 'learning_rate': 0.1, 'max_depth': 20, 'min_samples_leaf': 0.01},
-                "130to160": {'n_estimators': 200, 'learning_rate': 0.1, 'max_depth': 20, 'min_samples_leaf': 0.01},
-                "170to190": {'n_estimators': 200, 'learning_rate': 0.1, 'max_depth': 20, 'min_samples_leaf': 0.01},
-                "200to400": {'n_estimators': 200, 'learning_rate': 0.1, 'max_depth': 20, 'min_samples_leaf': 0.01},
-                "500to3000": {'n_estimators': 200, 'learning_rate': 0.1, 'max_depth': 20, 'min_samples_leaf': 0.01},
+                "80to120": {'n_estimators': 200, 'learning_rate': 0.1, 'max_depth':12, 'min_samples_leaf':0.005, 'min_samples_split':0.01},
+                "130to160": {'n_estimators': 200, 'learning_rate': 0.1, 'max_depth':12, 'min_samples_leaf':0.005, 'min_samples_split':0.01},
+                "170to190": {'n_estimators': 200, 'learning_rate': 0.1, 'max_depth':12, 'min_samples_leaf':0.005, 'min_samples_split':0.01},
+                "200to400": {'n_estimators': 200, 'learning_rate': 0.1, 'max_depth':20, 'min_samples_leaf':0.002, 'min_samples_split':0.004},
+                "500to3000": {'n_estimators': 200, 'learning_rate': 0.1, 'max_depth':20, 'min_samples_leaf':0.001, 'min_samples_split':0.002},
             },
+
+            "ALT": {
+                "80to160": {'n_estimators': 200, 'learning_rate': 0.1, 'max_depth':12, 'min_samples_leaf':0.005, 'min_samples_split':0.01},
+                "170to400": {'n_estimators': 200, 'learning_rate': 0.1, 'max_depth':12, 'min_samples_leaf':0.005, 'min_samples_split':0.01},
+                "500to1000": {'n_estimators': 200, 'learning_rate': 0.1, 'max_depth':20, 'min_samples_leaf':0.002, 'min_samples_split':0.004},
+                "1200to3000": {'n_estimators': 200, 'learning_rate': 0.1, 'max_depth':20, 'min_samples_leaf':0.001, 'min_samples_split':0.002},
+            },
+
             "UP_DOWN":{},
             "SINGLE":{},
 

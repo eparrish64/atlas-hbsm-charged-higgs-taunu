@@ -26,91 +26,48 @@ class Weight(object):
         "weight_total": ("weight_total", )
     }
     W_TAU = {
-        "tau_0_sf_NOMINAL_TauEffSF_JetBDTmedium": (
-            W_STR_FMT.format(
-                "n_taus", "tau_0_sf_NOMINAL_TauEffSF_JetBDTmedium"),  # NOMINAL
+        "tau_0_sf_NOMINAL_TauEffSF_JetBDTmedium": ( 
+            W_STR_FMT.format("n_taus", "tau_0_sf_NOMINAL_TauEffSF_JetBDTmedium"),  #<! NOMINAL
 
-            # W_STR_FMT.format(
-            #     "n_taus", "tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_1PRONGSTATSYSTUNCORR2025_1up_TauEffSF_JetBDTmedium"),
+            ## (name, title); title will be used to access the corresponding TTree branch.
+            ("TAU_EFF_JETID_HIGHPT_1up" , W_STR_FMT.format("n_taus", "tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_HIGHPT_1up_TauEffSF_JetBDTmedium")),
+            ("TAU_EFF_JETID_HIGHPT_1down", W_STR_FMT.format("n_taus", "tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_HIGHPT_1down_TauEffSF_JetBDTmedium")),
 
-            # W_STR_FMT.format(
-            #     "n_taus", "tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_1PRONGSTATSYSTUNCORR2025_1down_TauEffSF_JetBDTmedium"),
-
-            # W_STR_FMT.format(
-            #     "n_taus", "tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_1PRONGSTATSYSTUNCORR2530_1up_TauEffSF_JetBDTmedium"),
-            # W_STR_FMT.format(
-            #     "n_taus", "tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_1PRONGSTATSYSTUNCORR2530_1down_TauEffSF_JetBDTmedium"),
-
-            # W_STR_FMT.format(
-            #     "n_taus", "tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_1PRONGSTATSYSTUNCORR3040_1up_TauEffSF_JetBDTmedium"),
-            # W_STR_FMT.format(
-            #     "n_taus", "tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_1PRONGSTATSYSTUNCORR3040_1down_TauEffSF_JetBDTmedium"),
-
-            # W_STR_FMT.format(
-            #     "n_taus", "tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_1PRONGSTATSYSTUNCORRGE40_1up_TauEffSF_JetBDTmedium"),
-            # W_STR_FMT.format(
-            #     "n_taus", "tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_1PRONGSTATSYSTUNCORRGE40_1down_TauEffSF_JetBDTmedium"),
-
-            # W_STR_FMT.format(
-            #     "n_taus", "tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_3PRONGSTATSYSTUNCORR2030_1up_TauEffSF_JetBDTmedium"),
-            # W_STR_FMT.format(
-            #     "n_taus", "tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_3PRONGSTATSYSTUNCORR2030_1down_TauEffSF_JetBDTmedium"),
-
-            # W_STR_FMT.format(
-            #     "n_taus", "tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_3PRONGSTATSYSTUNCORRGE30_1up_TauEffSF_JetBDTmedium"),
-            # W_STR_FMT.format(
-            #     "n_taus", "tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_3PRONGSTATSYSTUNCORRGE30_1down_TauEffSF_JetBDTmedium"),
-
-            W_STR_FMT.format(
-                "n_taus", "tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_HIGHPT_1up_TauEffSF_JetBDTmedium"),
-            W_STR_FMT.format(
-                "n_taus", "tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_HIGHPT_1down_TauEffSF_JetBDTmedium"),
-
-            W_STR_FMT.format(
-                "n_taus", "tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_SYST_1up_TauEffSF_JetBDTmedium"),
-            W_STR_FMT.format(
-                "n_taus", "tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_SYST_1down_TauEffSF_JetBDTmedium"),
+            ("TAU_EFF_JETID_SYST_1up", W_STR_FMT.format("n_taus", "tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_SYST_1up_TauEffSF_JetBDTmedium")),
+            ("TAU_EFF_JETID_SYST_1down", W_STR_FMT.format("n_taus", "tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_SYST_1down_TauEffSF_JetBDTmedium")),
         ),
 
-        "tau_0_sf_NOMINAL_TauEffSF_VeryLooseLlhEleOLR_electron": (
-            W_STR_FMT.format(
-                "n_taus", "tau_0_sf_NOMINAL_TauEffSF_VeryLooseLlhEleOLR_electron"),
+        # "tau_0_sf_NOMINAL_TauEffSF_VeryLooseLlhEleOLR_electron": (
+        #     W_STR_FMT.format("n_taus", "tau_0_sf_NOMINAL_TauEffSF_VeryLooseLlhEleOLR_electron"),
 
-            W_STR_FMT.format(
-                "n_taus", "tau_0_sf_TAUS_TRUEHADTAU_EFF_ELEOLR_TOTAL_1up_TauEffSF_HadTauEleOLR_tauhad"),
-            W_STR_FMT.format(
-                "n_taus", "tau_0_sf_TAUS_TRUEHADTAU_EFF_ELEOLR_TOTAL_1down_TauEffSF_HadTauEleOLR_tauhad"),
-        ),
+        #     ("TAU_EFF_ELEOLR_TOTAL_1up", W_STR_FMT.format("n_taus", "tau_0_sf_TAUS_TRUEHADTAU_EFF_ELEOLR_TOTAL_1up_TauEffSF_HadTauEleOLR_tauhad")),
+        #     ("TAU_EFF_ELEOLR_TOTAL_1down", W_STR_FMT.format("n_taus", "tau_0_sf_TAUS_TRUEHADTAU_EFF_ELEOLR_TOTAL_1down_TauEffSF_HadTauEleOLR_tauhad")),
+        # ),
+
+        # "tau_0_sf_NOMINAL_TauEffSF_HadTauEleOLR_tauhad":(
+        #     W_STR_FMT.format("n_taus", "tau_0_sf_NOMINAL_TauEffSF_HadTauEleOLR_tauhad"),
+        # ),
 
         "tau_0_sf_NOMINAL_TauEffSF_MediumEleBDT_electron":(
             W_STR_FMT.format(
-                "n_taus", "tau_0_sf_NOMINAL_TauEffSF_MediumEleBDT_electron"),
-        ),
+                "n_taus", "((true_tau_0_isEle==1)*tau_0_sf_NOMINAL_TauEffSF_MediumEleBDT_electron)+(true_tau_0_isEle!=1)"),
 
-        "tau_0_sf_NOMINAL_TauEffSF_HadTauEleOLR_tauhad":(
-            W_STR_FMT.format(
-                "n_taus", "tau_0_sf_NOMINAL_TauEffSF_HadTauEleOLR_tauhad"),
+            ("TAU_EFF_ELEBDT_SYST_1down", "((true_tau_0_isEle==1)*tau_0_sf_TAUS_TRUEELECTRON_EFF_ELEBDT_SYST_1down_TauEffSF_MediumEleBDT_electron)+(true_tau_0_isEle!=1)"),
+            ("TAU_EFF_ELEBDT_SYST_1up", "((true_tau_0_isEle==1)*tau_0_sf_TAUS_TRUEELECTRON_EFF_ELEBDT_SYST_1up_TauEffSF_MediumEleBDT_electron)+(true_tau_0_isEle!=1)"),
         ),
 
         "tau_0_sf_NOMINAL_TauEffSF_selection":(
-            W_STR_FMT.format(
-                "n_taus", "tau_0_sf_NOMINAL_TauEffSF_selection"),
+            W_STR_FMT.format("n_taus", "tau_0_sf_NOMINAL_TauEffSF_selection"),
         ),
-
-
 
         "tau_0_sf_NOMINAL_TauEffSF_reco": (
             W_STR_FMT.format("n_taus", "tau_0_sf_NOMINAL_TauEffSF_reco"),
 
-            W_STR_FMT.format(
-                "n_taus", "tau_0_sf_TAUS_TRUEHADTAU_EFF_RECO_TOTAL_1up_TauEffSF_reco"),
-            W_STR_FMT.format(
-                "n_taus", "tau_0_sf_TAUS_TRUEHADTAU_EFF_RECO_TOTAL_1down_TauEffSF_reco"),
+            ("TAU_EFF_RECO_TOTAL_1up", W_STR_FMT.format("n_taus", "tau_0_sf_TAUS_TRUEHADTAU_EFF_RECO_TOTAL_1up_TauEffSF_reco")),
+            ("TAU_EFF_RECO_TOTAL_1down", W_STR_FMT.format("n_taus", "tau_0_sf_TAUS_TRUEHADTAU_EFF_RECO_TOTAL_1down_TauEffSF_reco")),
 
-            W_STR_FMT.format(
-                "n_taus", "tau_0_sf_TAUS_TRUEHADTAU_EFF_RECO_HIGHPT_1up_TauEffSF_reco"),
-            W_STR_FMT.format(
-                "n_taus", "tau_0_sf_TAUS_TRUEHADTAU_EFF_RECO_HIGHPT_1down_TauEffSF_reco"),
+            ("TAU_EFF_RECO_HIGHPT_1up", W_STR_FMT.format("n_taus", "tau_0_sf_TAUS_TRUEHADTAU_EFF_RECO_HIGHPT_1up_TauEffSF_reco")),
+            ("TAU_EFF_RECO_HIGHPT_1down", W_STR_FMT.format("n_taus", "tau_0_sf_TAUS_TRUEHADTAU_EFF_RECO_HIGHPT_1down_TauEffSF_reco")),
         ),
     }  # W_TAU
 
@@ -122,150 +79,100 @@ class Weight(object):
         "jet_sf_NOMINAL_central_jets_global_ineffSF_JVT": (
             "jet_sf_NOMINAL_central_jets_global_ineffSF_JVT",
         ),
+
     }  # W_JET
 
     W_BJET = {
-        "jet_sf_FT_EFF_Eigen_B": (
+        "jet_sf_NOMINAL_global_effSF_MV2c10":(
+            "jet_sf_NOMINAL_global_effSF_MV2c10", #<! NOMINAL 
+            ("jet_effSF_Eigen_B_0_1down",  "jet_sf_FT_EFF_Eigen_B_0_1down_global_effSF_MV2c10", ),
+            ("jet_effSF_Eigen_B_0_1up",  "jet_sf_FT_EFF_Eigen_B_0_1up_global_effSF_MV2c10", ),
+
+            ("jet_effSF_Eigen_C_0_1down",  "jet_sf_FT_EFF_Eigen_C_0_1down_global_effSF_MV2c10", ),
+            ("jet_effSF_Eigen_C_0_1up",  "jet_sf_FT_EFF_Eigen_C_0_1up_global_effSF_MV2c10", ),
+
+            ("jet_effSF_Eigen_Light_0_1down",  "jet_sf_FT_EFF_Eigen_Light_0_1down_global_effSF_MV2c10", ),
+            ("jet_effSF_Eigen_Light_0_1up",  "jet_sf_FT_EFF_Eigen_Light_0_1up_global_effSF_MV2c10", ),
+
+            ("jet_effSF_extrapolation_1down",  "jet_sf_FT_EFF_extrapolation_1down_global_effSF_MV2c10", ),
+            ("jet_effSF_extrapolation_1up",  "jet_sf_FT_EFF_extrapolation_1up_global_effSF_MV2c10", ),            
+            ),
+
+        "jet_sf_NOMINAL_global_ineffSF_MV2c10":(
             "jet_sf_NOMINAL_global_ineffSF_MV2c10",
-            "jet_sf_FT_EFF_Eigen_B_0_1down_global_effSF_MV2c10",
-            "jet_sf_FT_EFF_Eigen_B_0_1down_global_ineffSF_MV2c10",
-            "jet_sf_FT_EFF_Eigen_B_0_1up_global_effSF_MV2c10",
-            "jet_sf_FT_EFF_Eigen_B_0_1up_global_ineffSF_MV2c10",
-        #     "jet_sf_FT_EFF_Eigen_B_1_1down_global_effSF_MV2c10",
-        #     "jet_sf_FT_EFF_Eigen_B_1_1down_global_ineffSF_MV2c10",
-        #     "jet_sf_FT_EFF_Eigen_B_1_1up_global_effSF_MV2c10",
-        #     "jet_sf_FT_EFF_Eigen_B_1_1up_global_ineffSF_MV2c10",
-        #     "jet_sf_FT_EFF_Eigen_B_2_1down_global_effSF_MV2c10",
-        #     "jet_sf_FT_EFF_Eigen_B_2_1down_global_ineffSF_MV2c10",
-        #     "jet_sf_FT_EFF_Eigen_B_2_1up_global_effSF_MV2c10",
-        #     "jet_sf_FT_EFF_Eigen_B_2_1up_global_ineffSF_MV2c10",
-        ),
 
-        "jet_sf_FT_EFF_Eigen_C": (
-            "jet_sf_NOMINAL_global_ineffSF_MV2c10",
-            "jet_sf_FT_EFF_Eigen_C_0_1down_global_effSF_MV2c10",
-            "jet_sf_FT_EFF_Eigen_C_0_1down_global_ineffSF_MV2c10",
-            "jet_sf_FT_EFF_Eigen_C_0_1up_global_effSF_MV2c10",
-            "jet_sf_FT_EFF_Eigen_C_0_1up_global_ineffSF_MV2c10",
-        #     "jet_sf_FT_EFF_Eigen_C_1_1down_global_effSF_MV2c10",
-        #     "jet_sf_FT_EFF_Eigen_C_1_1down_global_ineffSF_MV2c10",
-        #     "jet_sf_FT_EFF_Eigen_C_1_1up_global_effSF_MV2c10",
-        #     "jet_sf_FT_EFF_Eigen_C_1_1up_global_ineffSF_MV2c10",
-        #     "jet_sf_FT_EFF_Eigen_C_2_1down_global_effSF_MV2c10",
-        #     "jet_sf_FT_EFF_Eigen_C_2_1down_global_ineffSF_MV2c10",
-        #     "jet_sf_FT_EFF_Eigen_C_2_1up_global_effSF_MV2c10",
-        #     "jet_sf_FT_EFF_Eigen_C_2_1up_global_ineffSF_MV2c10",
-        ),
+            ("jet_ineffSF_Eigen_B_0_1down",  "jet_sf_FT_EFF_Eigen_B_0_1down_global_ineffSF_MV2c10", ),
+            ("jet_ineffSF_Eigen_B_0_1up",  "jet_sf_FT_EFF_Eigen_B_0_1up_global_ineffSF_MV2c10", ),
 
-        "jet_sf_FT_EFF_Eigen_Light": (
-            "jet_sf_NOMINAL_global_ineffSF_MV2c10",            
-            "jet_sf_FT_EFF_Eigen_Light_0_1down_global_effSF_MV2c10",
-            "jet_sf_FT_EFF_Eigen_Light_0_1down_global_ineffSF_MV2c10",
-            "jet_sf_FT_EFF_Eigen_Light_0_1up_global_effSF_MV2c10",
-            "jet_sf_FT_EFF_Eigen_Light_0_1up_global_ineffSF_MV2c10",
-        #     "jet_sf_FT_EFF_Eigen_Light_1_1down_global_effSF_MV2c10",
-        #     "jet_sf_FT_EFF_Eigen_Light_1_1down_global_ineffSF_MV2c10",
-        #     "jet_sf_FT_EFF_Eigen_Light_1_1up_global_effSF_MV2c10",
-        #     "jet_sf_FT_EFF_Eigen_Light_1_1up_global_ineffSF_MV2c10",
-        #     "jet_sf_FT_EFF_Eigen_Light_2_1down_global_effSF_MV2c10",
-        #     "jet_sf_FT_EFF_Eigen_Light_2_1down_global_ineffSF_MV2c10",
-        #     "jet_sf_FT_EFF_Eigen_Light_2_1up_global_effSF_MV2c10",
-        #     "jet_sf_FT_EFF_Eigen_Light_2_1up_global_ineffSF_MV2c10",
-        #     "jet_sf_FT_EFF_Eigen_Light_3_1down_global_effSF_MV2c10",
-        #     "jet_sf_FT_EFF_Eigen_Light_3_1down_global_ineffSF_MV2c10",
-        #     "jet_sf_FT_EFF_Eigen_Light_3_1up_global_effSF_MV2c10",
-        #     "jet_sf_FT_EFF_Eigen_Light_3_1up_global_ineffSF_MV2c10",
-        #     "jet_sf_FT_EFF_Eigen_Light_4_1down_global_effSF_MV2c10",
-        #     "jet_sf_FT_EFF_Eigen_Light_4_1down_global_ineffSF_MV2c10",
-        #     "jet_sf_FT_EFF_Eigen_Light_4_1up_global_effSF_MV2c10",
-        #     "jet_sf_FT_EFF_Eigen_Light_4_1up_global_ineffSF_MV2c10",
-        ),
+            ("jet_ineffSF_Eigen_C_0_1down",  "jet_sf_FT_EFF_Eigen_C_0_1down_global_ineffSF_MV2c10", ),
+            ("jet_ineffSF_Eigen_C_0_1up",  "jet_sf_FT_EFF_Eigen_C_0_1up_global_ineffSF_MV2c10", ),
 
-        "jet_sf_FT_EFF_extrapolation": (
-            "jet_sf_NOMINAL_global_ineffSF_MV2c10",            
-            "jet_sf_FT_EFF_extrapolation_1down_global_effSF_MV2c10",
-            "jet_sf_FT_EFF_extrapolation_1down_global_ineffSF_MV2c10",
-            "jet_sf_FT_EFF_extrapolation_1up_global_effSF_MV2c10",
-            "jet_sf_FT_EFF_extrapolation_1up_global_ineffSF_MV2c10",
-            # "jet_sf_FT_EFF_extrapolation_from_charm_1down_global_effSF_MV2c10",
-            # "jet_sf_FT_EFF_extrapolation_from_charm_1down_global_ineffSF_MV2c10",
-            # "jet_sf_FT_EFF_extrapolation_from_charm_1up_global_effSF_MV2c10",
-            # "jet_sf_FT_EFF_extrapolation_from_charm_1up_global_ineffSF_MV2c10",
-        ),
+            ("jet_ineffSF_Eigen_Light_0_1down",  "jet_sf_FT_EFF_Eigen_Light_0_1down_global_ineffSF_MV2c10", ),
+            ("jet_ineffSF_Eigen_Light_0_1up",  "jet_sf_FT_EFF_Eigen_Light_0_1up_global_ineffSF_MV2c10", ),
+
+            ("jet_ineffSF_extrapolation_1down",  "jet_sf_FT_EFF_extrapolation_1down_global_ineffSF_MV2c10", ),
+            ("jet_ineffSF_extrapolation_1up",  "jet_sf_FT_EFF_extrapolation_1up_global_ineffSF_MV2c10", ),            
+            ),
+
     }  # W_BJET
 
     W_MU = {
         "mu_0_sf_NOMINAL_MuEffSF_TTVA": (
-            W_STR_FMT.format("n_muons", "mu_0_sf_NOMINAL_MuEffSF_TTVA"),
+            W_STR_FMT.format("n_muons", "mu_0_sf_NOMINAL_MuEffSF_TTVA"), #<! NOMINAL 
             
-            W_STR_FMT.format("n_muons", "mu_0_sf_MUON_EFF_TTVA_STAT_1down_MuEffSF_TTVA"),
-            W_STR_FMT.format("n_muons", "mu_0_sf_MUON_EFF_TTVA_STAT_1up_MuEffSF_TTVA"),
+            ("MUON_EFF_TTVA_STAT_1down", W_STR_FMT.format("n_muons", "mu_0_sf_MUON_EFF_TTVA_STAT_1down_MuEffSF_TTVA")),
+            ("MUON_EFF_TTVA_STAT_1up", W_STR_FMT.format("n_muons", "mu_0_sf_MUON_EFF_TTVA_STAT_1up_MuEffSF_TTVA")),
 
-            W_STR_FMT.format("n_muons", "mu_0_sf_MUON_EFF_TTVA_SYS_1down_MuEffSF_TTVA"),
-            W_STR_FMT.format("n_muons", "mu_0_sf_MUON_EFF_TTVA_SYS_1up_MuEffSF_TTVA"),
+            ("MUON_EFF_TTVA_SYS_1down", W_STR_FMT.format("n_muons", "mu_0_sf_MUON_EFF_TTVA_SYS_1down_MuEffSF_TTVA")),
+            ("MUON_EFF_TTVA_SYS_1up", W_STR_FMT.format("n_muons", "mu_0_sf_MUON_EFF_TTVA_SYS_1up_MuEffSF_TTVA")),
 
         ),
 
         "mu_0_sf_NOMINAL_MuEffSF_IsoGradient": (
             W_STR_FMT.format("n_muons", "mu_0_sf_NOMINAL_MuEffSF_IsoGradient"),
 
-            W_STR_FMT.format("n_muons", "mu_0_sf_MUON_EFF_ISO_STAT_1down_MuEffSF_IsoGradient"),
-            W_STR_FMT.format("n_muons", "mu_0_sf_MUON_EFF_ISO_STAT_1up_MuEffSF_IsoGradient"),
+            ("MUON_EFF_ISO_STAT_1down", W_STR_FMT.format("n_muons", "mu_0_sf_MUON_EFF_ISO_STAT_1down_MuEffSF_IsoGradient")),
+            ("MUON_EFF_ISO_STAT_1up", W_STR_FMT.format("n_muons", "mu_0_sf_MUON_EFF_ISO_STAT_1up_MuEffSF_IsoGradient")),
 
-            W_STR_FMT.format("n_muons", "mu_0_sf_MUON_EFF_ISO_SYS_1down_MuEffSF_IsoGradient"),
-            W_STR_FMT.format("n_muons", "mu_0_sf_MUON_EFF_ISO_SYS_1up_MuEffSF_IsoGradient"),
-
+            ("MUON_EFF_ISO_SYS_1down", W_STR_FMT.format("n_muons", "mu_0_sf_MUON_EFF_ISO_SYS_1down_MuEffSF_IsoGradient")),
+            ("MUON_EFF_ISO_SYS_1up", W_STR_FMT.format("n_muons", "mu_0_sf_MUON_EFF_ISO_SYS_1up_MuEffSF_IsoGradient")),
         ),
 
         "mu_0_sf_NOMINAL_MuEffSF_Reco_QualTight": (
             W_STR_FMT.format("n_muons", "mu_0_sf_NOMINAL_MuEffSF_Reco_QualTight"),
 
-            W_STR_FMT.format("n_muons", "mu_0_sf_MUON_EFF_RECO_STAT_1down_MuEffSF_Reco_QualTight"), 
-            W_STR_FMT.format("n_muons", "mu_0_sf_MUON_EFF_RECO_STAT_1up_MuEffSF_Reco_QualTight"), 
+            ("MUON_EFF_RECO_STAT_1down", W_STR_FMT.format("n_muons", "mu_0_sf_MUON_EFF_RECO_STAT_1down_MuEffSF_Reco_QualTight")), 
+            ("MUON_EFF_RECO_STAT_1up", W_STR_FMT.format("n_muons", "mu_0_sf_MUON_EFF_RECO_STAT_1up_MuEffSF_Reco_QualTight")), 
 
-            W_STR_FMT.format("n_muons", "mu_0_sf_MUON_EFF_RECO_SYS_1down_MuEffSF_Reco_QualTight"), 
-            W_STR_FMT.format("n_muons", "mu_0_sf_MUON_EFF_RECO_SYS_1up_MuEffSF_Reco_QualTight"), 
-
+            ("MUON_EFF_RECO_SYS_1down", W_STR_FMT.format("n_muons", "mu_0_sf_MUON_EFF_RECO_SYS_1down_MuEffSF_Reco_QualTight")), 
+            ("MUON_EFF_RECO_SYS_1up", W_STR_FMT.format("n_muons", "mu_0_sf_MUON_EFF_RECO_SYS_1up_MuEffSF_Reco_QualTight")), 
         ),
 
-        # ##FIXME : PROBLEMATIC; TOO SMALL !!
-        # "mu_0_sf_MuEffSF_Trig": (
-        #   W_STR_FMT.format("n_muons", 
-        #     "mu_0_sf_NOMINAL_MuEffSF_HLT_mu24_ivarmedium_QualTight_IsoNone*mu_0_sf_NOMINAL_MuEffSF_HLT_mu26_imedium_QualTight_IsoNone*mu_0_sf_NOMINAL_MuEffSF_HLT_mu40_QualTight_IsoNone"),
+        "mu_0_sf_MuEffSF_Trig": (
+          W_STR_FMT.format("n_muons", 
+            "mu_0_sf_NOMINAL_MuEffSF_HLT_mu26_ivarmedium_QualTight_IsoNone"),
 
-        #   W_STR_FMT.format("n_muons", 
-        #     "mu_0_sf_MUON_EFF_TrigSystUncertainty_1down_MuEffSF_HLT_mu24_imedium_QualTight_IsoNone"
-        #     "*mu_0_sf_MUON_EFF_TrigSystUncertainty_1down_MuEffSF_HLT_mu50_QualTight_IsoNone"),
-        #   W_STR_FMT.format("n_muons", 
-        #     "mu_0_sf_MUON_EFF_TrigSystUncertainty_1up_MuEffSF_HLT_mu24_imedium_QualTight_IsoNone"
-        #     "*mu_0_sf_MUON_EFF_TrigSystUncertainty_1up_MuEffSF_HLT_mu50_QualTight_IsoNone"),
-
-        #   W_STR_FMT.format("n_muons", 
-        #     "mu_0_sf_MUON_EFF_TrigStatUncertainty_1down_MuEffSF_HLT_mu24_imedium_QualTight_IsoNone"
-        #     "*mu_0_sf_MUON_EFF_TrigStatUncertainty_1down_MuEffSF_HLT_mu50_QualTight_IsoNone"),
-        #   W_STR_FMT.format("n_muons", 
-        #     "mu_0_sf_MUON_EFF_TrigStatUncertainty_1up_MuEffSF_HLT_mu24_imedium_QualTight_IsoNone"
-        #     "*mu_0_sf_MUON_EFF_TrigStatUncertainty_1up_MuEffSF_HLT_mu50_QualTight_IsoNone"),
-        # ),
-
+         ("MUON_EFF_TRIG_SYS_1down",  W_STR_FMT.format("n_muons", 
+            "mu_0_sf_MUON_EFF_TrigSystUncertainty_1down_MuEffSF_HLT_mu26_ivarmedium_QualTight_IsoNone")),
+         ("MUON_EFF_TRIG_SYS_1up",  W_STR_FMT.format("n_muons", 
+            "mu_0_sf_MUON_EFF_TrigSystUncertainty_1up_MuEffSF_HLT_mu26_ivarmedium_QualTight_IsoNone")),
+        )
     }  # W_MU
 
     W_EL = {
         "el_0_sf_NOMINAL_EleEffSF_offline_RecoTrk": (
             W_STR_FMT.format("n_electrons", "el_0_sf_NOMINAL_EleEffSF_offline_RecoTrk"),
 
-            W_STR_FMT.format("n_electrons", "el_0_sf_EL_EFF_Reco_TOTAL_1NPCOR_PLUS_UNCOR_1down_EleEffSF_offline_RecoTrk"),
-            W_STR_FMT.format("n_electrons", "el_0_sf_EL_EFF_Reco_TOTAL_1NPCOR_PLUS_UNCOR_1up_EleEffSF_offline_RecoTrk"),
+            ("EL_EFF_RECO_TOTAL_1down", W_STR_FMT.format("n_electrons", "el_0_sf_EL_EFF_Reco_TOTAL_1NPCOR_PLUS_UNCOR_1down_EleEffSF_offline_RecoTrk")),
+            ("EL_EFF_RECO_TOTAL_1up", W_STR_FMT.format("n_electrons", "el_0_sf_EL_EFF_Reco_TOTAL_1NPCOR_PLUS_UNCOR_1up_EleEffSF_offline_RecoTrk")),
         ),
 
         "el_0_sf_NOMINAL_EleEffSF_Isolation_TightLLH_d0z0_v13_FCTight": (
             W_STR_FMT.format(
                 "n_electrons", "el_0_sf_NOMINAL_EleEffSF_Isolation_TightLLH_d0z0_v13_FCTight"),
 
-            W_STR_FMT.format(
-                "n_electrons","el_0_sf_EL_EFF_Iso_TOTAL_1NPCOR_PLUS_UNCOR_1down_EleEffSF_Isolation_TightLLH_d0z0_v13_FCTight"),
-            W_STR_FMT.format(
-                "n_electrons","el_0_sf_EL_EFF_Iso_TOTAL_1NPCOR_PLUS_UNCOR_1up_EleEffSF_Isolation_TightLLH_d0z0_v13_FCTight"),
+            ("EL_EFF_ISO_TOTAL_1down", W_STR_FMT.format("n_electrons","el_0_sf_EL_EFF_Iso_TOTAL_1NPCOR_PLUS_UNCOR_1down_EleEffSF_Isolation_TightLLH_d0z0_v13_FCTight")),
+            ("EL_EFF_ISO_TOTAL_1up", W_STR_FMT.format("n_electrons","el_0_sf_EL_EFF_Iso_TOTAL_1NPCOR_PLUS_UNCOR_1up_EleEffSF_Isolation_TightLLH_d0z0_v13_FCTight")),
 
         ),
 
@@ -273,35 +180,35 @@ class Weight(object):
             W_STR_FMT.format(
                 "n_electrons", "el_0_sf_NOMINAL_EleEffSF_offline_TightLLH_d0z0_v13"),
 
-            W_STR_FMT.format(
-                "n_electrons","el_0_sf_EL_EFF_ID_TOTAL_1NPCOR_PLUS_UNCOR_1down_EleEffSF_offline_TightLLH_d0z0_v13"),
-            W_STR_FMT.format(
-                "n_electrons","el_0_sf_EL_EFF_ID_TOTAL_1NPCOR_PLUS_UNCOR_1up_EleEffSF_offline_TightLLH_d0z0_v13"),
+            ("EL_EFF_ID_TOTAL_1down", W_STR_FMT.format("n_electrons","el_0_sf_EL_EFF_ID_TOTAL_1NPCOR_PLUS_UNCOR_1down_EleEffSF_offline_TightLLH_d0z0_v13")),
+            ("EL_EFF_ID_TOTAL_1up", W_STR_FMT.format("n_electrons","el_0_sf_EL_EFF_ID_TOTAL_1NPCOR_PLUS_UNCOR_1up_EleEffSF_offline_TightLLH_d0z0_v13")),
         ),
 
         "el_0_sf_EleEffSF_Trig": (
             W_STR_FMT.format(
-                "n_electrons", "el_0_sf_NOMINAL_EleEffSF_e24_lhmedium_L1EM20VH_OR_e60_lhmedium_OR_e120_lhloose_MediumLLH_d0z0_v13_isolFCTight_2015"
-                    "*el_0_sf_NOMINAL_EleEffSF_e26_lhtight_nod0_ivarloose_OR_e60_lhmedium_nod0_OR_e140_lhloose_nod0_TightLLH_d0z0_v13_isolFCTight_2016"
-                    "*el_0_sf_NOMINAL_EleEffSF_e26_lhtight_nod0_ivarloose_OR_e60_lhmedium_nod0_OR_e140_lhloose_nod0_TightLLH_d0z0_v13_isolFCTight_2017"
+                "n_electrons", 
+                #"el_0_sf_NOMINAL_EleEffSF_e24_lhmedium_L1EM20VH_OR_e60_lhmedium_OR_e120_lhloose_MediumLLH_d0z0_v13_isolFCTight_2015*"
+                "el_0_sf_NOMINAL_EleEffSF_e26_lhtight_nod0_ivarloose_OR_e60_lhmedium_nod0_OR_e140_lhloose_nod0_TightLLH_d0z0_v13_isolFCTight_2016"
+                    # "*el_0_sf_NOMINAL_EleEffSF_e26_lhtight_nod0_ivarloose_OR_e60_lhmedium_nod0_OR_e140_lhloose_nod0_TightLLH_d0z0_v13_isolFCTight_2017"
                     ),
 
-            W_STR_FMT.format(
-                "n_electrons", "el_0_sf_EL_EFF_Trigger_TOTAL_1NPCOR_PLUS_UNCOR_1down_EleEffSF_e24_lhmedium_L1EM20VH_OR_e60_lhmedium_OR_e120_lhloose_MediumLLH_d0z0_v13_isolFCTight_2015"
-                "*el_0_sf_EL_EFF_Trigger_TOTAL_1NPCOR_PLUS_UNCOR_1down_EleEffSF_e26_lhtight_nod0_ivarloose_OR_e60_lhmedium_nod0_OR_e140_lhloose_nod0_TightLLH_d0z0_v13_isolFCTight_2016"
-                "*el_0_sf_EL_EFF_Trigger_TOTAL_1NPCOR_PLUS_UNCOR_1down_EleEffSF_e26_lhtight_nod0_ivarloose_OR_e60_lhmedium_nod0_OR_e140_lhloose_nod0_TightLLH_d0z0_v13_isolGradient_2017"),
+            ("EL_EFF_TRIGGER_TOTAL_1down", W_STR_FMT.format(
+                "n_electrons",                 "el_0_sf_EL_EFF_Trigger_TOTAL_1NPCOR_PLUS_UNCOR_1down_EleEffSF_e26_lhtight_nod0_ivarloose_OR_e60_lhmedium_nod0_OR_e140_lhloose_nod0_TightLLH_d0z0_v13_isolFCTight_2016")),
 
-            W_STR_FMT.format(
-                "n_electrons", "el_0_sf_EL_EFF_Trigger_TOTAL_1NPCOR_PLUS_UNCOR_1up_EleEffSF_e24_lhmedium_L1EM20VH_OR_e60_lhmedium_OR_e120_lhloose_MediumLLH_d0z0_v13_isolFCTight_2015"
-                "*el_0_sf_EL_EFF_Trigger_TOTAL_1NPCOR_PLUS_UNCOR_1up_EleEffSF_e26_lhtight_nod0_ivarloose_OR_e60_lhmedium_nod0_OR_e140_lhloose_nod0_TightLLH_d0z0_v13_isolFCTight_2016"
-                "*el_0_sf_EL_EFF_Trigger_TOTAL_1NPCOR_PLUS_UNCOR_1up_EleEffSF_e26_lhtight_nod0_ivarloose_OR_e60_lhmedium_nod0_OR_e140_lhloose_nod0_TightLLH_d0z0_v13_isolGradient_2017"),
+            ("EL_EFF_TRIGGER_TOTAL_1up", W_STR_FMT.format(
+                "n_electrons",                 "*el_0_sf_EL_EFF_Trigger_TOTAL_1NPCOR_PLUS_UNCOR_1up_EleEffSF_e26_lhtight_nod0_ivarloose_OR_e60_lhmedium_nod0_OR_e140_lhloose_nod0_TightLLH_d0z0_v13_isolFCTight_2016")),
         )
     }
 
     ## met trigger efficiency  (apply overall lumi weighted or apply it per year)
     W_TRIGGER_TAUJET = {
         "metTrigEff": (
-            "metTrigEff(met_p4->Et(), 1000, NOMINAL_pileup_random_run_number)",
+            "metTrigEff(met_p4->Et(), 1000, NOMINAL_pileup_random_run_number)", #<! NOMINAL
+            ("metTrigEff_MEDIUM_TAU", "metTrigEff(met_p4->Et(), 1001, NOMINAL_pileup_random_run_number)"),
+            ("metTrigEff_TIGHT_TAU", "metTrigEff(met_p4->Et(), 1002, NOMINAL_pileup_random_run_number)"),
+            ("metTrigEff_MEDIUM_EL", "metTrigEff(met_p4->Et(), 1003, NOMINAL_pileup_random_run_number)"),
+            ("metTrigEff_TIGHT_EL", "metTrigEff(met_p4->Et(), 1004, NOMINAL_pileup_random_run_number)"),
+            ("metTrigEff_THREE_JETS",  "metTrigEff(met_p4->Et(), 1005, NOMINAL_pileup_random_run_number)"),
             # "metTrigEff(met_p4->Et(), 1000)",
         ),
     }

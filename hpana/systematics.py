@@ -205,10 +205,10 @@ class Systematic(object):
             "EG_RESOLUTION_ALL_1up",
         ),
 
-        "EG_SCALE_AF2":(
-            "EG_SCALE_AF2_1down",
-            "EG_SCALE_AF2_1up",
-        ),
+        # "EG_SCALE_AF2":(
+        #     "EG_SCALE_AF2_1down",
+        #     "EG_SCALE_AF2_1up",
+        # ),
 
         "EG_SCALE_ALL":(
             "EG_SCALE_ALL_1down",
@@ -253,11 +253,15 @@ class Systematic(object):
                 if len(var_weights) < 1:
                     continue
 
-                # FIX ME: better solution ?
                 syst_vars = []
                 for vw in var_weights:
-                    vname = vw.split("*")[-1].replace(")", "")
-                    syst_vars += [(Variation(vname, title="(%s)/(%s)" %(vw, nom_w), _type="WEIGHT")) ]
+                    if isinstance(vw, (list, tuple)):
+                        vname = vw[0]
+                        vtitle = vw[1]
+                    else:
+                        vname = vw
+                        vtitle = vw
+                    syst_vars += [(Variation(vname, title="(%s)/(%s)" %(vtitle, nom_w), _type="WEIGHT")) ]
 
                 systematics += [cls(weight.name, _type="WEIGHT", variations=syst_vars)]
 

@@ -205,13 +205,12 @@ class Data(Sample):
         categories = []
         cuts_list = []
         for name, cut in cuts.iteritems():
-            if name.upper() == "TRIGGER":
-                cut = self.config.trigger(dtype="DATA")
             cuts_list += [cut]
             categories.append(
-                Category(name, cuts_list=cuts_list, mc_camp=self.config.mc_camp))
+                Category(name, cuts_list=cuts_list, tauid=None, truth_tau=None, mc_camp=self.config.mc_camp))
 
         field = kwargs.pop("field", self.config.variables[0])
+        kwargs["trigger"] = None
         hists = self.hists(categories=categories, fields=[field], **kwargs)
 
         return hists

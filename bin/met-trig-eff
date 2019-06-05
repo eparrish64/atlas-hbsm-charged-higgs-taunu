@@ -49,7 +49,7 @@ ROOT.Math.MinimizerOptions.SetDefaultMinimizer("Minuit2")
 ## - - consts
 ##------------------------------------------------------------------------------------
 ERR_FUNC_STR = "{0}*(1 + TMath::Erf((met_et - {1})/{2}))+{3}" #<! @NOTE KEEP x FOR DIRECT PLOTTING ROOT CAN"T HANDLE ANYTHING ELSE
-MET_ET.bins = range(0, 200, 20) + range(200, 400, 50)
+MET_ET.bins = range(0, 130, 20) + [150, 180, 250, 500]
 COLORS = [ROOT.kRed, ROOT.kBlue, ROOT.kGreen, ROOT.kMagenta, ROOT.kOrange, ROOT.kYellow]
 
 ## - - update lumi blocks
@@ -216,7 +216,7 @@ def fit_eff(eff_hists,
                 err_function.SetParameters(0.5, 100, 50, 0)
                 
                 ## - - fit and retrieve the function 
-                hist.Fit(err_function, "EM")
+                hist.Fit(err_function, "WW") #<! ignore error bars
                 fit_func = hist.GetFunction("erf")
                 params = [fit_func.GetParameter(n) for n in range(num_params)]
                 fit_params[year][trigger][variation] = "(%s)"%ERR_FUNC_STR.format(*params)
@@ -300,7 +300,7 @@ def draw_fits(fit_funcs, fit_params,
                 if n==0:
                     hist.GetXaxis().SetTitle(MET_ET.title)
                     hist.GetYaxis().SetTitle("E^{mis}_{T} Trigger Efficiency")
-                    hist.Draw("E1")
+                    hist.Draw("LPE1")
                     fit_func.Draw("PSAME")
                     for label in lables:
                         label.Draw("SAME")
@@ -310,7 +310,7 @@ def draw_fits(fit_funcs, fit_params,
                 else:
                     hist.GetXaxis().SetTitle(MET_ET.title)
                     hist.GetYaxis().SetTitle("E^{mis}_{T} Trigger Efficiency")
-                    hist.Draw("PE1")
+                    hist.Draw("LPE1")
                     fit_func.Draw("P SAME")
                     legend.AddEntry(fit_func, variation.label, "LP")
 

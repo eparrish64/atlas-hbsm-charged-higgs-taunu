@@ -132,7 +132,7 @@ def fake_sources(samples, category, ftypes={}, tauid=None, antitau=None):
 ##--------------------------------------------------------------------------
 def get_cr_ffs(hist_sets, 
                 control_regions=[], 
-                tau_jet_bdt_score_trans_wps=[], 
+                tau_jet_bdt_score_trans_wps={"NOMINAL":0.02, "1up": 0.01, "1down": 0.03}, 
                 n_charged_tracks=[], 
                 subtract_mc=True,
                 cache_file=None,
@@ -192,10 +192,22 @@ def get_cr_ffs(hist_sets,
                 
         data_mc_tau_h = data_tau_hsum.Clone()
         data_mc_antitau_h = data_antitau_hsum.Clone()
+
+        ## variations for MC subtraction (0.5, 1.5)
+        data_mc_mcsub05_tau_h = data_tau_hsum.Clone()
+        data_mc_mcsub05_antitau_h = data_antitau_hsum.Clone()
+        data_mc_mcsub15_tau_h = data_tau_hsum.Clone()
+        data_mc_mcsub15_antitau_h = data_antitau_hsum.Clone()
+
         # - - subtract MC from DATA
         if subtract_mc:
             data_mc_tau_h.Add(mc_tau_hsum, -1)
             data_mc_antitau_h.Add(mc_antitau_hsum, -1)
+
+            data_mc_mcsub05_tau_h.Add(mc_tau_hsum, -0.5)
+            data_mc_mcsub05_antitau_h.Add(mc_antitau_hsum, -0.5)
+            data_mc_mcsub15_tau_h.Add(mc_tau_hsum, -1.5)
+            data_mc_mcsub15_antitau_h.Add(mc_antitau_hsum, -1.5)
         
         log.info("Region:{}; TAU events; DATA: {}, MC: {}".format(cr_name,
             data_tau_hsum.Integral(), mc_tau_hsum.Integral() if subtract_mc else "NAN") )
@@ -204,7 +216,13 @@ def get_cr_ffs(hist_sets,
 
         htmp_tau = data_mc_tau_h.Clone()
         htmp_antitau = data_mc_antitau_h.Clone()
+
+        htmp_tau_mcsub05 = data_mc_mcsub05_tau_h.Clone()
+        htmp_antitau_mcsub05 = data_mc_mcsub05_antitau_h.Clone()
+        htmp_tau_mcsub15 = data_mc_mcsub15_tau_h.Clone()
+        htmp_antitau_mcsub15 = data_mc_mcsub15_antitau_h.Clone()
         
+
         # - - project along X and Y to get the bins
         htmp_X = htmp_antitau.ProjectionX().Clone()
         htmp_Y = htmp_antitau.ProjectionY().Clone()
@@ -237,12 +255,19 @@ def get_cr_ffs(hist_sets,
             canvas.Close()
         
         # - - gather hists per tau pT and ntracks bin and also tau_jet_bdt_score WPs
-        for jbs_n, jbs_wp in enumerate(tau_jet_bdt_score_trans_wps):
-            jkey = "tauJetBDT_0%i"%(100*jbs_wp)
+        for jkey, jbs_wp in tau_jet_bdt_score_trans_wps.iteritems():
+            # jkey = "tauJetBDT_0%i"%(100*jbs_wp)
             ffs_dict[cr_name][jkey] = {}
+            if jkey=="NOMINAL" and subtract_mc:
+                ffs_dict[cr_name]["MCSubt_1up"] = {}
+                ffs_dict[cr_name]["MCSubt_1down"] = {}
+
             for itk_n, itk in enumerate(n_charged_tracks):
                 tkey = "%i"%itk
                 ffs_dict[cr_name][jkey][tkey]= {}
+                if jkey=="NOMINAL" and subtract_mc:
+                    ffs_dict[cr_name]["MCSubt_1up"][tkey] = {}
+                    ffs_dict[cr_name]["MCSubt_1down"][tkey] = {}
                 
                 # - - keep jet BDT score along X (only a lower cut)
                 x_low = htmp_X.FindBin(jbs_wp)
@@ -265,9 +290,35 @@ def get_cr_ffs(hist_sets,
                         log.warning("{} bin for antitau is empty, setting tau/antitau to 1!".format(pkey))
                         tau_antitau_ratio = 1.
                     else:
-                        tau_antitau_ratio = "%.6f"%(tau_bin_cont/float(antitau_bin_cont))
+                        tau_antitau_ratio = "%.6f"%(tau_bin_cont/float(antitau_bin_cont))                    
                     ffs_dict[cr_name][jkey][tkey][pkey] = tau_antitau_ratio
                     
+                    ##  MC subtraction variations
+                    if jkey=="NOMINAL" and subtract_mc:
+                        tau_mcsub05_bin_cont = htmp_tau_mcsub05.Integral(x_low, x_high, y_low, y_high, z_low, z_high)
+                        antitau_mcsub05_bin_cont = htmp_antitau_mcsub05.Integral(x_low, x_high, y_low, y_high, z_low, z_high)
+                        if antitau_mcsub05_bin_cont==0:
+                            log.debug("{} bin for antitau is empty, setting tau/antitau to 1 for non-empty tau bin".format(pkey))
+                            if tau_mcsub05_bin_cont==0:
+                                tau_antitau_ratio_mcsub05 = 0.
+                            else:
+                                tau_antitau_ratio_mcsub05 = 1. 
+                        else:
+                            tau_antitau_ratio_mcsub05 = "%.4f"%(tau_mcsub05_bin_cont/float(antitau_mcsub05_bin_cont))                    
+                        ffs_dict[cr_name]["MCSubt_1up"][tkey][pkey] = tau_antitau_ratio_mcsub05
+
+                        tau_mcsub15_bin_cont = htmp_tau_mcsub15.Integral(x_low, x_high, y_low, y_high, z_low, z_high)
+                        antitau_mcsub15_bin_cont = htmp_antitau_mcsub15.Integral(x_low, x_high, y_low, y_high, z_low, z_high)
+                        if antitau_mcsub15_bin_cont==0:
+                            log.debug("{} bin for antitau is empty, setting tau/antitau to 1 for non-empty tau bin".format(pkey))
+                            if tau_mcsub15_bin_cont==0:
+                                tau_antitau_ratio_mcsub15 = 0.
+                            else:
+                                tau_antitau_ratio_mcsub15 = 1. 
+                        else:
+                            tau_antitau_ratio_mcsub15 = "%.4f"%(tau_mcsub15_bin_cont/float(antitau_mcsub15_bin_cont))                    
+                        ffs_dict[cr_name]["MCSubt_1down"][tkey][pkey] = tau_antitau_ratio_mcsub15
+
                     log.debug("bins: {}".format((x_low, x_high, y_low, y_high, z_low, z_high)))
                     log.debug("ratio in << {}  >> bin: tau:{}, antitau: {}, ratio: {} ".format(
                         (jkey, tkey, pkey), tau_bin_cont, antitau_bin_cont, tau_antitau_ratio))
@@ -300,11 +351,10 @@ def get_cr_ffs(hist_sets,
         with open(cxx_file, "a") as cxx_cache:
             cxx_cache.write("#include <iostream>\n")
             for cr in [c.name for c in control_regions]:
-                for jbs_n, jbs_wp in enumerate(tau_jet_bdt_score_trans_wps):
-                    jkey = "tauJetBDT_0%i"%(100*jbs_wp)
-                    cxx_cache.write("//! tau_0_jet_bdt_score_trans lower cut ({})\n".format(jbs_wp))
+                for jkey in ffs_dict[cr].keys():
+                    cxx_cache.write("//! {} \n".format(jkey))
                     cxx_cache.write(
-                        "float GetFF0{0}_{1}(float pt, int nTracks){{\n".format(int(100*jbs_wp), cr) )
+                        "float GetFF_{0}_{1}(float pt, int nTracks){{\n".format(cr, jkey) )
                     for itk in n_charged_tracks:
                         tkey = "%i"%itk
                         cxx_cache.write("\t if(nTracks==%i){\n"%itk)
@@ -380,7 +430,7 @@ def prep_ff_hists(ffs_hists,
 ##--------------------------------------------------------------------------
 ## - - organize the hists for calcualting FFs 
 ##--------------------------------------------------------------------------
-def fit_alpha(cr_hists, target_hists,
+def fit_alpha(cr_hists, target_hists, regions,
               ntracks=[1, 3],
               fitting_bins={},
               shape_vars=[],
@@ -407,16 +457,16 @@ def fit_alpha(cr_hists, target_hists,
 
     """
     ## - - - - fit regions 
-    cr_regions = []
-    target_regions = []
-    for hset in cr_hists:
-        if not hset.category in cr_regions:
-            cr_regions.append(hset.category)
-    for hset in target_hists:
-        if not hset.category in (target_regions + cr_regions):
-            target_regions.append(hset.category)
+    # cr_regions = []
+    # target_regions = []
+    # for hset in cr_hists:
+    #     if not hset.category in cr_regions:
+    #         cr_regions.append(hset.category)
+    # for hset in target_hists:
+    #     if not hset.category in (target_regions + cr_regions):
+    #         target_regions.append(hset.category)
             
-    regions = cr_regions + target_regions
+    # regions = cr_regions + target_regions
     
     # - - - - output containers
     chi2s = {}
@@ -515,11 +565,11 @@ def fit_alpha(cr_hists, target_hists,
                 
                 # - - - - keep alpha corresponding to min Chi2 distribution        
                 if not hs.category in alphas[tkey][pkey]:
-                    alphas[tkey][pkey][hs.category] = {"NOMINAL":0, "UP":0, "DOWN":0}
+                    alphas[tkey][pkey][hs.category] = {"NOMINAL":0, "1up":0, "1down":0}
                     
                 alphas[tkey][pkey][hs.category]["NOMINAL"] = alpha
-                alphas[tkey][pkey][hs.category]["UP"] = alpha + err_up
-                alphas[tkey][pkey][hs.category]["DOWN"] = alpha - err_down
+                alphas[tkey][pkey][hs.category]["1up"] = alpha + err_up
+                alphas[tkey][pkey][hs.category]["1down"] = alpha - err_down
                 
                 # - - - - fit to the target hist (P_target = aP_mj + (1-a)P_wj) 
                 alpha_mj_hist = mj_hist.Clone()
@@ -543,19 +593,19 @@ def fit_alpha(cr_hists, target_hists,
         cxx_file = cache.replace(".yml", ".cxx")
         with open(cxx_file, "w") as cxx_cache:
             cxx_cache.write("#include <iostream>\n")
-            for syst in ["NOMINAL", "UP", "DOWN"]:
+            for syst in ["NOMINAL", "1up", "1down"]:
                 cxx_cache.write(
                     "float GetFFCombined_%s(float pt, int ntracks, float FF_CR_MULTIJET, float FF_CR_WJETS, int index){\n"%syst)
                 for index, cat in enumerate(regions):
-                    cxx_cache.write("\t //! Combined FFs for ({}) target region\n".format(cat))
-                    cxx_cache.write("\t if (index==%i) {\n"%(QCD.FF_INDICIES[cat]))
+                    cxx_cache.write("\t //! Combined FFs for ({}) target region\n".format(cat.name))
+                    cxx_cache.write("\t if (index==%i) {\n"%(cat.ff_index))
 
                     ## special categories 
-                    if cat=="DILEP_BTAG": #<! 99 % ttbar! no fakes 
+                    if cat.name=="DILEP_BTAG": #<! 99 % ttbar! no fakes 
                         cxx_cache.write("\t return 0;\n\t}\n")
                         continue
-                    if cat in ["FF_CR_MULTIJET", "FF_CR_WJETS"]:
-                        cxx_cache.write("\t return %s;\n\t}\n"%cat)
+                    if cat.name in ["FF_CR_MULTIJET", "FF_CR_WJETS"]:
+                        cxx_cache.write("\t return %s;\n\t}\n"%cat.name)
                         continue
 
                     for itk in ntracks:
@@ -563,10 +613,10 @@ def fit_alpha(cr_hists, target_hists,
                         cxx_cache.write("\t\t if(ntracks==%i){\n"%itk)
                         for pT in fitting_bins[tkey][2:]:
                             pkey = "%i"%pT
-                            if not cat in alphas[tkey][pkey]:
-                                log.warning("alpha for %s category is missing; skipping"%cat)
+                            if not cat.name in alphas[tkey][pkey]:
+                                log.warning("alpha for %s category is missing; skipping"%cat.name)
                                 continue
-                            alpha = alphas[tkey][pkey][cat][syst]
+                            alpha = alphas[tkey][pkey][cat.name][syst]
                             cxx_cache.write("\t\t\t if(pt < {0}) return ({1}*FF_CR_MULTIJET) + ({2}*FF_CR_WJETS);\n".format(pT, alpha, 1 - alpha ))
                         cxx_cache.write("\t\t\t else return 0;\n")                                
                         cxx_cache.write("\t\t }\n")
@@ -582,7 +632,7 @@ def fit_alpha(cr_hists, target_hists,
     if validation_plots:
         log.info("processing validation plots")
         validate_template_fit(cr_hists_dict, target_hists_dict, chi2s,
-                              ntracks=ntracks, fitting_bins=fitting_bins, target_regions=target_regions, shape_vars=shape_vars, pdir=pdir)
+                              ntracks=ntracks, fitting_bins=fitting_bins, target_regions=regions, shape_vars=shape_vars, pdir=pdir)
             
     return alphas
 
@@ -591,7 +641,7 @@ def fit_alpha(cr_hists, target_hists,
 ## - - control regions Fake Factors plotting funtions 
 ##--------------------------------------------------------------------------
 def plot_cr_ffs(cr_ffs, cr_labels={},
-                jet_bdt_key="tauJetBDT_02", suffix="", pdir="", pname="FFs_inclusive_tracks_pT.png",
+                jet_bdt_key="NOMINAL", suffix="", pdir="", pname="FFs_inclusive_tracks_pT.png",
                 logy=True, logx=True, formats=[".png"], data_info="#sqrt{13} TeV",
                 colors=[ROOT.kBlack, ROOT.kGreen, ROOT.kRed, ROOT.kBlue,]):
     """
@@ -613,12 +663,19 @@ def plot_cr_ffs(cr_ffs, cr_labels={},
                 ff = float(cr_ffs[cr][jet_bdt_key][itk]["%i"%pt])
 
                 ## syst error (variation of LOOSE TAU)
-                ff_up = float(cr_ffs[cr][jet_bdt_key.replace("02", "01")][itk]["%i"%pt])
-                ff_dn = float(cr_ffs[cr][jet_bdt_key.replace("02", "03")][itk]["%i"%pt])
+                ff_up = float(cr_ffs[cr][jet_bdt_key.replace("NOMINAL", "BDT_1up")][itk]["%i"%pt])
+                ff_dn = float(cr_ffs[cr][jet_bdt_key.replace("NOMINAL", "BDT_1down")][itk]["%i"%pt])
+
+                ## syst error (varaition of MC subtraction) 
+                ff_mcsubt_up = float(cr_ffs[cr][jet_bdt_key.replace("NOMINAL", "MCSubt_1up")][itk]["%i"%pt])
+                ff_mcsubt_dn = float(cr_ffs[cr][jet_bdt_key.replace("NOMINAL", "MCSubt_1down")][itk]["%i"%pt])
+
+                up = math.sqrt((ff-ff_up)**2 + (ff-ff_mcsubt_up)**2)
+                dn = math.sqrt((ff-ff_dn)**2 + (ff-ff_mcsubt_dn)**2)
 
                 x_dumm = (bin_keys[n]+bin_keys[n+1])/2. #<! just to make plots look nicer 
                 e_graph.SetPoint(n, x_dumm, ff)
-                e_graph.SetPointError(n, x_dumm-pt, x_dumm-pt, abs(ff-ff_dn), abs(ff-ff_up))
+                e_graph.SetPointError(n, x_dumm-pt, x_dumm-pt, dn, up)
                 
             graphs += [e_graph]
             label = cr_labels[cr] if cr_labels else cr
@@ -888,8 +945,8 @@ def plot_alpha(alphas, cr_ffs,
                         alpha_up = alpha_down = 0.001                    
                     else:
                         alpha = alphas[itk][pkey][cat.name]["NOMINAL"]
-                        alpha_up = abs(alpha-alphas[itk][pkey][cat.name]["UP"])
-                        alpha_down = abs(alpha-alphas[itk][pkey][cat.name]["DOWN"])
+                        alpha_up = abs(alpha-alphas[itk][pkey][cat.name]["1up"])
+                        alpha_down = abs(alpha-alphas[itk][pkey][cat.name]["1down"])
 
                 ## symmetric error (too large errors --> not beautiful plots --> drop them from plots)
                 symt_alpha_err = 0.001 # max(alpha_up, alpha_down)
@@ -897,14 +954,14 @@ def plot_alpha(alphas, cr_ffs,
                 #     symt_alpha_err = 0.434*symt_alpha_err/alpha 
 
                 ## - - ff_com = alpha * ff_mj + (1-alpha)ff_wj
-                ff_mj_nom = float(cr_ffs["FF_CR_MULTIJET"]["tauJetBDT_02"][itk][pkey])
-                ff_wj_nom = float(cr_ffs["FF_CR_WJETS"]["tauJetBDT_02"][itk][pkey])
+                ff_mj_nom = float(cr_ffs["FF_CR_MULTIJET"]["NOMINAL"][itk][pkey])
+                ff_wj_nom = float(cr_ffs["FF_CR_WJETS"]["NOMINAL"][itk][pkey])
 
-                ff_mj_up = abs(ff_mj_nom - float(cr_ffs["FF_CR_MULTIJET"]["tauJetBDT_01"][itk][pkey]))
-                ff_wj_up = abs(ff_wj_nom - float(cr_ffs["FF_CR_WJETS"]["tauJetBDT_01"][itk][pkey]))
+                ff_mj_up = abs(ff_mj_nom - float(cr_ffs["FF_CR_MULTIJET"]["BDT_1up"][itk][pkey]))
+                ff_wj_up = abs(ff_wj_nom - float(cr_ffs["FF_CR_WJETS"]["BDT_1up"][itk][pkey]))
 
-                ff_mj_down = abs(ff_mj_nom - float(cr_ffs["FF_CR_MULTIJET"]["tauJetBDT_03"][itk][pkey]))
-                ff_wj_down = abs(ff_wj_nom - float(cr_ffs["FF_CR_WJETS"]["tauJetBDT_03"][itk][pkey]))
+                ff_mj_down = abs(ff_mj_nom - float(cr_ffs["FF_CR_MULTIJET"]["BDT_1down"][itk][pkey]))
+                ff_wj_down = abs(ff_wj_nom - float(cr_ffs["FF_CR_WJETS"]["BDT_1down"][itk][pkey]))
 
                 ## error propagation 
                 ff = alpha*ff_mj_nom + (1-alpha)*ff_wj_nom 
@@ -945,7 +1002,7 @@ def plot_alpha(alphas, cr_ffs,
         ah.GetYaxis().SetTitle("#alpha_{MJ}")
         ah.GetXaxis().SetTitle("p^{#tau}_{T} [GeV]")
         ah.GetXaxis().SetRangeUser(30, 4000)
-        ah.GetYaxis().SetRangeUser(-1, 3) 
+        ah.GetYaxis().SetRangeUser(-1, 6) 
             
     for label in labels:
         label.Draw("SAME")
@@ -989,3 +1046,157 @@ def plot_alpha(alphas, cr_ffs,
     
     canvas.Clear()
     canvas.Close()
+
+
+##--------------------------------------------------------------------------
+## - - correct upsilon
+##--------------------------------------------------------------------------
+def correct_upsilon(hists, cr_regions, 
+    cache="UpsilonCorrection.cxx", outdir="./", formats=[".png", ".pdf", ".eps"]):
+    """ MED tau and anti-tau have different upsilon shapes --> need 
+    ## a correction for QCD fakes estimated with FFs method.
+    ## Smirnov transform: https://en.wikipedia.org/wiki/Inverse_transform_sampling
+    ## Y_corr = CDF^-1 (CDF_tau(Y))
+    """
+    
+    ## prep outdir 
+    os.system("mkdir -p %s"%outdir)
+
+    ## tmp containers
+    cdfs = {}
+    fits = {}
+    upsilon_corrected = {}
+    ufile = open(cache, "w")
+    ufile.write("//! Upsilon Correction Macro\n")
+
+    canvas = ROOT.TCanvas("c", "c", 800, 600)
+    legend = ROOT.TLegend(0.75, 0.8, 0.9, 0.9)        
+    cdf_leg = ROOT.TLegend(0.7, 0.3, 0.9, 0.4)
+    labels = label_plot(canvas, data_info="139 fb^{-1}; #sqrt{13} TeV")
+    for cr in cr_regions:
+        if not cr.name in cdfs:
+            cdfs[cr.name] = {"TAU":  [], "ANTITAU": []}
+        if not cr.name in fits:
+            fits[cr.name] = {"TAU":  [], "ANTITAU": []}
+        if not cr.name in upsilon_corrected:
+            upsilon_corrected[cr.name] = []
+
+        tau_hist = filter(lambda h: h.category==cr.name+"_TAU", hists)[0].hist.Clone()
+        antitau_hist = filter(lambda h: h.category==cr.name+"_ANTITAU", hists)[0].hist.Clone()
+        
+        tau_hist.Scale(1./tau_hist.Integral())
+        antitau_hist.Scale(1./antitau_hist.Integral())
+
+        tau_hist.SetMarkerColor(ROOT.kBlack)
+        antitau_hist.SetMarkerColor(ROOT.kRed)
+        tau_hist.SetLineColor(ROOT.kBlack)
+        antitau_hist.SetLineColor(ROOT.kRed)
+
+        tau_hist.GetYaxis().SetTitle("Normalized Events")
+        tau_hist.GetXaxis().SetTitle("#Upsilon_{#tau}")
+
+        legend.AddEntry(tau_hist, "MED #tau", "P")
+        legend.AddEntry(antitau_hist, "anti-#tau", "P")
+
+        tau_hist.Draw("P")
+        antitau_hist.Draw("SAME P")
+        legend.Draw("SAME")
+        for lb in labels:
+            lb.Draw("SAME")
+
+        ## save fig    
+        outname = "Upsilon_distribution_%s"%cr.name
+        for fmt in formats:
+            canvas.Print(os.path.join(outdir, outname+fmt))
+        legend.Clear()
+        canvas.Clear()
+
+        ## calculate cumulative distribution functions
+        tau_int = tau_hist.Integral("width")
+        antitau_int = antitau_hist.Integral("width")
+        for cnt in range(1, tau_hist.GetNbinsX()-1):
+            cdfs[cr.name]["TAU"].append((tau_hist.GetBinLowEdge(cnt), tau_hist.Integral(1, cnt+1))) 
+            cdfs[cr.name]["ANTITAU"].append((antitau_hist.GetBinLowEdge(cnt), antitau_hist.Integral(1, cnt+1)))
+
+        tau_cdf = ROOT.TGraph(len(cdfs[cr.name]["TAU"]), 
+            array.array("d", [it[0] for it in cdfs[cr.name]["TAU"]]), array.array("d", [it[1] for it in cdfs[cr.name]["TAU"]]))
+        antitau_cdf = ROOT.TGraph(len(cdfs[cr.name]["ANTITAU"]), 
+            array.array("d", [it[0] for it in cdfs[cr.name]["ANTITAU"]]), array.array("d", [it[1] for it in cdfs[cr.name]["ANTITAU"]]))
+        
+        tau_cdf.SetMarkerColor(ROOT.kBlack)
+        tau_cdf.SetLineColor(ROOT.kBlack)
+        tau_cdf.SetLineWidth(3)
+
+        antitau_cdf.SetMarkerColor(ROOT.kRed)
+        antitau_cdf.SetLineColor(ROOT.kRed)
+        antitau_cdf.SetLineWidth(3)
+
+        tau_cdf.GetYaxis().SetTitle("CDF")
+        tau_cdf.GetXaxis().SetTitle("#Upsilon_{#tau}")
+
+        cdf_leg.AddEntry(tau_cdf, "MED #tau", "L")
+        cdf_leg.AddEntry(antitau_cdf, "anti-#tau", "L")
+
+        tau_cdf.Draw("AC")
+        antitau_cdf.Draw("SAME")
+        cdf_leg.Draw("SAME")
+        for lb in labels:
+            lb.Draw("SAME")
+
+        ## save fig
+        cdf_outname = "Upsilon_CDF_distribution_%s"%cr.name
+        for fmt in formats:
+            canvas.Print(os.path.join(outdir, cdf_outname+fmt))
+        canvas.Clear()
+        cdf_leg.Clear()
+
+        ## @FIXME: more elegant way would be to do a fit
+        # tau_func1 = ROOT.TF1("tau_func1", "pol3", -1, 0.9)
+        # tau_func2 = ROOT.TF1("tau_func2", "pol2", 0.9, 1.2)
+        # tau_func3 = ROOT.TF1("tau_func3", "pol2", 1.2, 2)
+        # tau_cdf.Fit(tau_func1, "R")
+        # tau_cdf.Fit(tau_func2, "R+")
+        # tau_cdf.Fit(tau_func3, "R+")
+
+        # fit = tau_cdf.GetFunction("tau_func1")
+        # fit.SetMarkerColor(ROOT.kBlue)
+        # fit.SetLineColor(ROOT.kBlue)
+        # fit.Draw("SAME")
+        
+
+        ## direct calculation 
+        nbins = len(cdfs[cr.name]["TAU"])
+        Ymin = tau_hist.GetBinLowEdge(1)
+        Ymax = tau_hist.GetBinLowEdge(nbins)
+
+        ufile.write("//! Smirnov transform derived from %s control region\n"%cr.name)
+        ufile.write("const float CorrectedUpsilon_%s[%i] = {\n"%(cr.name, nbins))                        
+
+        for bn in range(1, nbins):            
+            _yi = cdfs[cr.name]["ANTITAU"][bn][1]
+            cnt = 1
+            while(cdfs[cr.name]["TAU"][cnt][1] < _yi and cnt < nbins-1):
+                cnt += 1
+            y_corr = Ymin + float(cnt)*(Ymax-Ymin)/float(nbins)
+            upsilon_corrected[cr.name].append(y_corr)
+            ufile.write("\t %.4f,\n"%y_corr)
+        ufile.write("};\n\n")
+
+    ufile.write("float CorrectUpsilon(float upsilon, int ntracks, int ff_region){\n")
+    ufile.write("\t if (ntracks!=1)\n")
+    ufile.write("\t\t return upsilon;\n")
+
+    ufile.write("\t int bin = ((upsilon-(%.4f))/(%.4f-(%.4f))) * %i;\n"%(Ymin, Ymax, Ymin, nbins))
+    ufile.write("\t if (ff_region==9001)\n")
+    ufile.write("\t\t return (upsilon<1.500) ? CorrectedUpsilon_%s[bin] : -2 ;\n"%cr_regions[0].name) #<! MJ CR
+    ufile.write("\t else if (ff_region==9002)\n")
+    ufile.write("\t\treturn (upsilon<1.500) ? CorrectedUpsilon_%s[bin] : -2 ;\n"%cr_regions[1].name) #<! WJ CR
+    ufile.write("\t else\n")
+    ufile.write("\t\t return upsilon;\n")
+    ufile.write("}\n")
+    ufile.close()
+
+    canvas.Clear()
+    canvas.Close()
+
+    return

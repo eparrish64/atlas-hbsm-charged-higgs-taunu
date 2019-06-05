@@ -469,7 +469,7 @@ def uncertainty_band(hists_dict, overflow=True):
         total_min = total_high.Clone()
         
         for syst in systematics:
-            for i in range(0, total_nom.GetNbinsX()+1):
+            for i in range(1, total_nom.GetNbinsX()+1):
                 bkey = "BIN%i"%i
             
                 ## get bin variation 
@@ -549,7 +549,7 @@ def ratio_hist(h1, h2):
     # - - - - remove bins where data is zero
     for i in range(0, h1.GetNbinsX()):
         if h1.GetBinContent(i) <= 0:
-            ratio_hist.SetBinContent(i, 1)
+            ratio_hist.SetBinContent(i, -1)
             
     ratio_hist.GetXaxis().SetLabelFont(43)
     ratio_hist.GetXaxis().SetLabelSize(16)

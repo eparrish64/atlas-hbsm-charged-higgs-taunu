@@ -24,58 +24,35 @@ from hpana import log
 # - - dedicated sample class for jets faking taus background
 # ---------------------------------------------------------------------------------------
 class QCD(Sample):
-    """
+    """ Base class for QCD fakes 
     """
 
-    # - - - -  Fake-Factor weights are different for different selection categories
-    FF_TYPES = OrderedDict()
-    FF_INDICIES = OrderedDict()
-    ff_index = 999
-    ff_cr_index = 9000
-    for ch in ["taujet", "taulep"]:
-        FF_TYPES[ch] = {}
-        for ct in CATEGORIES[ch]:
-            ff_index += 1
-            FF_TYPES[ch][ct.name] = ff_index
-            FF_INDICIES[ct.name] = ff_index
-        for cr in FF_CR_REGIONS[ch]:
-            ff_cr_index += 1
-            FF_TYPES[ch][cr.name] = ff_cr_index
-            FF_INDICIES[cr.name] = ff_cr_index
-
-    # - - - - control region FFs are calcualted with a the following funtions, loaded in the global ROOT scope.
+    ## control region FFs are calcualted with a the following funtions, loaded in the global ROOT scope.
     TEMPLATE_VARS = ("tau_0_p4->Pt()", "tau_0_n_charged_tracks")
 
-    FFs = {
-        "NOMINAL": {#<! variations based on tau BDT score for the anti-tau definition (tau_0_jet_bdt_score_trans>)
-            "WCR": "GetFF02_FF_CR_WJETS({0}, {1})".format(*TEMPLATE_VARS) , #<! 0.02
-            "MJCR": "GetFF02_FF_CR_MULTIJET({0}, {1})".format(*TEMPLATE_VARS)
-        },
-        "1up": {
-            "WCR": "GetFF03_FF_CR_WJETS({0}, {1})".format(*TEMPLATE_VARS) , #<! 0.03
-            "MJCR": "GetFF03_FF_CR_MULTIJET({0}, {1})".format(*TEMPLATE_VARS)
-        },
-        
-        "1down":{
-            "WCR": "GetFF01_FF_CR_WJETS({0}, {1})".format(*TEMPLATE_VARS) , #<! 0.01
-            "MJCR": "GetFF01_FF_CR_MULTIJET({0}, {1})".format(*TEMPLATE_VARS)
-        },
-    }
+    ## variations based on tau BDT score for the anti-tau definition (tau_0_jet_bdt_score_trans>) or MC contamination
+    FFs_VARIATIONS = ["NOMINAL", "BDT_1up", "BDT_1down", "MCSubt_1up", "MCSubt_1down"]
+    FFs = {}
+    for var in FFs_VARIATIONS:
+        if not var in FFs:
+            FFs[var] = {}
+        FFs[var]["WCR"] = "GetFF_FF_CR_WJETS_{0}({1}, {2})".format(var, *TEMPLATE_VARS) 
+        FFs[var]["MJCR"] = "GetFF_FF_CR_MULTIJET_{0}({1}, {2})".format(var, *TEMPLATE_VARS)
     
-    FF_WCR = "GetFF02_FF_CR_WJETS({0}, {1})".format(*TEMPLATE_VARS)
-    FF_MJCR = "GetFF02_FF_CR_MULTIJET({0}, {1})".format(*TEMPLATE_VARS)
+    FF_WCR = "GetFF_FF_CR_WJETS_NOMINAL({0}, {1})".format(*TEMPLATE_VARS)
+    FF_MJCR = "GetFF_FF_CR_MULTIJET_NOMINAL({0}, {1})".format(*TEMPLATE_VARS)
     
-    # - - - - combinined FFs are calcualted with a the following fucntion, loaded in the global ROOT scope. 
+    ## combinined FFs are calcualted with a the following fucntion, loaded in the global ROOT scope. 
     rQCD = {
         "NOMINAL": "GetFFCombined_NOMINAL({0}, {1}, {2}, {3}, {4})",
-        "1up": "GetFFCombined_UP({0}, {1}, {2}, {3}, {4})",
-        "1down": "GetFFCombined_DOWN({0}, {1}, {2}, {3}, {4})",
+        "1up": "GetFFCombined_1up({0}, {1}, {2}, {3}, {4})",
+        "1down": "GetFFCombined_1down({0}, {1}, {2}, {3}, {4})",
         }
 
-    # - - - - correction factor for tau polarization variable (using Inverse Smirnov transformation)
+    ## correction factor for  (1prong) tau polarization variable (using Inverse Smirnov transformation)
     UPSILON_CORRECTED = {
         "mc15": "CorrectUpsilon({0}, tau_0_n_tracks)", #< Y, ntracks
-        "mc16": "CorrectUpsilon_QCD(tau_0_upsilon_pt_based, tau_0_n_charged_tracks)"
+        "mc16": "CorrectUpsilon((-999*(tau_0_n_charged_tracks!=1)) + (tau_0_upsilon_pt_based*(tau_0_n_charged_tracks==1)), tau_0_n_charged_tracks, 9002)"
     }
     
     @staticmethod
@@ -88,10 +65,10 @@ class QCD(Sample):
     def __init__(self, config, data, mc,
                  name="QCD", label="fakes", correct_upsilon=True, **kwargs):
         
-        # - - - - quick sanity check
+        ## quick sanity check
         QCD.sample_compatibility(data, mc)
 
-        # - - - - instantiate base 
+        ## instantiate base 
         super(QCD, self).__init__(config, name=name, label=label, **kwargs)
         
         self.config = config
@@ -120,18 +97,11 @@ class QCD(Sample):
         ff_weights = {"NOMINAL": {}}
         for category in categories:
             #!TMPFIX for cutflow 
-            if category.name.upper() in ["CLEANEVENT", "TRIGGER", "TAUPT40", "ELOLR"]:
+            if category.name.upper() in ["CLEANEVENT", "TRIGGER",]:
                 ff_weights["NOMINAL"][category.name] = ["1."]
                 continue
 
-            if not category.name.upper() in QCD.FF_TYPES[self.config.channel]:
-                log.warning("no dedicated FFs for %s region; using the SR one"%category.name)
-                if self.config.channel=="taujet":
-                    ff_weight_index = QCD.FF_TYPES[self.config.channel]["SR_TAUJET"]
-                else:
-                    ff_weight_index = QCD.FF_TYPES[self.config.channel]["SR_TAULEP"]
-            else:
-                ff_weight_index = QCD.FF_TYPES[self.config.channel][category.name.upper()]
+            ff_weight_index = category.ff_index
 
             # nominal
             ff_weights["NOMINAL"][category.name] = [
@@ -139,7 +109,7 @@ class QCD(Sample):
                     QCD.TEMPLATE_VARS[0], QCD.TEMPLATE_VARS[1], QCD.FFs["NOMINAL"]["MJCR"], QCD.FFs["NOMINAL"]["WCR"], ff_weight_index)]   
 
             # variations from antitau definition
-            for var in ["1up", "1down"]:
+            for var in QCD.FFs_VARIATIONS:
                 if not "FFs_%s"%var in ff_weights:
                     ff_weights["FFs_%s"%var] = {}
                 ff_wcr = QCD.FFs[var]["WCR"]
@@ -173,8 +143,10 @@ class QCD(Sample):
         # variations from antitau definition
         ffs_tauID_syst = Systematic("FFs_tauID", _type="WEIGHT")
         ffs_tauID_syst.variations = [
-            Variation("FFs_1up", title=ff_ws["FFs_1up"], _type="WEIGHT"),
-            Variation("FFs_1down", title=ff_ws["FFs_1down"], _type="WEIGHT"),
+            Variation("FFs_BDT_1up", title=ff_ws["FFs_BDT_1up"], _type="WEIGHT"),
+            Variation("FFs_BDT_1down", title=ff_ws["FFs_BDT_1down"], _type="WEIGHT"),
+            Variation("FFs_MCSubt_1up", title=ff_ws["FFs_MCSubt_1up"], _type="WEIGHT"),
+            Variation("FFs_MCSubt_1down", title=ff_ws["FFs_MCSubt_1down"], _type="WEIGHT"),
         ]
         
         # variations from template-fit 
@@ -191,19 +163,27 @@ class QCD(Sample):
         """
         """
         categories = []
-        cuts_list = []
-        systematics = self.systematics[:1]
+        cuts_list = [ROOT.TCut("tau_0_jet_bdt_loose==0")]
+        ff_index = 1001
         for name, cut in cuts.iteritems():
             if name.upper()=="TAUID":
-                cut = ANTI_TAU #<! ANTI_TAU * FF 
-            elif name.upper()=="TRIGGER":
-                cut = self.config.trigger(dtype="DATA")
+                cut = ANTI_TAU #<! ANTI_TAU * FF
+                ff_index = 2001
+                if self.config.channel=="taujet":
+                    ff_index = 1001 
             cuts_list += [cut]
-            categories.append(Category(name, cuts_list=cuts_list, mc_camp=self.config.mc_camp))
+            categories.append(Category(name, ff_index=ff_index, cuts_list=cuts_list, mc_camp=self.config.mc_camp))
             
         field = kwargs.pop("field", self.config.variables[0])
-        hists = self.hists(categories=categories, systematics=systematics, fields=[field], **kwargs)
-        
+        systematics = kwargs.pop("systematics", self.systematics[:1])
+
+        ## a little tweak is needed here to get the NOMINAL properly (it's complicated!)
+        ffws = self.ff_weights(categories=categories)
+        nominal = self.systematics[0]
+        nominal.variations[0].title = dict(ffws["NOMINAL"])
+        kwargs["trigger"] = None
+        hists = self.hists(categories=categories, systematics=[nominal], fields=[field], **kwargs)
+    
         return hists
     
     def workers(self, 
@@ -221,16 +201,16 @@ class QCD(Sample):
         if not fields:
             fields = self.config.variables
 
+        ##@FIXME: for cutflow this block should be commented out!            
         qcd_systematics = self.systematics
-        if systematics:
-            systematics = filter(
-                lambda s: s.name in [st.name for st in systematics], qcd_systematics)
+        if len(systematics)>0:
+            systematics = filter(lambda st: st.name in [s.name for s in systematics], qcd_systematics)
         else:
             systematics = qcd_systematics            
 
-        # - - - - correct tau polarization for fakes
+        ## correct tau polarization for fakes
         if self.correct_upsilon:
-            fields = copy.deepcopy(fields)
+            fields = copy.deepcopy(fields) #<! to make sure not messing around with other samples' variabels
             log.debug("correcting upsilon for %s sample"%self.name)
             for field in fields:
                 if field.name=="tau_0_upsilon":
@@ -240,11 +220,11 @@ class QCD(Sample):
         if not categories:
             categories = self.config.categories
 
-        if not trigger:
+        if trigger is None:
             data_triggers = self.data.triggers(categories=categories, data_streams=self.data.streams, dtype="DATA")
             mc_triggers = self.mc[0].triggers(categories=categories, data_streams=self.data.streams, dtype="MC")
 
-        # - - - - tauID = ANTITAU * FF
+        ## tauID = ANTITAU * FF
         tauid = kwargs.pop("tauid", self.tauid)
 
         """
@@ -255,8 +235,8 @@ class QCD(Sample):
         # keep in the mind that the trigger might be different for different selection categories.
         """
 
-        # - - - - make sure to truth match taus to lep or hadronic tau in MC
-        # - - - - drop default tau ID and Truth Match cuts
+        ## make sure to truth match taus to lep or hadronic tau in MC
+        ## drop default tau ID and Truth Match cuts
         mc_categories = copy.deepcopy(categories)
         for mc_category in mc_categories:
             mc_category.tauid = tauid
@@ -273,18 +253,19 @@ class QCD(Sample):
             if extra_cuts:
                 data_category.cuts += extra_cuts
 
-        # - - - - prepare MC and FF weights
+        ## prepare MC and FF weights
         mc_weights = self.weights(categories=categories)
         ff_weights = self.ff_weights(categories=categories)
 
-        # - - - - MC workers
+        ## MC workers
         mc_workers = []
         for mc in self.mc:
             for ds in mc.datasets:
                 total_weights = {}
                 for cat, weights in mc_weights.iteritems():
                     total_weights[cat] = mc_weights[cat][:]
-                # - - - - lumi weight  
+
+                ## lumi weight  
                 if weighted:
                     if ds.events !=0:
                         if ds.lumi_weight:
@@ -297,7 +278,7 @@ class QCD(Sample):
                     for cat in categories:    
                         total_weights[cat.name] += [str(lumi_weight)]
                         
-                # - - - - one worker per systematic per dataset
+                ## one worker per systematic per dataset
                 worker = HistWorker(
                     name="%s.%s"%(self.name, ds.name),
                     sample=self.name,
@@ -309,7 +290,7 @@ class QCD(Sample):
                     channel=self.config.channel)
                 mc_workers.append(worker)
 
-        # - - - - DATA workers
+        ## DATA workers
         data_workers = []
         for ds in self.data.datasets:
             ## @FIXME 2018 triggers are not available in 2015-2017 samples (v06 ntuples)
@@ -327,7 +308,7 @@ class QCD(Sample):
                     data_category.truth_tau = None
                     data_category.cuts += trigger if trigger else triggers[data_category.name]
 
-            # - - - - one worker per systematic per dataset
+            ## one worker per systematic per dataset
             sname = self.name
             worker = HistWorker(
                 name="%s.%s"%(self.name, ds.name),
@@ -341,7 +322,6 @@ class QCD(Sample):
 
         qcd_workers = mc_workers + data_workers
         return qcd_workers
-
         
     def hists(self,
               fields=[],
@@ -370,9 +350,9 @@ class QCD(Sample):
             raise RuntimeError("no category is selected to produce hists for it")
 
         if not systematics:
-            systematics = self.config.systematics[:1] #<! NOMINAL
+            systematics = self.systematics[:1] #<! NOMINAL
 
-        # - - - - prepare the workers
+        ## prepare the workers
         workers = self.workers(categories=categories,fields=fields, systematics=systematics, **kwargs)
         log.info(
             "************ processing %s sample hists in parallel, njobs=%i ************"%(self.name, len(workers) ) )
@@ -382,11 +362,11 @@ class QCD(Sample):
         for res in results:
             hist_sets += res.get(3600) #<! without the timeout this blocking call ignores all signals.
 
-        # - - - - extract DATA/MC hists
+        ## extract DATA/MC hists
         data_hist_set = filter(lambda hs: hs.sample.startswith("%s.DATA"%self.name), hist_sets)
         mc_hist_set = filter(lambda hs: not hs.sample.startswith("%s.DATA"%self.name), hist_sets)
 
-        # - - - - add DATA/MC dataset hists, then subtract sum of MC from DATA
+        ## add DATA/MC dataset hists, then subtract sum of MC from DATA
         merged_hist_set = self.merge_hists(hist_set=data_hist_set+mc_hist_set, write=False)
 
         return merged_hist_set
@@ -400,7 +380,7 @@ class QCD(Sample):
             log.info("reading dataset hists from %s"%histsdir)
             assert histsdir, "hists dir is not provided!"
             
-            # - - - - retrieve the samples hists
+            ## retrieve the samples hists
             data_hfiles = glob.glob("%s/%s.DATA*"%(histsdir, self.name) )             
             mc_hfiles = list(set(glob.glob("%s/%s.*"%(histsdir, self.name) ) ) - set(data_hfiles) )
             
@@ -408,12 +388,12 @@ class QCD(Sample):
                 log.warning(" incomplete hists for %s in %s dir"%(self.name, histsdir))
                 return []
 
-            # - - - - extract the hists 
+            ## extract the hists 
             fields = set()
             categories = set()
             systematics = []
             mc_hist_set = []
-            # - - - - get QCD MC component hists (to be subtracted)
+            ## get QCD MC component hists (to be subtracted)
             for hf in mc_hfiles:
                 htf = ROOT.TFile(hf, "READ")
                 systs = [k.GetName() for k in htf.GetListOfKeys()]
@@ -439,7 +419,7 @@ class QCD(Sample):
                             mc_hist_set.append(hset)
                 htf.Close()
 
-            # - - - - get QCD data component hists
+            ## get QCD data component hists
             data_hist_set = []
             for hf in data_hfiles:
                 htf = ROOT.TFile(hf, "READ")
@@ -466,28 +446,28 @@ class QCD(Sample):
                             data_hist_set.append(hset)
                 htf.Close()
         else:
-            # - - - - get list of categories and fields available in hist_set
+            ## get list of categories and fields available in hist_set
             fields = list(set([hs.variable for hs in hist_set] ) )
             categories = list(set([hs.category for hs in hist_set] ) )
             systematics = list(set([hs.systematic for hs in hist_set]))
 
-            # - - - - gather hists for this sample
+            ## gather hists for this sample
             hist_set = filter(lambda hs: hs.sample.startswith(self.name), hist_set)
             data_hist_set = filter(lambda hs: hs.sample.startswith("%s.DATA"%self.name), hist_set)
             mc_hist_set = filter(lambda hs: not hs.sample.startswith("%s.DATA"%self.name), hist_set)
         
-        # - - - - bailing out if not hists    
+        ## bailing out if not hists    
         if not (mc_hist_set and data_hist_set):
             log.warning("no hist is found for %s; skipping the merge!"%self.name)
             return []
 
         if write:
-            # - - - - output file
+            ## output file
             if not hists_file:
                 hists_file = self.config.hists_file
             merged_hists_file = ROOT.TFile(os.path.join(histsdir, hists_file), "UPDATE")
 
-        # - - - - add them up
+        ## add them up
         merged_hist_set = []
         for systematic in systematics:
             for var in fields:
@@ -537,7 +517,7 @@ class LepFake(Sample):
     """
     """
     def __init__(self, config, mc, name="LepFake", label="l->#tau", **kwargs):
-        # - - - - instantiate base 
+        ## instantiate base 
         super(LepFake, self).__init__(config, name=name, label=label, **kwargs)
         
         self.config = config
@@ -555,11 +535,11 @@ class LepFake(Sample):
         -------
         cut: Cut, updated Cut type.
         """
-        # - - - - drop the truth matching on lep fakes first
+        ## drop the truth matching on lep fakes first
         kwargs.pop("truth_match_tau", None)
         cut = super(MC, self).cuts(*args, **kwargs)
 
-        # - - - - lep-match the tau
+        ## lep-match the tau
         cut += self.leptau
         return cut
     
@@ -575,22 +555,22 @@ class LepFake(Sample):
         if not categories:
             categories = self.config.categories
             
-        # - - - - prepare categories; deep copy since we don't want change categories
+        ## prepare categories; deep copy since we don't want change categories
         mc_categories = copy.deepcopy(categories)
 
-        # - - - - get leps faking tau
+        ## get leps faking tau
         for mc_cat in mc_categories:
             mc_cat.truth_tau = self.leptau
         
-        # - - - - MC workers
+        ## MC workers
         lepfake_workers = []
         for mc in self.mc:
-            # - - - - turn off truth matching 
+            ## turn off truth matching 
             lepfake_workers += mc.workers(categories=mc_categories, fields=fields,systematics=systematics,
                                         weighted=weighted,channel=self.config.channel, **kwargs)
 
-        # - - - - add LepFake prefix to the workers names
-        # - - - - so that are no mistaken with DATA/MC workers.
+        ## add LepFake prefix to the workers names
+        ## so that are no mistaken with DATA/MC workers.
         for lw in lepfake_workers:
             lw.name="%s.%s"%(self.name, lw.name)
 

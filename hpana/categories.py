@@ -86,7 +86,7 @@ TAU_3_TRACK = {
 }
 TAU_TRACKS = {
     "mc15": TCut("tau_0_n_tracks==1 || tau_0_n_tracks==3"),
-    "mc16": TCut("tau_0_n_charged_tracks==1 ||tau_0_n_charged_tracks==3"),
+    "mc16": TCut("tau_0_n_charged_tracks==1||tau_0_n_charged_tracks==3"),
 }
 
 TAU_PT30 = {
@@ -125,7 +125,9 @@ ANTI_TAU = TCut("tau_0_jet_bdt_score_trans > 0.02 && tau_0_jet_bdt_loose==0")
 VETO_TAU = ROOT.TCut("n_taus==0")
 TAU_EL_OLR_PASS = {
     "mc15": TCut("tau_0_ele_olr_pass==1"),
-    "mc16": TCut("tau_0_ele_olr_pass==1&&tau_0_ele_bdt_tight==1"),
+    "mc16": TCut("tau_0_ele_bdt_medium==1"),
+    # "mc16": TCut("tau_0_ele_olr_pass==1"),
+
 }
 
 TAU_BASE = {}
@@ -222,6 +224,7 @@ W_LEP_MT_MAX160 = {
 ##  - - jets
 ##------------------------------------------------------------------------------------
 NUM_JETS1  = TCut("n_jets > 0")
+NUM_JETS2  = TCut("n_jets > 1")
 NUM_JETS3  = TCut("n_jets > 2")
 NUM_JETS4  = TCut("n_jets > 3")
 
@@ -264,6 +267,7 @@ class Category:
                  mc_camp="mc16",
                  tauid=TAUID_MEDIUM,
                  truth_tau=TAU_IS_TRUE,
+                 ff_index=1,
                  cuts_list=[]):
         self.channel = channel
         self.name = name
@@ -272,6 +276,7 @@ class Category:
         self.cuts_list = cuts_list[:]
         self.tauid = tauid
         self.truth_tau = truth_tau
+        self.ff_index = ff_index
         
     @property
     def cuts(self):
@@ -304,18 +309,22 @@ class Category:
 Category_TAUJET_PRESEL = Category(
     name="TAUJET_PRESEL",
     label="#tau-jet presel",
+    ff_index=1000,
     cuts_list=[
         CLEAN_EVT,
         TAU_BASE,
         LEP_VETO,
-        MET100, 
-        NUM_JETS3,    
-        MT50],
+        MET150, 
+        NUM_JETS3,
+        # MT50,
+        # NUM_BJETS1,    
+        ],
 )
 
 Category_SR_TAUJET = Category(
     name="SR_TAUJET",
     label="#tau-jet SR",
+    ff_index=1001,
     cuts_list = [
         CLEAN_EVT,
         TAU_BASE,
@@ -332,6 +341,7 @@ Category_SR_TAUJET = Category(
 Category_TTBAR = Category(
     name="TTBAR",
     label="t#bar{t} CR",
+    ff_index=1002,
     cuts_list=[
         CLEAN_EVT,
         TAU_BASE,
@@ -340,12 +350,14 @@ Category_TTBAR = Category(
         NUM_JETS3,
         NUM_BJETS2,     
         MET150,
-        MT_MAX100],
+        MT_MAX100,
+        ],
 )
 
 Category_WJETS = Category(
     name="WJETS",
     label="W/Z jets CR",
+    ff_index=1003,
     cuts_list=[
         CLEAN_EVT,
         TAU_BASE,
@@ -361,6 +373,7 @@ Category_WJETS = Category(
 Category_BVETO = Category(
     name="BVETO",
     label="b-veto CR",
+    ff_index=1004,
     cuts_list= [
         CLEAN_EVT,
         TAU_BASE,
@@ -380,10 +393,12 @@ Category_BVETO = Category(
 Category_TAULEP_PRESEL = Category(
     name="TAULEP_PRESEL",
     label="#tau-lep presel",
+    ff_index=2000,
     cuts_list = [
         CLEAN_EVT,
         TAU_BASE,
         LEP_BASE,
+        OS_TAU_LEP,
         NUM_JETS1,
         JET_PT25
     ],
@@ -392,6 +407,7 @@ Category_TAULEP_PRESEL = Category(
 Category_SR_TAULEP = Category(
     name="SR_TAULEP",
     label="#tau-lep SR",
+    ff_index=2001,
     cuts_list = [
         CLEAN_EVT,
         TAU_BASE,
@@ -407,6 +423,7 @@ Category_SR_TAULEP = Category(
 Category_SR_TAUEL = Category(
     name="SR_TAUEL",
     label="#tau-e SR",
+    ff_index=2002,
     cuts_list = [
         CLEAN_EVT,
         TAU_BASE,
@@ -423,6 +440,7 @@ Category_SR_TAUEL = Category(
 Category_SR_TAUMU = Category(
     name="SR_TAUMU",
     label="#tau-#mu SR",
+    ff_index=2003,
     cuts_list = [
         CLEAN_EVT,
         TAU_BASE,
@@ -439,6 +457,7 @@ Category_SR_TAUMU = Category(
 Category_TAUEL_BVETO = Category(
     name="TAUEL_BVETO",
     label="#tau-e b-veto CR",
+    ff_index=2004,
     cuts_list = [
         CLEAN_EVT,
         EL_BASE,
@@ -455,6 +474,7 @@ Category_TAUEL_BVETO = Category(
 Category_TAUMU_BVETO = Category(
     name="TAUMU_BVETO",
     label="#tau-#mu b-veto CR",
+    ff_index=2005,
     cuts_list = [
         CLEAN_EVT,
         MU_BASE,
@@ -471,6 +491,7 @@ Category_TAUMU_BVETO = Category(
 Category_DILEP_BTAG = Category(
     name="DILEP_BTAG",
     label="dilep-btag CR",
+    ff_index=2006,
     tauid=None,
     truth_tau=None,
     cuts_list = [
@@ -488,7 +509,8 @@ Category_DILEP_BTAG = Category(
 
 Category_SS_TAUEL = Category(
     name="SS_TAUEL",
-    label="same sign #tau-e",
+    label="same sign #tau-e CR",
+    ff_index=2007,
     cuts_list=[
         CLEAN_EVT,
         TAU_BASE,
@@ -503,7 +525,8 @@ Category_SS_TAUEL = Category(
 
 Category_SS_TAUMU = Category(
     name="SS_TAUMU",
-    label="same sign #tau-#mu",
+    label="same sign #tau-#mu CR",
+    ff_index=2008,
     cuts_list=[
         CLEAN_EVT,
         TAU_BASE,
@@ -518,7 +541,8 @@ Category_SS_TAUMU = Category(
 
 Category_ZEE = Category(
     name="ZEE",
-    label="Zee",
+    label="Zee CR",
+    ff_index=2009,
     cuts_list = [
         CLEAN_EVT,
         TAU_BASE,
@@ -541,7 +565,7 @@ CATEGORIES["taujet"] = [
     Category_TTBAR,
     Category_BVETO,
     Category_WJETS,
-    # Category_TAUJET_PRESEL,
+    Category_TAUJET_PRESEL,
 ]
 
 CATEGORIES["taulep"] = [
@@ -554,7 +578,7 @@ CATEGORIES["taulep"] = [
     Category_SS_TAUMU,
     Category_DILEP_BTAG,
     Category_ZEE,
-    # Category_TAULEP_PRESEL,
+    Category_TAULEP_PRESEL,
 ]
 
     
@@ -564,6 +588,7 @@ CATEGORIES["taulep"] = [
 FF_CR_MULTIJET = Category(
     "FF_CR_MULTIJET",
     label="ff multijet CR",
+    ff_index=9001,
     cuts_list=[
         CLEAN_EVT,
         TAU_PT30,
@@ -578,6 +603,7 @@ FF_CR_MULTIJET = Category(
 
 FF_CR_WJETS = Category(
     "FF_CR_WJETS", label="ff Wjets CR",
+    ff_index=9002,
     cuts_list=[
         CLEAN_EVT,
         TAU_EL_OLR_PASS,
@@ -621,34 +647,38 @@ FAKE_TAU_SOURCE = {
 ## - - Classifier training selections
 ##------------------------------------------------------------------------------------
 CLF_TJ = Category("CLF_TAUJET",
-                  label="clf #tau-jet",
-                  truth_tau=None,
-                  cuts_list=[
-                      CLEAN_EVT,
-                      TAU_BASE,
-                      LEP_VETO,
-                      NUM_JETS3,
-                      NUM_BJETS1,
-                      MET100,
-                      MT50,
-                      TAU_PT40,
-                  ])
+        label="clf #tau-jet",
+        ff_index=1005,
+        #   truth_tau=None,
+        cuts_list = [
+            CLEAN_EVT,
+            TAU_BASE,
+            LEP_VETO,
+            TAU_PT40,
+            NUM_JETS3,
+            JET_PT25,
+            MET100,
+            MT50,
+            NUM_BJETS1,
+    ])
 
 CLF_TL = Category("CLF_TAULEP",
-                  label="clf #tau-lep",
-                  truth_tau=None,
-                  cuts_list=[
-                      CLEAN_EVT,
-                      TAU_BASE,
-                      LEP_BASE,
-                      NUM_JETS1,
-                      NUM_BJETS1,
-                      MET50,
-                  ])
+        label="clf #tau-lep",
+        ff_index=2010,  
+    #   truth_tau=None,
+        cuts_list=[
+        CLEAN_EVT,
+        TAU_BASE,
+        LEP_BASE,
+        OS_TAU_LEP,
+        NUM_JETS1,
+        NUM_BJETS1,
+        MET50,
+        ])
 
 CLASSIFIER_CATEGORIES = {
     "taujet": CLF_TJ,
-    "taulep":CLF_TL,
+    "taulep": CLF_TL,
 }
 
 
@@ -658,20 +688,17 @@ CLASSIFIER_CATEGORIES = {
 ##------------------------------------------------------------------------------------
 MET_TRIGG_EFF_CUTS_BASE = [
     ROOT.TCut("n_taus==1"),
-    ROOT.TCut("n_electrons==1"),
+    TAU_EL_OLR_PASS,
+    ROOT.TCut("n_electrons==1&&n_muons==0"),
+    ROOT.TCut("tau_0_q*el_0_q==-1"),
     ROOT.TCut("el_0_p4->Pt() > 26"),
-    # - - trigger matched electron
-    ROOT.TCut( 
-        "(el_0_trig_HLT_e24_lhmedium_L1EM20VH==1 && run_number <= 288000)" #<! 2015
-        "|| (el_0_trig_HLT_e26_lhtight_nod0_ivarloose==1 && run_number > 288000)" #<! 2016
-        #"||(el_0_trig_trigger_matched==1 && HLT_e26_lhtight_nod0_ivarloose==1 && run_number > 288000)"
-    ),
+    ROOT.TCut( "el_0_trig_trigger_matched==1"),
     
-    ROOT.TCut("n_jets>1 && n_bjets>0"),
+    ROOT.TCut("n_jets>1 && n_bjets>1"),
     ROOT.TCut("jet_0_p4->Pt() > 25 && jet_1_p4->Pt() > 25"),
     
     # - - only for the bkg modelling in this region (not applied for calcualting trigger efficency).
-    #ROOT.TCut("met_p4->Et() > 100"),
+    ROOT.TCut("met_p4->Et() > 100"),
 ]
 
 ## - - - - systematic variations from tau/el ID and number of jets.
@@ -679,48 +706,54 @@ MET_TRIGG_EFF_CUTS_BASE = [
 MET_TRIG_EFF_CR_NOM = Category(
     "MET_TRIG_EFF_CR_NOM",
     label="E^{T}_{miss} trig eff CR (nom)",
+    ff_index=2011,
     tauid=TAUID_LOOSE,
-    truth_tau=None,
+    # truth_tau=None,
     cuts_list=MET_TRIGG_EFF_CUTS_BASE + [ROOT.TCut("el_0_id_loose==1")],
 )
 
 MET_TRIG_EFF_CR_TAUID_MED = Category(
     "MET_TRIG_EFF_CR_TAUID_MED",
     label="E^{T}_{miss} trig eff CR (MED #tau)",
+    ff_index=2011,
     tauid=TAUID_MEDIUM,
-    truth_tau=None,
+    # truth_tau=None,
     cuts_list=MET_TRIGG_EFF_CUTS_BASE + [ROOT.TCut("el_0_id_loose==1")],
 )
 
 MET_TRIG_EFF_CR_TAUID_TIGHT = Category(
     "MET_TRIG_EFF_CR_TAUID_TIGHT",
     label="E^{T}_{miss} trig eff CR (TIGHT #tau)",
+    ff_index=2011,
     tauid=TAUID_TIGHT,
-    truth_tau=None,
+    # truth_tau=None,
     cuts_list=MET_TRIGG_EFF_CUTS_BASE + [ROOT.TCut("el_0_id_loose==1")],
 )
 
 MET_TRIG_EFF_CR_ELID_MED = Category(
     "MET_TRIG_EFF_CR_ELID_MED",
     label="E^{T}_{miss} trig eff CR (MED e)",
+    ff_index=2011,
     tauid=TAUID_LOOSE,
-    truth_tau=None,
+    # truth_tau=None,
     cuts_list=MET_TRIGG_EFF_CUTS_BASE + [ROOT.TCut("el_0_id_medium==1")],
 )
 
 MET_TRIG_EFF_CR_ELID_TIGHT = Category(
     "MET_TRIG_EFF_CR_ELID_TIGHT",
     label="E^{T}_{miss} trig eff CR (TIGHT e)",
+    ff_index=2011,
     tauid=TAUID_LOOSE,
-    truth_tau=None,
+    # truth_tau=None,
     cuts_list=MET_TRIGG_EFF_CUTS_BASE + [ROOT.TCut("el_0_id_tight==1")],
 )
 
 MET_TRIG_EFF_CR_NJETS3 = Category(
     "MET_TRIG_EFF_CR_NJETS3",
     label="E^{T}_{miss} trig eff CR (3 jets)",
+    ff_index=2011,
     tauid=TAUID_LOOSE,
-    truth_tau=None,
+    # truth_tau=None,
     cuts_list=MET_TRIGG_EFF_CUTS_BASE + [ROOT.TCut("el_0_id_loose==1"), ROOT.TCut("n_jets > 2")],
 )
 
@@ -738,31 +771,32 @@ MET_TRIG_EFF_CRs = [
 ##------------------------------------------------------------------------------------
 ## - - cutflow selections 
 ##------------------------------------------------------------------------------------
+
 CUTFLOW = {
     "taujet": OrderedDict(
         [
-            ("cleanEvent",  CLEAN_EVT),
-            ("trigger", {"mc16": ROOT.TCut("1>0"), "mc15": ROOT.TCut("1>0")}), #<! trigger is applied globally (just a place holder here)
-            ("tauPt40", TAU_PT40),
-            ("tauID", TAUID_MEDIUM),
-            ("ElOLR", TAU_EL_OLR_PASS),
-            ("lepVeto", LEP_VETO),
-            ("3jets", NUM_JETS3),
-            ("jetPt25", JET_PT25),
+            # ("cleanEvent",  CLEAN_EVT),
+            ("trigger", TCut("1.>0")), #<! trigger is applied globally (just a place holder here)
+            ("tauID", TCut("tau_0_jet_bdt_medium==1")),
+            ("taupT40", TAU_PT40["mc16"]+TAU_BASE["mc16"]),  
+            ("lepVeto", TCut("(n_muons+n_electrons)==0 &&tau_0_ele_bdt_medium==1")),
+            # ("3jets", NUM_JETS3),
+            # ("jetPt25", JET_PT25),
             ("1bjets", NUM_BJETS1),
-            ("MET150", MET150),
+            ("MET150", MET150),            
             ("mT50", MT50),
         ]),
     "taulep":
     OrderedDict(
-        [("cleanEvent",  CLEAN_EVT),
-         ("trigger", {"mc16": ROOT.TCut("1>0"), "mc15": ROOT.TCut("1>0")}), #<! trigger is applied globally (just a place holder here)
-         ("tauPt40", TAU_PT40),
-         ("tauID", TAUID_MEDIUM),
-         ("elBase", EL_BASE),
-         ("1jets", NUM_JETS1),
-         ("jetPt25", JET_PT25),
-         ("1bjets", NUM_BJETS1),
-         ("MET50", MET50),
+        [
+            # ("cleanEvent",  CLEAN_EVT),
+            ("trigger", {"mc16": ROOT.TCut("1.>0"), "mc15": ROOT.TCut("1.>0")}), #<! trigger is applied globally (just a place holder here)
+            ("tauID", TAUID_MEDIUM),
+            ("tauPt40", TAU_PT30["mc16"]+TAU_BASE["mc16"]),
+            ("elBase", LEP_BASE),
+            #  ("1jets", NUM_JETS1),
+            #  ("jetPt25", JET_PT25),
+            ("1bjets", NUM_BJETS1),
+            ("MET50", MET50),
         ]),
 }

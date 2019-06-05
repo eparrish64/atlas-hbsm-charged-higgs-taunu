@@ -234,6 +234,7 @@ class Sample(object):
             cuts_list += [cut]
             categories.append(Category(name, cuts_list=cuts_list, tauid=None, mc_camp=self.config.mc_camp))
         field = kwargs.pop("field", self.config.variables[0])
+
         hists = self.hists(categories=categories, fields=[field], **kwargs)
         return hists
     
@@ -252,16 +253,16 @@ class Sample(object):
         selection string is passed to the worker. Furtheremore for each selection category a weight is also 
         assigned.
         """
+        if not categories:
+            return []
 
-        if not systematics:
+        if systematics is None or len(systematics)<1:
             systematics = self.config.systematics[:] #self.systematics[:1] #<! NOMINAL
         else: #<! sanity check 
             systematics = filter(lambda s: s.name in [st.name for st in systematics], self.systematics)
 
         if not fields:
             fields = self.config.variables
-        if not categories:
-            categories = self.config.categories
 
         # - - same trigger for all selection categories ?
         if not trigger:
@@ -273,7 +274,7 @@ class Sample(object):
             category.cuts += trigger if trigger else triggers[category.name]
             if extra_cuts:
                 category.cuts += extra_cuts
-            
+
         # - - one worker per dataset per systematic
         workers = set()
         for ds in self.datasets:
@@ -300,9 +301,7 @@ class Sample(object):
                         category.cuts += extra_cuts
 
             # - - one worker per dataset
-            # weights list per category
             weights = self.weights(categories=categories)
-            
             for category in categories_cp:
                 # - - lumi, MC and extra weights  
                 if weighted:
@@ -379,13 +378,13 @@ class Sample(object):
         if not categories:
             raise RuntimeError("no category is selected to produce hists for it")
         
-        if not systematics:
+        if systematics is None or len(systematics)<1:
             systematics = self.systematics[:1] #<! NOMINAL
         else: #<! sanity check 
             systematics = filter(lambda s: s.name in [st.name for st in systematics], self.systematics)
 
         # - - prepare the workers
-        workers = self.workers(categories=categories, fields=fields, **kwargs)
+        workers = self.workers(categories=categories, fields=fields, systematics=systematics, **kwargs)
 
         log.info(
             "************** processing %s sample hists in parallel, njobs=%i ************"%(self.name, len(workers) ) )

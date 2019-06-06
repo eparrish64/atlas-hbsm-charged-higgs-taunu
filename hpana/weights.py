@@ -50,10 +50,10 @@ class Weight(object):
 
         "tau_0_sf_NOMINAL_TauEffSF_MediumEleBDT_electron":(
             W_STR_FMT.format(
-                "n_taus", "((true_tau_0_isEle==1)*tau_0_sf_NOMINAL_TauEffSF_MediumEleBDT_electron)+(true_tau_0_isEle!=1)"),
+                "n_taus", "(((true_tau_0_isEle==1)*tau_0_sf_NOMINAL_TauEffSF_MediumEleBDT_electron)+(true_tau_0_isEle!=1))"),
 
-            ("TAU_EFF_ELEBDT_SYST_1down", "((true_tau_0_isEle==1)*tau_0_sf_TAUS_TRUEELECTRON_EFF_ELEBDT_SYST_1down_TauEffSF_MediumEleBDT_electron)+(true_tau_0_isEle!=1)"),
-            ("TAU_EFF_ELEBDT_SYST_1up", "((true_tau_0_isEle==1)*tau_0_sf_TAUS_TRUEELECTRON_EFF_ELEBDT_SYST_1up_TauEffSF_MediumEleBDT_electron)+(true_tau_0_isEle!=1)"),
+            ("TAU_EFF_ELEBDT_SYST_1down", "(((true_tau_0_isEle==1)*tau_0_sf_TAUS_TRUEELECTRON_EFF_ELEBDT_SYST_1down_TauEffSF_MediumEleBDT_electron)+(true_tau_0_isEle!=1))"),
+            ("TAU_EFF_ELEBDT_SYST_1up", "(((true_tau_0_isEle==1)*tau_0_sf_TAUS_TRUEELECTRON_EFF_ELEBDT_SYST_1up_TauEffSF_MediumEleBDT_electron)+(true_tau_0_isEle!=1))"),
         ),
 
         "tau_0_sf_NOMINAL_TauEffSF_selection":(

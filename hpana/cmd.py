@@ -30,14 +30,15 @@ def get_base_parser():
     base_parser.add_argument("--mc-campaign", "-mcc", type=str, default="mc16",choices=("mc15", "mc16"),
                         help="mc campaign; analysis samples, ntuples branches, etc. might be different among them")
 
-    base_parser.add_argument("--db-version", "-nv", type=str, 
+    base_parser.add_argument("--db-version", "-nv", type=str, default="v06P",
                         help="database version; should match the database version you use when creating database")
 
     base_parser.add_argument("--data-streams", nargs="+", choices=["2015","2016", "2017", "2018",],
-                             help="DATA taking yeats", default=["2015", "2016"])
+                             help="DATA taking yeats", default=["2015", "2016", "2017", "2018"])
     
     base_parser.add_argument("--fields", nargs="+",
                         help="list of the variables that you want to analyze")
+
     base_parser.add_argument("--categories", nargs="+",
                         help="list of the categories that you want to analyze")
 
@@ -98,6 +99,9 @@ def get_ana_parser(base_parser=None):
     ana_parser.add_argument("--pickled-analysis", type=str, default="ANALYSIS.pkl",
                             help="main analysis object pickled to be shipped to the worker nodes")
 
+    ana_parser.add_argument("--conf-file", type=str, default="config.yml",
+                            help="main analysis configuration flags are writen to this file")
+
     ana_parser.add_argument("--dry-run", action="store_true",
                             help="if you just want to see the scripts that will be submitted to the cluster")
     
@@ -108,7 +112,16 @@ def get_ana_parser(base_parser=None):
                             help="the resource manager on your cluster")
 
     ana_parser.add_argument("--retry", help="retry failed jobs", action="store_true")
-    
+
+    ana_parser.add_argument('--plots', action="store_true",
+                                 help='draw plots', )
+
+    ana_parser.add_argument('--fmt', nargs="+", default=["png", "eps", "pdf"],
+                                help="format for the plots")
+
+    ana_parser.add_argument('--logy', action="store_true",
+                                 help='Y axis in log scale', )
+
     # - - - - - - - - - parse analysis args
     #argcomplete.autocomplete(ana_parser)
 
@@ -321,7 +334,7 @@ def get_clf_parser():
     clf_parser.add_argument("--mass-range", nargs=2, default=[80, 3000], 
                             help="signals' mass range")
 
-    clf_parser.add_argument("--bin-scheme", default="NOM", choices=["NOM", "UP_DOWN", "SINGLE"], 
+    clf_parser.add_argument("--bin-scheme", default="NOM", choices=["NOM", "UP_DOWN", "SINGLE", "ALT"], 
                             help="mass binning scheme for training clfs ")
 
     clf_parser.add_argument("--dry-run", action="store_true",
@@ -345,6 +358,9 @@ def get_clf_parser():
     clf_parser.add_argument("--retry", action="store_true",
                             help="retry failed jobs", )
     
+    clf_parser.add_argument("--inc-trks", action="store_true",
+                            help="train on both 1p and 3p taus ?")
+
     return clf_parser
 
 def get_evalclf_parser(base_parser=None):

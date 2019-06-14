@@ -33,7 +33,7 @@ for channel in ["taujet", "taulep"]:
 TRAINING_MASS_BINS = {
     # as of 2015+2016 legacy analysis --> optimized binning given the limited stat
     "NOM": [     
-        (80, 90, 100, 110, 120), #< low mas 
+        (80, 90, 100, 110, 120), #< low mass 
         (130, 140, 150, 160), #< int mass I
         (170, 180, 190), #< int mass II
         (200, 225, 250, 275, 300, 350, 400), #< high mass I
@@ -44,6 +44,14 @@ TRAINING_MASS_BINS = {
 
     # train per mass point 
     "SINGLE": [(m,) for m in Higgs.MASSES],
+
+    "ALT": [     
+        (80, 90, 100, 110, 120, 130, 140, 150, 160), #< low mass 
+        (170, 180, 190, 200, 225, 250, 275, 300, 350, 400), #< int mass + high mass I
+        tuple(range(500, 1100, 100)), 
+        tuple(range(1200, 2200, 200) + [2500, 3000]), #< high mass II
+    ], 
+
 } 
 
 ## - - Hyperparameters for GradientBoosting 
@@ -69,7 +77,7 @@ BDT_FILE_PATTERN = re.compile(
 XML_FILE_PATTERN = re.compile(
     "^(?P<name>\w+)"
     "_(?P<mass>(\d+to\d+))"
-    "_ntracks_(?P<ntracks>\d)"
+    "_ntracks_(?P<ntracks>\d+)"
     "_nfolds_(?P<nfolds>\d)"
     "_fold_(?P<fold>\d)"
     "(\.weights\.xml)$"
@@ -79,7 +87,7 @@ PKL_FILE_PATTERN = re.compile(
     "(?P<name>\w+)"
     "_channel_(?P<channel>\w+)"
     "_mass_(?P<mass>\w+)"
-    "_ntracks_(?P<ntracks>\d)"
+    "_ntracks_(?P<ntracks>\d+)"
     "_nfolds_(?P<nfolds>\d)"
     "_fold_(?P<fold>\d)"
     "_nvars_(?P<nvars>\d+)"

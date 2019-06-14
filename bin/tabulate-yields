@@ -52,39 +52,51 @@ config = Configuration(
     year=YIELDS_ARGS.year,
     mc_campaign=YIELDS_ARGS.mc_campaign,
     data_streams=YIELDS_ARGS.data_streams,
-    db_version=YIELDS_ARGS.db_version)
+    db_version=YIELDS_ARGS.db_version,
+    FFs_macros=["FFsCOM.cxx", "FFsCR.cxx"], 
+    metTrigEff_macros=["metTrigEff.cxx"], 
+    upsilon_macros=["CorrectUpsilon.cxx"],
+)
 
 # - - - - - - - - instantiate the analysis
 analysis = Analysis(config, compile_cxx=True)
 
 # - - - - - - - - categories & systematics
-categories = config.categories+config.ff_cr_regions
+categories = config.categories 
 if YIELDS_ARGS.categories:
-    categories = filter(lambda c: c.name in YIELDS_ARGS.categories, categories)
+    categories = filter(lambda c: c.name in YIELDS_ARGS.categories, categories+config.ff_cr_regions+config.clf_regions)
 
 ## systematics
-all_systematics = config.systematics[:]  # <! common systematics
-all_systematics += analysis.qcd.systematics[1:]  # <! QCD fakes only
-if YIELDS_ARGS.systematics:
-    systematics = filter(
-        lambda s: s.name in YIELDS_ARGS.systematics, all_systematics)
-elif YIELDS_ARGS.systs:
-    systematics = all_systematics
-else:
+if YIELDS_ARGS.cutflow:
     systematics = config.systematics[:1] #<! NOMINAL
+else:
+    all_systematics = config.systematics[:]  # <! common systematics
+    all_systematics += analysis.qcd.systematics[1:]  # <! QCD fakes only
+    if YIELDS_ARGS.systematics:
+        systematics = filter(
+            lambda s: s.name in YIELDS_ARGS.systematics, all_systematics)
+    elif YIELDS_ARGS.systs:
+        systematics = all_systematics
+    else:
+        systematics = config.systematics[:1] #<! NOMINAL
 
 systematics_vars = []
 for st in systematics:
     systematics_vars += st.variations 
 
-fields = config.variables[0:1]  # <! tau_0_pt
+## variable
+fields = config.variables[:1]
 
-# - - - - - - - - samples
-samples = analysis.backgrounds + [analysis.data] #+ analysis.signals 
+## samples
+samples = analysis.backgrounds + [analysis.data] + analysis.get_signals(masses=[80, 160, 400, 3000]) 
 backgrounds = analysis.backgrounds
 if YIELDS_ARGS.samples:
     samples = filter(lambda s: s.name in YIELDS_ARGS.samples, samples)
     backgrounds = filter(lambda b: b.name in YIELDS_ARGS.samples, backgrounds)
+
+## unblind data 
+# analysis.data.blind_regions = []
+# analysis.data.blind_streams = []
 
 # ---------------------------------------------------------------------------
 # get the yields
@@ -98,7 +110,7 @@ if YIELDS_ARGS.yields_table:
         var = fields[0]
         for syst_var in systematics_vars:
             for sample in samples:
-                for cat in categories:                    
+                for cat in categories:
                     hname = os.path.join(syst_var.name, config.hist_name_template.format(
                         sample.name, cat.name, var.name))
                     hist = hfile.Get(hname)
@@ -111,7 +123,7 @@ if YIELDS_ARGS.yields_table:
                         events = -1
                     else:                        
                         hist = hfile.Get(hname)
-                        events = hist.Integral(0, -1)
+                        events = hist.Integral(0, hist.GetNbinsX()+1)
                     yields.append(
                         Yield(sample=sample.name, category=cat.name, systematic=syst_var.name, events=events))
 
@@ -124,7 +136,7 @@ if YIELDS_ARGS.yields_table:
         yields = []
         for hs in y_hists:
             # <! include underflow/overflow bins
-            nevents = hs.hist.Integral(0, -1)
+            nevents = hs.hist.Integral(0, hs.hist.GetNbinsX()+1)
             yields.append(
                 Yield(sample=hs.sample, category=hs.category, systematic=hs.systematic, events=nevents))
                 
@@ -179,9 +191,9 @@ if YIELDS_ARGS.cutflow:
     cutflow_selections = CUTFLOW[YIELDS_ARGS.channel]
     table_rows = []
     cutflow_hist_sets = []
-
+    bkg_sum_events = []
     cutflow_hist_sets = analysis.cutflow(
-        cutflow_selections, samples=samples, tauid=ROOT.TCut("1>0"), trigger=ROOT.TCut("1>0"))
+        cutflow_selections, samples=samples, tauid=ROOT.TCut("1>0"), trigger=ROOT.TCut("1>0"), systematics=systematics)
 
     for sample in samples:
         sample_hists = filter(lambda hs: hs.sample==sample.name, cutflow_hist_sets)
@@ -192,6 +204,9 @@ if YIELDS_ARGS.cutflow:
             for hs in sample_hists:
                 if hs.category == cname:
                     events.append(hs.hist.Integral(0, hs.hist.GetNbinsX()+1))
+
+        if sample.name in [b.name for b in backgrounds]:
+           bkg_sum_events += [events]
 
         # - - - - the the fraction of events failing
         s_fractions = [0]*len(cutflow_selections)
@@ -208,6 +223,32 @@ if YIELDS_ARGS.cutflow:
             else:
                 evt_fract.append("{0:0.2f}".format(evt))
         row = [sample.name] + evt_fract
+        table_rows.append(row)
+
+    ## bkg sum 
+    if len(bkg_sum_events)>0:
+        bkg_tot = []
+        for i in range(len(bkg_sum_events[0])):
+            br = 0
+            for be in bkg_sum_events:
+                br += be[i]
+            bkg_tot += [br]
+
+        ## the the fraction of events failing
+        s_fractions = [0]*len(cutflow_selections)
+        for i in range(1, len(bkg_tot)):
+            if bkg_tot[i-1] != 0:
+                s_fractions[i] = (bkg_tot[i-1] - bkg_tot[i])/(bkg_tot[i-1])
+            else:
+                s_fractions[i] = 0
+
+        evt_fract = []
+        for evt, frac in zip(bkg_tot, s_fractions):
+            if frac != 0:
+                evt_fract.append("{0:0.2f} ({1:0.0f}%)".format(evt, 100*frac))
+            else:
+                evt_fract.append("{0:0.2f}".format(evt))
+        row = ["Total bkg"] + evt_fract
         table_rows.append(row)
 
     # - - - - format the table

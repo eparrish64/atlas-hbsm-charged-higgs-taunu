@@ -5,13 +5,12 @@ import os
 import sys
 import time
 import glob
-import pickle
+import yaml
 
 # - - - - - - - -  parse ana args (needed before ROOT)
 from hpana.cmd import get_ana_parser
 ana_parser = get_ana_parser()
 ANA_ARGS = ana_parser.parse_args()
-
 
 # local
 from hpana import log
@@ -19,10 +18,7 @@ from hpana.dataset_hists import dataset_hists, dataset_hists_direct
 from hpana.cluster.parallel import run_pool, Job
 from hpana.analysis import Analysis
 from hpana.config import Configuration
-
-# PyPI
-import dill
-
+from hpana.plotting.draw import draw 
 
 # - - - - - - - -  set log level
 log.setLevel(ANA_ARGS.log)
@@ -45,30 +41,25 @@ config = Configuration(
     year=ANA_ARGS.year,
     data_streams=ANA_ARGS.data_streams,
     mc_campaign=ANA_ARGS.mc_campaign,
-    db_version=ANA_ARGS.db_version)
-
-# - - - - instantiate the analysis
-analysis = Analysis(config, 
-    compile_cxx=not ANA_ARGS.no_cxx, 
-    # FFs_macros=["FFsCOM_18.cxx", "FFsCR15161718.cxx"], 
-    FFs_macros=["FFsCOM_v06.cxx", "FFsCR_v06.cxx"], 
+    db_version=ANA_ARGS.db_version,
+    FFs_macros=["FFsCOM.cxx", "FFsCR.cxx"], 
     metTrigEff_macros=["metTrigEff.cxx"], 
-    upsilon_macros=["CorrectUpsilon_WCR.cxx", "CorrectUpsilon_QCD.cxx",]
+    upsilon_macros=["CorrectUpsilon.cxx"],
     )
 
-# ## unblind DATA!!!
-# analysis.data.blind_regions = []
-# analysis.data.blind_streams=[]
+# - - - - instantiate the analysis
+analysis = Analysis(config, compile_cxx=not ANA_ARGS.no_cxx, )
 
 # - - - - some checks on cmd args
 if ANA_ARGS.fields:
     fields = filter(lambda v: v.name in ANA_ARGS.fields, config.variables)
 else:
-    fields = config.variables
+    fields = config.variables 
 
 if ANA_ARGS.categories:
     categories = filter(
-        lambda c: c.name in ANA_ARGS.categories, config.categories+ config.ff_cr_regions+ config.clf_regions)
+        lambda c: c.name in ANA_ARGS.categories, 
+            config.categories+ config.ff_cr_regions+ config.clf_regions)#+config.met_trigeff_regions)
 else:
     categories = config.categories 
 
@@ -88,7 +79,6 @@ if ANA_ARGS.samples:
     samples = filter(lambda s: s.name in ANA_ARGS.samples, analysis.samples)
 else:
     samples = analysis.samples
-
 
 # -------------------------------------------------------------
 # main driver
@@ -139,18 +129,44 @@ def main():
 
             return 
 
-        # - -  pickle the analysis: IF YOU DONT WANT TO SHIP THE WHOLE CODE TO THE NODES.
-        with open(ANA_ARGS.pickled_analysis, "wb") as pfile:
-            dill.dump(analysis, pfile)
+        ## setup output dir
+        os.system("mkdir -p {0}/jobs  {0}/logs {0}/hists".format(ANA_ARGS.outdir))
+
+        ## Analysis Configuration parameters to be copied to the worker nodes
+        conf_params = {
+            "channel": ANA_ARGS.channel,
+            "year": ANA_ARGS.year,
+            "data_streams": ANA_ARGS.data_streams,
+            "mc_campaign": ANA_ARGS.mc_campaign,
+            "db_version": ANA_ARGS.db_version,
+            "FFs_macros": ["FFsCOM.cxx", "FFsCR.cxx"],  
+            "metTrigEff_macros": ["metTrigEff.cxx"], 
+            "upsilon_macros": ["CorrectUpsilon.cxx",],
+            "samples": ANA_ARGS.samples,
+            "systematics":ANA_ARGS.systematics,
+            "systs":ANA_ARGS.systs,
+            "categories":ANA_ARGS.categories ,
+            "fields":ANA_ARGS.fields,
+        }
+
+        with open(ANA_ARGS.conf_file, "wb") as cfile:
+            yaml.dump(conf_params, cfile) 
+
+        ## zip source code
+        log.info("Creating source code tarball...")
+        source_code_tarball = os.path.abspath(ANA_ARGS.outdir+"/source_code.tar.gz")
+        if os.path.isfile(source_code_tarball):
+            os.system("rm -rf %s"%source_code_tarball)
+
+        src_ds = ["bin", "hpana", "aux", "setup.sh"]
+        src_ds = " ".join(src_ds)
+        os.system("cd {src_dir} && tar -cf {target_tar} {source_files} && cd - && tar --append --file={target_tar} {conf_file}".format(
+            src_dir=__HERE+"/../", conf_file=ANA_ARGS.conf_file, target_tar=source_code_tarball, source_files=src_ds))
 
         # - - clusters' resource manager and scheduler
         if ANA_ARGS.rs_manager == "TORQUE":
             # - - write jobs
             from hpana.cluster.job_template import PBS_JOB_TEMPLATE
-
-            # - - setup the submit dir
-            os.system(
-                "mkdir -p {0}/jobs {0}/hists".format(ANA_ARGS.outdir))
 
             ostr = "**"*20 + "... Submitting %i jobs ..."% len(ana_workers) + "**"*20 
             log.info(ostr)
@@ -168,7 +184,7 @@ def main():
                          PBS_JOB_TEMPLATE.format(logsdir=ANA_ARGS.logsdir,
                                                  outdir=ANA_ARGS.outdir,
                                                  local_scratch=ANA_ARGS.local_scratch,
-                                                 pickled_analysis=ANA_ARGS.pickled_analysis,
+                                                 conf_file=ANA_ARGS.conf_file,
                                                  script_path=os.path.join(__HERE, "process-dataset"),
                                                  jobname=aw.name,))
 
@@ -183,8 +199,6 @@ def main():
             # - - write jobs
             from hpana.cluster.job_template import SLURM_JOB_TEMPLATE
 
-            # - - setup the submit dir
-            os.system("mkdir -p {0}/jobs  {0}/logs {0}/hists".format(ANA_ARGS.outdir))
             submitfile_name = "%s/%s.sh" % (ANA_ARGS.outdir, "submitAllJobs")
             submit_file = os.open(submitfile_name, os.O_CREAT | os.O_WRONLY, 0755)
 
@@ -198,10 +212,11 @@ def main():
                     print aw.name
 
                 # - - payload for container
-                payload = "source {job_script} {pickled_analysis} {script_path}".format(
+                payload = "source {job_script} {source_code} {conf_file} {script_path}".format(
                     job_script=os.path.join(__HERE, "slurm_job.sh"),
-                    pickled_analysis=ANA_ARGS.pickled_analysis,
-                    script_path=os.path.join(__HERE, "process-dataset"),
+                    source_code=source_code_tarball,
+                    conf_file=ANA_ARGS.conf_file,
+                    script_path=os.path.join("bin", "process-dataset"),
                 )
 
                 # - - write the job submission script with right permissions
@@ -214,8 +229,8 @@ def main():
                              outdir=ANA_ARGS.outdir,
                              local_scratch=ANA_ARGS.local_scratch,
                              cores=1,
-                             time="12:0:0",
-                             memory="2GB",
+                             time="6:0:0",
+                             memory="3GB",
                              jobname=aw.name,  #<! important - jobname steers which worker used from pickled ana
                              payload=payload,
                              project=ANA_ARGS.rs_project
@@ -248,11 +263,82 @@ def main():
 
 
 # -------------------------------------------------------------
+# draw plots
+# -------------------------------------------------------------
+def draw_plots(hists_file, fields, categories):
+    ## draw parameters 
+    params = {
+        "hists_file":hists_file,
+        "backgrounds":analysis.backgrounds,
+        "data":analysis.data,
+        # "blind": False,
+        "signals":analysis.get_signals(masses=[140,160, 400, 2000]),        
+        "signal_scale":1,
+        "systematics":ANA_ARGS.systs,
+        "output_dir":"plots_"+ANA_ARGS.outdir,
+        "logy":ANA_ARGS.logy,
+        "logx":False,
+        "show_ratio":True,
+        "show_pvalue":False,
+        "error_bars":True,
+        "bin_optimization":False,
+        "scale_sig_to_bkg_sum":True,
+        "output_formats":ANA_ARGS.fmt,
+        # "ratio_range": (0.5, 1.5),
+        # "blind_range":(0.5, 1),
+    }
+
+    ## setup the output directory for the plots
+    if not os.path.isdir(params["output_dir"]):
+        os.system("mkdir -p %s"%params["output_dir"])
+
+    jobs = []
+    ## draw plots
+    for var in fields:
+        jparams = dict(params) #<! defensive copy 
+
+        ##@FIXME check if it's a classification score
+        m_range = var.name.split("_")[-1].split("to")
+        if len(m_range) > 1:
+            masses = [int(m) for m in m_range]
+            signals = analysis.get_signals(masses=masses)
+            jparams["signals"] = signals
+
+        for cat in categories:
+            ## signals are very tiny in control regions --> drop them from plots
+            if not ("SR_" in cat.name or "CLF" in cat.name):
+                jparams["signals"] = []
+                jparams["blind_range"] = ()
+
+            jobs += [Job(draw, var, cat, **jparams)]
+    run_pool(jobs, n_jobs=-1)
+
+# -------------------------------------------------------------
 # run
 # -------------------------------------------------------------
 if __name__ == "__main__":
     start_time = time.time()
+
+    ## process histograms 
+    log.info( 30*"*" + "...Processing histograms..."+30*"*")
+    log.info("Samples: %r"%[s.name for s in samples])
+
+    log.info("--"*50)
+    log.info("Systematics: %r"%[s.name for s in systematics])
+
+    log.info("--"*50)
+    log.info("Categories: %r"%[c.name for c in categories])
+
+    log.info("--"*50)
+    log.info("Variables: %r"%[f.name for f in fields])
+
     main()
+
+    ## draw plots 
+    if ANA_ARGS.plots:
+        log.info(20*"*" + "...Processing plots..."+ 20*"*")
+        hists_file = glob.glob("%s/HIST*"%ANA_ARGS.outdir)[0]        
+        draw_plots(hists_file, fields, categories)
 
     end_time = time.time()
     elapsed_time = (end_time - start_time)/60.

@@ -540,6 +540,10 @@ def fit_alpha(cr_hists, target_hists, regions,
                     template_hist = scaled_mj_hist.Clone()
                     template_hist.Add(scaled_wj_hist, 1 - a)
                     
+                    ## force fit range 
+                    if itk==3:
+                        template_hist.GetXaxis().SetRangeUser(0.02, 0.25)
+
                     if template_hist.Integral()==0 or target_hist.Integral()==0:
                         log.warning("target or template hist is zero, wont fit anything")
                         continue
@@ -788,8 +792,8 @@ def validate_template_fit(cr_hists_dict, target_hists_dict, chi2s,
             wj_hist.SetLineColor(ROOT.kRed)
             wj_hist.GetXaxis().SetTitle(var.title)
             if itk==3:
-                wj_hist.GetXaxis().SetRangeUser(0, 0.25)
-                mj_hist.GetXaxis().SetRangeUser(0, 0.25)
+                wj_hist.GetXaxis().SetRangeUser(0.02, 0.25)
+                mj_hist.GetXaxis().SetRangeUser(0.02, 0.25)
 
             wj_hist.GetYaxis().SetTitle("fraction of events")
             cr_legend.AddEntry(wj_hist, "W-jets CR", "P")
@@ -821,6 +825,10 @@ def validate_template_fit(cr_hists_dict, target_hists_dict, chi2s,
                 tr_legend = ROOT.TLegend(0.6, 0.8, 0.9, 0.9) 
                 target_hist, target_fit = target_hists_dict[tkey][pkey][cat]
 
+                if itk==3:
+                    target_fit.GetXaxis().SetLimits(0.025, 0.25)
+                    target_hist.GetXaxis().SetRangeUser(0.025, 0.25)
+
                 tr_ymax = 1.5* target_hist.GetMaximum()
                 target_fit.GetYaxis().SetRangeUser(0, tr_ymax)
                 target_fit.SetMarkerColor(ROOT.kRed)
@@ -833,9 +841,6 @@ def validate_template_fit(cr_hists_dict, target_hists_dict, chi2s,
                 target_fit.GetYaxis().SetTitle("Normalized Events")
                 target_hist.Draw("SAME")
 
-                if itk==3:
-                    target_fit.GetXaxis().SetRangeUser(0, 0.25)
-                    target_hist.GetXaxis().SetRangeUser(0, 0.25)
 
                 lg = "%s region"%cat
                 if cat=="SR_TAUJET":

@@ -809,7 +809,7 @@ def validate_template_fit(cr_hists_dict, target_hists_dict, chi2s,
             ##--------------------------------------------------------
             # - - plot target regions hists and fitted functions
             ##--------------------------------------------------------
-            for cat in target_regions:
+            for cat in [tr.name for tr in target_regions]:
                 canvas.cd(2)
                 if not pkey in target_hists_dict[tkey]:
                     log.warning("missing TARGET %s %s "%(tkey, pkey))

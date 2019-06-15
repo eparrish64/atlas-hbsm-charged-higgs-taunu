@@ -2,10 +2,11 @@
 """
 
 ## stdlib
-import multiprocessing, os, re, shutil, array, time 
+import multiprocessing, os, re, shutil, array, time, logging
 from multiprocessing import Process
 from collections import OrderedDict
 from os import environ
+from math import ceil
 
 ## PyPI
 from sklearn.metrics import roc_curve, roc_auc_score
@@ -373,7 +374,9 @@ def fill_scores_histogram(tree, models, hist_template=None, event_selection=None
         filled histogram
     """
 
-    log.debug("---------------- models:\n %r"%models)
+    if log.isEnabledFor(logging.DEBUG):
+        # Converting these to strings is slow, even if the logger doesn't print anything
+        log.debug("---------------- models:\n %r"%models)
 
     event_number = ROOT.TTreeFormula("event_number", "event_number", tree)
 
@@ -385,43 +388,58 @@ def fill_scores_histogram(tree, models, hist_template=None, event_selection=None
             clf_feats_tf.append(ROOT.TTreeFormula(feat.name, feat.tformula, tree))
     for f_tf in clf_feats_tf:
         f_tf.SetQuickLoad(True)
-        
-    ## - - cache Tree block by block 
+
+    ## - - cache Tree
     tree.SetCacheSize(32*2**20)
     tree.SetCacheLearnEntries()
     ents = tree.GetEntries()
-    blockSize = 2**18
-    blocks = ents/blockSize
-    for block in xrange(blocks+1):
-        for entry in xrange(block*blockSize, min(ents, (block+1)*blockSize)):
-            tree.LoadTree(entry)
+    info = dict() # Cache of features for events passing selection, indexed by folds
+    for model in models:
+        if model.kfolds not in info: info[model.kfolds] = dict()
+        if model.fold_num not in info[model.kfolds]: info[model.kfolds][model.fold_num] = [[], []] # Features and weights
+    for entry in xrange(ents):
 
-            # - - does the event pass the selections ?
-            if event_selection is not None:
-                if not event_selection.EvalInstance():
-                    continue
+        tree.LoadTree(entry)
 
-            if (entry%10000==0): 
-                log.info("Tree: {0}, Event: {1}/{2}".format(tree.GetName(), entry+1, ents))
+        # Logging output
+        #if (entry%10000==0): 
+        #    log.info("Tree: {0}, Event: {1}/{2}".format(tree.GetName(), entry+1, ents))
 
-            ## - - evaluate features vector
-            feats = [f.EvalInstance() for f in clf_feats_tf]    
-            ifeats = np.array([feats])
+        # - - does the event pass the selections ?
+        if event_selection is not None:
+            if not event_selection.EvalInstance():
+                continue
 
-            e_weight = event_weight.EvalInstance()
-            ## - - trained on all with rem!= event_numbr%kFOLDS --> evaluate on the complementary
-            for model in models:
-                event_num = int(event_number.EvalInstance())
-                if event_num%model.kfolds!=model.fold_num:
-                    continue
+        ## - - evaluate features vector
+        feats = [f.EvalInstance() for f in clf_feats_tf]
+        weight = event_weight.EvalInstance()
+        eventnum = event_number.EvalInstance()
+        for kfolds in info:
+            for fold in info[kfolds]:
+                if eventnum % kfolds == fold:
+                    info[kfolds][fold][0].append(feats)
+                    info[kfolds][fold][1].append(weight)
+    # End loop over entries
 
-                score = model.predict_proba(ifeats)[0][1]  #<! probability of belonging to class 1 (SIGNAL)
-                hist_template.Fill(score, e_weight)
+    # Convert to np.array
+    for kfolds in info:
+        for fold in info[kfolds]:
+            if len(info[kfolds][fold][0]) > 0:
+                old = info[kfolds][fold]
+                info[kfolds][fold][0] = np.array(info[kfolds][fold][0])
 
-            if entry%100000==0:
-                log.debug("%r : %r "%(ifeats, score))
+    for model in models:
+        # Loop over models, evaluating events and filling trees
+        # In theory we could do this periodically while looping over events, if memory becomes a problem
+        events = info[model.kfolds][model.fold_num]
+        if len(events[0]) == 0: continue # No events passed the selection
+        scores = model.predict_proba(events[0])
+        for idx in xrange(len(scores)):
+            hist_template.Fill(scores[idx][1], events[1][idx]) # <! probability of belonging to class 1 (SIGNAL)
+            if idx%100000==0:
+                log.debug("%r : %r "%(events[0][idx], scores[idx][1]))
+    # End loop over models
 
-    
 ##-----------------------------------------------
 ##
 ##-----------------------------------------------

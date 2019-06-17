@@ -353,7 +353,7 @@ def setup_tformulas(tree, features):
 ##-----------------------------------------------
 ## 
 ##-----------------------------------------------
-def fill_scores_histogram(tree, models, hist_template=None, event_selection=None, event_weight=None, correct_upsilon=False):
+def fill_scores_histogram(tree, models, hist_template=None, event_selection=None, event_weight=None, correct_upsilon=False, event_list=None):
     """ evaluate scores from a model on a tree and fill a histogram
     Parameters
     ----------
@@ -367,6 +367,8 @@ def fill_scores_histogram(tree, models, hist_template=None, event_selection=None
         cuts to be applied on the events
     event_weight: ROOT.TTFormula,
         event weight for the histogram
+    event_list: ROOT.TEventList,
+        preseleted list of events to consider
 
     Return
     ------
@@ -397,7 +399,12 @@ def fill_scores_histogram(tree, models, hist_template=None, event_selection=None
     for model in models:
         if model.kfolds not in info: info[model.kfolds] = dict()
         if model.fold_num not in info[model.kfolds]: info[model.kfolds][model.fold_num] = [[], []] # Features and weights
-    for entry in xrange(ents):
+    entries = xrange(ents)
+    if event_list is not None:
+      entries = []
+      for entry in xrange(event_list.GetN()):
+        entries.append(event_list.GetEntry(entry))
+    for entry in entries:
 
         tree.LoadTree(entry)
 

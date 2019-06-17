@@ -367,6 +367,9 @@ def dataset_hists_direct(hist_worker,
                     event_weight = ROOT.TTreeFormula("event_weight", eventweight, tree)
                     event_weight.SetQuickLoad(True)
                     if clf_models:
+                        # - - create a TEventList of the events passing the selection
+                        tree.Draw(">>elist", selection)
+                        event_list = ROOT.gDirectory.Get("elist") # Used to skip over unselected events
                         for mtag in clf_models:
                             m_hists =  filter(lambda hs: mtag in hs.variable, cat_hists )
                             if len(m_hists)==0:
@@ -379,7 +382,7 @@ def dataset_hists_direct(hist_worker,
                             hist_tmp = m_hists[0].hist
                             hist_tmp.SetName("%s_category_%s_var_%s" %(outname, category.name, m_hists[0].variable))
                             fill_scores_histogram(tree, clf_models[mtag], 
-                                hist_template=hist_tmp, event_selection=event_selection, event_weight=event_weight, correct_upsilon=correct_upsilon)                        
+                                hist_template=hist_tmp, event_selection=None, event_weight=event_weight, correct_upsilon=correct_upsilon, event_list=event_list) 
                     else:
                         # - - loop over the events
                         for i, event in enumerate(tree):

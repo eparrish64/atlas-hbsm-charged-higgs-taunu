@@ -769,7 +769,7 @@ clf_score_GB200_mass_170to190 = Variable(
 
 clf_score_GB200_mass_200to400 = Variable(
     "clf_score_GB200_mass_200to400",    
-    title='BDT score ( 200 to 400 [GeV])',
+    title='BDT score (200 to 400 [GeV])',
     binning=(1000, 0, 1), 
     plot_bins=np.arange(0, 1.1, 0.1),
 )

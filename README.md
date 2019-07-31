@@ -9,7 +9,7 @@ Setup
 #### first time only
 Setting up Python virtualenv for clean PyPI packages setup. 
 
-    - setupATLAS; lsetup root (this is to make sure you have the right Python 2.7; by default on some lxplus machines we have Python 2.6! )
+    - setupATLAS; lsetup "root 6.14.08-x86_64-centos7-gcc8-opt" (this is to make sure you have the right Python 2.7; by default on some lxplus machines we have Python 2.6! )
     - get a stable virtualenv release from here, https://virtualenv.pypa.io/en/stable/installation/
     - somewhere outside the hpana code do: mkdir -p PythonPackags/Venvs; cd PythonPackags  
     - wget https://pypi.python.org/packages/source/v/virtualenv/virtualenv-16.7.2.tar.gz 

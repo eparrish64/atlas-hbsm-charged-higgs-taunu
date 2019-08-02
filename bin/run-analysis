@@ -130,7 +130,7 @@ def main():
             return 
 
         ## setup output dir
-        os.system("mkdir -p {0}/jobs  {0}/logs {0}/hists".format(ANA_ARGS.outdir))
+        os.system("mkdir -p {0}/jobs  {0}/logs {0}/hists {0}/logs/log {0}/logs/err {0}/logs/out".format(ANA_ARGS.outdir))
 
         ## Analysis Configuration parameters to be copied to the worker nodes
         conf_params = {
@@ -163,6 +163,10 @@ def main():
         os.system("cd {src_dir} && tar -cf {target_tar} {source_files} && cd - && tar --append --file={target_tar} {conf_file}".format(
             src_dir=__HERE+"/../", conf_file=ANA_ARGS.conf_file, target_tar=source_code_tarball, source_files=src_ds))
 
+        # print source_code_tarball
+        # print len(source_code_tarball)
+        # print source_code_tarball[0:5]
+        # raise Exception("DEBUGGING")
         # - - clusters' resource manager and scheduler
         if ANA_ARGS.rs_manager == "TORQUE":
             # - - write jobs
@@ -194,6 +198,61 @@ def main():
                 log.info("submitting  %s ..." % aw.name)
                 if not ANA_ARGS.dry_run:
                     os.system("qsub {0}".format(jfile_name))
+
+        elif ANA_ARGS.rs_manager == "CONDOR":
+            # -- write jobs
+            from hpana.cluster.job_template import CONDOR_JOB_TEMPLATE
+
+            submitfile_name = "%s/%s.sh" %(ANA_ARGS.outdir, "submitAllJobs")
+            submit_file = os.open(submitfile_name, os.O_CREAT | os.O_WRONLY, 0755)
+
+            # - -  create the job scripts and run them. Returns Analysis workers
+            ostr = "**"*20 + "... Submitting %i jobs ..."% len(ana_workers) + "**"*20 
+            log.info(ostr)
+            log.info("*"*len(ostr))
+
+            submit_file_name = "%s/submitAllJobs.sh" % (ANA_ARGS.outdir)
+            # with submit_file as open(submit_file_name, "w"):
+            submit_file = open(submit_file_name, "w")
+                # submit_file = os.open(submit_file_name, os.O_CREAT | os.O_WRONLY, 0755)
+            # print os.getcwd() +"/" + ANA_ARGS.outdir
+            submit_file.write(
+                         CONDOR_JOB_TEMPLATE.format(
+                             logsdir=os.path.join(
+                                 ANA_ARGS.outdir, ANA_ARGS.logsdir),
+                             execScript=os.path.join(__HERE, "condor_jobs.sh"),
+                             userEmail="Z1832314@students.niu.edu",
+                             memory="3GB",
+                             # jobname=aw.name,  #<! important - jobname steers which worker used from pickled ana
+                             submitdir=__HERE,
+                             source_code=source_code_tarball,
+                             script_path=os.path.join(__HERE, "process-dataset"),
+                             conf_file=ANA_ARGS.conf_file,
+                         )
+                         )
+
+            for aw in ana_workers:
+                if ANA_ARGS.dry_run:
+                    print "--"*100
+                    print aw.name
+
+                submit_file.write("\nArguments = %s %s %s %s %s\nqueue\n" %(aw.name, source_code_tarball, os.path.join(__HERE, "process-dataset"), ANA_ARGS.conf_file, os.path.join(os.getcwd(), ANA_ARGS.outdir)))
+
+
+                # os.close(jfile)
+
+                # - - - - write submission to file to be used outside container
+                log.info("Writing to %s for job %s ..." %
+                         (submit_file_name, aw.name))
+                # os.write(submit_file, "sbatch %s\n" % jfile_name)
+
+            submit_file.close()
+            log.warning("Submission not supported from within container.")
+            log.warning("Please launch outside container via:")
+            log.warning("\t condor_submit {0}".format(submit_file_name))
+
+            # raise Exception("*"*20+"DEBUGGING"+"*"*20)
+
 
         elif ANA_ARGS.rs_manager == "SLURM":
             # - - write jobs

@@ -7,7 +7,8 @@ from multiprocessing import Process
 from collections import OrderedDict
 from os import environ
 from math import ceil
-
+import math
+import csv
 ## PyPI
 from sklearn.metrics import roc_curve, roc_auc_score
 import numpy as np
@@ -22,12 +23,13 @@ from hpana.mva import plt, XML_FILE_PATTERN, PKL_FILE_PATTERN
 import ROOT 
 
 
+
 ##-------------------------------------------------------------------
 ## simple class for appending clf scores to TTrees
 ##-------------------------------------------------------------------
 class AppendJob(Process):
     """
-    simpel worker class for parallel
+    simple worker class for parallel
     processing. the run method is necessary,
     which will overload the run method of Procces.
     """
@@ -98,18 +100,24 @@ def plot_scores(models,
     log.debug(30*"*" + " Testing Data Frame " + 30*"*")
     log.debug(dframe)
 
+    #ak
+    #fo = open("foo.txt", "wb")
+
     rocs = []
     for sig in signals:
         sm_df = dframe.loc[[sig.name]]
         s_train_scores = []
         b_train_scores = []
         s_scores = []        
-        b_scores = []        
+        b_scores = []  
+        #ak
+        b_auc = []
+        #ak      
         for m_model in models:
             masses = m_model.mass_range
             if not (masses[0] <= sig.mass <= masses[-1]):
                 continue
-
+            #print m_model.name
             feats = m_model.features
             ## evaluate on the training samples
             if train_score:
@@ -145,8 +153,41 @@ def plot_scores(models,
             s_score = m_model.predict_proba(s_test)[:, 1]
             s_scores += [s_score]
 
+            #ak
+            b1_arr = np.concatenate([b_score])
+            s1_arr = np.concatenate([s_score])
+
+            Y1_score = np.concatenate([b1_arr, s1_arr])
+            b1_true = np.zeros(b1_arr.size)
+            s1_true = np.ones(s1_arr.size)
+            Y1_true = np.concatenate([b1_true, s1_true])
+            auc1 = roc_auc_score(Y1_true, Y1_score)            
+            b_auc += [auc1]
+            #ak
+            ##aklog.info("Evaluated model %s, mass =%i, ntrack=%i, ==> AUC=%f"%(m_model.name,
+            ##ak    sig.mass, m_model.ntracks, auc))
+            #print "KFOLD",sig.mass,auc1,m_model.name
+
+
+
         if len(s_scores) < 1:
             continue
+
+        sum_auc = 0
+        nfold = 5.
+        for m_fold in b_auc:
+            sum_auc += m_fold 
+        mean_auc = sum_auc/nfold
+        sum_auc2 = 0
+        for m_fold in b_auc:
+            sum_auc2 +=(m_fold-mean_auc)*(m_fold-mean_auc)
+        err_mean_auc = math.sqrt(sum_auc2/(nfold*(nfold-1)))
+
+        thisrow = sig.mass,mean_auc,err_mean_auc 
+        with open(r'AUC.csv', 'a') as f:
+            writer = csv.writer(f)
+            writer.writerow(thisrow)
+
             
         b_arr = np.concatenate(b_scores)
         s_arr = np.concatenate(s_scores)
@@ -155,8 +196,8 @@ def plot_scores(models,
             b_train_arr = np.concatenate(b_train_scores)
             s_train_arr = np.concatenate(s_train_scores)
 
-        log.info("Evaluated mass %i, ntrack=%i, bkg events=%i, and sig events=%i"%(
-                sig.mass, m_model.ntracks, b_arr.shape[0], s_arr.shape[0]))
+        ##ak log.info("Evaluated mass %i, ntrack=%i, bkg events=%i, and sig events=%i"%(
+        ##ak        sig.mass, m_model.ntracks, b_arr.shape[0], s_arr.shape[0]))
         if bins is None:
             bins = np.linspace(0, 1, 50)
 
@@ -193,6 +234,11 @@ def plot_scores(models,
             fpr_grd, tpr_grd, _ = roc_curve(Y_true, Y_score)
             auc = roc_auc_score(Y_true, Y_score)            
             rocs += [(m_model, fpr_grd, tpr_grd, auc)]
+            #ak
+            ##aklog.info("Evaluated model %s, mass =%i, ntrack=%i, ==> AUC=%f"%(m_model.name,
+            ##ak    sig.mass, m_model.ntracks, auc))
+            #print sig.mass,auc,m_model.name
+            #ak fo.write(str(sig.mass)+' '+str(auc)+'\n')
 
             if train_score:
                 Y_train_score = np.concatenate([b_train_arr, s_train_arr])
@@ -237,7 +283,10 @@ def plot_scores(models,
         plt.savefig(outname)
         plt.close()
 
-    return 
+    #ak
+    #ak fo.close()
+
+    return  
 
 
 ##-----------------------------------------------
@@ -353,7 +402,7 @@ def setup_tformulas(tree, features):
 ##-----------------------------------------------
 ## 
 ##-----------------------------------------------
-def fill_scores_histogram(tree, models, hist_template=None, event_selection=None, event_weight=None, correct_upsilon=False, event_list=None):
+def fill_scores_histogram(tree, models, hist_template=None, event_selection=None, event_weight=None, correct_upsilon=False):
     """ evaluate scores from a model on a tree and fill a histogram
     Parameters
     ----------
@@ -367,8 +416,6 @@ def fill_scores_histogram(tree, models, hist_template=None, event_selection=None
         cuts to be applied on the events
     event_weight: ROOT.TTFormula,
         event weight for the histogram
-    event_list: ROOT.TEventList,
-        preseleted list of events to consider
 
     Return
     ------
@@ -399,12 +446,7 @@ def fill_scores_histogram(tree, models, hist_template=None, event_selection=None
     for model in models:
         if model.kfolds not in info: info[model.kfolds] = dict()
         if model.fold_num not in info[model.kfolds]: info[model.kfolds][model.fold_num] = [[], []] # Features and weights
-    entries = xrange(ents)
-    if event_list is not None:
-      entries = []
-      for entry in xrange(event_list.GetN()):
-        entries.append(event_list.GetEntry(entry))
-    for entry in entries:
+    for entry in xrange(ents):
 
         tree.LoadTree(entry)
 
@@ -445,93 +487,6 @@ def fill_scores_histogram(tree, models, hist_template=None, event_selection=None
             hist_template.Fill(scores[idx][1], events[1][idx]) # <! probability of belonging to class 1 (SIGNAL)
             if idx%100000==0:
                 log.debug("%r : %r "%(events[0][idx], scores[idx][1]))
-    # End loop over models
-
-##-----------------------------------------------
-## 
-##-----------------------------------------------
-def fill_scores_mult(tree, all_models, hist_templates, event_list, event_weight=None, correct_upsilon=False):
-    """ evaluate scores from a model on a tree and fill a histogram
-    Parameters
-    ----------
-    ...
-
-    Return
-    ------
-    ...
-    """
-
-    #if log.isEnabledFor(logging.DEBUG):
-    #    # Converting these to strings is slow, even if the logger doesn't print anything
-    #    log.debug("---------------- models:\n %r"%models)
-
-    event_number = ROOT.TTreeFormula("event_number", "event_number", tree)
-
-    clf_feats_tf = dict()
-    for mtag in all_models:
-      for feat in all_models[mtag][0].features:
-          if feat.name in clf_feats_tf: continue
-          if correct_upsilon and "upsilon" in feat.name.lower():
-              clf_feats_tf[feat.name] = ROOT.TTreeFormula(feat.name, QCD.UPSILON_CORRECTED["mc16"], tree)
-          else:
-              clf_feats_tf[feat.name] = ROOT.TTreeFormula(feat.name, feat.tformula, tree)
-      for f_tf in clf_feats_tf.values():
-          f_tf.SetQuickLoad(True)
-
-    ## - - cache Tree
-    tree.SetCacheSize(32*2**20)
-    tree.SetCacheLearnEntries()
-    infos = dict()
-    for mtag in all_models:
-      infos[mtag] = dict() # Cache of features for events passing selection, indexed by folds    
-      for model in all_models[mtag]:
-          if model.kfolds not in infos[mtag]: infos[mtag][model.kfolds] = dict()
-          if model.fold_num not in infos[mtag][model.kfolds]: infos[mtag][model.kfolds][model.fold_num] = [[], []] # Features and weights
-    entries = []
-    for entry in xrange(event_list.GetN()):
-      entries.append(event_list.GetEntry(entry))
-    for entry in entries:
-
-        tree.LoadTree(entry)
-
-        # Logging output
-        #if (entry%10000==0): 
-        #    log.info("Tree: {0}, Event: {1}/{2}".format(tree.GetName(), entry+1, ents))
-
-        ## - - evaluate features
-        feats = { n:v.EvalInstance() for n,v in clf_feats_tf.iteritems() }
-        weight = event_weight.EvalInstance()
-        eventnum = event_number.EvalInstance()
-
-        ## - - build features vectors per fold
-        for mtag in all_models:
-          event_feats = [feats[feat.name] for feat in all_models[mtag][0].features]
-          for kfolds in infos[mtag]:
-              for fold in infos[mtag][kfolds]:
-                  if eventnum % kfolds == fold:
-                      infos[mtag][kfolds][fold][0].append(event_feats)
-                      infos[mtag][kfolds][fold][1].append(weight)
-    # End loop over entries
-
-    ## - - convert to np.array
-    for mtag in infos:
-      for kfolds in infos[mtag]:
-          for fold in infos[mtag][kfolds]:
-              if len(infos[mtag][kfolds][fold][0]) > 0:
-                  old = infos[mtag][kfolds][fold]
-                  infos[mtag][kfolds][fold][0] = np.array(infos[mtag][kfolds][fold][0])
-
-    for mtag in all_models:
-      for model in all_models[mtag]:
-          # Loop over models, evaluating events and filling trees
-          # In theory we could do this periodically while looping over events, if memory becomes a problem
-          events = infos[mtag][model.kfolds][model.fold_num]
-          if len(events[0]) == 0: continue # No events passed the selection
-          scores = model.predict_proba(events[0])
-          for idx in xrange(len(scores)):
-              hist_templates[mtag].Fill(scores[idx][1], events[1][idx]) # <! probability of belonging to class 1 (SIGNAL)
-              if idx%100000==0:
-                  log.debug("%r : %r "%(events[0][idx], scores[idx][1]))
     # End loop over models
 
 ##-----------------------------------------------

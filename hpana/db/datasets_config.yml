@@ -1,17 +1,57 @@
 ## YMAL DOESN'T ALLOW \t ; USE SPACES !
+"2015":
+  common:
+    grl: ""
+    
+  taujet:
+    mc_path: /xdata/eparrish/HPlusNTuples/2018/v06/taujet/mc16/
+    mc_prefix: #"user."
+    mc_pattern: '*.root'
+    mc_treename: 'NOMINAL'
+    mc_sampletype:
+    data_path: /xdata/eparrish/HPlusNTuples/2018/v06/taujet/data/
+    data_prefix: # "user." 
+    data_pattern: '*.root*'
+    data_treename: 'NOMINAL'
+    data_sampletype:
+
+  taulep:
+    mc_path: /xdata/eparrish/HPlusNTuples/2018/v06/taulep/mc16/
+    mc_prefix: #"user."
+    mc_pattern: '*.root*'
+    mc_treename: 'NOMINAL'
+    mc_sampletype:
+    data_path: /xdata/eparrish/HPlusNTuples/2018/v06/taulep/data/
+    data_prefix: # "user." 
+    data_pattern: '*.root*'
+    data_treename: 'NOMINAL'
+    data_sampletype:
+
 "2016":
   common:
     grl: ""
     
   taujet:
-    mc_path: /home/sbahrase/WorkDesk/HPlusTauNu/AnaNTUPs/merged_ntups_1017v01/
+    mc_path: /xdata/eparrish/HPlusNTuples/2018/v06/taujet/mc16/
     mc_prefix: #"user."
-    mc_pattern: '*hist-output.root*.nn'
+    mc_pattern: '*.root*'
     mc_treename: 'NOMINAL'
     mc_sampletype:
-    data_path: /home/sbahrase/WorkDesk/HPlusTauNu/AnaNTUPs/merged_ntups_1017v01/
-    data_prefix: "data" 
-    data_pattern: 'full_data_1017v01.root'
+    data_path: /xdata/eparrish/HPlusNTuples/2018/v06/taujet/data/
+    data_prefix: # "user." 
+    data_pattern: '*.root*'
+    data_treename: 'NOMINAL'
+    data_sampletype:
+
+  taulep:
+    mc_path: /xdata/eparrish/HPlusNTuples/2018/v06/taulep/mc16/
+    mc_prefix: #"user."
+    mc_pattern: '*.root*'
+    mc_treename: 'NOMINAL'
+    mc_sampletype:
+    data_path: /xdata/eparrish/HPlusNTuples/2018/v06/taulep/data/
+    data_prefix: # "user." 
+    data_pattern: '*.root*'
     data_treename: 'NOMINAL'
     data_sampletype:
 
@@ -20,30 +60,54 @@
     grl: ""
     
   taujet:
-    mc_path: /home/sbahrase/WorkDesk/HPlusTauNu/AnaNTUPs/merged_ntups_1017v01/
+    mc_path: /xdata/eparrish/HPlusNTuples/2018/v06/taujet/mc16/
     mc_prefix: #"user."
-    mc_pattern: '*hist-output.root*.nn'
+    mc_pattern: '*.root*'
     mc_treename: 'NOMINAL'
     mc_sampletype:
-    data_path: /home/sbahrase/WorkDesk/HPlusTauNu/AnaNTUPs/merged_ntups_1017v01/
-    data_prefix: "data" 
-    data_pattern: 'full_data_1017v01.root'
+    data_path: /xdata/eparrish/HPlusNTuples/2018/v06/taujet/data/
+    data_prefix: # "user." 
+    data_pattern: '*.root*'
     data_treename: 'NOMINAL'
     data_sampletype:
       
+  taulep:
+    mc_path: /xdata/eparrish/HPlusNTuples/2018/v06/taulep/mc16/
+    mc_prefix: #"user."
+    mc_pattern: '*.root*'
+    mc_treename: 'NOMINAL'
+    mc_sampletype:
+    data_path: /xdata/eparrish/HPlusNTuples/2018/v06/taulep/data/
+    data_prefix: # "user." 
+    data_pattern: '*.root*'
+    data_treename: 'NOMINAL'
+    data_sampletype:
+
 "2018":
   common:
     grl: ""
    
   taujet:
-    mc_path: /home/sbahrase/WorkDesk/SAMPLES/HBSM/nTuples/2018/18v01/mc/
-    mc_prefix: "user."
-    mc_pattern: '*hist-output.root*'
+    mc_path: /xdata/eparrish/HPlusNTuples/2018/v06/taujet/mc16/
+    mc_prefix: #"user."
+    mc_pattern: '*.root*'
     mc_treename: 'NOMINAL'
     mc_sampletype:
-    data_path: /home/sbahrase/WorkDesk/SAMPLES/HBSM/nTuples/2018/18v01/data/
-    data_prefix: "user."
-    data_pattern: '*hist-output.root*'
+    data_path: /xdata/eparrish/HPlusNTuples/2018/v06/taujet/data/
+    data_prefix: # "user."
+    data_pattern: '*.root*'
+    data_treename: 'NOMINAL'
+    data_sampletype:
+            
+  taulep:
+    mc_path: /xdata/eparrish/HPlusNTuples/2018/v06/taulep/mc16/
+    mc_prefix: #"user."
+    mc_pattern: '*.root*'
+    mc_treename: 'NOMINAL'
+    mc_sampletype:
+    data_path: /xdata/eparrish/HPlusNTuples/2018/v06/taulep/data/
+    data_prefix: # "user."
+    data_pattern: '*.root*'
     data_treename: 'NOMINAL'
     data_sampletype:
             

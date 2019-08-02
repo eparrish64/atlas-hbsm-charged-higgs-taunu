@@ -105,7 +105,7 @@ def get_ana_parser(base_parser=None):
     ana_parser.add_argument("--dry-run", action="store_true",
                             help="if you just want to see the scripts that will be submitted to the cluster")
     
-    ana_parser.add_argument("--rs-manager", type=str,default="TORQUE", choices=["TORQUE", "SLURM"],
+    ana_parser.add_argument("--rs-manager", type=str,default="TORQUE", choices=["TORQUE", "SLURM", "CONDOR"],
                             help="the resource manager on your cluster")
 
     ana_parser.add_argument("--rs-project", type=str,default="ctb-stelzer", choices=["ctb-stelzer", "def-doneil"],
@@ -114,7 +114,7 @@ def get_ana_parser(base_parser=None):
     ana_parser.add_argument("--retry", help="retry failed jobs", action="store_true")
 
     ana_parser.add_argument('--plots', action="store_true",
-                                 help='draw plots', )
+                                 help='p plots', )
 
     ana_parser.add_argument('--fmt', nargs="+", default=["png", "eps", "pdf"],
                                 help="format for the plots")
@@ -157,6 +157,9 @@ def get_plotting_parser(base_parser=None):
     
     plotting_parser.add_argument('--no-data', action="store_true",
                                  help='dont plot data', )
+
+    plotting_parser.add_argument('--bdt-only', action="store_true",
+                                help='Plot only bdt scores')
     return plotting_parser
 
 ##--------------------------------------------------------------------------------------------------
@@ -296,13 +299,13 @@ def get_clf_parser():
                             help="optimize Boosted Decision Tree")
     
     clf_parser.add_argument("--train-data", default=None,
-                            help="tarining data ")
+                            help="training data ")
     
     clf_parser.add_argument("--train-nn", action="store_true",
-                            help="tarin a Neural Network")
+                            help="train a Neural Network")
     
     clf_parser.add_argument("--per-mass", action="store_true",
-                            help="tarin per mass point")
+                            help="train per mass point")
     
     clf_parser.add_argument("--parallel", action="store_true",
                             help="if you want to do parallel processing")
@@ -349,7 +352,7 @@ def get_clf_parser():
     clf_parser.add_argument("--logsdir", type=str, default="logs",
                             help="where to put the log files")
     
-    clf_parser.add_argument("--rs-manager", type=str, default="SLURM", choices=["TORQUE", "SLURM"],
+    clf_parser.add_argument("--rs-manager", type=str, default="SLURM", choices=["TORQUE", "SLURM", "CONDOR"],
                             help="the resource manager on your cluster")
 
     clf_parser.add_argument("--rs-project", type=str, default="ctb-stelzer", choices=["ctb-stelzer", "def-doneil"],
@@ -360,6 +363,9 @@ def get_clf_parser():
     
     clf_parser.add_argument("--inc-trks", action="store_true",
                             help="train on both 1p and 3p taus ?")
+
+    clf_parser.add_argument("--balanced", action="store_true",
+                            help="Do not balance training classes")
 
     return clf_parser
 
@@ -374,6 +380,9 @@ def get_evalclf_parser(base_parser=None):
 
     evalclf_parser.add_argument('--models', '-w', nargs="+",
                             help='path to xml or pickled trained models')
+
+    evalclf_parser.add_argument("--models-path", "-mp", nargs="+",
+                                help="directory that holds trained models")
 
     evalclf_parser.add_argument("--mtype", choices=["keras", "bdt"], default="bdt",
                             help="TMVA Method type")

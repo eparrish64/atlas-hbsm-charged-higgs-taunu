@@ -444,7 +444,7 @@ def train_model(model,
     train_df=None,
     features=[], 
     positive_weights=True, 
-    balanced=True,
+    balanced=False,
     outdir="", 
     weight_sample=False, 
     scale_features=True, 
@@ -475,18 +475,29 @@ def train_model(model,
         tr_df = model.train_df
     if not features :
         features = model.features
+ 
+    b_df = tr_df[tr_df["class_label"]==0]
+    s_df = tr_df[tr_df["class_label"]==1]
 
     if balanced: 
-        weight_sample = False   
-        b_df = tr_df[tr_df["class_label"]==0]
-        s_df = tr_df[tr_df["class_label"]==1]
-        log.info("Balancing training classes (under-sampling); signal events:{} | bkg events: {}".format(s_df.shape[0], b_df.shape[0]))
-        b_df = b_df.sample(s_df.shape[0], replace=True)
-        tr_df_ud = pd.concat([b_df, s_df], axis=0)
+        ## Set training weight of bkg events to 1. Signal events to N_bkg / N_sig.
+        weight_sample = False  
+        b_df["BDT_Weight"] = 1
+        s_df["BDT_Weight"] = float(b_df.shape[0])/float(s_df.shape[0])
+        log.info("Balancing training classes via weights in BDT. Setting signal weights to %s" %(float(b_df.shape[0])/float(s_df.shape[0])))
+
+    else:
+        log.info("Unbalanced training classes; signal events:{} | bkg events: {}".format(s_df.shape[0], b_df.shape[0]))
+
+    tr_df_ud = pd.concat([b_df, s_df], axis=0)
 
     ## - - training arrays
+    # print features
+    # print tr_df_ud
     X_train = tr_df_ud[[ft.name for ft in features]]    
     Y_train = tr_df_ud["class_label"]
+    # print X_train
+    # print Y_train
     if weight_sample:
         log.info("Using event weight for training, events with negative weight are thrown away")        
         X_weight = tr_df_ud["weight"] 
@@ -494,6 +505,10 @@ def train_model(model,
         if positive_weights: 
             log.info("using abs(weights)!")
             X_weight = np.absolute(X_weight.values)
+
+    if balanced:
+        ## Set training weight of bkg events to 1. Signal events to N_bkg / N_sig.
+        X_weight = tr_df_ud["BDT_Weight"]
 
     if scale_features:
         log.info("Scaling features using StandardScaler ...")
@@ -514,8 +529,13 @@ def train_model(model,
                     is_trained = False                                    
 
     if not is_trained:
+        # print X_train
+        # print Y_train
         ## train the model,
-        model = model.fit(X_train.values, Y_train.values, sample_weight=X_weight if weight_sample else None)
+        try:
+            model = model.fit(X_train.values, Y_train.values, sample_weight=X_weight if weight_sample else None)
+        except:
+            model = model.fit(X_train, Y_train.values, sample_weight=X_weight if weight_sample else None)
         model.is_trained = True
         if save_model:
             mpath = os.path.join(outdir, model.name)

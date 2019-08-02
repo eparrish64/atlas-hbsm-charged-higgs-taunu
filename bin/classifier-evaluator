@@ -18,8 +18,13 @@ if __name__=="__main__":
 
         if 'cedar' in socket.gethostname():
             jobname = os.getenv("SLURM_JOB_NAME")
+            models = sys.argv[2]
+        elif 'niu' in socket.gethostname() or 'cern' in socket.gethostname():
+            models = sys.argv[2]
+            jobname = sys.argv[3]
         else:
             jobname = os.getenv("PBS_JOBNAME")
+            models = sys.argv[2]
 
         ## load analysis
         with open(sys.argv[1], "rb") as pfile:
@@ -38,8 +43,8 @@ if __name__=="__main__":
         worker = workers[0]
         print "WORKER: ", worker
  
-        ## load trained models 
-        pmodels = get_models(sys.argv[2].split(",")) 
+        ## load trained models
+        pmodels = get_models(models.split(",")) 
 
         print "Trained Models: ", pmodels
 

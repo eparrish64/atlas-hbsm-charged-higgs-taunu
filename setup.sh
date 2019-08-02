@@ -1,8 +1,9 @@
 # source this file
 
 # ROOT version should be set manually 
+# export ALRB_rootVersion=6.14.08-x86_64-slc6-gcc62-opt
+# export ALRB_rootVersion=6.14.08-x86_64-slc7-gcc62-opt
 export ALRB_rootVersion=6.14.08-x86_64-centos7-gcc8-opt
-
 
 # determine path to this script
 # http://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-stored-in
@@ -25,12 +26,13 @@ case $USER in
     sbahrase)
         VENVPATH=/project/6024950/sbahrase/PythonPackages/VirtualEnvs/hpana_venv/
         ;;
-    klimek)
-        VENVPATH=/afs/cern.ch/work/k/klimek/private/Charged_H/Analysis_EoR2/hpana/PythonPackags/Venvs/hpanaVenv/
-        ;;
+    eparrish)
+		VENVPATH=/xdata/eparrish/VirtualEnv/Venvs/hpanaVenvSL7/
+		;;
 	*)
 		VENVPATH=""
 		echo "User not found when setting virtual envrionment, adjust setup file."
+
 esac
 
 case "$(hostname)" in

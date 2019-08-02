@@ -31,6 +31,7 @@ from hpana.mva.evaluation import get_models
 from hpana.mva.optimization import get_hparams
 from hpana.mva.validation import (
     plot_sig_dist, 
+    plot_bkg_dist,
     plot_weights, 
     features_ranking, 
     features_correlation, 
@@ -85,6 +86,7 @@ if __name__=="__main__":
 
     if CLF_ARGS.plot_sample_size:
         plot_sig_dist(DFRAME, signals=SIGS, outdir=CLF_ARGS.outdir)
+        plot_bkg_dist(DFRAME, backgrounds=BKGS, outdir=CLF_ARGS.outdir)
 
     if CLF_ARGS.plot_weights:
         plot_weights(DFRAME, outdir=CLF_ARGS.outdir) 

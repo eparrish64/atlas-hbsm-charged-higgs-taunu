@@ -121,9 +121,9 @@ def main():
 
         # # - -  some checks on cmd args
         if ECLF_ARGS.fields:
-            fields = filter(lambda v: v.name in ECLF_ARGS.fields, BDT_SCORES[ECLF_ARGS.channel])
+            fields = filter(lambda v: v.name in ECLF_ARGS.fields, BDT_SCORES[ECLF_ARGS.channel][ECLF_ARGS.bin_scheme])
         else:
-            fields = BDT_SCORES[ECLF_ARGS.channel]
+            fields = BDT_SCORES[ECLF_ARGS.channel][ECLF_ARGS.bin_scheme]
 
         if ECLF_ARGS.categories:
             categories = filter(
@@ -265,9 +265,9 @@ def main():
 
 
 
-                if ECLF_ARGS.bin_scheme == "SINGLE":
+                if ECLF_ARGS.bin_scheme == "SINGLE" or ECLF_ARGS.bin_scheme == "UP_DOWN":
                     from hpana.mva import TRAINING_MASS_BINS
-                    indivmodels = {"%sto%s"%(i[0],i[0]): [] for i in TRAINING_MASS_BINS["SINGLE"]}
+                    indivmodels = {"%sto%s"%(i[0],i[-1]): [] for i in TRAINING_MASS_BINS[ECLF_ARGS.bin_scheme]}
                     for mass_point in indivmodels.keys():
                         for model in ECLF_ARGS.models:
                             if mass_point in os.path.basename(model):

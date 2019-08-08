@@ -333,7 +333,7 @@ else:
                 "method_name": clf_name,
                 "method_type": ROOT.TMVA.Types.kBDT,
                 "output": "%s.root"%clf_name,
-                "features": CLF_FEATURES[CLF_ARGS.channel],
+                "features": CLF_FEATURES[CLF_ARGS.channel[CLF_ARGS.bin_scheme]],
                 "outdir": CLF_ARGS.outdir,
             }
             tr_params = {
@@ -373,7 +373,7 @@ else:
                 "method_name": clf_name,
                 "method_type": ROOT.TMVA.Types.kPyKeras,
                 "output": "%s.root"%clf_name,
-                "features": CLF_FEATURES[CLF_ARGS.channel],
+                "features": CLF_FEATURES[CLF_ARGS.channel[CLF_ARGS.bin_scheme]],
                 "outdir": CLF_ARGS.outdir,
             }
             tr_params = {

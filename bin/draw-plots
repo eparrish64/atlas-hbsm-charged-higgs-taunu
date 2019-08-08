@@ -46,7 +46,8 @@ config = Configuration(
 analysis = Analysis(config)
 
 backgrounds = analysis.backgrounds
-signals = analysis.get_signals(masses=[80, 160, 400, 2000])
+# signals = analysis.get_signals(masses=[80, 160, 400, 2000])
+signals = analysis.get_signals(masses=[80,160])
 data = analysis.data
 
 # print 
@@ -83,7 +84,7 @@ params = {
     "signals":signals,
     "signal_scale":1,
     "systematics":PLOTTING_ARGS.systs,
-    "output_dir":PLOTTING_ARGS.pdir,
+    "output_dir":PLOTTING_ARGS.outdir,
     "logy":PLOTTING_ARGS.logy,
     "logx":False,
     "show_ratio":True,

@@ -2,7 +2,6 @@
 
 # ROOT version should be set manually 
 # export ALRB_rootVersion=6.14.08-x86_64-slc6-gcc62-opt
-# export ALRB_rootVersion=6.14.08-x86_64-slc7-gcc62-opt
 export ALRB_rootVersion=6.14.08-x86_64-centos7-gcc8-opt
 
 # determine path to this script

@@ -135,7 +135,7 @@ def get_plotting_parser(base_parser=None):
     else:
         plotting_parser = base_parser
     
-    plotting_parser.add_argument('--pdir', '-pd', default="./plots",
+    plotting_parser.add_argument('--outdir', '-pd', default="./plots",
                                  help='where to put the plots', )
     
     plotting_parser.add_argument('--no-ratio', action="store_true",
@@ -152,6 +152,7 @@ def get_plotting_parser(base_parser=None):
     
     plotting_parser.add_argument('--fmt', nargs="+", default=["png", "eps", "pdf"],
                                 help="format for the plots")
+
     plotting_parser.add_argument('--logy', action="store_true",
                                  help='Y axis in log scale', )
     
@@ -203,6 +204,7 @@ def get_ffs_parser(base_parser=None):
 
     ffs_parser.add_argument("--data-streams", nargs="+", choices=["2015","2016", "2017", "2018",],
                              help="DATA taking yeats", default=["2015", "2016"])
+    
     ffs_parser.add_argument("--fake-sources", action="store_true",
                               help="what is the source of fake tau")
 

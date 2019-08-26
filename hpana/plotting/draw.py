@@ -186,6 +186,9 @@ def draw(var, category,
         # retrieve NOMINAL hists and decorate them
         backgrounds_hists_nom = []
         for bkg in reversed(backgrounds):
+            print bkg.name, hists_dict[bkg.name]
+            print hists_dict[bkg.name].keys()
+            print hists_dict[bkg.name]["NOMINAL"].ls()
             bkg_hist = hists_dict[bkg.name]["NOMINAL"]
             if bkg_hist:
                 bkg_hist.SetFillColor(bkg.color) 

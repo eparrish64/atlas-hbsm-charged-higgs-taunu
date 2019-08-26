@@ -40,7 +40,7 @@ TRAINING_MASS_BINS = {
         tuple(range(500, 1100, 100) + range(1200, 2200, 200) + [2500, 3000]), #< high mass II
         ],   
     # one mass point above and one blow --> no discontinuity in training bins 
-    "UP_DOWN": [(80, 90, 100), (2000, 2500, 3000)] + [tuple(Higgs.MASSES[cnt-1:cnt+2]) for cnt in range(len(Higgs.MASSES))[3:-2]],
+    "UP_DOWN": [(80, 90), (80, 90, 100), (90, 100, 110), (2000, 2500, 3000), (2500, 3000)] + [tuple(Higgs.MASSES[cnt-1:cnt+2]) for cnt in range(len(Higgs.MASSES))[3:-2]],
 
     # train per mass point 
     "SINGLE": [(m,) for m in Higgs.MASSES],
@@ -51,7 +51,6 @@ TRAINING_MASS_BINS = {
         tuple(range(500, 1100, 100)), 
         tuple(range(1200, 2200, 200) + [2500, 3000]), #< high mass II
     ], 
-
 } 
 
 ## - - Hyperparameters for GradientBoosting 

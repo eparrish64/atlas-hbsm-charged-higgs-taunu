@@ -220,9 +220,19 @@ if CLF_ARGS.backend=="sklearn":
                         ###################################################################################################################################################################################################
                         trained_model = train_model(sclf, train_df=sdf, weight_sample=False, balanced=CLF_ARGS.balanced, scale_features=False, outdir=CLF_ARGS.outdir, features=feats)
 
-                        auc = calculate_scores(trained_model, dframe=trained_model.valid_df, backgrounds=reg_bkgs, sig=signals[0], outdir=CLF_ARGS.outdir)
-                        log.info("Calculated roc_auc_score %s"%(auc))
+                        aucs = []
+                        for sig in signals:
+                            auc = calculate_scores(trained_model, dframe=trained_model.valid_df, backgrounds=reg_bkgs, sig=sig, outdir=CLF_ARGS.outdir)
+                            aucs.append(auc)
+                            log.info("Calculated roc_auc_score for %s %s"%(sig.name,auc))
+                        avgs_auc = np.mean(aucs)
 
+                        with open(r'%s%s_auc.txt'%(CLF_ARGS.outdir,trained_model.name.replace(".pkl", "")), 'w') as f:
+                            f.write("Signals:\n")
+                            for i in signals:
+                                f.write("\t%s\n"%(i.name))
+                            f.write("Hyperparameters: %s\n" %(hparam))
+                            f.write("AUC: %s\n"%auc)
                         raise Exception("DEBUGGING")
 
                         ###################################################################################################################################################################################################

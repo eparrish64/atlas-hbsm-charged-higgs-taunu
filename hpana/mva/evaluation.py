@@ -115,10 +115,10 @@ def calculate_scores(model,
     Y_true = np.concatenate([b_true, s_true])
     auc = roc_auc_score(Y_true, Y_score)
 
-    with open(r'%s_auc.csv'%(model.name.replace(".pkl", "")), 'a') as f:
-        writer = csv.writer(f)
-        writer.writerow(("b_scores","s_scores","auc"))
-        writer.writerow((b_score,s_score,auc))
+    # with open(r'%s%s_auc.csv'%(outdir,model.name.replace(".pkl", "")), 'a') as f:
+    #     writer = csv.writer(f)
+    #     writer.writerow(("b_scores","s_scores","auc"))
+    #     writer.writerow((b_score,s_score,auc))
     return auc
 
 

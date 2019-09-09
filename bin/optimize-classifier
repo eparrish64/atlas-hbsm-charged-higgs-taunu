@@ -1,0 +1,331 @@
+#!/usr/bin/env python
+"""
+* This scripts provides functionalities for training a binary classifier in order to separate signal from background.
+* It's build on top of the MVA with the option for Pythonic keras & scikit-learn backends.
+"""
+
+## stdlib
+import os, sys, glob, multiprocessing
+from subprocess import call
+from os import environ
+
+## - -  parse ana args (needed before ROOT)
+from hpana.cmd import get_clf_parser 
+clf_parser = get_clf_parser()
+# clf_parser.add_argument("--plot-sample-size", action="store_true")
+CLF_ARGS = clf_parser.parse_args()
+
+# print "\nThese are the arguments!!!!!!!!!!!!!!!!!!\n"
+# print CLF_ARGS
+# raise Exception("Debugging!!")
+
+## PyPI
+from root_numpy import root2array, tree2array
+import h5py
+import numpy as np
+import pickle, cPickle
+
+## local
+from hpana.config import Configuration
+from hpana.analysis import Analysis
+from hpana.samples.sample  import Sample
+from hpana.samples.higgs import Higgs 
+from hpana.variables import CLF_FEATURES
+from hpana.categories import CLASSIFIER_CATEGORIES
+from hpana.cluster.parallel import run_pool, Job
+
+from hpana.mva.classifier import Classifier, SClassifier, train_model
+from hpana.mva.optimization import get_hparams, optimize_model, get_hparam_grid
+from hpana.mva import N_TRACKS, FOLD_CUT_STR, TRAINING_MASS_BINS, BRANCHES, ALL_FEATS, GB_HYPERPARAMS
+from hpana.mva.evaluation import calculate_scores
+
+## - - set log level
+from hpana import log
+log.setLevel(CLF_ARGS.log)
+
+# - - speed things up a bit
+import ROOT
+ROOT.SetSignalPolicy(ROOT.kSignalFast)
+ROOT.gROOT.SetBatch(True)
+log.info("ROOT is in batch mode")
+
+
+##-------------------------------------------------------------
+## consts 
+##-------------------------------------------------------------
+__HERE = os.path.dirname(os.path.abspath(__file__))
+
+## - - build analysis main configuration object
+CONFIG = Configuration(CLF_ARGS.channel, db_version=CLF_ARGS.db_version, data_streams=CLF_ARGS.data_streams,)
+
+## - - instantiate Analysis
+ANALYSIS  = Analysis(CONFIG, compile_cxx=True)
+
+## - - training samples (no need for l-->tau fakes or MC j--> tau fakes for masses < 500GeV)
+BKGS = filter(lambda b: not b.name in ["LepFakes"], ANALYSIS.backgrounds)
+if CLF_ARGS.bkg:
+    BKGS = filter(lambda b: b.name in CLF_ARGS.bkg, BKGS)
+
+SIGS = ANALYSIS.get_signals()
+if CLF_ARGS.sig:
+    SIGS = filter(lambda s: s.name in CLF_ARGS.sig, SIGS)
+
+## different set of bkgs for different signals regions 
+TRAINING_BKGS = { 
+    "LOW": filter(lambda b: not b.name in ["QCD"] , BKGS),
+    "HIGH":  BKGS[:], #<! above 500 GeV
+}  
+
+## - - setup outdir
+os.system("mkdir -p %s"%CLF_ARGS.outdir)
+    
+
+##-----------------------------
+## sklearn backend 
+##-----------------------------
+if CLF_ARGS.backend=="sklearn":
+    try:
+        import sklearn
+    except ImportError:
+        raise RuntimeError("Please install sklearn; (pip install sklearn)")
+
+    ## - - prepare training Dataframe
+    DFRAME = SClassifier.prepare_data(BKGS, SIGS, ALL_FEATS[CLF_ARGS.channel], data_lumi=CONFIG.data_lumi,
+                                      channel=CLF_ARGS.channel, branches=BRANCHES[CLF_ARGS.channel], train_data=CLF_ARGS.train_data)
+    jobs = []
+    models = []
+    train_masses = TRAINING_MASS_BINS[CLF_ARGS.bin_scheme]
+    # if CLF_ARGS.plot_sample_size:
+    #     plot_sig_dist(DFRAME, signals=SIGS, outdir=CLF_ARGS.outdir)
+    #     plot_bkg_dist(DFRAME, backgrounds=BKGS, outdir=CLF_ARGS.outdir)
+    # print train_masses
+    #ak
+    # i = 0
+    #ak
+    for signal_masses in train_masses:
+        mass_tag = "%ito%i"%(signal_masses[0], signal_masses[-1]) if signal_masses else "ALL_MASSES"
+
+        if CLF_ARGS.bin_scheme == "UP_DOWN":
+            #ak
+            #print signal_masses[0],signal_masses[-1],signal_masses
+            f_sig = 0
+            l_sig = 0
+            if (signal_masses[0] == 80):
+                f_sig = signal_masses[0]
+            else:
+                f_sig = train_masses[i-1][0]
+
+            if (signal_masses[0] == 3000):
+                l_sig = signal_masses[0]
+            else:
+                l_sig = train_masses[i+1][0]
+            
+            #print f_sig,l_sig
+            
+            signals = filter(lambda s:f_sig <= s.mass <= l_sig, SIGS)
+            i = i +1
+            #ak
+
+        signals = filter(lambda s: s.mass in signal_masses, SIGS)
+
+
+        if CLF_ARGS.mass_range:
+            signals = filter(lambda s:int(CLF_ARGS.mass_range[0]) <= s.mass <= int(CLF_ARGS.mass_range[1]), signals)   
+        if not signals:
+            log.info("No signal in %s mass range; skipping!"%mass_tag)
+            continue
+
+        ## - - different set of features for low mass and high mass
+        if (len(signals)==1 and signals[0].mass > 400) or any([s.mass>500 for s in signals]):
+            feats = CLF_FEATURES[CLF_ARGS.channel]["HIGH"]
+        else:
+            feats = CLF_FEATURES[CLF_ARGS.channel]["LOW"]
+
+        hyper_params_grid = get_hparam_grid()
+
+        ## get list of backgrounds to be used in this signal region 
+        if max(signal_masses) > 400:
+            reg_bkgs = TRAINING_BKGS["HIGH"]
+        else:
+            reg_bkgs = TRAINING_BKGS["LOW"]
+
+        ## retrive Dataframe     
+        dframe = DFRAME.loc[[bkg.name for bkg in reg_bkgs]+[sig.name for sig in signals]]
+        s_dframe = DFRAME.loc[[sig.name for sig in signals]]
+        log.info("*"*80)
+        log.info("Signals: {0} | #events: {1} ; backgrounds: {2} | #events: {3}".format(
+            [s.name for s in signals], s_dframe.shape[0], [b.name for b in reg_bkgs], dframe.shape[0]-s_dframe.shape[0]))
+        log.debug(30*"*" + " Training Data Frame " + 30*"*")
+        log.debug(dframe)
+
+        ## training separately for 1p and 3p taus or inclusively(do not include QCD fakes for 1p training)
+        if CLF_ARGS.inc_trks:
+            ntracks = 13 #<! a dummy value for consistency 
+            for rem in range(CLF_ARGS.kfolds): #<@NOTE 1 obviously is all
+                where = ""
+                if CLF_ARGS.kfolds>1:
+                    where = (dframe["event_number"]%CLF_ARGS.kfolds!=rem)
+                sdf = dframe[where]
+                
+                for hparam in hyper_params_grid:
+                    hparam["verbose"] = 1
+                    log.info("Training in mass range:%s on ntracks=%i, nevents=%i, and nfeatures=%i\n\t\tHyperparams: %r\n"%(
+                        mass_tag, ntracks, sdf.shape[0], sdf.shape[1]-4, hparam))
+
+                    ## - - instantiate the model
+                    clf_name = SClassifier.MODEL_NAME_STR_FORMAT.format(
+                        "GB%i"%hparam["n_estimators"],CLF_ARGS.channel, mass_tag, ntracks, CLF_ARGS.kfolds, rem, len(feats), hparam['learning_rate'], hparam['min_samples_leaf'], hparam['n_estimators'], hparam['min_samples_split'], hparam['max_depth'])
+                    sclf = SClassifier(CLF_ARGS.channel, 
+                        train_df=sdf, name=clf_name, features=feats, weight_sample=False, mass_range=signal_masses, kfolds=CLF_ARGS.kfolds, fold_num=rem, **hparam)
+                    models += [sclf]
+
+                    ## pickle the model                        
+                    mpath = os.path.join(CLF_ARGS.outdir, sclf.name)
+                    if os.path.isfile(mpath):
+                        log.warning("Found %s model; skipping the preparation..."%mpath)
+                        continue
+                    else:
+                        log.info("Saving %s model to disk ..."%mpath)
+                        with open(mpath, "w") as mcache:
+                            cPickle.dump(sclf, mcache, protocol=2)
+
+        else:
+            for ntracks in N_TRACKS:
+                for rem in range(CLF_ARGS.kfolds): #<@NOTE 1 obviously is all
+                    if CLF_ARGS.kfolds==1:
+                        where = (dframe["tau_0_n_charged_tracks"]==ntracks)
+                        vdf = None
+                    else:
+                        where = (dframe["event_number"]%CLF_ARGS.kfolds!=rem) & (dframe["tau_0_n_charged_tracks"]==ntracks)
+
+                        ## Need to get validation kfold
+                        vdf = dframe.loc[(dframe["event_number"]%CLF_ARGS.kfolds==rem) & (dframe["tau_0_n_charged_tracks"]==ntracks)]
+
+                    sdf = dframe[where]
+
+
+                    for hparam in hyper_params_grid:
+                        hparam["verbose"] = 1
+                        log.info("Training in mass range:%s on ntracks=%i, nevents=%i, and nfeatures=%i\n\t\tHyperparams: %r\n"%(
+                            mass_tag, ntracks, sdf.shape[0], sdf.shape[1]-4, hparam))
+
+                        ## - - instantiate the model
+                        clf_name = SClassifier.MODEL_NAME_STR_FORMAT.format(
+                        "GB%i"%hparam["n_estimators"],CLF_ARGS.channel, mass_tag, ntracks, CLF_ARGS.kfolds, rem, len(feats), hparam['learning_rate'], hparam['min_samples_leaf'], hparam['n_estimators'], hparam['min_samples_split'], hparam['max_depth'])
+                        sclf = SClassifier(CLF_ARGS.channel, 
+                            train_df=sdf, name=clf_name, features=feats, weight_sample=False, mass_range=signal_masses, kfolds=CLF_ARGS.kfolds, fold_num=rem, valid_df=vdf, **hparam)
+                        models += [sclf]
+
+
+                        ###################################################################################################################################################################################################
+                        trained_model = train_model(sclf, train_df=sdf, weight_sample=False, balanced=CLF_ARGS.balanced, scale_features=False, outdir=CLF_ARGS.outdir, features=feats)
+
+                        auc = calculate_scores(trained_model, dframe=trained_model.valid_df, backgrounds=reg_bkgs, sig=signals[0], outdir=CLF_ARGS.outdir)
+                        log.info("Calculated roc_auc_score %s"%(auc))
+
+                        raise Exception("DEBUGGING")
+
+                        ###################################################################################################################################################################################################
+
+                        ## pickle the model                        
+                        mpath = os.path.join(CLF_ARGS.outdir, sclf.name)
+                        if os.path.isfile(mpath):
+                            log.warning("Found %s model; skipping the preparation..."%mpath)
+                            continue
+                        else:
+                            log.info("Saving %s model to disk ..."%mpath)
+                            with open(mpath, "w") as mcache:
+                                cPickle.dump(sclf, mcache, protocol=2)
+
+    # if CLF_ARGS.parallel:
+        # jobs.append(Job(train_model, sclf, weight_sample=False, balanced=CLF_ARGS.balanced, scale_features=False, outdir=CLF_ARGS.outdir))
+        ## - - run
+        # log.info("**"*30 + " Submitting %i jobs "%len(jobs) + "**"*30)
+        # run_pool(jobs, n_jobs=-1)
+
+    if CLF_ARGS.cluster:
+        if CLF_ARGS.rs_manager=="CONDOR":
+            # - - write jobs
+            from hpana.cluster.job_template import CONDOR_JOB_TEMPLATE
+
+            ## zip source code
+            log.info("Creating source code tarball...")
+            source_code_tarball = os.path.abspath(CLF_ARGS.outdir+"/source_code.tar.gz")
+            if os.path.isfile(source_code_tarball):
+                os.system("rm -rf %s"%source_code_tarball)
+
+            src_ds = ["bin", "hpana", "aux", "setup.sh"]
+            src_ds = " ".join(src_ds)
+            os.system("cd {src_dir} && tar -cf {target_tar} {source_files} && cd - && tar --append --file={target_tar}".format(
+                src_dir=__HERE+"/../", target_tar=source_code_tarball, source_files=src_ds))
+
+            nodes = ["pt3wrk0", "pt3wrk1", "pt3wrk2", "pt3wrk3", "pt3wrk4"]
+            # nodes = ["pt3wrk2", "pt3wrk3", "pt3wrk4"]
+
+            for node in nodes:
+                globWrkDirectory = "/nfs/work/{0}/eparrish/databank/".format(node)
+
+                log.info("Creating databank directory ")
+                os.system("if [ ! -d '%s' ]; then mkdir -p '%s'; fi" %(globWrkDirectory,globWrkDirectory)) 
+
+                log.info("Copying source code tar to node")
+                # os.system("rsync -axvH --no-g --no-p %s %s; cd %s; tar -xvf source_code.tar.gz; cd -" %(source_code_tarball, globWrkDirectory, globWrkDirectory))
+
+                # for model in models:
+                    # log.info("Transfering model file %s to %s" %(model.name,globWrkDirectory))
+                    # os.system("rsync -av %s '%s'"%(os.path.join(CLF_ARGS.outdir,model.name), globWrkDirectory))
+
+            wrkDirectory = "/disk/eparrish/databank/"
+
+            # - - setup the submit dir
+            os.system("mkdir -p {0}/jobs  {0}/logs {0}/models".format(CLF_ARGS.outdir))
+
+            log.info("************** creating %i jobs for HTCondor submission ************" % len(models))
+            log.info("**************************************************************")
+
+
+
+            os.system("mkdir -p {0}/jobs  {0}/logs {0}/hists {0}/logs/log {0}/logs/err {0}/logs/out".format(CLF_ARGS.outdir))
+            
+            submit_file_name = "%s/submitAllJobs.sh" % (CLF_ARGS.outdir)
+            submit_file = open(submit_file_name, "w")
+            submit_file.write(
+                         CONDOR_JOB_TEMPLATE.format(
+                             logsdir=os.path.join(
+                                 CLF_ARGS.outdir, CLF_ARGS.logsdir),
+                             execScript=os.path.join(__HERE, "condor_jobs_clf.sh"),
+                             userEmail="Z1832314@students.niu.edu",
+                             memory="2GB",
+                         )
+                         )
+
+            for model in models:
+                # # print "Running command: %s" %("rsync -av %s '/nfs/work/pt3wrk0/eparrish/databank/'"%(os.path.join(CLF_ARGS.outdir, model.name)))
+                # log.info("Transfering model file %s to %s" %(model.name,wrkDirectory))
+                # os.system("rsync -av %s '%s'"%(os.path.join(CLF_ARGS.outdir,model.name), wrkDirectory))
+
+                submit_file.write("\nArguments = %s %s %s %s \nqueue\n" %(   model.name, 
+                                                                                os.path.join(__HERE, "classifier-optimizer"), 
+                                                                                wrkDirectory,
+                                                                                os.path.join(os.getcwd(),CLF_ARGS.outdir)
+                                                                            )
+                )
+
+
+                # os.close(jfile)
+
+                # - - - - write submission to file to be used outside container
+                log.info("Writing to %s for job %s ..." %
+                         (submit_file_name, model.name))
+                # os.write(submit_file, "sbatch %s\n" % jfile_name)
+
+            submit_file.close()
+            log.warning("Submission not supported from within container.")
+            log.warning("Please launch outside container via:")
+            log.warning("\t condor_submit {0}".format(submit_file_name))
+        
+##-----------------------------
+## tmva backend
+##-----------------------------
+else:
+    raise Exception("Non Sklearn backend not implemented yet")

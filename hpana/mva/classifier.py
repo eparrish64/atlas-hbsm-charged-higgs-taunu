@@ -166,6 +166,8 @@ class SClassifier(GradientBoostingClassifier):
                     mass_range=[], 
                     features=[], 
                     train_df=None, 
+                    valid_df=None,
+                    eval_df=None,
                     weight_sample=False,
                     is_trained=False,
                     kfolds=5,
@@ -179,6 +181,8 @@ class SClassifier(GradientBoostingClassifier):
         self.features = features
         self.mass_range = mass_range
         self.train_df = train_df
+        self.valid_df = valid_df
+        self.eval_df = eval_df
         self.weight_sample = weight_sample
         self.kfolds = kfolds
         self.fold_num = fold_num
@@ -473,9 +477,11 @@ def train_model(model,
 
     if train_df is None:
         tr_df = model.train_df
+    else:
+        tr_df = train_df
     if not features :
         features = model.features
- 
+
     b_df = tr_df[tr_df["class_label"]==0]
     s_df = tr_df[tr_df["class_label"]==1]
 

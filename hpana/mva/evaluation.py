@@ -7,6 +7,7 @@ from multiprocessing import Process
 from collections import OrderedDict
 from os import environ
 from math import ceil
+import csv
 
 ## PyPI
 from sklearn.metrics import roc_curve, roc_auc_score
@@ -70,6 +71,55 @@ class AppendJob(Process):
         evaluate_scores_on_trees(output, self.models)
 
         return 
+
+def calculate_scores(model, 
+        dframe=None, 
+        backgrounds=[], 
+        sig=None, 
+        fold_var="event_number", 
+        n_tracks_var="tau_0_n_charged_tracks",
+        train_score=True,
+        outdir="", 
+        outname=None,
+        inclusive_trks=False):
+    """
+    For single model. Will return roc_auc_score for given model.
+    given dframe must be validation kfold.
+    Currently only takes one signal point                           Sept 6, 2019
+    """
+
+    b_dframe = dframe.loc[[bkg.name for bkg in backgrounds]]
+    s_dframe = dframe.loc[[sig.name]]
+    log.debug(30*"*" + " Testing Data Frame " + 30*"*")
+    log.debug(dframe)
+   
+    masses = model.mass_range
+    if not (masses[0] <= sig.mass <= masses[-1]):
+        return None
+
+    feats = model.features
+
+    b_test = b_dframe[[ft.name for ft in feats ]]
+    s_test = s_dframe[[ft.name for ft in feats ]]
+
+    ## evaluate score 
+    b_score = model.predict_proba(b_test)[:, 1]
+    s_score = model.predict_proba(s_test)[:, 1]
+
+    b_arr = np.concatenate([b_score])
+    s_arr = np.concatenate([s_score])
+
+    Y_score = np.concatenate([b_arr, s_arr])
+    b_true = np.zeros(b_arr.size)
+    s_true = np.ones(s_arr.size)
+    Y_true = np.concatenate([b_true, s_true])
+    auc = roc_auc_score(Y_true, Y_score)
+
+    with open(r'%s_auc.csv'%(model.name.replace(".pkl", "")), 'a') as f:
+        writer = csv.writer(f)
+        writer.writerow(("b_scores","s_scores","auc"))
+        writer.writerow((b_score,s_score,auc))
+    return auc
 
 
 ##--------------------------------------------------------------------------

@@ -103,8 +103,8 @@ def main():
         jobs = []
         for mtag, trained_models in models.iteritems():
             # print trained_models
-            jobs += [Job(plot_scores, trained_models, 
-                backgrounds=backgrounds, signals=signals, outdir=ECLF_ARGS.outdir, formats=[".pdf", ".png"], inclusive_trks=ECLF_ARGS.inc_trks)]
+            jobs += [Job(plot_scores, trained_models, dframe=dframe,
+                backgrounds=backgrounds, signals=signals, outdir=ECLF_ARGS.outdir, formats=[".pdf", ".png", ".eps"], inclusive_trks=ECLF_ARGS.inc_trks)]
 
         if ECLF_ARGS.parallel:
             log.info("************** submitting %i jobs  ************" % len(jobs))

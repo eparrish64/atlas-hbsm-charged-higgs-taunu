@@ -35,7 +35,7 @@ ROOT.gROOT.SetBatch(True)
 #-----------------------------------------------
 # consts
 #-----------------------------------------------
-TMP_DATASETS = [ 
+TMP_DATASETS = [  
     "LepFakes.Wtaunu.Sherpa_221_NNPDF30NNLO_Wtaunu_MAXHTPTV140_280_BFilter_9364__001",
     "LepFakes.Ztautau.Sherpa_221_NNPDF30NNLO_Ztautau_MAXHTPTV500_1000_9364",
     "Wtaunu.Sherpa_221_NNPDF30NNLO_Wtaunu_MAXHTPTV280_500_CVetoBVeto_9364",
@@ -102,8 +102,9 @@ def main():
 
         jobs = []
         for mtag, trained_models in models.iteritems():
+            # print trained_models
             jobs += [Job(plot_scores, trained_models, 
-                dframe=dframe, backgrounds=backgrounds, signals=signals, outdir=ECLF_ARGS.outdir, formats=[".pdf", ".png"], inclusive_trks=ECLF_ARGS.inc_trks)]
+                backgrounds=backgrounds, signals=signals, outdir=ECLF_ARGS.outdir, formats=[".pdf", ".png"], inclusive_trks=ECLF_ARGS.inc_trks)]
 
         if ECLF_ARGS.parallel:
             log.info("************** submitting %i jobs  ************" % len(jobs))
@@ -249,6 +250,11 @@ def main():
             elif ECLF_ARGS.rs_manager == "CONDOR":
                 from hpana.cluster.job_template import CONDOR_JOB_TEMPLATE
 
+                # wrkDirectory = "/nfs/work/pt3wrk0/eparrish/databank/"
+
+                # log.info("Creating databank directory ")
+                # os.system("if [ ! -d '%s' ]; then mkdir -p '%s'; fi" %(wrkDirectory,wrkDirectory)) 
+
                 ## zip source code
                 log.info("Creating source code tarball...")
                 source_code_tarball = os.path.abspath(ECLF_ARGS.outdir+"/source_code.tar.gz")
@@ -260,10 +266,28 @@ def main():
                 os.system("cd {src_dir} && tar -cf {target_tar} {source_files} && cd - && tar --append --file={target_tar}".format(
                     src_dir=__HERE+"/../", target_tar=source_code_tarball, source_files=src_ds))
 
+                # log.info("Copying source code tar to node")
+                # os.system("rsync -axvH --no-g --no-p %s %s; cd %s; tar -xvf source_code.tar.gz; cd -" %(source_code_tarball, wrkDirectory, wrkDirectory))
+
+                nodes = ["pt3wrk0", "pt3wrk1", "pt3wrk2", "pt3wrk3", "pt3wrk4"]
+                # nodes = ["pt3wrk3", "pt3wrk4"]
+
+                for node in nodes:
+                    globWrkDirectory = "/nfs/work/{0}/eparrish/databank/".format(node)
+
+                    log.info("Creating databank directory ")
+                    os.system("if [ ! -d '%s' ]; then mkdir -p '%s'; fi" %(globWrkDirectory,globWrkDirectory)) 
+
+                    log.info("Copying source code tar to node")
+                    os.system("rsync -axvH --no-g --no-p %s %s; cd %s; tar -xvf source_code.tar.gz; cd -" %(source_code_tarball, globWrkDirectory, globWrkDirectory))
+
+                    for model in ECLF_ARGS.models:
+                        log.info("Transfering model file %s to %s" %(os.path.basename(model),globWrkDirectory))
+                        os.system("rsync -av %s '%s'"%(model, globWrkDirectory))
+
+                wrkDirectory = "/disk/eparrish/databank/"
                 # - - setup the submit dir
                 os.system("mkdir -p {0}/jobs  {0}/logs {0}/hists {0}/logs/log {0}/logs/err {0}/logs/out".format(ECLF_ARGS.outdir))
-
-
 
                 if ECLF_ARGS.bin_scheme == "SINGLE" or ECLF_ARGS.bin_scheme == "UP_DOWN":
                     from hpana.mva import TRAINING_MASS_BINS
@@ -294,13 +318,23 @@ def main():
                         os.system("mkdir -p {0}/{1}/jobs  {0}/{1}/logs {0}/{1}/hists {0}/{1}/logs/log {0}/{1}/logs/err {0}/{1}/logs/out".format(ECLF_ARGS.outdir, mass_point))
                         for aw in ana_workers:
 
-                            submit_file.write("\nArguments = %s %s %s %s %s %s %s\nqueue\n" %(aw.name, source_code_tarball, os.path.join(__HERE, "classifier-evaluator"), 
-                                                                                        os.path.join(os.getcwd(), ECLF_ARGS.outdir,mass_point), 
-                                                                                        os.path.abspath(ECLF_ARGS.pickled_analysis), 
-                                                                                        os.path.abspath(ECLF_ARGS.models_path[0]), 
-                                                                                        ",".join(os.path.basename(m) for m in indivmodels[mass_point])))
+                            # submit_file.write("\nArguments = %s %s %s %s %s %s %s\nqueue\n" %(  aw.name, 
+                            #                                                                     source_code_tarball, 
+                            #                                                                     os.path.join(__HERE, "classifier-evaluator"), 
+                            #                                                                     os.path.join(os.getcwd(), 
+                            #                                                                     ECLF_ARGS.outdir,mass_point), 
+                            #                                                                     os.path.abspath(ECLF_ARGS.pickled_analysis), 
+                            #                                                                     os.path.abspath(ECLF_ARGS.models_path[0]), 
+                            #                                                                     ",".join(os.path.basename(m) for m in indivmodels[mass_point])))
 
 
+                            submit_file.write("\nArguments = %s %s %s %s %s \nqueue\n" %(     aw.name,  
+                                                                                            os.path.join(__HERE, "classifier-evaluator"), 
+                                                                                            os.path.join(os.getcwd(), ECLF_ARGS.outdir), 
+                                                                                            os.path.abspath(ECLF_ARGS.pickled_analysis), 
+                                                                                            ",".join([wrkDirectory+os.path.basename(m) for m in ECLF_ARGS.models])
+                                                                                            )
+                        )
 
                         submit_file.close()
                         log.warning("Submission not supported from within container.")
@@ -326,11 +360,22 @@ def main():
 
                     for aw in ana_workers:
 
-                        submit_file.write("\nArguments = %s %s %s %s %s %s %s\nqueue\n" %(aw.name, source_code_tarball, os.path.join(__HERE, "classifier-evaluator"), 
-                                                                                        os.path.join(os.getcwd(), ECLF_ARGS.outdir), 
-                                                                                        os.path.abspath(ECLF_ARGS.pickled_analysis), 
-                                                                                        os.path.abspath(ECLF_ARGS.models_path[0]), 
-                                                                                        ",".join([os.path.basename(m) for m in ECLF_ARGS.models])))
+                        # submit_file.write("\nArguments = %s %s %s %s %s %s %s\nqueue\n" %(  aw.name, 
+                        #                                                                     source_code_tarball, 
+                        #                                                                     os.path.join(__HERE, "classifier-evaluator"), 
+                        #                                                                     os.path.join(os.getcwd(), ECLF_ARGS.outdir), 
+                        #                                                                     os.path.abspath(ECLF_ARGS.pickled_analysis), 
+                        #                                                                     os.path.abspath(ECLF_ARGS.models_path[0]), 
+                        #                                                                     ",".join([os.path.basename(m) for m in ECLF_ARGS.models])))
+
+
+                        submit_file.write("\nArguments = %s %s %s %s %s \nqueue\n" %(     aw.name,  
+                                                                                            os.path.join(__HERE, "classifier-evaluator"), 
+                                                                                            os.path.join(os.getcwd(), ECLF_ARGS.outdir), 
+                                                                                            os.path.abspath(ECLF_ARGS.pickled_analysis), 
+                                                                                            ",".join([wrkDirectory+os.path.basename(m) for m in ECLF_ARGS.models])
+                                                                                            )
+                        )
 
 
 

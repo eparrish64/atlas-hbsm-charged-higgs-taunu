@@ -26,14 +26,38 @@ fail(){
 mkdir -p "$JOBSCRATCH" || fail;
 cd "$JOBSCRATCH" || fail;
 
-rsync -axvH --no-g --no-p ${2}  ./ || fail;
-tar -xvf ${2} || fail;
-# source /cvmfs/atlas.cern.ch/repo/ATLASLocalRootBase/user/atlasLocalSetup.sh;
+# Creating scratch directory on a remote node
+mkdir -p "$JOBSCRATCH" || fail;
+cd "$JOBSCRATCH" || fail;
+
+if [ ! -d "${3}" ]; then mkdir -p "${3}"; fi
+
+rsync -axvH --no-g --no-p  ${4}/source_code.tar.gz ./ || fail; tar -xvf source_code.tar.gz || fail;
+
+rsync -axvH --no-g --no-p "${4}/${1}" ${3} || fail;
+
 source setup.sh || fail;
+# source /cvmfs/atlas.cern.ch/repo/ATLASLocalRootBase/user/atlasLocalSetup.sh;
 
-rsync -axvH --no-g --no-p "${4}/${1}" ./ || fail;
+# rsync -axvH --no-g --no-p "${4}/${1}" ./ || fail; 
 
-python ${3} ${1} || fail;
+# echo "Copying input models";
+# if [ ! -d "/disk/$MYUSERNAME/databank" ]; then mkdir -p "/disk/$MYUSERNAME/databank"; fi
+# rsync -av "${4}/${1}" "/disk/$MYUSERNAME/databank/" || fail;
+
+# echo "Copying source code tar";
+# rsync -axvH --no-g --no-p ${2} ./|| fail;
+# # cd /disk/$MYUSERNAME/databank/;
+# tar -xvf source_code.tar.gz || fail;
+
+# source "/disk/$MYUSERNAME/databank/setup.sh" || fail;
+
+# cd -;
+
+# echo `ls`;
+
+
+python ${2} "${3}/${1}" ${5}|| fail;
 
 files="$JOBSCRATCH"/*.pkl
 if [ ${#files[@]} -eq 0 ]; then

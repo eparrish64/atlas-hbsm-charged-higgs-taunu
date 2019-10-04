@@ -60,7 +60,7 @@ else:
     fields = config.variables # BDT_SCORES[PLOTTING_ARGS.channel] #      
 
 if PLOTTING_ARGS.bdt_only:
-    fields = BDT_SCORES[PLOTTING_ARGS.channel]
+    fields = BDT_SCORES[PLOTTING_ARGS.channel][PLOTTING_ARGS.bin_scheme]
 
 # print fields
 if PLOTTING_ARGS.categories:
@@ -105,7 +105,7 @@ jobs = []
 ## draw plots
 for var in fields:
     jparams = dict(params) #<! defensive copy 
-
+    
     ##@FIXME check if it's a classification score
     m_range = var.name.split("_")[-1].split("to")
     if len(m_range) > 1:

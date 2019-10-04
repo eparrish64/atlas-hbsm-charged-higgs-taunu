@@ -8,12 +8,12 @@ JOBSCRATCH="$PROJECT_SCRATCH_DIR/${1}_${DATE}"
 CONDOR_JOB_NAME=${1}
 #
 
-echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!DEBUGGING!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!";
-echo "Testing things if they work";
-echo "$JOBSCRATCH";
-echo "$PROJECT_SCRATCH_DIR";
-echo "$MYUSERNAME";
-echo "$HOSTNAME_SHORT";
+# echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!DEBUGGING!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!";
+# echo "Testing things if they work";
+# echo "$JOBSCRATCH";
+# echo "$PROJECT_SCRATCH_DIR";
+# echo "$MYUSERNAME";
+# echo "$HOSTNAME_SHORT";
 
 
 fail(){
@@ -32,8 +32,8 @@ tar -xvf ${2} || fail;
 # source /cvmfs/atlas.cern.ch/repo/ATLASLocalRootBase/user/atlasLocalSetup.sh;
 source setup.sh || fail;
 
-echo "MY ENVIRONMENT"
-env | sort
+# echo "MY ENVIRONMENT"
+# env | sort
 
 python ${3} ${4} ${1} || fail;
 

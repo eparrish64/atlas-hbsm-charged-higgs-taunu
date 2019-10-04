@@ -8,11 +8,21 @@ if __name__=="__main__":
         import socket
         import time
         import cPickle
+        import numpy as np
 
-        from hpana.classifier import optimize_model, GB_HYPERPARAMS
+        # from hpana.mva import GB_HYPERPARAMS
+        # from hpana.mva.optimization import optimize_model
+        from hpana.mva.classifier import train_model
+        from hpana.mva.evaluation import calculate_scores
+
+        import ROOT
+        ROOT.SetSignalPolicy(ROOT.kSignalFast)
+        ROOT.gROOT.SetBatch(True)
     
         if 'cedar' in socket.gethostname():
             jobname = os.getenv("SLURM_JOB_NAME")
+        elif 'niu' in socket.gethostname() or 'cern' in socket.gethostname():
+            jobname = sys.argv[1]
         else:
             jobname = os.getenv("PBS_JOBNAME")
 
@@ -21,8 +31,27 @@ if __name__=="__main__":
         
         print "Model: ", model 
 
-        # - - get the hists 
         start_time = time.time()
-        optimize_model(model, param_grid=dict(GB_HYPERPARAMS), outdir="./")
+
+        # - - train model
+        trained_model = train_model(model, outdir="./", weight_sample=False, scale_features=False)
+
+        aucs = []
+        for sig in model.sigs:
+            auc = calculate_scores(trained_model, backgrounds=model.bkgs, sig=sig, outdir="./")
+            aucs.append(auc)
+            # log.info("Calculated roc_auc_score for %s %s"%(sig.name,auc))
+        avgs_auc = np.mean(aucs)
+
+        with open(r'%s_auc.txt'%(trained_model.name.replace(".pkl", "")), 'w') as f:
+            f.write("Signals:\n")
+            for i in model.sigs:
+                f.write("\t%s\n"%(i.name))
+            f.write("Hyperparameters: %s\n" %(model.hyperparams))
+            f.write("AUC: %s\n"%avgs_auc)
+        # Get roc_auc_score
+        # calculate_scores(trained_model, backgrounds=reg_bkgs, sig=signals[0], outdir="./")
+
+
         end_time = time.time()
         print "Execution Time:\t  %0.2f"%(end_time - start_time)

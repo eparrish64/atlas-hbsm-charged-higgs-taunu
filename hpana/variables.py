@@ -748,6 +748,8 @@ CLF_FEATURES = {
 ##-----------------------------------------------------------------
 # - - - - - - - -  BDT scores (fine binning for WS; rebin for plots)
 ##-----------------------------------------------------------------
+
+#### NOMINAL
 clf_score_GB200_mass_80to120 = Variable(
     "clf_score_GB200_mass_80to120",    
     title='BDT score (80 to 120 [GeV])', 
@@ -789,6 +791,7 @@ clf_score_GB200_mass_80to80 = Variable(
     plot_bins=np.arange(0, 1.1, 0.1),
 )
 
+#### SINGLE
 clf_score_GB200_mass_90to90 = Variable(
     "clf_score_GB200_mass_90to90",
     title='BDT score (90 to 90 [GeV])',
@@ -1011,6 +1014,7 @@ clf_score_GB200_mass_3000to3000 = Variable(
     plot_bins=np.arange(0, 1.1, 0.1),
 )
 
+#### UP_DOWN (Sliding Window)
 clf_score_GB200_mass_80to90 = Variable(
     'clf_score_GB200_mass_80to90',
     title='BDT score (80 to 90 [GeV])',
@@ -1071,12 +1075,12 @@ clf_score_GB200_mass_160to180 = Variable(
     bining=(1000,0,1),
     plot_bins=np.arange(0,1.1,0.1),
 )
-clf_score_GB200_mass_170to190 = Variable(
-    'clf_score_GB200_mass_170to190',
-    title='BDT score (170 to 190 [GeV])',
-    bining=(1000,0,1),
-    plot_bins=np.arange(0,1.1,0.1),
-)
+# clf_score_GB200_mass_170to190 = Variable(
+#     'clf_score_GB200_mass_170to190',
+#     title='BDT score (170 to 190 [GeV])',
+#     bining=(1000,0,1),
+#     plot_bins=np.arange(0,1.1,0.1),
+# )
 clf_score_GB200_mass_180to200 = Variable(
     'clf_score_GB200_mass_180to200',
     title='BDT score (180 to 200 [GeV])',

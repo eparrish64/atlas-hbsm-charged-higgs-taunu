@@ -161,6 +161,9 @@ def get_plotting_parser(base_parser=None):
 
     plotting_parser.add_argument('--bdt-only', action="store_true",
                                 help='Plot only bdt scores')
+    
+    plotting_parser.add_argument("--bin-scheme", default="NOM", choices=["NOM", "UP_DOWN", "SINGLE", "ALT"], 
+                            help="mass binning scheme for training clfs ")
     return plotting_parser
 
 ##--------------------------------------------------------------------------------------------------
@@ -368,6 +371,9 @@ def get_clf_parser():
 
     clf_parser.add_argument("--balanced", action="store_true",
                             help="Do not balance training classes")
+
+    clf_parser.add_argument("--parse-auc", action="store_true",
+                            help="Only parse optimization output txt files")
 
     return clf_parser
 

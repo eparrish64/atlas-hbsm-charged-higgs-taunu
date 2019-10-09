@@ -107,26 +107,26 @@ if CLF_ARGS.backend=="sklearn":
 
         # if CLF_ARGS.bin_scheme=="UP_DOWN":
         # # ak
-        print signal_masses[0],signal_masses[-1],signal_masses
-        f_sig = 0
-        l_sig = 0
-        if (signal_masses[0] == 80):
-            f_sig = signal_masses[0]
-        else:
-            f_sig = train_masses[i-1][0]
+        # print signal_masses[0],signal_masses[-1],signal_masses
+        # f_sig = 0
+        # l_sig = 0
+        # if (signal_masses[0] == 80):
+        #     f_sig = signal_masses[0]
+        # else:
+        #     f_sig = train_masses[i-1][0]
 
-        if (signal_masses[0] == 3000):
-            l_sig = signal_masses[0]
-        else:
-            l_sig = train_masses[i+1][0]
+        # if (signal_masses[0] == 3000):
+        #     l_sig = signal_masses[0]
+        # else:
+        #     l_sig = train_masses[i+1][0]
         
-        print f_sig,l_sig
+        # print f_sig,l_sig
         
-        signals = filter(lambda s:f_sig <= s.mass <= l_sig, SIGS)
-        i = i +1
+        # signals = filter(lambda s:f_sig <= s.mass <= l_sig, SIGS)
+        # i = i +1
         # # ak
 
-        # signals = filter(lambda s: s.mass in signal_masses, SIGS)
+        signals = filter(lambda s: s.mass in signal_masses, SIGS)
 
 
         if CLF_ARGS.mass_range:

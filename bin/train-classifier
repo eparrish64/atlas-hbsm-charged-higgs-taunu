@@ -36,7 +36,7 @@ from hpana.categories import CLASSIFIER_CATEGORIES
 from hpana.cluster.parallel import run_pool, Job
 
 from hpana.mva.classifier import Classifier, SClassifier, train_model
-from hpana.mva.optimization import get_hparams, optimize_model, get_hparam_grid
+from hpana.mva.optimization import get_hparams, optimize_model
 from hpana.mva import N_TRACKS, FOLD_CUT_STR, TRAINING_MASS_BINS, BRANCHES, ALL_FEATS, GB_HYPERPARAMS
 
 ## - - set log level
@@ -107,23 +107,23 @@ if CLF_ARGS.backend=="sklearn":
 
         # if CLF_ARGS.bin_scheme=="UP_DOWN":
         # # ak
-        # print signal_masses[0],signal_masses[-1],signal_masses
-        # f_sig = 0
-        # l_sig = 0
-        # if (signal_masses[0] == 80):
-        #     f_sig = signal_masses[0]
-        # else:
-        #     f_sig = train_masses[i-1][0]
+        print signal_masses[0],signal_masses[-1],signal_masses
+        f_sig = 0
+        l_sig = 0
+        if (signal_masses[0] == 80):
+            f_sig = signal_masses[0]
+        else:
+            f_sig = train_masses[i-1][0]
 
-        # if (signal_masses[0] == 3000):
-        #     l_sig = signal_masses[0]
-        # else:
-        #     l_sig = train_masses[i+1][0]
+        if (signal_masses[0] == 3000):
+            l_sig = signal_masses[0]
+        else:
+            l_sig = train_masses[i+1][0]
         
-        # print f_sig,l_sig
+        print f_sig,l_sig
         
-        # signals = filter(lambda s:f_sig <= s.mass <= l_sig, SIGS)
-        # i = i +1
+        signals = filter(lambda s:f_sig <= s.mass <= l_sig, SIGS)
+        i = i +1
         # # ak
 
         # signals = filter(lambda s: s.mass in signal_masses, SIGS)

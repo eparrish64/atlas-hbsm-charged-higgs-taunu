@@ -4,24 +4,24 @@
     grl: ""
     
   taujet:
-    mc_path: /xdata/eparrish/HPlusNTuples/2018/v06/taujet/mc16/
+    mc_path: /eos/atlas/atlascerngroupdisk/phys-higgs/HSG6/Htaunu/v06/taujet/mc16/
     mc_prefix: #"user."
     mc_pattern: '*.root'
     mc_treename: 'NOMINAL'
     mc_sampletype:
-    data_path: /xdata/eparrish/HPlusNTuples/2018/v06/taujet/data/
+    data_path: /eos/atlas/atlascerngroupdisk/phys-higgs/HSG6/Htaunu/v06/taujet/data/
     data_prefix: # "user." 
     data_pattern: '*.root*'
     data_treename: 'NOMINAL'
     data_sampletype:
 
   taulep:
-    mc_path: /xdata/eparrish/HPlusNTuples/2018/v06/taulep/mc16/
+    mc_path: /eos/atlas/atlascerngroupdisk/phys-higgs/HSG6/Htaunu/v06/taulep/mc16/
     mc_prefix: #"user."
     mc_pattern: '*.root*'
     mc_treename: 'NOMINAL'
     mc_sampletype:
-    data_path: /xdata/eparrish/HPlusNTuples/2018/v06/taulep/data/
+    data_path: /eos/atlas/atlascerngroupdisk/phys-higgs/HSG6/Htaunu/v06/taulep/data/
     data_prefix: # "user." 
     data_pattern: '*.root*'
     data_treename: 'NOMINAL'
@@ -32,24 +32,24 @@
     grl: ""
     
   taujet:
-    mc_path: /xdata/eparrish/HPlusNTuples/2018/v06/taujet/mc16/
+    mc_path: /eos/atlas/atlascerngroupdisk/phys-higgs/HSG6/Htaunu/v06/taujet/mc16/
     mc_prefix: #"user."
     mc_pattern: '*.root*'
     mc_treename: 'NOMINAL'
     mc_sampletype:
-    data_path: /xdata/eparrish/HPlusNTuples/2018/v06/taujet/data/
+    data_path: /eos/atlas/atlascerngroupdisk/phys-higgs/HSG6/Htaunu/v06/taujet/data/
     data_prefix: # "user." 
     data_pattern: '*.root*'
     data_treename: 'NOMINAL'
     data_sampletype:
 
   taulep:
-    mc_path: /xdata/eparrish/HPlusNTuples/2018/v06/taulep/mc16/
+    mc_path: /eos/atlas/atlascerngroupdisk/phys-higgs/HSG6/Htaunu/v06/taulep/mc16/
     mc_prefix: #"user."
     mc_pattern: '*.root*'
     mc_treename: 'NOMINAL'
     mc_sampletype:
-    data_path: /xdata/eparrish/HPlusNTuples/2018/v06/taulep/data/
+    data_path: /eos/atlas/atlascerngroupdisk/phys-higgs/HSG6/Htaunu/v06/taulep/data/
     data_prefix: # "user." 
     data_pattern: '*.root*'
     data_treename: 'NOMINAL'
@@ -60,24 +60,24 @@
     grl: ""
     
   taujet:
-    mc_path: /xdata/eparrish/HPlusNTuples/2018/v06/taujet/mc16/
+    mc_path: /eos/atlas/atlascerngroupdisk/phys-higgs/HSG6/Htaunu/v06/taujet/mc16/
     mc_prefix: #"user."
     mc_pattern: '*.root*'
     mc_treename: 'NOMINAL'
     mc_sampletype:
-    data_path: /xdata/eparrish/HPlusNTuples/2018/v06/taujet/data/
+    data_path: /eos/atlas/atlascerngroupdisk/phys-higgs/HSG6/Htaunu/v06/taujet/data/
     data_prefix: # "user." 
     data_pattern: '*.root*'
     data_treename: 'NOMINAL'
     data_sampletype:
       
   taulep:
-    mc_path: /xdata/eparrish/HPlusNTuples/2018/v06/taulep/mc16/
+    mc_path: /eos/atlas/atlascerngroupdisk/phys-higgs/HSG6/Htaunu/v06/taulep/mc16/
     mc_prefix: #"user."
     mc_pattern: '*.root*'
     mc_treename: 'NOMINAL'
     mc_sampletype:
-    data_path: /xdata/eparrish/HPlusNTuples/2018/v06/taulep/data/
+    data_path: /eos/atlas/atlascerngroupdisk/phys-higgs/HSG6/Htaunu/v06/taulep/data/
     data_prefix: # "user." 
     data_pattern: '*.root*'
     data_treename: 'NOMINAL'
@@ -88,24 +88,24 @@
     grl: ""
    
   taujet:
-    mc_path: /xdata/eparrish/HPlusNTuples/2018/v06/taujet/mc16/
+    mc_path: /eos/atlas/atlascerngroupdisk/phys-higgs/HSG6/Htaunu/v06/taujet/mc16/
     mc_prefix: #"user."
     mc_pattern: '*.root*'
     mc_treename: 'NOMINAL'
     mc_sampletype:
-    data_path: /xdata/eparrish/HPlusNTuples/2018/v06/taujet/data/
+    data_path: /eos/atlas/atlascerngroupdisk/phys-higgs/HSG6/Htaunu/v06/taujet/data/
     data_prefix: # "user."
     data_pattern: '*.root*'
     data_treename: 'NOMINAL'
     data_sampletype:
             
   taulep:
-    mc_path: /xdata/eparrish/HPlusNTuples/2018/v06/taulep/mc16/
+    mc_path: /eos/atlas/atlascerngroupdisk/phys-higgs/HSG6/Htaunu/v06/taulep/mc16/
     mc_prefix: #"user."
     mc_pattern: '*.root*'
     mc_treename: 'NOMINAL'
     mc_sampletype:
-    data_path: /xdata/eparrish/HPlusNTuples/2018/v06/taulep/data/
+    data_path: /eos/atlas/atlascerngroupdisk/phys-higgs/HSG6/Htaunu/v06/taulep/data/
     data_prefix: # "user."
     data_pattern: '*.root*'
     data_treename: 'NOMINAL'

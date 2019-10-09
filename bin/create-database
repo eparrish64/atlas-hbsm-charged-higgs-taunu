@@ -30,6 +30,8 @@ from hpana.db.datasets import Database
 from hpana import log
 
 # - - - - - - - - create a database 
+log.info("WHAT")
+print "WHAT"
 db = Database(name="%s_%s%s"%(args.name, args.channel, args.version),
               verbose=args.verbose, log_level=args.log)
 

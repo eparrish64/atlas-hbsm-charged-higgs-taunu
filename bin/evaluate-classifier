@@ -269,21 +269,21 @@ def main():
                 # log.info("Copying source code tar to node")
                 # os.system("rsync -axvH --no-g --no-p %s %s; cd %s; tar -xvf source_code.tar.gz; cd -" %(source_code_tarball, wrkDirectory, wrkDirectory))
 
-                nodes = ["pt3wrk0", "pt3wrk1", "pt3wrk2", "pt3wrk3", "pt3wrk4"]
+                # nodes = ["pt3wrk0", "pt3wrk1", "pt3wrk2", "pt3wrk3", "pt3wrk4"]
                 # nodes = ["pt3wrk3", "pt3wrk4"]
 
-                for node in nodes:
-                    globWrkDirectory = "/nfs/work/{0}/eparrish/databank/".format(node)
+                # for node in nodes:
+                    # globWrkDirectory = "/nfs/work/{0}/eparrish/databank/".format(node)
 
-                    log.info("Creating databank directory ")
-                    os.system("if [ ! -d '%s' ]; then mkdir -p '%s'; fi" %(globWrkDirectory,globWrkDirectory)) 
+                    # log.info("Creating databank directory ")
+                    # os.system("if [ ! -d '%s' ]; then mkdir -p '%s'; fi" %(globWrkDirectory,globWrkDirectory)) 
 
-                    log.info("Copying source code tar to node")
-                    os.system("rsync -axvH --no-g --no-p %s %s; cd %s; tar -xvf source_code.tar.gz; cd -" %(source_code_tarball, globWrkDirectory, globWrkDirectory))
+                    # log.info("Copying source code tar to node")
+                    # os.system("rsync -axvH --no-g --no-p %s %s; cd %s; tar -xvf source_code.tar.gz; cd -" %(source_code_tarball, globWrkDirectory, globWrkDirectory))
 
-                    for model in ECLF_ARGS.models:
-                        log.info("Transfering model file %s to %s" %(os.path.basename(model),globWrkDirectory))
-                        os.system("rsync -av %s '%s'"%(model, globWrkDirectory))
+                    # for model in ECLF_ARGS.models:
+                    #     log.info("Transfering model file %s to %s" %(os.path.basename(model),globWrkDirectory))
+                    #     os.system("rsync -av %s '%s'"%(model, globWrkDirectory))
 
                 wrkDirectory = "/disk/eparrish/databank/"
                 # - - setup the submit dir

@@ -30,11 +30,11 @@ cd "$JOBSCRATCH" || fail;
 mkdir -p "$JOBSCRATCH" || fail;
 cd "$JOBSCRATCH" || fail;
 
-if [ ! -d "${3}" ]; then mkdir -p "${3}"; fi
+# if [ ! -d "${3}" ]; then mkdir -p "${3}"; fi
 
 rsync -axvH --no-g --no-p  ${4}/source_code.tar.gz ./ || fail; tar -xvf source_code.tar.gz || fail;
 
-rsync -axvH --no-g --no-p "${4}/${1}" ${3} || fail;
+rsync -axvH --no-g --no-p "${4}/${1}" ./ || fail;
 
 source setup.sh || fail;
 # source /cvmfs/atlas.cern.ch/repo/ATLASLocalRootBase/user/atlasLocalSetup.sh;
@@ -57,7 +57,7 @@ source setup.sh || fail;
 # echo `ls`;
 
 
-python ${2} "${3}/${1}" ${5}|| fail;
+python ${2} "${1}" ${5}|| fail;
 
 files="$JOBSCRATCH"/*.pkl
 if [ ${#files[@]} -eq 0 ]; then

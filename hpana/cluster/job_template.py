@@ -92,9 +92,6 @@ CONDOR_JOB_TEMPLATE="""
 ##########################################################################################################################################################
 ## Condor job description file to launch on any free node
 ##########################################################################################################################################################
-requirements                = (Arch == "SL7x64")
-#
-#
 executable                  = {execScript}
 output                      = {logsdir}/out/$(Process).out
 error                       = {logsdir}/err/$(Process).err
@@ -103,11 +100,7 @@ universe                    = vanilla
 getenv                      = true
 #
 # RequestMemory               = {memory}
-#
-should_transfer_files       = YES
-when_to_transfer_files      = ON_EXIT
-# notify_user                 = {userEmail}
-notification                = always
-submit_nicadd_job.shGetEnv  = True
+request_cpus            = 1
++JobFlavour             = "espresso"
 
 """

@@ -30,6 +30,9 @@ def calculate_chi2(target_hist, template_hist, min_evts=10):
     """
     Chi squared/ndf  
     """
+    #MB
+    nbins_real= 0
+    #MB
     chi2 = 0
     nbins = target_hist.GetNbinsX()
     for i in range(nbins):
@@ -45,10 +48,15 @@ def calculate_chi2(target_hist, template_hist, min_evts=10):
         #     continue
         if tr_cont==0 or tm_cont==0:
             continue
+        #MB
+        nbins_real += 1
+        #MB
         chi2 += ((tr_cont-tm_cont)**2)/(tr_err**2 + tm_err**2)
         
-    return chi2/nbins
-
+    #return chi2/nbins
+    #MB
+    return chi2/nbins_real , nbins_real
+    #MB
 
 ##--------------------------------------------------------------------------
 ## - - chi2 fit error 
@@ -72,21 +80,37 @@ def chi2_error(chi2_graph, template_bins=20):
 
     ## small number of bins 
     # std = (2./template_bins)
-
-    err_up = std
+    
+    #err_up = std
+    #for n in range(xmin_index+1, len(xarr)):
+     #   if err_up < (xarr[n]- xmin):
+      #      err_up = xarr[n] - xmin
+          #  break
+        
+    #err_dn = std
+    #n = xmin_index-1
+    #while n > 0:
+     #   if err_dn < (xmin - xarr[n]):
+      #      err_dn = xmin - xarr[n]
+       #     break
+        #n -= 1
+    
+    #MB 
+    
+    err_up =0
     for n in range(xmin_index+1, len(xarr)):
-        if err_up < (xarr[n]- xmin):
+        if std <(yarr[n]- ymin):
             err_up = xarr[n] - xmin
             break
         
-    err_dn = std
+    err_dn = 0
     n = xmin_index-1
     while n > 0:
-        if err_dn < (xmin - xarr[n]):
+        if std < (yarr[n]-ymin):
             err_dn = xmin - xarr[n]
             break
         n -= 1
-        
+    #MB
     return xmin, err_up, err_dn
         
 ##--------------------------------------------------------------------------
@@ -529,6 +553,7 @@ def fit_alpha(cr_hists, target_hists, regions,
                 target_hist.Sumw2()   
                 # - - - - varying the coefficient
                 chi2 = []
+                
                 alpha = np.arange (-5, 5, 0.01)
 
                 # - - - - fit to aP_mj + (1-a)P_wj
@@ -551,7 +576,10 @@ def fit_alpha(cr_hists, target_hists, regions,
                     template_hist.Sumw2()
                     
                     # - - - - CHI2 fit; other option: KolmogorovTest(template_hist, "U O") 
-                    c2 = target_hist.Chi2Test(template_hist, "WW CHI2/NDF ")
+                    #c2 = target_hist.Chi2Test(template_hist, "WW CHI2/NDF ")
+                    #MB
+                    c2, nbins_real =calculate_chi2(target_hist, template_hist, min_evts=10)
+                    #MB
                     chi2.append((a, c2))
                     
                     scaled_mj_hist.Delete()
@@ -565,8 +593,9 @@ def fit_alpha(cr_hists, target_hists, regions,
                 chi2_graph.SetName("chi2_graph")
                 chi2s[tkey][pkey][hs.category] = chi2_graph
 
-                alpha, err_up, err_down = chi2_error(chi2_graph, template_bins=len(fitting_sub_bins))
-                
+                #alpha, err_up, err_down = chi2_error(chi2_graph, template_bins=len(fitting_sub_bins))
+                #MB
+                alpha, err_up, err_down = chi2_error(chi2_graph, nbins_real)
                 # - - - - keep alpha corresponding to min Chi2 distribution        
                 if not hs.category in alphas[tkey][pkey]:
                     alphas[tkey][pkey][hs.category] = {"NOMINAL":0, "1up":0, "1down":0}

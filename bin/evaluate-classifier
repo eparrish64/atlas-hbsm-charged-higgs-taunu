@@ -113,6 +113,64 @@ def main():
         else:
             run_pool(jobs, n_jobs=1)
 
+    if ECLF_ARGS.indirect:
+
+        if ECLF_ARGS.cluster:
+            models = get_models(ECLF_ARGS.models)
+            # print models
+            # - - write jobs
+            from hpana.cluster.job_template import CONDOR_JOB_TEMPLATE
+
+            ## zip source code
+            log.info("Creating source code tarball...")
+            source_code_tarball = os.path.abspath(ECLF_ARGS.outdir+"/source_code.tar.gz")
+            if os.path.isfile(source_code_tarball):
+                os.system("rm -rf %s"%source_code_tarball)
+
+            src_ds = ["bin", "hpana", "aux", "setup.sh"]
+            src_ds = " ".join(src_ds)
+            os.system("cd {src_dir} && tar -cf {target_tar} {source_files} && cd - && tar --append --file={target_tar}".format(
+                src_dir=__HERE+"/../", target_tar=source_code_tarball, source_files=src_ds))        
+
+            # - - setup the submit dir
+            os.system("mkdir -p {0}/jobs  {0}/logs {0}/hists {0}/logs/log {0}/logs/err {0}/logs/out".format(ECLF_ARGS.outdir))
+
+            log.info("************** creating %i jobs for HTCondor submission ************" % len(models))
+            log.info("**************************************************************")
+
+            submit_file_name = "%s/submitAllJobs.sh" % (ECLF_ARGS.outdir)
+            submit_file = open(submit_file_name, "w")
+            submit_file.write(
+                         CONDOR_JOB_TEMPLATE.format(
+                             logsdir=os.path.join(
+                                 ECLF_ARGS.outdir, ECLF_ARGS.logsdir),
+                             execScript=os.path.join(__HERE, "condor_jobs_clf.sh"),
+                             userEmail="Z1832314@students.niu.edu",
+                             memory="1GB",
+                         )
+                         )
+
+            for model in models.iteritems():
+                print model
+                submit_file.write("\nArguments = %s %s %s %s \nqueue\n" %(   model.name, 
+                                                                                os.path.join(__HERE, "classifier-evaluator"), 
+                                                                                os.path.join(os.getcwd(),ECLF_ARGS.outdir),
+                                                                                ECLF_ARGS.balanced
+                                                                            )
+                )
+
+                log.info("Writing to %s for job %s ..." %(submit_file_name, model.name))
+
+            submit_file.close()
+            log.warning("Submission not supported from within container.")
+            log.warning("Please launch outside container via:")
+            log.warning("\t condor_submit {0}".format(submit_file_name))
+
+
+
+
+
+
     if ECLF_ARGS.direct:
         # - -  build analysis main configuration object
         config = Configuration(ECLF_ARGS.channel, data_streams=ECLF_ARGS.data_streams, db_version=ECLF_ARGS.db_version)

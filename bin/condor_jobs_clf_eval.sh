@@ -33,7 +33,13 @@ cd "$JOBSCRATCH" || fail;
 # rsync -axvH --no-g --no-p ${6}/*.pkl ./ || fail;
 
 
-source "/disk/$MYUSERNAME/databank/setup.sh" || fail;
+# source "/disk/$MYUSERNAME/databank/setup.sh" || fail;
+
+rsync -axvH --no-g --no-p  ${4}/source_code.tar.gz ./ || fail; tar -xvf source_code.tar.gz || fail;
+
+rsync -axvH --no-g --no-p "${4}/${1}" ./ || fail;
+
+source setup.sh || fail;
 
 python ${2} ${4} ${5} ${1} || fail;
 

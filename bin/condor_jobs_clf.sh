@@ -22,9 +22,9 @@ fail(){
     exit 1;
 }
 
-# Creating scratch directory on a remote node
-mkdir -p "$JOBSCRATCH" || fail;
-cd "$JOBSCRATCH" || fail;
+# # Creating scratch directory on a remote node
+# mkdir -p "$JOBSCRATCH" || fail;
+# cd "$JOBSCRATCH" || fail;
 
 # Creating scratch directory on a remote node
 mkdir -p "$JOBSCRATCH" || fail;

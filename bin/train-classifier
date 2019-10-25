@@ -380,14 +380,13 @@ if CLF_ARGS.backend=="sklearn":
                 wrkDirectory = "/disk/eparrish/databank/"
 
                 # - - setup the submit dir
-                os.system("mkdir -p {0}/jobs  {0}/logs {0}/models".format(CLF_ARGS.outdir))
+                os.system("mkdir -p {0}/jobs  {0}/logs {0}/hists {0}/logs/log {0}/logs/err {0}/logs/out".format(CLF_ARGS.outdir))
 
                 log.info("************** creating %i jobs for HTCondor submission ************" % len(models))
                 log.info("**************************************************************")
 
 
 
-                os.system("mkdir -p {0}/jobs  {0}/logs {0}/hists {0}/logs/log {0}/logs/err {0}/logs/out".format(CLF_ARGS.outdir))
                 
                 submit_file_name = "%s/submitAllJobs.sh" % (CLF_ARGS.outdir)
                 submit_file = open(submit_file_name, "w")

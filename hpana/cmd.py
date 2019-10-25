@@ -419,6 +419,9 @@ def get_evalclf_parser(base_parser=None):
     evalclf_parser.add_argument("--direct", action="store_true",
                                 help="calculate clf scores on the fly")
 
+    evalclf_parser.add_argument("--indirect", action="store_true",
+                                help="calculate clf scores via dataframes saved to model pkl files")
+
     evalclf_parser.add_argument("--plot-scores", action="store_true",
                                 help="calculate and plot clf scores directly from np arrays")
 

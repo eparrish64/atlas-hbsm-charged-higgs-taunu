@@ -55,7 +55,5 @@ echo "Activating the virtual env"
 source $VENVPATH/bin/activate
 echo "If this is the first time install do: pip install -r requirements.txt"
 
-printenv
-
 export PYTHONPATH=${DIR_HPANA_SETUP}${PYTHONPATH:+:$PYTHONPATH}
 export PATH=${DIR_HPANA_SETUP}/bin${PATH:+:$PATH}

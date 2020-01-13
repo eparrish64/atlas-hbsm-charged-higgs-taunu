@@ -190,11 +190,12 @@ tau_0_pt = Variable(
     binning=(200, 0, 1000),
     plot_bins={
         "COMMON": range(40, 300, 20) + range(300, 500, 50),
-        "FF_CR_MULTIJET": [30, 35, 40, 45, 50, 60, 80, 100, 200, 3500],
-        "FF_CR_WJETS": [30, 35, 40, 45, 50, 60, 80, 100, 200, 3500],
+        # "FF_CR_MULTIJET": [30, 35, 40, 45, 50, 60, 80, 100, 200, 3500],
+        # "FF_CR_WJETS": [30, 35, 40, 45, 50, 60, 80, 100, 200, 3500],
     },
     unit='[GeV]',
     scale=1.)
+
 
 tau_0_eta = Variable(
     "tau_0_eta" , 
@@ -331,6 +332,24 @@ mu_0_pt = Variable(
     unit='[GeV]',
     scale=1.)
 
+mu_0_eta = Variable(
+    "mu_0_eta",
+    title='#font[152]{#eta}(#mu_{1})',
+    tformula={
+        "mc16":"mu_0_p4->Eta()",
+        "mc15":"mu_0_p4->Eta()",},
+    binning=(120, -3., 3.)
+    )
+    
+mu_0_phi = Variable(
+    "mu_0_phi",
+    title='#font[152]{#phi}(#mu_{1})',
+    tformula={
+        "mc16":"mu_0_p4->Phi()",
+        "mc15":"mu_0_p4->Phi()",},
+    binning=(60, -3, 3)
+    )
+
 
 ##############################################
 # - - - - - - - electron
@@ -338,11 +357,29 @@ mu_0_pt = Variable(
 el_0_pt = Variable(
     "el_0_pt", 
     title='#font[52]{p}_{T}(e_{1}) [GeV]',
-    tformula="mu_0_p4->Pt()",
+    tformula="el_0_p4->Pt()",
     binning=(20, 0, 400),
     unit='[GeV]',
-    scale=1.)
+    scale=1.
+    )
+
+el_0_eta = Variable(
+    "el_0_eta",
+    title='#font[152]{#eta}(e_{1})',
+    tformula={
+        "mc16":"el_0_p4->Eta()",
+        "mc15":"el_0_p4->Eta()",},
+    binning=(120, -3., 3.)
+    )
     
+el_0_phi = Variable(
+    "el_0_phi",
+    title='#font[152]{#phi}(e_{1})',
+    tformula={
+        "mc16":"el_0_p4->Phi()",
+        "mc15":"el_0_p4->Phi()",},
+    binning=(60, -3, 3)
+    )
 
 ##############################################
 # - - - - - - - - jets
@@ -373,7 +410,7 @@ bjet_0_pt =  Variable(
     title='#font[52]{p}_{T}lead b-jet [GeV]',
     latex=r"$b-jet_{p_T}$",
     tformula=BJET_P4_STR.format("Pt()"),
-    binning=(1000, 0, 1000),
+    binning=(20, 0, 1000),
     plot_bins=range(25, 500, 25),
     scale=1.,
     unit='[GeV]')
@@ -425,7 +462,7 @@ met_et = Variable(
         "mc16":"met_p4->Et()",
         "mc15": "met_et"},
     binning=(1000, 0, 1000),
-    plot_bins=range(100, 300, 20) + range(300, 500, 50),
+    plot_bins=range(50, 300, 20) + range(300, 500, 50),
     scale=1.,
     unit='[GeV]')
 
@@ -537,9 +574,27 @@ lep_0_pt = Variable(
     title='#font[52]{p}_{T}(l_{1}) [GeV]',
     latex=r"$\ell_{p_T}$",
     tformula="mu_0_p4->Pt()+el_0_p4->Pt()",
-    binning=(1000, 0, 1000),
+    binning=(20, 0, 1000),
     unit='[GeV]',
     scale=1.)
+
+lep_0_eta = Variable(
+    "tau_0_eta" , 
+    title='#font[52]#eta(l_{1})',
+    tformula={
+        "mc16": "mu_0_p4->Eta()+el_0_p4->Eta()",
+        "mc15": "mu_0_p4->Eta()+el_0_p4->Eta()"},
+    binning=(120, -4., 4.),
+    plot_bins=np.arange(-2.5, 2.5, 0.1))
+
+lep_0_phi = Variable(
+    "lep_0_phi" , 
+    title='#font[52]#phi(l_{1})',
+    tformula={
+        "mc16": "mu_0_p4->Phi()+el_0_p4->Phi()",
+        "mc15": "mu_0_p4->Phi()+el_0_p4->Phi()"},
+    binning=(20, -3.2, 3.2),
+    plot_bins=np.arange(-2.5, 2.5, 0.1))
 
 tau_0_lep_0_mass = Variable(
     "tau_0_lep_0_mass", 
@@ -621,6 +676,7 @@ VARIABLES_TAUJET = [
 
     tau_0_pt,
     tau_0_eta,
+    tau_0_phi,
     tau_0_n_charged_tracks,
     tau_0_q, 
     tau_0_upsilon,
@@ -647,7 +703,7 @@ VARIABLES_TAUJET = [
 
 ##-----------------------------------------------------------------
 # - - - - - - - - taulep channel variables list
-##-----------------------------------------------------------------
+##----------------------------------------------------------b-------
 VARIABLES_TAULEP = [
     n_avg_int_cor,
     n_actual_int_cor,
@@ -659,6 +715,16 @@ VARIABLES_TAULEP = [
     tau_0_upsilon,
 
     lep_0_pt,
+    lep_0_eta,
+    lep_0_phi,
+
+    el_0_pt,
+    el_0_eta,
+    el_0_phi,
+
+    mu_0_pt,
+    mu_0_eta,
+    mu_0_phi,
 
     met_et,
     tau_0_met_mt,

@@ -72,9 +72,13 @@ MT_MAX100 = {
 TAU_Q = TCut("abs(tau_0_q)==1")
 TAU_DECAY_MODE = TCut("tau_0_decay_mode==0")
 
-TAUID_LOOSE = TCut("tau_0_jet_bdt_loose==1")
-TAUID_MEDIUM = TCut("tau_0_jet_bdt_medium==1")
-TAUID_TIGHT = TCut("tau_0_jet_bdt_tight==1")
+# TAUID_LOOSE = TCut("tau_0_jet_bdt_loose==1")
+# TAUID_MEDIUM = TCut("tau_0_jet_bdt_medium==1")
+# TAUID_TIGHT = TCut("tau_0_jet_bdt_tight==1")
+
+TAUID_LOOSE = TCut("tau_0_jet_rnn_loose==1")
+TAUID_MEDIUM = TCut("tau_0_jet_rnn_medium==1")
+TAUID_TIGHT = TCut("tau_0_jet_rnn_tight==1")
 
 TAU_1_TRACK = {
     "mc15": TCut("tau_0_n_tracks==1"),
@@ -84,9 +88,10 @@ TAU_3_TRACK = {
     "mc15": TCut("tau_0_n_tracks==3"),
     "mc16": TCut("tau_0_n_charged_tracks==3"),
 }
+
 TAU_TRACKS = {
-    "mc15": TCut("tau_0_n_tracks==1"),# || tau_0_n_tracks==3"),
-    "mc16": TCut("tau_0_n_charged_tracks==1"),#||tau_0_n_charged_tracks==3"),
+    "mc15": TCut("tau_0_n_tracks==1 || tau_0_n_tracks==3"),
+    "mc16": TCut("tau_0_n_charged_tracks==1 || tau_0_n_charged_tracks==3"),
 }
 
 TAU_PT30 = {
@@ -165,8 +170,11 @@ EL_BASE = {
                       "&& (abs(el_0_p4->Eta()) < 2.47 && !(abs(el_0_p4->Eta()) < 1.52 && abs(el_0_p4->Eta()) > 1.37))"),
 }
 MU_BASE = {
-    "mc15": ROOT.TCut("n_muons==1 && mu_0_pt > 30000 && mu_0_id_tight && mu_0_iso_Gradient && abs(mu_0_eta) < 2.5"),
-    "mc16": ROOT.TCut("n_muons==1 && mu_0_p4->Pt() > 30 && mu_0_id_tight && mu_0_iso_Gradient && abs(mu_0_p4->Eta()) < 2.5"),
+#     "mc15": ROOT.TCut("n_muons==1 && mu_0_pt > 30000 && mu_0_id_tight && mu_0_iso_Gradient && abs(mu_0_eta) < 2.5"),
+#     "mc16": ROOT.TCut("n_muons==1 && mu_0_p4->Pt() > 30 && mu_0_id_tight && mu_0_iso_Gradient && abs(mu_0_p4->Eta()) < 2.5"),
+# Switching to mu_0_iso_FCTight_FixedRad
+    "mc15": ROOT.TCut("n_muons==1 && mu_0_pt > 30000 && mu_0_id_tight && mu_0_iso_FCTight_FixedRad && abs(mu_0_eta) < 2.5"),
+    "mc16": ROOT.TCut("n_muons==1 && mu_0_p4->Pt() > 30 && mu_0_id_tight && mu_0_iso_FCTight_FixedRad && abs(mu_0_p4->Eta()) < 2.5"),
 }
 
 LEP_BASE = {}
@@ -777,7 +785,7 @@ CUTFLOW = {
         [
             # ("cleanEvent",  CLEAN_EVT),
             ("trigger", TCut("1.>0")), #<! trigger is applied globally (just a place holder here)
-            ("tauID", TCut("tau_0_jet_bdt_medium==1")),
+            ("tauID", TAUID_MEDIUM),
             ("taupT40", TAU_PT40["mc16"]+TAU_BASE["mc16"]),  
             ("lepVeto", TCut("(n_muons+n_electrons)==0 &&tau_0_ele_bdt_medium==1")),
             # ("3jets", NUM_JETS3),

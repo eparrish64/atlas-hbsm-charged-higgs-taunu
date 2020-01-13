@@ -803,6 +803,7 @@ def validate_single(args, child=False):
             
         ## determine events in original ntuples
         ds_name = info.name
+        # log.info(get_file(amiclient, parent_dAOD))
         ds_logical_name  = get_file(amiclient, parent_dAOD)[0]["logicalDatasetName"]
         
         ds_info = get_dataset_info(amiclient, ds_logical_name)[0]

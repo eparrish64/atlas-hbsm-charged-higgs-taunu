@@ -50,7 +50,7 @@ def draw(var, category,
          ttbar_norm_factor=1,
          wtaunu_norm_factor=1,
          blind_range=(),
-         ratio_range=(0, 2),
+         ratio_range=(0.5, 1.5),
          ):
     """
     Parameters

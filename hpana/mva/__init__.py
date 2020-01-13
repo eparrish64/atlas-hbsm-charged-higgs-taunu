@@ -53,17 +53,18 @@ TRAINING_MASS_BINS = {
     ], 
 } 
 
-## - - Hyperparameters for GradientBoosting 
+## - - Hyperparameters for GradientBoosting (used in GridSearc for hyperparams)
 GB_HYPERPARAMS = {
     # "loss": ["deviance", "exponential"],
-    "learning_rate": [0.1, 0.2],
-    "n_estimators":[100, 200,], 
-    "min_samples_leaf": [0.01, 0.02],
-    "max_depth": [10, 15],
+    "learning_rate": [0.05, 0.1, 0.2],
+    "n_estimators":[100, 200, 300], 
+    "min_samples_leaf": [0.001, 0.002, 0.005],
+    "min_samples_split": [0.01, 0.002, 0.004],
+    "max_depth": [10, 20, 30],
 }
 
 ## cores for GridSearch hyperparams optimization 
-N_OPT_CORES = 48
+N_OPT_CORES = 2
 
 BDT_FILE_PATTERN = re.compile(
     '^(?P<name>\w+)'

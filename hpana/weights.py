@@ -26,15 +26,27 @@ class Weight(object):
         "weight_total": ("weight_total", )
     }
     W_TAU = {
-        "tau_0_sf_NOMINAL_TauEffSF_JetBDTmedium": ( 
-            W_STR_FMT.format("n_taus", "tau_0_sf_NOMINAL_TauEffSF_JetBDTmedium"),  #<! NOMINAL
+
+        # "tau_0_sf_NOMINAL_TauEffSF_JetBDTmedium": ( 
+        #     W_STR_FMT.format("n_taus", "tau_0_sf_NOMINAL_TauEffSF_JetBDTmedium"),  #<! NOMINAL
+
+        #     ## (name, title); title will be used to access the corresponding TTree branch.
+        #     ("TAU_EFF_JETID_HIGHPT_1up" , W_STR_FMT.format("n_taus", "tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_HIGHPT_1up_TauEffSF_JetBDTmedium")),
+        #     ("TAU_EFF_JETID_HIGHPT_1down", W_STR_FMT.format("n_taus", "tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_HIGHPT_1down_TauEffSF_JetBDTmedium")),
+
+        #     ("TAU_EFF_JETID_SYST_1up", W_STR_FMT.format("n_taus", "tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_SYST_1up_TauEffSF_JetBDTmedium")),
+        #     ("TAU_EFF_JETID_SYST_1down", W_STR_FMT.format("n_taus", "tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_SYST_1down_TauEffSF_JetBDTmedium")),
+        # ),
+
+        "tau_0_sf_NOMINAL_TauEffSF_JetRNNmedium": ( 
+            W_STR_FMT.format("n_taus", "tau_0_sf_NOMINAL_TauEffSF_JetRNNmedium"),  #<! NOMINAL
 
             ## (name, title); title will be used to access the corresponding TTree branch.
-            ("TAU_EFF_JETID_HIGHPT_1up" , W_STR_FMT.format("n_taus", "tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_HIGHPT_1up_TauEffSF_JetBDTmedium")),
-            ("TAU_EFF_JETID_HIGHPT_1down", W_STR_FMT.format("n_taus", "tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_HIGHPT_1down_TauEffSF_JetBDTmedium")),
+            ("TAU_EFF_JETID_HIGHPT_1up" , W_STR_FMT.format("n_taus", "tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_HIGHPT_1up_TauEffSF_JetRNNmedium")),
+            ("TAU_EFF_JETID_HIGHPT_1down", W_STR_FMT.format("n_taus", "tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_HIGHPT_1down_TauEffSF_JetRNNmedium")),
 
-            ("TAU_EFF_JETID_SYST_1up", W_STR_FMT.format("n_taus", "tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_SYST_1up_TauEffSF_JetBDTmedium")),
-            ("TAU_EFF_JETID_SYST_1down", W_STR_FMT.format("n_taus", "tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_SYST_1down_TauEffSF_JetBDTmedium")),
+            ("TAU_EFF_JETID_SYST_1up", W_STR_FMT.format("n_taus", "tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_SYST_1up_TauEffSF_JetRNNmedium")),
+            ("TAU_EFF_JETID_SYST_1down", W_STR_FMT.format("n_taus", "tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_SYST_1down_TauEffSF_JetRNNmedium")),
         ),
 
         # "tau_0_sf_NOMINAL_TauEffSF_VeryLooseLlhEleOLR_electron": (
@@ -47,6 +59,7 @@ class Weight(object):
         # "tau_0_sf_NOMINAL_TauEffSF_HadTauEleOLR_tauhad":(
         #     W_STR_FMT.format("n_taus", "tau_0_sf_NOMINAL_TauEffSF_HadTauEleOLR_tauhad"),
         # ),
+
 
         "tau_0_sf_NOMINAL_TauEffSF_MediumEleBDT_electron":(
             W_STR_FMT.format(
@@ -69,6 +82,7 @@ class Weight(object):
             ("TAU_EFF_RECO_HIGHPT_1up", W_STR_FMT.format("n_taus", "tau_0_sf_TAUS_TRUEHADTAU_EFF_RECO_HIGHPT_1up_TauEffSF_reco")),
             ("TAU_EFF_RECO_HIGHPT_1down", W_STR_FMT.format("n_taus", "tau_0_sf_TAUS_TRUEHADTAU_EFF_RECO_HIGHPT_1down_TauEffSF_reco")),
         ),
+
     }  # W_TAU
 
     W_JET = {
@@ -128,14 +142,24 @@ class Weight(object):
 
         ),
 
-        "mu_0_sf_NOMINAL_MuEffSF_IsoGradient": (
-            W_STR_FMT.format("n_muons", "mu_0_sf_NOMINAL_MuEffSF_IsoGradient"),
+        # "mu_0_sf_NOMINAL_MuEffSF_IsoGradient": (
+        #     W_STR_FMT.format("n_muons", "mu_0_sf_NOMINAL_MuEffSF_IsoGradient"),
 
-            ("MUON_EFF_ISO_STAT_1down", W_STR_FMT.format("n_muons", "mu_0_sf_MUON_EFF_ISO_STAT_1down_MuEffSF_IsoGradient")),
-            ("MUON_EFF_ISO_STAT_1up", W_STR_FMT.format("n_muons", "mu_0_sf_MUON_EFF_ISO_STAT_1up_MuEffSF_IsoGradient")),
+        #     ("MUON_EFF_ISO_STAT_1down", W_STR_FMT.format("n_muons", "mu_0_sf_MUON_EFF_ISO_STAT_1down_MuEffSF_IsoGradient")),
+        #     ("MUON_EFF_ISO_STAT_1up", W_STR_FMT.format("n_muons", "mu_0_sf_MUON_EFF_ISO_STAT_1up_MuEffSF_IsoGradient")),
 
-            ("MUON_EFF_ISO_SYS_1down", W_STR_FMT.format("n_muons", "mu_0_sf_MUON_EFF_ISO_SYS_1down_MuEffSF_IsoGradient")),
-            ("MUON_EFF_ISO_SYS_1up", W_STR_FMT.format("n_muons", "mu_0_sf_MUON_EFF_ISO_SYS_1up_MuEffSF_IsoGradient")),
+        #     ("MUON_EFF_ISO_SYS_1down", W_STR_FMT.format("n_muons", "mu_0_sf_MUON_EFF_ISO_SYS_1down_MuEffSF_IsoGradient")),
+        #     ("MUON_EFF_ISO_SYS_1up", W_STR_FMT.format("n_muons", "mu_0_sf_MUON_EFF_ISO_SYS_1up_MuEffSF_IsoGradient")),
+        # ),
+
+        "mu_0_sf_NOMINAL_MuEffSF_IsoFCTight_FixedRad": (
+            W_STR_FMT.format("n_muons", "mu_0_sf_NOMINAL_MuEffSF_IsoFCTight_FixedRad"),
+
+            ("MUON_EFF_ISO_STAT_1down", W_STR_FMT.format("n_muons", "mu_0_sf_MUON_EFF_ISO_STAT_1down_MuEffSF_IsoFCTight_FixedRad")),
+            ("MUON_EFF_ISO_STAT_1up", W_STR_FMT.format("n_muons", "mu_0_sf_MUON_EFF_ISO_STAT_1up_MuEffSF_IsoFCTight_FixedRad")),
+
+            ("MUON_EFF_ISO_SYS_1down", W_STR_FMT.format("n_muons", "mu_0_sf_MUON_EFF_ISO_SYS_1down_MuEffSF_IsoFCTight_FixedRad")),
+            ("MUON_EFF_ISO_SYS_1up", W_STR_FMT.format("n_muons", "mu_0_sf_MUON_EFF_ISO_SYS_1up_MuEffSF_IsoFCTight_FixedRad")),
         ),
 
         "mu_0_sf_NOMINAL_MuEffSF_Reco_QualTight": (
@@ -160,12 +184,14 @@ class Weight(object):
     }  # W_MU
 
     W_EL = {
+
         "el_0_sf_NOMINAL_EleEffSF_offline_RecoTrk": (
             W_STR_FMT.format("n_electrons", "el_0_sf_NOMINAL_EleEffSF_offline_RecoTrk"),
 
             ("EL_EFF_RECO_TOTAL_1down", W_STR_FMT.format("n_electrons", "el_0_sf_EL_EFF_Reco_TOTAL_1NPCOR_PLUS_UNCOR_1down_EleEffSF_offline_RecoTrk")),
             ("EL_EFF_RECO_TOTAL_1up", W_STR_FMT.format("n_electrons", "el_0_sf_EL_EFF_Reco_TOTAL_1NPCOR_PLUS_UNCOR_1up_EleEffSF_offline_RecoTrk")),
         ),
+
 
         "el_0_sf_NOMINAL_EleEffSF_Isolation_TightLLH_d0z0_v13_FCTight": (
             W_STR_FMT.format(
@@ -198,6 +224,7 @@ class Weight(object):
             ("EL_EFF_TRIGGER_TOTAL_1up", W_STR_FMT.format(
                 "n_electrons",                 "*el_0_sf_EL_EFF_Trigger_TOTAL_1NPCOR_PLUS_UNCOR_1up_EleEffSF_e26_lhtight_nod0_ivarloose_OR_e60_lhmedium_nod0_OR_e140_lhloose_nod0_TightLLH_d0z0_v13_isolFCTight_2016")),
         )
+
     }
 
     ## met trigger efficiency  (apply overall lumi weighted or apply it per year)

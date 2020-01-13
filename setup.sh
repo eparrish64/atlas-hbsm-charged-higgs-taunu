@@ -26,7 +26,8 @@ case $USER in
         VENVPATH=/project/6024950/sbahrase/PythonPackages/VirtualEnvs/hpana_venv/
         ;;
     eparrish)
-		VENVPATH=/afs/cern.ch/user/e/eparrish/workarea/public/HPlusTauNu/PythonPackages/Venvs/hpanaVenvNominal
+		# VENVPATH=/afs/cern.ch/user/e/eparrish/workarea/public/HPlusTauNu/PythonPackages/Venvs/hpanaVenvNominal
+		VENVPATH=/xdata/eparrish/VirtualEnv/Venvs/hpanaVenvSL7/
 		;;
 	*)
 		VENVPATH=""

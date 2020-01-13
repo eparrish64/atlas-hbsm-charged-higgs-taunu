@@ -159,7 +159,10 @@ class Classifier(TMVA.Factory):
 class SClassifier(GradientBoostingClassifier):
     """
     """
-    MODEL_NAME_STR_FORMAT = "model_{0}_channel_{1}_mass_{2}_ntracks_{3}_nfolds_{4}_fold_{5}_nvars_{6}.pkl" #<! name, channel, ntracks, nfolds, fold, n_vars 
+    # try:
+    MODEL_NAME_STR_FORMAT = "model_{0}_channel_{1}_mass_{2}_ntracks_{3}_nfolds_{4}_fold_{5}_nvars_{6}_learnRate_{7}_minSampsLeaf_{8}_nEst_{9}_minSampsSplit_{10}_maxDepth_{11}.pkl" #<! name, channel, ntracks, nfolds, fold, n_vars
+    # except:
+    # MODEL_NAME_STR_FORMAT = "model_{0}_channel_{1}_mass_{2}_ntracks_{3}_nfolds_{4}_fold_{5}_nvars_{6}.pkl"
     
     def __init__(self, channel, 
                     name="GB", 
@@ -173,6 +176,9 @@ class SClassifier(GradientBoostingClassifier):
                     kfolds=5,
                     fold_num=0,
                     ntracks=1,
+                    optimize=False,
+                    sigs=[],
+                    bkgs=[],
                     **params):
         log.debug("Initializing SClassifier ...")
         self.kparams = params
@@ -189,6 +195,14 @@ class SClassifier(GradientBoostingClassifier):
         self.ntracks = ntracks
         self.is_trained = is_trained
         self.hyperparams = params
+        self.optimize = optimize
+        self.sigs = sigs
+        self.bkgs = bkgs
+
+        if self.optimize:
+            MODEL_NAME_STR_FORMAT = "model_{0}_channel_{1}_mass_{2}_ntracks_{3}_nfolds_{4}_fold_{5}_nvars_{6}_learnRate_{7}_minSampsLeaf_{8}_nEst_{9}_minSampsSplit_{10}_maxDepth_{11}.pkl" #<! name, channel, ntracks, nfolds, fold, n_vars
+        else:
+            MODEL_NAME_STR_FORMAT = "model_{0}_channel_{1}_mass_{2}_ntracks_{3}_nfolds_{4}_fold_{5}_nvars_{6}.pkl" #<! name, channel, ntracks, nfolds, fold, n_vars 
 
         ## instantiate the base
         super(SClassifier, self).__init__(**params)
@@ -484,6 +498,20 @@ def train_model(model,
 
     b_df = tr_df[tr_df["class_label"]==0]
     s_df = tr_df[tr_df["class_label"]==1]
+
+    
+    s_e_overlap = pd.merge(b_df, s_df, how="inner")
+
+    if s_e_overlap.empty:
+        print s_e_overlap
+        print "No Overlap in train and evaluate"
+
+    else:
+        print s_e_overlap
+        raise Excpetion("Overlap in train and evaluate")
+
+    # print b_df
+    # print s_df
 
     if balanced: 
         ## Set training weight of bkg events to 1. Signal events to N_bkg / N_sig.

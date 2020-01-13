@@ -4,24 +4,41 @@
     grl: ""
     
   taujet:
+<<<<<<< Updated upstream
     mc_path: /eos/atlas/atlascerngroupdisk/phys-higgs/HSG6/Htaunu/v06/taujet/mc16/
     mc_prefix: #"user."
     mc_pattern: '*.root'
     mc_treename: 'NOMINAL'
     mc_sampletype:
     data_path: /eos/atlas/atlascerngroupdisk/phys-higgs/HSG6/Htaunu/v06/taujet/data/
+=======
+    mc_path: /xdata/eparrish/HPlusNTuples/2018/v06/taujets/MC/
+    mc_prefix: #"user."ata  
+    mc_pattern: '*.root*'
+    mc_treename: 'NOMINAL'
+    mc_sampletype:
+    data_path: /xdata/eparrish/HPlusNTuples/2018/v06/taujets/Data/
+>>>>>>> Stashed changes
     data_prefix: # "user." 
     data_pattern: '*.root*'
     data_treename: 'NOMINAL'
     data_sampletype:
 
   taulep:
+<<<<<<< Updated upstream
     mc_path: /eos/atlas/atlascerngroupdisk/phys-higgs/HSG6/Htaunu/v06/taulep/mc16/
+=======
+    mc_path: /xdata/eparrish/HPlusNTuples/2018/v06/taulep/MC/
+>>>>>>> Stashed changes
     mc_prefix: #"user."
     mc_pattern: '*.root*'
     mc_treename: 'NOMINAL'
     mc_sampletype:
+<<<<<<< Updated upstream
     data_path: /eos/atlas/atlascerngroupdisk/phys-higgs/HSG6/Htaunu/v06/taulep/data/
+=======
+    data_path: /xdata/eparrish/HPlusNTuples/2018/v06/taulep/Data/
+>>>>>>> Stashed changes
     data_prefix: # "user." 
     data_pattern: '*.root*'
     data_treename: 'NOMINAL'
@@ -32,24 +49,40 @@
     grl: ""
     
   taujet:
+<<<<<<< Updated upstream
     mc_path: /eos/atlas/atlascerngroupdisk/phys-higgs/HSG6/Htaunu/v06/taujet/mc16/
+=======
+    mc_path: /xdata/eparrish/HPlusNTuples/2018/v06/taujets/MC/
+>>>>>>> Stashed changes
     mc_prefix: #"user."
     mc_pattern: '*.root*'
     mc_treename: 'NOMINAL'
     mc_sampletype:
+<<<<<<< Updated upstream
     data_path: /eos/atlas/atlascerngroupdisk/phys-higgs/HSG6/Htaunu/v06/taujet/data/
+=======
+    data_path: /xdata/eparrish/HPlusNTuples/2018/v06/taujets/Data/
+>>>>>>> Stashed changes
     data_prefix: # "user." 
     data_pattern: '*.root*'
     data_treename: 'NOMINAL'
     data_sampletype:
 
   taulep:
+<<<<<<< Updated upstream
     mc_path: /eos/atlas/atlascerngroupdisk/phys-higgs/HSG6/Htaunu/v06/taulep/mc16/
+=======
+    mc_path: /xdata/eparrish/HPlusNTuples/2018/v06/taulep/MC/
+>>>>>>> Stashed changes
     mc_prefix: #"user."
     mc_pattern: '*.root*'
     mc_treename: 'NOMINAL'
     mc_sampletype:
+<<<<<<< Updated upstream
     data_path: /eos/atlas/atlascerngroupdisk/phys-higgs/HSG6/Htaunu/v06/taulep/data/
+=======
+    data_path: /xdata/eparrish/HPlusNTuples/2018/v06/taulep/Data/
+>>>>>>> Stashed changes
     data_prefix: # "user." 
     data_pattern: '*.root*'
     data_treename: 'NOMINAL'
@@ -60,24 +93,40 @@
     grl: ""
     
   taujet:
+<<<<<<< Updated upstream
     mc_path: /eos/atlas/atlascerngroupdisk/phys-higgs/HSG6/Htaunu/v06/taujet/mc16/
+=======
+    mc_path: /xdata/eparrish/HPlusNTuples/2018/v06/taujets/MC/
+>>>>>>> Stashed changes
     mc_prefix: #"user."
     mc_pattern: '*.root*'
     mc_treename: 'NOMINAL'
     mc_sampletype:
+<<<<<<< Updated upstream
     data_path: /eos/atlas/atlascerngroupdisk/phys-higgs/HSG6/Htaunu/v06/taujet/data/
+=======
+    data_path: /xdata/eparrish/HPlusNTuples/2018/v06/taujets/Data/
+>>>>>>> Stashed changes
     data_prefix: # "user." 
     data_pattern: '*.root*'
     data_treename: 'NOMINAL'
     data_sampletype:
       
   taulep:
+<<<<<<< Updated upstream
     mc_path: /eos/atlas/atlascerngroupdisk/phys-higgs/HSG6/Htaunu/v06/taulep/mc16/
+=======
+    mc_path: /xdata/eparrish/HPlusNTuples/2018/v06/taulep/MC/
+>>>>>>> Stashed changes
     mc_prefix: #"user."
     mc_pattern: '*.root*'
     mc_treename: 'NOMINAL'
     mc_sampletype:
+<<<<<<< Updated upstream
     data_path: /eos/atlas/atlascerngroupdisk/phys-higgs/HSG6/Htaunu/v06/taulep/data/
+=======
+    data_path: /xdata/eparrish/HPlusNTuples/2018/v06/taulep/Data/
+>>>>>>> Stashed changes
     data_prefix: # "user." 
     data_pattern: '*.root*'
     data_treename: 'NOMINAL'
@@ -88,24 +137,40 @@
     grl: ""
    
   taujet:
+<<<<<<< Updated upstream
     mc_path: /eos/atlas/atlascerngroupdisk/phys-higgs/HSG6/Htaunu/v06/taujet/mc16/
+=======
+    mc_path: /xdata/eparrish/HPlusNTuples/2018/v06/taujets/MC/
+>>>>>>> Stashed changes
     mc_prefix: #"user."
     mc_pattern: '*.root*'
     mc_treename: 'NOMINAL'
     mc_sampletype:
+<<<<<<< Updated upstream
     data_path: /eos/atlas/atlascerngroupdisk/phys-higgs/HSG6/Htaunu/v06/taujet/data/
+=======
+    data_path: /xdata/eparrish/HPlusNTuples/2018/v06/taujets/Data/
+>>>>>>> Stashed changes
     data_prefix: # "user."
     data_pattern: '*.root*'
     data_treename: 'NOMINAL'
     data_sampletype:
             
   taulep:
+<<<<<<< Updated upstream
     mc_path: /eos/atlas/atlascerngroupdisk/phys-higgs/HSG6/Htaunu/v06/taulep/mc16/
+=======
+    mc_path: /xdata/eparrish/HPlusNTuples/2018/v06/taulep/MC/
+>>>>>>> Stashed changes
     mc_prefix: #"user."
     mc_pattern: '*.root*'
     mc_treename: 'NOMINAL'
     mc_sampletype:
+<<<<<<< Updated upstream
     data_path: /eos/atlas/atlascerngroupdisk/phys-higgs/HSG6/Htaunu/v06/taulep/data/
+=======
+    data_path: /xdata/eparrish/HPlusNTuples/2018/v06/taulep/Data/
+>>>>>>> Stashed changes
     data_prefix: # "user."
     data_pattern: '*.root*'
     data_treename: 'NOMINAL'

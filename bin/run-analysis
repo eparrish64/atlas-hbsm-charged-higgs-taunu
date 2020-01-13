@@ -222,7 +222,7 @@ def main():
                                  ANA_ARGS.outdir, ANA_ARGS.logsdir),
                              execScript=os.path.join(__HERE, "condor_jobs.sh"),
                              userEmail="Z1832314@students.niu.edu",
-                             memory="3GB",
+                             memory="1GB",
                              # jobname=aw.name,  #<! important - jobname steers which worker used from pickled ana
                              submitdir=__HERE,
                              source_code=source_code_tarball,

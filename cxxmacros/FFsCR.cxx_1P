@@ -1,0 +1,271 @@
+#include <iostream>
+//! NOMINAL 
+float GetFF_FF_CR_WJETS_NOMINAL(float pt, int nTracks){
+	 if(nTracks==1){
+		 if(pt < 35) return 0.115346;
+		 if(pt < 40) return 0.090424;
+		 if(pt < 45) return 0.081014;
+		 if(pt < 50) return 0.071592;
+		 if(pt < 60) return 0.075518;
+		 if(pt < 80) return 0.062874;
+		 if(pt < 100) return 0.052751;
+		 if(pt < 200) return 0.042357;
+		 if(pt < 3500) return 0.034000;
+		 else return 0;
+		 }
+	 if(nTracks==3){
+		 if(pt < 35) return 0.032223;
+		 if(pt < 40) return 0.031228;
+		 if(pt < 60) return 0.022642;
+		 if(pt < 80) return 0.015183;
+		 if(pt < 100) return 0.009577;
+		 if(pt < 3500) return 0.011027;
+		 else return 0;
+		 }
+	 else return 0;
+}
+
+
+//! MCSubt_1up 
+float GetFF_FF_CR_WJETS_MCSubt_1up(float pt, int nTracks){
+	 if(nTracks==1){
+		 if(pt < 35) return 0.1519;
+		 if(pt < 40) return 0.1365;
+		 if(pt < 45) return 0.1246;
+		 if(pt < 50) return 0.1115;
+		 if(pt < 60) return 0.1044;
+		 if(pt < 80) return 0.0880;
+		 if(pt < 100) return 0.0776;
+		 if(pt < 200) return 0.0662;
+		 if(pt < 3500) return 0.0480;
+		 else return 0;
+		 }
+	 if(nTracks==3){
+		 if(pt < 35) return 0.0354;
+		 if(pt < 40) return 0.0337;
+		 if(pt < 60) return 0.0266;
+		 if(pt < 80) return 0.0209;
+		 if(pt < 100) return 0.0173;
+		 if(pt < 3500) return 0.0179;
+		 else return 0;
+		 }
+	 else return 0;
+}
+
+
+//! MCSubt_1down 
+float GetFF_FF_CR_WJETS_MCSubt_1down(float pt, int nTracks){
+	 if(nTracks==1){
+		 if(pt < 35) return 0.0746;
+		 if(pt < 40) return 0.0381;
+		 if(pt < 45) return 0.0315;
+		 if(pt < 50) return 0.0267;
+		 if(pt < 60) return 0.0435;
+		 if(pt < 80) return 0.0344;
+		 if(pt < 100) return 0.0246;
+		 if(pt < 200) return 0.0152;
+		 if(pt < 3500) return 0.0180;
+		 else return 0;
+		 }
+	 if(nTracks==3){
+		 if(pt < 35) return 0.0289;
+		 if(pt < 40) return 0.0286;
+		 if(pt < 60) return 0.0185;
+		 if(pt < 80) return 0.0091;
+		 if(pt < 100) return 0.0013;
+		 if(pt < 3500) return 0.0036;
+		 else return 0;
+		 }
+	 else return 0;
+}
+
+
+//! BDT_1up 
+float GetFF_FF_CR_WJETS_BDT_1up(float pt, int nTracks){
+	 if(nTracks==1){
+		 if(pt < 35) return 0.085156;
+		 if(pt < 40) return 0.066741;
+		 if(pt < 45) return 0.058242;
+		 if(pt < 50) return 0.051658;
+		 if(pt < 60) return 0.053742;
+		 if(pt < 80) return 0.044187;
+		 if(pt < 100) return 0.036342;
+		 if(pt < 200) return 0.028793;
+		 if(pt < 3500) return 0.022311;
+		 else return 0;
+		 }
+	 if(nTracks==3){
+		 if(pt < 35) return 0.022242;
+		 if(pt < 40) return 0.021171;
+		 if(pt < 60) return 0.014950;
+		 if(pt < 80) return 0.009708;
+		 if(pt < 100) return 0.005894;
+		 if(pt < 3500) return 0.006696;
+		 else return 0;
+		 }
+	 else return 0;
+}
+
+
+//! BDT_1down 
+float GetFF_FF_CR_WJETS_BDT_1down(float pt, int nTracks){
+	 if(nTracks==1){
+		 if(pt < 35) return 0.146409;
+		 if(pt < 40) return 0.115678;
+		 if(pt < 45) return 0.103320;
+		 if(pt < 50) return 0.091717;
+		 if(pt < 60) return 0.096780;
+		 if(pt < 80) return 0.081600;
+		 if(pt < 100) return 0.069012;
+		 if(pt < 200) return 0.055547;
+		 if(pt < 3500) return 0.046327;
+		 else return 0;
+		 }
+	 if(nTracks==3){
+		 if(pt < 35) return 0.041905;
+		 if(pt < 40) return 0.040799;
+		 if(pt < 60) return 0.030084;
+		 if(pt < 80) return 0.020726;
+		 if(pt < 100) return 0.013454;
+		 if(pt < 3500) return 0.015697;
+		 else return 0;
+		 }
+	 else return 0;
+}
+
+
+//! NOMINAL 
+float GetFF_FF_CR_MULTIJET_NOMINAL(float pt, int nTracks){
+	 if(nTracks==1){
+		 if(pt < 35) return 0.096418;
+		 if(pt < 40) return 0.079583;
+		 if(pt < 45) return 0.060503;
+		 if(pt < 50) return 0.052210;
+		 if(pt < 60) return 0.053104;
+		 if(pt < 80) return 0.049223;
+		 if(pt < 100) return 0.042987;
+		 if(pt < 200) return 0.035039;
+		 if(pt < 3500) return 0.019958;
+		 else return 0;
+		 }
+	 if(nTracks==3){
+		 if(pt < 35) return 0.026665;
+		 if(pt < 40) return 0.022048;
+		 if(pt < 60) return 0.013920;
+		 if(pt < 80) return 0.011917;
+		 if(pt < 100) return 0.008865;
+		 if(pt < 3500) return 0.006768;
+		 else return 0;
+		 }
+	 else return 0;
+}
+
+
+//! MCSubt_1up 
+float GetFF_FF_CR_MULTIJET_MCSubt_1up(float pt, int nTracks){
+	 if(nTracks==1){
+		 if(pt < 35) return 0.0974;
+		 if(pt < 40) return 0.0806;
+		 if(pt < 45) return 0.0618;
+		 if(pt < 50) return 0.0536;
+		 if(pt < 60) return 0.0545;
+		 if(pt < 80) return 0.0513;
+		 if(pt < 100) return 0.0459;
+		 if(pt < 200) return 0.0376;
+		 if(pt < 3500) return 0.0214;
+		 else return 0;
+		 }
+	 if(nTracks==3){
+		 if(pt < 35) return 0.0270;
+		 if(pt < 40) return 0.0228;
+		 if(pt < 60) return 0.0145;
+		 if(pt < 80) return 0.0129;
+		 if(pt < 100) return 0.0103;
+		 if(pt < 3500) return 0.0079;
+		 else return 0;
+		 }
+	 else return 0;
+}
+
+
+//! MCSubt_1down 
+float GetFF_FF_CR_MULTIJET_MCSubt_1down(float pt, int nTracks){
+	 if(nTracks==1){
+		 if(pt < 35) return 0.0954;
+		 if(pt < 40) return 0.0786;
+		 if(pt < 45) return 0.0592;
+		 if(pt < 50) return 0.0508;
+		 if(pt < 60) return 0.0517;
+		 if(pt < 80) return 0.0471;
+		 if(pt < 100) return 0.0401;
+		 if(pt < 200) return 0.0325;
+		 if(pt < 3500) return 0.0185;
+		 else return 0;
+		 }
+	 if(nTracks==3){
+		 if(pt < 35) return 0.0263;
+		 if(pt < 40) return 0.0213;
+		 if(pt < 60) return 0.0133;
+		 if(pt < 80) return 0.0110;
+		 if(pt < 100) return 0.0074;
+		 if(pt < 3500) return 0.0056;
+		 else return 0;
+		 }
+	 else return 0;
+}
+
+
+//! BDT_1up 
+float GetFF_FF_CR_MULTIJET_BDT_1up(float pt, int nTracks){
+	 if(nTracks==1){
+		 if(pt < 35) return 0.067708;
+		 if(pt < 40) return 0.055078;
+		 if(pt < 45) return 0.041126;
+		 if(pt < 50) return 0.035397;
+		 if(pt < 60) return 0.036169;
+		 if(pt < 80) return 0.033123;
+		 if(pt < 100) return 0.028843;
+		 if(pt < 200) return 0.022985;
+		 if(pt < 3500) return 0.012627;
+		 else return 0;
+		 }
+	 if(nTracks==3){
+		 if(pt < 35) return 0.017099;
+		 if(pt < 40) return 0.013753;
+		 if(pt < 60) return 0.008243;
+		 if(pt < 80) return 0.007144;
+		 if(pt < 100) return 0.005185;
+		 if(pt < 3500) return 0.004021;
+		 else return 0;
+		 }
+	 else return 0;
+}
+
+
+//! BDT_1down 
+float GetFF_FF_CR_MULTIJET_BDT_1down(float pt, int nTracks){
+	 if(nTracks==1){
+		 if(pt < 35) return 0.126168;
+		 if(pt < 40) return 0.104916;
+		 if(pt < 45) return 0.080973;
+		 if(pt < 50) return 0.069766;
+		 if(pt < 60) return 0.070362;
+		 if(pt < 80) return 0.065176;
+		 if(pt < 100) return 0.057609;
+		 if(pt < 200) return 0.046920;
+		 if(pt < 3500) return 0.027195;
+		 else return 0;
+		 }
+	 if(nTracks==3){
+		 if(pt < 35) return 0.035790;
+		 if(pt < 40) return 0.030087;
+		 if(pt < 60) return 0.019574;
+		 if(pt < 80) return 0.016783;
+		 if(pt < 100) return 0.012681;
+		 if(pt < 3500) return 0.009711;
+		 else return 0;
+		 }
+	 else return 0;
+}
+
+

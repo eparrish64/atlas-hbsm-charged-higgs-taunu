@@ -1,0 +1,60 @@
+## YMAL DOESN'T ALLOW \t ; USE SPACES !
+"2016":
+  common:
+    grl: ""
+    
+  taujet:
+    mc_path: /home/sbahrase/WorkDesk/HPlusTauNu/AnaNTUPs/merged_ntups_1017v01/
+    mc_prefix: #"user."
+    mc_pattern: '*hist-output.root*.nn'
+    mc_treename: 'NOMINAL'
+    mc_sampletype:
+    data_path: /home/sbahrase/WorkDesk/HPlusTauNu/AnaNTUPs/merged_ntups_1017v01/
+    data_prefix: "data" 
+    data_pattern: 'full_data_1017v01.root'
+    data_treename: 'NOMINAL'
+    data_sampletype:
+
+"2017":
+  common:
+    grl: ""
+    
+  taujet:
+    mc_path: /home/sbahrase/WorkDesk/HPlusTauNu/AnaNTUPs/merged_ntups_1017v01/
+    mc_prefix: #"user."
+    mc_pattern: '*hist-output.root*.nn'
+    mc_treename: 'NOMINAL'
+    mc_sampletype:
+    data_path: /home/sbahrase/WorkDesk/HPlusTauNu/AnaNTUPs/merged_ntups_1017v01/
+    data_prefix: "data" 
+    data_pattern: 'full_data_1017v01.root'
+    data_treename: 'NOMINAL'
+    data_sampletype:
+      
+"2018":
+  common:
+    grl: ""
+   
+  taujet:
+    mc_path: /home/people/kaczmars/taujet_mc_Sina/
+    mc_prefix: ""
+    mc_pattern: '*root*'
+    mc_treename: 'NOMINAL'
+    mc_sampletype:
+    data_path: /mnt/atlasdata2/chargedHiggs_prod_may2018/v06/taujet/data/
+    data_prefix: ""
+    data_pattern: '*root*'
+    data_treename: 'NOMINAL'
+    data_sampletype:            
+
+  taulep:
+    mc_path: /mnt/atlasdata2/chargedHiggs_prod_may2018/v06/taulep/mc16/
+    mc_prefix: ""
+    mc_pattern: '*root*'
+    mc_treename: 'NOMINAL'
+    mc_sampletype:
+    data_path: /mnt/atlasdata2/chargedHiggs_prod_may2018/v06/taulep/data/
+    data_prefix: ""
+    data_pattern: '*root*'
+    data_treename: 'NOMINAL'
+    data_sampletype:

@@ -1,0 +1,19 @@
+hp90:
+  name: Hp90
+  latex: 'H^+(90) #rightarrow #tau_h #nu$'
+  root: 'H^+(90) #rightarrow #tau_h #nu'
+  samples:
+    - "MadGraphPythia8EvtGen_A14NNPDF23LO_Hplus_H90_taunu"
+hp110:
+  name: Hp110
+  latex: 'H^+(110) #rightarrow #tau_h #nu$'
+  root: 'H^+(110)#rightarrow #tau_h #nu'
+  samples:
+    - "MadGraphPythia8EvtGen_A14NNPDF23LO_Hplus_H110_taunu"
+    
+hp400:
+  name: Hp400
+  latex: 'H^+(400) #rightarrow #tau_h #nu$'
+  root: 'H^+(400)#rightarrow #tau_h #nu'
+  samples:
+    - "aMcAtNloPythia8EvtGen_A14NNPDF23LO_Hplus4FS_H400_taunu"

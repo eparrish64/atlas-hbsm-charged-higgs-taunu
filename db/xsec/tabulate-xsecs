@@ -1,0 +1,56 @@
+#! /usr/bin/env python
+
+##stdlib imports
+import os
+from subprocess import call
+XS_URL = "http://pmg-centralmc15.web.cern.ch/PMG-CentralMC15/CentralMC15ProductionPage/XsecFiles/list_Xsec_*Download.txt"
+# DSID, Sample, Xsec, FiltEff, Total higher order xsec, K-factor, Higher order  xsec sample
+
+def tabulate_XS(xs_files, out_put='xsections.txt'):
+    for xf in xs_files:
+        with open(xf, 'r') as _f:
+            with open(out_put, 'a+') as out:
+                d, name = os.path.split(_f.name)
+                name = name.replace('list_Xsec_', '').replace('_Download.txt','')        
+                out.write('##'*60)
+                out.write('\n')
+                out.write('## %s\n\n'%name)
+            
+                for line in _f.readlines():
+                    line = line.strip()
+                    if (not line or line.startswith('#') 
+                        or line.startswith('DSID') or line.startswith('| DSID')):
+                        continue
+                    line = line.split()
+
+                    dsid = line[0]
+                    name = line[1]
+                    
+                    if "." in name:
+                        name = name.split(".")[2]
+                    xsec = line[2]    
+                    eff = line[3]
+                    kfact = line[5]
+                    
+                    # - - - -  ID name xsec kfac eff relunc
+                    out.write('{0}\t {1}\t {2}\t {3}\t {4}\t 1.0\n'.format(dsid, name, xsec, eff, kfact))
+            
+if __name__=='__main__':
+    from argparse import ArgumentParser
+    parser = ArgumentParser()
+    parser.add_argument('--xsfiles','-xf', nargs='+', help= 'xsection txt files')
+    parser.add_argument('--out_put', '-o', type=str,default='xsections.txt')
+    parser.add_argument('--wget', '-w',action='store_true', help='XS from MC wiki page ?')
+    args = parser.parse_args()
+    if args.wget:
+        print "updating Xs from MC centeral twiki:\n"
+        print XS_URL
+        cmds = "mkdir tmp1_xs ; cd tmp1_xs; wget -e robots=off  -r -H -np -R \"index.html*\" %s"%XS_URL
+        call(cmds, shell=True)
+        
+        #wget -r -np -R "index.html*"
+        
+    else:
+        print "updating Xs locally"
+        tabulate_XS(args.xsfiles, out_put=args.out_put)
+        

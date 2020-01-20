@@ -334,7 +334,7 @@ def draw_plots(hists_file, fields, categories):
         "signals":analysis.get_signals(masses=[140,160, 400, 2000]),        
         "signal_scale":1,
         "systematics":ANA_ARGS.systs,
-        "output_dir":"plots_"+ANA_ARGS.outdir,
+        "output_dir":ANA_ARGS.outdir+"plots",
         "logy":ANA_ARGS.logy,
         "logx":False,
         "show_ratio":True,

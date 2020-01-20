@@ -90,8 +90,8 @@ TAU_3_TRACK = {
 }
 
 TAU_TRACKS = {
-    "mc15": TCut("tau_0_n_tracks==1 || tau_0_n_tracks==3"),
-    "mc16": TCut("tau_0_n_charged_tracks==15 || tau_0_n_charged_tracks==3"),
+    "mc15": TCut("tau_0_n_tracks==1"),# || tau_0_n_tracks==3"),
+    "mc16": TCut("tau_0_n_charged_tracks==1"),# || tau_0_n_charged_tracks==3"),
 }
 
 TAU_PT30 = {

@@ -203,8 +203,7 @@ tau_0_eta = Variable(
     tformula={
         "mc16": "tau_0_p4->Eta()",
         "mc15": "tau_0_eta"},
-    binning=(120, -3., 3.),
-    plot_bins=np.arange(-2.5, 2.5, 0.1))
+    binning=(120, -3, 3))
 
 tau_0_phi = Variable(
     "tau_0_phi" , 
@@ -411,7 +410,6 @@ bjet_0_pt =  Variable(
     latex=r"$b-jet_{p_T}$",
     tformula=BJET_P4_STR.format("Pt()"),
     binning=(20, 0, 1000),
-    plot_bins=range(25, 500, 25),
     scale=1.,
     unit='[GeV]')
 

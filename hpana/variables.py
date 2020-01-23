@@ -12,7 +12,7 @@ __all__ = [
     "rQCD_VARS",
     "tau_0_pt",
     "tau_0_n_charged_tracks",
-    "tau_0_jet_bdt_score_trans"]
+    "tau_0_jet_rnn_score_trans"]
 
 ## FIXME: tmp workaround for missing bjet p4 in (2015-2017) systematics 
 BJET_P4_STR = "((jet_0_b_tag_score>0.83)*jet_0_p4->{0}+"\
@@ -203,7 +203,8 @@ tau_0_eta = Variable(
     tformula={
         "mc16": "tau_0_p4->Eta()",
         "mc15": "tau_0_eta"},
-    binning=(120, -3, 3))
+    binning=(120, -3., 3.),
+    plot_bins=np.arange(-2.5,2.5,0.1))
 
 tau_0_phi = Variable(
     "tau_0_phi" , 
@@ -238,17 +239,29 @@ tau_0_upsilon = Variable(
     binning=(3000, -1.0, 2.0),
     plot_bins=np.arange(-1, 1.2, 0.05))
 
-tau_0_jet_bdt_score = Variable(
-    "tau_0_jet_bdt_score",
-    title='#font[152]{#tau}_{1} #font[52]{Jet BDT score}',
+tau_pol_cms = Variable(
+    "tau_pol_cms", 
+    title='#font[52]{polcms}',
+    latex=r"$polcms$",
+    tformula = {
+        "mc16": "tau_0_allTrk_pt/tau_0_p4->Pt()",
+    },
+    binning=(3000, -1.0, 2.0),
+    plot_bins=np.arange(-1, 1.2, 0.05))
+
+
+
+tau_0_jet_rnn_score = Variable(
+    "tau_0_jet_rmm_score",
+    title='#font[152]{#tau}_{1} #font[52]{Jet RNN score}',
     binning=(100, -1., 1.))
 
-tau_0_jet_bdt_score_trans = Variable(
-    "tau_0_jet_bdt_score_trans",
-    title='#font[152]{#tau}_{1} #font[52]{Jet BDT score signal transformed}',
+tau_0_jet_rnn_score_trans = Variable(
+    "tau_0_jet_rnn_score_trans",
+    title='#font[152]{#tau}_{1} #font[52]{Jet RNN score signal transformed}',
     tformula = {
         "mc15": "tau_0_jet_bdt_score_sig",
-        "mc16": "tau_0_jet_bdt_score_trans",
+        "mc16": "tau_0_jet_rnn_score_trans",
     },
     binning=(20, 0, 1.), )
 
@@ -409,7 +422,8 @@ bjet_0_pt =  Variable(
     title='#font[52]{p}_{T}lead b-jet [GeV]',
     latex=r"$b-jet_{p_T}$",
     tformula=BJET_P4_STR.format("Pt()"),
-    binning=(20, 0, 1000),
+    binning=(200, 0, 1000),
+    # plot_bins=range(25, 500, 25),
     scale=1.,
     unit='[GeV]')
 
@@ -459,7 +473,7 @@ met_et = Variable(
     tformula={
         "mc16":"met_p4->Et()",
         "mc15": "met_et"},
-    binning=(1000, 0, 1000),
+    binning=(200, 0, 1000),
     plot_bins=range(50, 300, 20) + range(300, 500, 50),
     scale=1.,
     unit='[GeV]')
@@ -528,8 +542,8 @@ met_jet_dphi_ratio = Variable(
     tformula="(TMath::Pi() - fabs( fabs( tau_0_p4->Phi() - met_p4->Phi() ) - TMath::Pi() ))/ "\
     "(1 + TMath::Pi() - fabs( fabs( jet_0_p4->Phi() - met_p4->Phi() ) - TMath::Pi() )"\
     "+ TMath::Pi() - fabs( fabs( jet_1_p4->Phi() - met_p4->Phi() ) - TMath::Pi() ))",
-    binning = (400, -2, 2),
-    plot_bins=np.arange(0, 1, 0.05),   
+    binning = (20, -2, 2),
+    # plot_bins=np.arange(0, 1, 0.05),   
 )
 
 tau_met_jet_dphi_min = Variable(
@@ -541,6 +555,91 @@ tau_met_jet_dphi_min = Variable(
     ", (TMath::Pi() - fabs( tau_0_p4->Phi() - met_p4->Phi()) )**2 + ( jet_1_p4->Phi() - met_p4->Phi())**2) ",
     binning=(20, 0, 10),
 )
+
+###########################AK
+## FIX me! Only NOT b-tagged jets to be used
+tau0_met_dp = Variable(
+    "tau0_met_dp",
+    title='#Delta#phi(#tau, E^{miss}_{T})',
+    latex=r"$\Delta\phi(\tau, E^{miss}_{T})$",
+    tformula="((fabs(tau_0_p4->Phi() - met_p4->Phi())) > TMath::Pi())*(2* TMath::Pi() - fabs(tau_0_p4->Phi() - met_p4->Phi())) + ((fabs(tau_0_p4->Phi() - met_p4->Phi())) <= TMath::Pi())*(fabs(tau_0_p4->Phi() - met_p4->Phi()))", 
+    ##
+    #tformula="(fabs(tau_0_p4->Phi() - met_p4->Phi() )) > TMath::Pi() ? 2* TMath::Pi() - fabs(tau_0_p4->Phi() - met_p4->Phi() )  : fabs(tau_0_p4->Phi() - met_p4->Phi() )",
+    #tformula="2* 3.14 - fabs(tau_0_p4->Phi() - met_p4->Phi() )",
+    binning=(20, -1, 4),
+)
+
+jet0_met_dp = Variable(
+    "jet0_met_dp",
+    title='#Delta#phi(#jet0, E^{miss}_{T})',
+    latex=r"$\Delta\phi(jet0, E^{miss}_{T})$",
+    tformula="((fabs(jet_0_p4->Phi() - met_p4->Phi())) > TMath::Pi())*(2* TMath::Pi() - fabs(jet_0_p4->Phi() - met_p4->Phi())) + ((fabs(jet_0_p4->Phi() - met_p4->Phi())) <= TMath::Pi())*(fabs(jet_0_p4->Phi() - met_p4->Phi()))",
+    #tformula="(fabs(jet_0_p4->Phi() - met_p4->Phi())) > 3.14 ? 2* 3.14 - fabs(jet_0_p4->Phi() - met_p4->Phi())  : fabs(jet_0_p4->Phi() - met_p4->Phi())",
+    #tformula="(fabs(jet_0_p4->Phi() - met_p4->Phi())) > TMath::Pi() ? 2* TMath::Pi() - fabs(jet_0_p4->Phi() - met_p4->Phi())  : fabs(jet_0_p4->Phi() - met_p4->Phi())",
+    binning=(20, -1, 4),
+)
+
+jet1_met_dp = Variable(
+    "jet1_met_dp",
+    title='#Delta#phi(#jet1, E^{miss}_{T})',
+    latex=r"$\Delta\phi(jet1, E^{miss}_{T})$",
+    tformula="((fabs(jet_1_p4->Phi() - met_p4->Phi())) > TMath::Pi())*(2* TMath::Pi() - fabs(jet_1_p4->Phi() - met_p4->Phi())) + ((fabs(jet_1_p4->Phi() - met_p4->Phi())) <= TMath::Pi())*(fabs(jet_1_p4->Phi() - met_p4->Phi()))",
+    #tformula="(fabs(jet_1_p4->Phi() - met_p4->Phi())) > TMath::Pi() ? 2* TMath::Pi() - fabs(jet_1_p4->Phi() - met_p4->Phi())  : fabs(jet_1_p4->Phi() - met_p4->Phi())",
+    binning=(20, -1, 4),
+    #plot_bins=np.arange(-2, 2.4, .4)
+)
+
+jet2_met_dp = Variable(
+    "jet2_met_dp",
+    title='#Delta#phi(#jet2, E^{miss}_{T})',
+    latex=r"$\Delta\phi(jet2, E^{miss}_{T})$",
+    tformula="((fabs(jet_2_p4->Phi() - met_p4->Phi())) > TMath::Pi())*(2* TMath::Pi() - fabs(jet_2_p4->Phi() - met_p4->Phi())) + ((fabs(jet_2_p4->Phi() - met_p4->Phi())) <= TMath::Pi())*(fabs(jet_2_p4->Phi() - met_p4->Phi()))",
+    #tformula="(fabs(jet_2_p4->Phi() - met_p4->Phi())) > TMath::Pi() ? 2* TMath::Pi() - fabs(jet_2_p4->Phi() - met_p4->Phi())  : fabs(jet_2_p4->Phi() - met_p4->Phi())",
+    binning=(20, -1, 4),
+)
+
+taujet0_dp  = Variable(
+    "taujet0_dp",
+    title='taujet0_dp)',
+    latex="taujet0_dp",
+    tformula="sqrt((TMath::Pi()-"+tau0_met_dp.tformula+")**2+ "+jet0_met_dp.tformula+"**2)",
+    binning=(20, -1, 4),
+)
+
+taujet1_dp  = Variable(
+    "taujet1_dp",
+    title='taujet1_dp)',
+    latex="taujet1_dp",
+    tformula="sqrt((TMath::Pi()-"+tau0_met_dp.tformula+")**2+ "+jet1_met_dp.tformula+"**2)",
+    binning=(20, -1, 4),
+)
+
+taujet2_dp  = Variable(
+    "taujet2_dp",
+    title='taujet2_dp)',
+    latex="taujet2_dp",
+    tformula="sqrt((TMath::Pi()-"+tau0_met_dp.tformula+")**2+ "+jet2_met_dp.tformula+"**2)",
+    binning=(20, -1, 4),
+)
+
+r_min = Variable(
+    "r_min",
+    title="r_min_bb",
+    latex="r_min_bb",
+    tformula="min(min("+taujet0_dp.tformula+","+taujet1_dp.tformula+"),"+taujet2_dp.tformula+")",
+    binning=(20, 0, 10),
+)
+
+
+r_min_cut = Variable(
+    "r_min_cut",
+    title="r_min_bb",
+    latex="r_min_bb",
+    tformula="((tau_0_allTrk_pt/tau_0_p4->Pt() > 0.75)*(min(min("+taujet0_dp.tformula+","+taujet1_dp.tformula+"),"+taujet2_dp.tformula+")))",
+    binning=(20, 0, 10),
+)
+
+##########################AK
 
 bjet_0_met_dphi = Variable(
     "bjet_0_met_dphi", 
@@ -648,7 +747,7 @@ lep_0_met_mt = Variable(
     "lep_0_met_mt",
     title='m_{T}(l, E^{miss}_{T})[GeV]',
     latex=r"$m_{T}(\ell, E^{miss}_{T}$)",
-    binning=(1000, 0, 1000),
+    binning=(200, 0, 1000),
     plot_bins=range(60, 160, 5),
     tformula="sqrt(2 * (el_0_p4->Pt() + mu_0_p4->Pt()) * met_p4->Et() * (1 - cos(met_p4->Phi() - el_0_p4->Phi() - mu_0_p4->Phi() ) ) )", 
     unit='[GeV]')
@@ -697,6 +796,14 @@ VARIABLES_TAUJET = [
     bjet_0_met_dphi,
     bjet_0_tau_0_dr,
     met_jet_dphi_ratio,
+
+    tau0_met_dp,
+    jet0_met_dp,
+    jet1_met_dp,
+    jet2_met_dp,
+    r_min,
+    r_min_cut,
+    tau_pol_cms,
 ]
 
 ##-----------------------------------------------------------------
@@ -1391,10 +1498,10 @@ BDT_SCORES = {
 ##-----------------------------------------------------------------
 # - - - - - - - - variables for rQCD calculation
 ##-----------------------------------------------------------------
-rQCD_VARS = {"1": tau_0_jet_width, "3": tau_0_jet_bdt_score_trans}
+rQCD_VARS = {"1": tau_0_jet_width, "3": tau_0_jet_rnn_score_trans}
 
 # - - - - - - - - variables for extracting FFs shapes 
-FFS_TEMPLATE_VARS = (tau_0_pt, tau_0_n_charged_tracks, tau_0_jet_bdt_score_trans)
+FFS_TEMPLATE_VARS = (tau_0_pt, tau_0_n_charged_tracks, tau_0_jet_rnn_score_trans)
 
 
 ##-----------------------------------------------------------------

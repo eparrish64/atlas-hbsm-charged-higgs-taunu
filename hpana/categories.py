@@ -72,9 +72,12 @@ MT_MAX100 = {
 TAU_Q = TCut("abs(tau_0_q)==1")
 TAU_DECAY_MODE = TCut("tau_0_decay_mode==0")
 
-TAUID_LOOSE = TCut("tau_0_jet_bdt_loose==1")
-TAUID_MEDIUM = TCut("tau_0_jet_bdt_medium==1")
-TAUID_TIGHT = TCut("tau_0_jet_bdt_tight==1")
+#LD TAUID_LOOSE = TCut("tau_0_jet_bdt_loose==1")
+TAUID_LOOSE = TCut("tau_0_jet_rnn_loose==1")
+#akTAUID_MEDIUM = TCut("tau_0_jet_bdt_medium==1")
+TAUID_MEDIUM = TCut("tau_0_jet_rnn_medium==1")
+#LD TAUID_TIGHT = TCut("tau_0_jet_bdt_tight==1")
+TAUID_TIGHT = TCut("tau_0_jet_rnn_tight==1")
 
 TAU_1_TRACK = {
     "mc15": TCut("tau_0_n_tracks==1"),
@@ -119,7 +122,9 @@ TAU_IS_OTHER = TCut("!(%s || %s || %s ||%s ||%s || %s)"%(
 
 ## QCD fake tau
 TAU_IS_FAKE = TCut("!(%s || %s)"%(TAU_IS_TRUE, TAU_IS_LEP))
-ANTI_TAU = TCut("tau_0_jet_bdt_score_trans > 0.02 && tau_0_jet_bdt_loose==0")
+#LD ANTI_TAU = TCut("tau_0_jet_rnn_score_trans > 0.02 && tau_0_jet_rnn_loose==0")
+#ANTI_TAU = TCut("tau_0_jet_rnn_score_trans > 0.02 && tau_0_jet_rnn_medium==0")
+ANTI_TAU = TCut("tau_0_jet_rnn_loose==0")
 
 
 VETO_TAU = ROOT.TCut("n_taus==0")
@@ -165,8 +170,8 @@ EL_BASE = {
                       "&& (abs(el_0_p4->Eta()) < 2.47 && !(abs(el_0_p4->Eta()) < 1.52 && abs(el_0_p4->Eta()) > 1.37))"),
 }
 MU_BASE = {
-    "mc15": ROOT.TCut("n_muons==1 && mu_0_pt > 30000 && mu_0_id_tight && mu_0_iso_Gradient && abs(mu_0_eta) < 2.5"),
-    "mc16": ROOT.TCut("n_muons==1 && mu_0_p4->Pt() > 30 && mu_0_id_tight && mu_0_iso_Gradient && abs(mu_0_p4->Eta()) < 2.5"),
+    "mc15": ROOT.TCut("n_muons==1 && mu_0_pt > 30000 && mu_0_id_tight && mu_0_iso_FCTight_FixedRad && abs(mu_0_eta) < 2.5"),
+    "mc16": ROOT.TCut("n_muons==1 && mu_0_p4->Pt() > 30 && mu_0_id_tight && mu_0_iso_FCTight_FixedRad && abs(mu_0_p4->Eta()) < 2.5"),
 }
 
 LEP_BASE = {}
@@ -660,6 +665,7 @@ CLF_TJ = Category("CLF_TAUJET",
             MET100,
             MT50,
             NUM_BJETS1,
+
     ])
 
 CLF_TL = Category("CLF_TAULEP",
@@ -698,7 +704,7 @@ MET_TRIGG_EFF_CUTS_BASE = [
     ROOT.TCut("jet_0_p4->Pt() > 25 && jet_1_p4->Pt() > 25"),
     
     # - - only for the bkg modelling in this region (not applied for calcualting trigger efficency).
-    # ROOT.TCut("met_p4->Et() > 100"),
+    #ROOT.TCut("met_p4->Et() > 100"),
 ]
 
 ## - - - - systematic variations from tau/el ID and number of jets.
@@ -777,7 +783,8 @@ CUTFLOW = {
         [
             # ("cleanEvent",  CLEAN_EVT),
             ("trigger", TCut("1.>0")), #<! trigger is applied globally (just a place holder here)
-            ("tauID", TCut("tau_0_jet_bdt_medium==1")),
+            #ak ("tauID", TCut("tau_0_jet_bdt_medium==1")),
+            ("tauID", TCut("tau_0_jet_rnn_medium==1")),
             ("taupT40", TAU_PT40["mc16"]+TAU_BASE["mc16"]),  
             ("lepVeto", TCut("(n_muons+n_electrons)==0 &&tau_0_ele_bdt_medium==1")),
             # ("3jets", NUM_JETS3),

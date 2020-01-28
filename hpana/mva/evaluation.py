@@ -560,7 +560,7 @@ def evaluate_scores_on_trees(file_name, models, features=[], backend="sklearn"):
         tau_0_n_tracks =  ROOT.TTreeFormula("tau_0_n_charged_tracks", "tau_0_n_charged_tracks", tree)
         tau_0_decay_mode = ROOT.TTreeFormula("tau_0_decay_mode", "tau_0_decay_mode", tree)
         event_number = ROOT.TTreeFormula("event_number", "event_number", tree)
-        isFake = ROOT.TTreeFormula("tau_0_jet_bdt_loose==0", "tau_0_jet_bdt_loose==0", tree)
+        isFake = ROOT.TTreeFormula("tau_0_jet_rnn_loose==0", "tau_0_jet_rnn_loose==0", tree)
         
         forms_tau, forms_fake = setup_tformulas(tree, features)
         scores, score_branches = setup_score_branches(tree, models)

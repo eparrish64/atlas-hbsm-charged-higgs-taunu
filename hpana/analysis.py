@@ -376,7 +376,7 @@ class Analysis(object):
                   template_hist=None,
                   template_hist_bins=[],
                   control_regions=[],
-                  tau_jet_bdt_score_trans_wps=[0.01, 0.02, 0.03],
+                  tau_jet_rnn_score_trans_wps=[0.01, 0.02, 0.03],
                   n_charged_tracks=[1, 3],
                   trigger=None,
                   tauid=None, 
@@ -400,8 +400,8 @@ class Analysis(object):
             {ROOT.TCut()} type; tauID selection cut
         antitau:
             {ROOT.TCut()} type; anti tau selection cut
-        min_tau_jet_bdt_score_trans_wps: 
-            list type; working points for tau_jet_bdt_score_trans 
+        min_tau_jet_rnn_score_trans_wps: 
+            list type; working points for tau_jet_rnn_score_trans 
         """
         # - - - - set the mc_camp property
         for f in template_fields:
@@ -423,7 +423,7 @@ class Analysis(object):
             
         if not antitau:
             # - - - - PLEASE NOTE THAT tau_0_jet_bdt_score_sig cut is included in the template hist
-            antitau = ROOT.TCut("tau_0_jet_bdt_loose==0")
+            antitau = ROOT.TCut("tau_0_jet_rnn_loose==0")
             
         if not control_regions:
             control_regions = self.config.ff_cr_regions

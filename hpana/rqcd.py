@@ -156,8 +156,9 @@ def fake_sources(samples, category, ftypes={}, tauid=None, antitau=None):
 ##--------------------------------------------------------------------------
 def get_cr_ffs(hist_sets, 
                 control_regions=[], 
-                tau_jet_bdt_score_trans_wps={"NOMINAL":0.02, "1up": 0.01, "1down": 0.03}, 
-                n_charged_tracks=[], 
+            #LD tau_jet_bdt_score_trans_wps={"NOMINAL":0.02, "1up": 0.01, "1down": 0.03}, 
+              	tau_jet_rnn_score={"NOMINAL":0., "1up": 0.0, "1down": 0.0}, 
+	 	n_charged_tracks=[], 
                 subtract_mc=True,
                 cache_file=None,
                 write_cxx_macro=True,
@@ -279,7 +280,8 @@ def get_cr_ffs(hist_sets,
             canvas.Close()
         
         # - - gather hists per tau pT and ntracks bin and also tau_jet_bdt_score WPs
-        for jkey, jbs_wp in tau_jet_bdt_score_trans_wps.iteritems():
+        #LD for jkey, jbs_wp in tau_jet_bdt_score_trans_wps.iteritems(): switch to RNN
+	for jkey, jbs_wp in tau_jet_rnn_score.iteritems():
             # jkey = "tauJetBDT_0%i"%(100*jbs_wp)
             ffs_dict[cr_name][jkey] = {}
             if jkey=="NOMINAL" and subtract_mc:
@@ -567,7 +569,7 @@ def fit_alpha(cr_hists, target_hists, regions,
                     
                     ## force fit range 
                     if itk==3:
-                        template_hist.GetXaxis().SetRangeUser(0.02, 0.25)
+                        template_hist.GetXaxis().SetRangeUser(0.0, 0.25)
 
                     if template_hist.Integral()==0 or target_hist.Integral()==0:
                         log.warning("target or template hist is zero, wont fit anything")
@@ -674,7 +676,7 @@ def fit_alpha(cr_hists, target_hists, regions,
 ## - - control regions Fake Factors plotting funtions 
 ##--------------------------------------------------------------------------
 def plot_cr_ffs(cr_ffs, cr_labels={},
-                jet_bdt_key="NOMINAL", suffix="", pdir="", pname="FFs_inclusive_tracks_pT.png",
+                jet_rnn_key="NOMINAL", suffix="", pdir="", pname="FFs_inclusive_tracks_pT.png",
                 logy=True, logx=True, formats=[".png"], data_info="#sqrt{13} TeV",
                 colors=[ROOT.kBlack, ROOT.kGreen, ROOT.kRed, ROOT.kBlue,]):
     """
@@ -686,22 +688,22 @@ def plot_cr_ffs(cr_ffs, cr_labels={},
     # - - - - retrive hists 
     graphs = []
     for cr in cr_ffs.keys():
-        for itk, bins in cr_ffs[cr][jet_bdt_key].iteritems():
+        for itk, bins in cr_ffs[cr][jet_rnn_key].iteritems():
             bin_keys = sorted([float(b) for b in bins.keys()])
             e_graph = ROOT.TGraphAsymmErrors(len(bins)-1)
             for n in range(len(bin_keys)-1):
                 pt = bin_keys[n]
 
                 ## NOMINAL 
-                ff = float(cr_ffs[cr][jet_bdt_key][itk]["%i"%pt])
+                ff = float(cr_ffs[cr][jet_rnn_key][itk]["%i"%pt])
 
                 ## syst error (variation of LOOSE TAU)
-                ff_up = float(cr_ffs[cr][jet_bdt_key.replace("NOMINAL", "BDT_1up")][itk]["%i"%pt])
-                ff_dn = float(cr_ffs[cr][jet_bdt_key.replace("NOMINAL", "BDT_1down")][itk]["%i"%pt])
+                ff_up = float(cr_ffs[cr][jet_rnn_key.replace("NOMINAL", "1up")][itk]["%i"%pt])
+                ff_dn = float(cr_ffs[cr][jet_rnn_key.replace("NOMINAL", "1down")][itk]["%i"%pt])
 
                 ## syst error (varaition of MC subtraction) 
-                ff_mcsubt_up = float(cr_ffs[cr][jet_bdt_key.replace("NOMINAL", "MCSubt_1up")][itk]["%i"%pt])
-                ff_mcsubt_dn = float(cr_ffs[cr][jet_bdt_key.replace("NOMINAL", "MCSubt_1down")][itk]["%i"%pt])
+                ff_mcsubt_up = float(cr_ffs[cr][jet_rnn_key.replace("NOMINAL", "MCSubt_1up")][itk]["%i"%pt])
+                ff_mcsubt_dn = float(cr_ffs[cr][jet_rnn_key.replace("NOMINAL", "MCSubt_1down")][itk]["%i"%pt])
 
                 up = math.sqrt((ff-ff_up)**2 + (ff-ff_mcsubt_up)**2)
                 dn = math.sqrt((ff-ff_dn)**2 + (ff-ff_mcsubt_dn)**2)
@@ -793,7 +795,7 @@ def validate_template_fit(cr_hists_dict, target_hists_dict, chi2s,
                                 data_info=dinfo,
                                 atlas_label="",
                                 textsize=15,)
-            binning_label = ROOT.TLatex(pad.GetLeftMargin() + 0.02, 1 - pad.GetTopMargin() - 0.15,
+            binning_label = ROOT.TLatex(pad.GetLeftMargin() + 0.0, 1 - pad.GetTopMargin() - 0.15,
                                        "%ip; %i GeV < p^{#tau}_{T} < %i GeV"%(itk, int(pt_bins[n-1]), int(pt_bins[n])))
             binning_label.SetNDC()
             binning_label.SetTextFont(43)
@@ -821,8 +823,8 @@ def validate_template_fit(cr_hists_dict, target_hists_dict, chi2s,
             wj_hist.SetLineColor(ROOT.kRed)
             wj_hist.GetXaxis().SetTitle(var.title)
             if itk==3:
-                wj_hist.GetXaxis().SetRangeUser(0.02, 0.25)
-                mj_hist.GetXaxis().SetRangeUser(0.02, 0.25)
+                wj_hist.GetXaxis().SetRangeUser(0.0, 0.25)
+                mj_hist.GetXaxis().SetRangeUser(0.0, 0.25)
 
             wj_hist.GetYaxis().SetTitle("fraction of events")
             cr_legend.AddEntry(wj_hist, "W-jets CR", "P")
@@ -855,8 +857,8 @@ def validate_template_fit(cr_hists_dict, target_hists_dict, chi2s,
                 target_hist, target_fit = target_hists_dict[tkey][pkey][cat]
 
                 if itk==3:
-                    target_fit.GetXaxis().SetLimits(0.025, 0.25)
-                    target_hist.GetXaxis().SetRangeUser(0.025, 0.25)
+                    target_fit.GetXaxis().SetLimits(0.0, 0.25)
+                    target_hist.GetXaxis().SetRangeUser(0.0, 0.25)
 
                 tr_ymax = 1.5* target_hist.GetMaximum()
                 target_fit.GetYaxis().SetRangeUser(0, tr_ymax)
@@ -991,11 +993,11 @@ def plot_alpha(alphas, cr_ffs,
                 ff_mj_nom = float(cr_ffs["FF_CR_MULTIJET"]["NOMINAL"][itk][pkey])
                 ff_wj_nom = float(cr_ffs["FF_CR_WJETS"]["NOMINAL"][itk][pkey])
 
-                ff_mj_up = abs(ff_mj_nom - float(cr_ffs["FF_CR_MULTIJET"]["BDT_1up"][itk][pkey]))
-                ff_wj_up = abs(ff_wj_nom - float(cr_ffs["FF_CR_WJETS"]["BDT_1up"][itk][pkey]))
+                ff_mj_up = abs(ff_mj_nom - float(cr_ffs["FF_CR_MULTIJET"]["1up"][itk][pkey]))
+                ff_wj_up = abs(ff_wj_nom - float(cr_ffs["FF_CR_WJETS"]["1up"][itk][pkey]))
 
-                ff_mj_down = abs(ff_mj_nom - float(cr_ffs["FF_CR_MULTIJET"]["BDT_1down"][itk][pkey]))
-                ff_wj_down = abs(ff_wj_nom - float(cr_ffs["FF_CR_WJETS"]["BDT_1down"][itk][pkey]))
+                ff_mj_down = abs(ff_mj_nom - float(cr_ffs["FF_CR_MULTIJET"]["1down"][itk][pkey]))
+                ff_wj_down = abs(ff_wj_nom - float(cr_ffs["FF_CR_WJETS"]["1down"][itk][pkey]))
 
                 ## error propagation 
                 ff = alpha*ff_mj_nom + (1-alpha)*ff_wj_nom 

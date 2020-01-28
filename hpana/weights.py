@@ -26,8 +26,8 @@ class Weight(object):
         "weight_total": ("weight_total", )
     }
     W_TAU = {
-        "tau_0_sf_NOMINAL_TauEffSF_JetBDTmedium": ( 
-            W_STR_FMT.format("n_taus", "tau_0_sf_NOMINAL_TauEffSF_JetBDTmedium"),  #<! NOMINAL
+        "tau_0_sf_NOMINAL_TauEffSF_JetRNNmedium": (
+            W_STR_FMT.format("n_taus", "tau_0_sf_NOMINAL_TauEffSF_JetRNNmedium"),  #<! NOMINAL
 
             ## (name, title); title will be used to access the corresponding TTree branch.
             ("TAU_EFF_JETID_HIGHPT_1up" , W_STR_FMT.format("n_taus", "tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_HIGHPT_1up_TauEffSF_JetBDTmedium")),
@@ -128,14 +128,24 @@ class Weight(object):
 
         ),
 
-        "mu_0_sf_NOMINAL_MuEffSF_IsoGradient": (
-            W_STR_FMT.format("n_muons", "mu_0_sf_NOMINAL_MuEffSF_IsoGradient"),
+#        "mu_0_sf_NOMINAL_MuEffSF_IsoGradient": (
+#            W_STR_FMT.format("n_muons", "mu_0_sf_NOMINAL_MuEffSF_IsoGradient"),
+#
+#            ("MUON_EFF_ISO_STAT_1down", W_STR_FMT.format("n_muons", "mu_0_sf_MUON_EFF_ISO_STAT_1down_MuEffSF_IsoGradient")),
+#            ("MUON_EFF_ISO_STAT_1up", W_STR_FMT.format("n_muons", "mu_0_sf_MUON_EFF_ISO_STAT_1up_MuEffSF_IsoGradient")),
+#
+#            ("MUON_EFF_ISO_SYS_1down", W_STR_FMT.format("n_muons", "mu_0_sf_MUON_EFF_ISO_SYS_1down_MuEffSF_IsoGradient")),
+#            ("MUON_EFF_ISO_SYS_1up", W_STR_FMT.format("n_muons", "mu_0_sf_MUON_EFF_ISO_SYS_1up_MuEffSF_IsoGradient")),
+#        ),
 
-            ("MUON_EFF_ISO_STAT_1down", W_STR_FMT.format("n_muons", "mu_0_sf_MUON_EFF_ISO_STAT_1down_MuEffSF_IsoGradient")),
-            ("MUON_EFF_ISO_STAT_1up", W_STR_FMT.format("n_muons", "mu_0_sf_MUON_EFF_ISO_STAT_1up_MuEffSF_IsoGradient")),
+       "mu_0_sf_NOMINAL_MuEffSF_IsoFCTight_FixedRad": (
+           W_STR_FMT.format("n_muons", "mu_0_sf_NOMINAL_MuEffSF_IsoFCTight_FixedRad"),
 
-            ("MUON_EFF_ISO_SYS_1down", W_STR_FMT.format("n_muons", "mu_0_sf_MUON_EFF_ISO_SYS_1down_MuEffSF_IsoGradient")),
-            ("MUON_EFF_ISO_SYS_1up", W_STR_FMT.format("n_muons", "mu_0_sf_MUON_EFF_ISO_SYS_1up_MuEffSF_IsoGradient")),
+            ("MUON_EFF_ISO_STAT_1down", W_STR_FMT.format("n_muons", "mu_0_sf_MUON_EFF_ISO_STAT_1down_MuEffSF_IsoFCTight_FixedRad")),
+            ("MUON_EFF_ISO_STAT_1up", W_STR_FMT.format("n_muons", "mu_0_sf_MUON_EFF_ISO_STAT_1up_MuEffSF_IsoFCTight_FixedRad")),
+
+            ("MUON_EFF_ISO_SYS_1down", W_STR_FMT.format("n_muons", "mu_0_sf_MUON_EFF_ISO_SYS_1down_MuEffSF_IsoFCTight_FixedRad")),
+            ("MUON_EFF_ISO_SYS_1up", W_STR_FMT.format("n_muons", "mu_0_sf_MUON_EFF_ISO_SYS_1up_MuEffSF_IsoFCTight_FixedRad")),
         ),
 
         "mu_0_sf_NOMINAL_MuEffSF_Reco_QualTight": (
@@ -148,6 +158,7 @@ class Weight(object):
             ("MUON_EFF_RECO_SYS_1up", W_STR_FMT.format("n_muons", "mu_0_sf_MUON_EFF_RECO_SYS_1up_MuEffSF_Reco_QualTight")), 
         ),
 
+# FIXME!!!!
         "mu_0_sf_MuEffSF_Trig": (
           W_STR_FMT.format("n_muons", 
             "mu_0_sf_NOMINAL_MuEffSF_HLT_mu26_ivarmedium_QualTight_IsoNone"),

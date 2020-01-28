@@ -12,7 +12,7 @@ __all__ = [
     "rQCD_VARS",
     "tau_0_pt",
     "tau_0_n_charged_tracks",
-    "tau_0_jet_bdt_score_trans"]
+    "tau_0_jet_rnn_score_trans"]
 
 ## FIXME: tmp workaround for missing bjet p4 in (2015-2017) systematics 
 BJET_P4_STR = "((jet_0_b_tag_score>0.83)*jet_0_p4->{0}+"\
@@ -238,17 +238,17 @@ tau_0_upsilon = Variable(
     binning=(3000, -1.0, 2.0),
     plot_bins=np.arange(-1, 1.2, 0.05))
 
-tau_0_jet_bdt_score = Variable(
-    "tau_0_jet_bdt_score",
-    title='#font[152]{#tau}_{1} #font[52]{Jet BDT score}',
+tau_0_jet_rnn_score = Variable(
+    "tau_0_jet_rnn_score",
+    title='#font[152]{#tau}_{1} #font[52]{Jet RNN score}',
     binning=(100, -1., 1.))
 
-tau_0_jet_bdt_score_trans = Variable(
-    "tau_0_jet_bdt_score_trans",
-    title='#font[152]{#tau}_{1} #font[52]{Jet BDT score signal transformed}',
+tau_0_jet_rnn_score_trans = Variable(
+    "tau_0_jet_rnn_score_trans",
+    title='#font[152]{#tau}_{1} #font[52]{Jet RNN score signal transformed}',
     tformula = {
-        "mc15": "tau_0_jet_bdt_score_sig",
-        "mc16": "tau_0_jet_bdt_score_trans",
+        "mc15": "tau_0_jet_rnn_score_sig",
+        "mc16": "tau_0_jet_rnn_score_trans",
     },
     binning=(20, 0, 1.), )
 
@@ -802,10 +802,10 @@ BDT_SCORES = {
 ##-----------------------------------------------------------------
 # - - - - - - - - variables for rQCD calculation
 ##-----------------------------------------------------------------
-rQCD_VARS = {"1": tau_0_jet_width, "3": tau_0_jet_bdt_score_trans}
+rQCD_VARS = {"1": tau_0_jet_width, "3": tau_0_jet_rnn_score_trans}
 
 # - - - - - - - - variables for extracting FFs shapes 
-FFS_TEMPLATE_VARS = (tau_0_pt, tau_0_n_charged_tracks, tau_0_jet_bdt_score_trans)
+FFS_TEMPLATE_VARS = (tau_0_pt, tau_0_n_charged_tracks, tau_0_jet_rnn_score_trans)
 
 
 ##-----------------------------------------------------------------

@@ -30,8 +30,8 @@ class QCD(Sample):
     ## control region FFs are calcualted with a the following funtions, loaded in the global ROOT scope.
     TEMPLATE_VARS = ("tau_0_p4->Pt()", "tau_0_n_charged_tracks")
 
-    ## variations based on tau BDT score for the anti-tau definition (tau_0_jet_bdt_score_trans>) or MC contamination
-    FFs_VARIATIONS = ["NOMINAL", "BDT_1up", "BDT_1down", "MCSubt_1up", "MCSubt_1down"]
+    ## variations based on tau RNN score for the anti-tau definition (tau_0_jet_rnn_score_trans>) or MC contamination
+    FFs_VARIATIONS = ["NOMINAL", "RNN_1up", "RNN_1down", "MCSubt_1up", "MCSubt_1down"]
     FFs = {}
     for var in FFs_VARIATIONS:
         if not var in FFs:
@@ -143,8 +143,8 @@ class QCD(Sample):
         # variations from antitau definition
         ffs_tauID_syst = Systematic("FFs_tauID", _type="WEIGHT")
         ffs_tauID_syst.variations = [
-            Variation("FFs_BDT_1up", title=ff_ws["FFs_BDT_1up"], _type="WEIGHT"),
-            Variation("FFs_BDT_1down", title=ff_ws["FFs_BDT_1down"], _type="WEIGHT"),
+            Variation("FFs_RNN_1up", title=ff_ws["FFs_RNN_1up"], _type="WEIGHT"),
+            Variation("FFs_RNN_1down", title=ff_ws["FFs_RNN_1down"], _type="WEIGHT"),
             Variation("FFs_MCSubt_1up", title=ff_ws["FFs_MCSubt_1up"], _type="WEIGHT"),
             Variation("FFs_MCSubt_1down", title=ff_ws["FFs_MCSubt_1down"], _type="WEIGHT"),
         ]
@@ -163,7 +163,7 @@ class QCD(Sample):
         """
         """
         categories = []
-        cuts_list = [ROOT.TCut("tau_0_jet_bdt_loose==0")]
+        cuts_list = [ROOT.TCut("tau_0_jet_rnn_loose==0")]
         ff_index = 1001
         for name, cut in cuts.iteritems():
             if name.upper()=="TAUID":

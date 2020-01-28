@@ -517,9 +517,9 @@ VETO_BRANCHES["taujet"] = [
 	"tau_0_trig_HLT_tau160_medium1_tracktwo",
 	"tau_0_trig_HLT_tau160_medium1_tracktwoEF_L1TAU100",
 	"tau_0_trig_HLT_tau160_medium1_tracktwo_L1TAU100",
-	"tau_0_trig_HLT_tau160_mediumRNN_tracktwoMVA_L1TAU100",
+	"tau_0_trig_HLT_tau160_mediumBDT_tracktwoMVA_L1TAU100",
 	"tau_0_trig_HLT_tau200_medium1_tracktwoEF_L1TAU100",
-	"tau_0_trig_HLT_tau200_mediumRNN_tracktwoMVA_L1TAU100",
+	"tau_0_trig_HLT_tau200_mediumBDT_tracktwoMVA_L1TAU100",
 	"tau_0_trig_HLT_tau80_medium1_tracktwo",
 	"tau_0_trig_HLT_tau80_medium1_tracktwo_L1TAU60",
 

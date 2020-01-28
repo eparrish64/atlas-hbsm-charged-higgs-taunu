@@ -51,9 +51,9 @@ data = analysis.data
 
 # - - - - - - - - some checks on cmd args
 if PLOTTING_ARGS.fields:
-    fields = filter(lambda v: v.name in PLOTTING_ARGS.fields , config.variables+RNN_SCORES[PLOTTING_ARGS.channel])
+    fields = filter(lambda v: v.name in PLOTTING_ARGS.fields , config.variables+BDT_SCORES[PLOTTING_ARGS.channel])
 else:
-    fields = config.variables # RNN_SCORES[PLOTTING_ARGS.channel] #      
+    fields = config.variables # BDT_SCORES[PLOTTING_ARGS.channel] #      
 
 if PLOTTING_ARGS.categories:
     categories = filter(

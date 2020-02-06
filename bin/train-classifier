@@ -39,6 +39,16 @@ from hpana.mva.classifier import Classifier, SClassifier, train_model
 from hpana.mva.optimization import get_hparams, optimize_model
 from hpana.mva import N_TRACKS, FOLD_CUT_STR, TRAINING_MASS_BINS, BRANCHES, ALL_FEATS, GB_HYPERPARAMS
 
+import tensorflow as tf
+import keras
+from keras.models import Sequential
+from keras.layers import Dense, Activation, BatchNormalization
+from keras.regularizers import l2
+from keras import initializers
+from keras.optimizers import SGD
+from keras.wrappers.scikit_learn import KerasClassifier
+from keras.models import load_model
+
 ## - - set log level
 from hpana import log
 log.setLevel(CLF_ARGS.log)
@@ -49,6 +59,13 @@ ROOT.SetSignalPolicy(ROOT.kSignalFast)
 ROOT.gROOT.SetBatch(True)
 log.info("ROOT is in batch mode")
 
+print("Keras version: " + keras.__version__)
+print("TensorFlow version: " + tf.version.VERSION)
+from keras import backend as K
+K.tensorflow_backend._get_available_gpus()
+from tensorflow.python.client import device_lib
+print(device_lib.list_local_devices())
+print("GPU Available: ", tf.test.is_gpu_available())
 
 ##-------------------------------------------------------------
 ## consts 
@@ -266,6 +283,26 @@ if CLF_ARGS.backend=="sklearn":
                         train_df=sdf, valid_df=vdf, eval_df=edf, name=clf_name, features=feats, weight_sample=False, mass_range=signal_masses, kfolds=CLF_ARGS.kfolds, fold_num=rem, **hyper_params)
                     models += [sclf]
 
+                    ## - - instantiate the Keras model
+                    input_features = [f.tformula for f in feats]
+
+                    Keras_model_name = sclf.name.replace(".pkl", "")
+                    Keras_model = Sequential([
+                        BatchNormalization(input_shape=(len(input_features),)),
+                        Dense(64, activation='softsign',input_shape=(len(input_features),)),
+                        Dense(64, activation='softsign'),
+                        BatchNormalization(),
+                        Dense(64, activation='softsign'),
+                        BatchNormalization(),
+                        Dense(1, activation='sigmoid'),
+                        ])
+                    Keras_model.compile(
+                        optimizer='Adam',
+                        loss='binary_crossentropy',
+                        metrics=['accuracy'],
+                        )
+                    Keras_model.name=Keras_model_name
+
                     ## - - assign the job
                     if CLF_ARGS.train_bdt and CLF_ARGS.parallel:
                         jobs.append(Job(train_model, sclf, weight_sample=False, balanced=CLF_ARGS.balanced, scale_features=False, outdir=CLF_ARGS.outdir))
@@ -279,8 +316,11 @@ if CLF_ARGS.backend=="sklearn":
                         log.info("Saving %s model to disk ..."%mpath)
                         with open(mpath, "w") as mcache:
                             cPickle.dump(sclf, mcache, protocol=2)
+                            cPickle.dump(Keras_model, mcache, protocol=2)
                                         
-    
+                    #train_model(sclf, weight_sample=False, balanced=False, scale_features=False, outdir=CLF_ARGS.outdir)
+                    train_model(sclf, weight_sample=False, balanced=True, scale_features=False, outdir=CLF_ARGS.outdir)
+
     if CLF_ARGS.train_bdt:
         if CLF_ARGS.parallel:
             ## - - run
@@ -395,7 +435,8 @@ if CLF_ARGS.backend=="sklearn":
                                  logsdir=os.path.join(
                                      CLF_ARGS.outdir, CLF_ARGS.logsdir),
                                  execScript=os.path.join(__HERE, "condor_jobs_clf.sh"),
-                                 userEmail="Z1832314@students.niu.edu",
+#                                 userEmail="Z1832314@students.niu.edu",
+                                 userEmail="pawel.klimek@cern.ch",
                                  memory="1GB",
                              )
                              )

@@ -14,6 +14,20 @@ from sklearn.model_selection import StratifiedKFold
 from sklearn.metrics import roc_curve, auc
 from sklearn.feature_selection import RFECV
 
+#ak
+from os import environ
+#environ['KERAS_BACKEND'] = 'theano'
+environ['KERAS_BACKEND'] = 'tensorflow'
+# Set architecture of system (AVX instruction set is not supported on SWAN)
+environ['THEANO_FLAGS'] = 'gcc.cxxflags=-march=corei7'
+from keras.models import Sequential
+from keras.layers import Dense, Activation
+from keras.regularizers import l2
+from keras import initializers
+from keras.optimizers import SGD
+from keras.wrappers.scikit_learn import KerasClassifier
+#ak
+
 ## local
 from hpana.mva import plt 
 from hpana import log
@@ -34,8 +48,8 @@ def plot_sig_dist(sdframe, signals=[], outdir=".", outname=None, formats=["png",
 
     fig, ax = plt.subplots()
     ax.scatter(np.array(masses), np.array(dist))
-    ax.set(xlabel=r'H^{\pm} mass(GeV)', ylabel=' # of events',
-        title='Signals Distribution')
+    ax.set(xlabel='mass(GeV)', ylabel=' # of events',
+        title='Signlas Distribution')
     ax.grid()
 
     ## save the plot
@@ -48,43 +62,7 @@ def plot_sig_dist(sdframe, signals=[], outdir=".", outname=None, formats=["png",
         plt.savefig(outname+"."+fmt, format=fmt, dpi=600)
 
     plt.close()
-    return
 
-def plot_bkg_dist(bdframe, backgrounds=[], outdir=".", outname=None, formats=["png", "pdf", "eps"]):
-    names = []
-    sizes = []
-
-    for bkg in backgrounds:
-        thisbkg = bdframe.loc[[bkg.name]]
-        names.append(bkg.name)
-        sizes.append(thisbkg.shape[0])
-
-    sizeDF = pd.DataFrame(data={"Names": names, "Sizes": sizes})
-
-    fig, ax = plt.subplots()
-    sizeDF.plot(kind="bar",x="Names",y="Sizes",ax=ax,rot=0,logy=True,stacked=True,sort_columns=True,legend=False)
-    for p in ax.patches:
-        ax.annotate(str(p.get_height()), (p.get_x() * 1.01, p.get_height() * 1.01))
-
-    props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
-    ax.text(0.5, 0.95, "Total: %s Events" %(sum(sizes)), transform=ax.transAxes, fontsize=14,
-        verticalalignment='top', bbox=props)
-    ax.set(xlabel="Sample Name", ylabel=" # of events", title="Background Distribution")
-    # ax.grid()
-    # fig.savefig('TESTING.png')
-
-    ## save the plot
-    if not os.path.isdir(outdir):
-        os.system("mkdir -p %s"%outdir)
-    if outname is None:        
-        outname = os.path.join(outdir, "Background_events_distribution")
-    for fmt in formats:
-        log.info("Saving %s ..."%(outname+"."+fmt))
-        plt.savefig(outname+"."+fmt, format=fmt, dpi=600)
-
-    plt.close()
-
-    return
 
 ##--------------------------------------------------------------------------
 ## plot samples weight distribution  

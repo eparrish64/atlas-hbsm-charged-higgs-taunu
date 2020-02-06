@@ -612,6 +612,14 @@ bjet_0_lep_0_dr = Variable(
     binning=(60, 0, 6.)
     )
 
+##############################################
+# - - - - - - - TruthMass
+##############################################
+TruthMass = Variable(
+    "TruthMass",
+    title="TruthMass",
+    binning=(300, 0., 3000.)
+    )
 
 ##-----------------------------------------------------------------
 # - - - - - - - - taujet channel variables list
@@ -703,6 +711,7 @@ CLF_FEATURES = {
             bjet_0_tau_0_dr,
             met_jet_dphi_ratio,
             tau_0_upsilon,
+            TruthMass,
         ],
         
         "HIGH": [ #<! above 400 [GeV]
@@ -713,6 +722,7 @@ CLF_FEATURES = {
             bjet_0_met_dphi,
             bjet_0_tau_0_dr,
             met_jet_dphi_ratio,
+            TruthMass,
         ],
     },
 
@@ -729,6 +739,7 @@ CLF_FEATURES = {
             bjet_0_lep_0_dr,
             met_jet_dphi_ratio,
             tau_0_upsilon,
+            TruthMass,
         ],
         "HIGH": [ #<! above 400 [GeV]
             tau_0_pt,
@@ -741,6 +752,7 @@ CLF_FEATURES = {
             tau_0_lep_0_dr,
             bjet_0_lep_0_dr,
             met_jet_dphi_ratio,
+            TruthMass,
         ],
     }        
 }
@@ -1208,6 +1220,15 @@ clf_score_GB200_mass_2500to3000 = Variable(
     plot_bins=np.arange(0,1.1,0.1),
 )
 
+#### SINGLE
+clf_score_GB200_mass_80to3000 = Variable(
+    "clf_score_GB200_mass_80to3000",
+    title='BDT score (80 to 3000 [GeV])',
+    binning=(1000, 0, 1),
+    plot_bins=np.arange(0, 1.1, 0.1),
+)
+
+
 BDT_SCORES = {
     "taujet":[
         clf_score_GB200_mass_80to80,
@@ -1319,6 +1340,9 @@ BDT_SCORES = {
             clf_score_GB200_mass_1800to2500,
             clf_score_GB200_mass_2000to3000,
             clf_score_GB200_mass_2500to3000,
+            ],
+        "ALL":[
+            clf_score_GB200_mass_80to3000,
             ],
     }
 }

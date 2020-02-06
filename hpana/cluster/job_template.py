@@ -100,7 +100,8 @@ universe                    = vanilla
 getenv                      = true
 #
 # RequestMemory               = {memory}
-request_cpus            = 1
+request_GPUs            = 1
+#request_cpus            = 1
 +JobFlavour             = "espresso"
 
 """

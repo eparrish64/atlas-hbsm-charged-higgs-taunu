@@ -37,7 +37,7 @@ After you have the database ready, you can produce all the histograms with
 the following
 
 - to see all the options exectute ``run-analysis --help``
-- example: ``run-analysis --db-version 18v01 --data-streams 2015 2016 --samples DiBoson --caegories SR_TAUJET --parallel --merge-hists --outdir lT01`` 
+- example: ``run-analysis --db-version 18v01 --channel taujet --data-streams 2015 2016 --samples DiBoson --categories SR_TAUJET --parallel --merge-hists --outdir lT01`` 
 
 
 #### plotting 

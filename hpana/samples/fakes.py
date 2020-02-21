@@ -212,10 +212,24 @@ class QCD(Sample):
         if self.correct_upsilon:
             fields = copy.deepcopy(fields) #<! to make sure not messing around with other samples' variabels
             log.debug("correcting upsilon for %s sample"%self.name)
+            print "fields in fakes.py: ", fields
             for field in fields:
-                if field.name=="tau_0_upsilon":
-                    mcc = field.mc_camp
-                    field.tformula = QCD.UPSILON_CORRECTED
+                #print "field in fakes.py: ", field
+                #print "field.name: ", field.name
+                #print "fields[field]: ", fields[field]
+                #print "fields[field].name: ", fields[field].name
+                for variable in fields[field]:
+                    #print "variable.name: ", variable.name
+                    #print "variable.mc_camp : ",variable.mc_camp 
+                    #print "variable.tformula : ",variable.tformula
+                    if variable.name=="tau_0_upsilon":
+                        mcc = variable.mc_camp
+                        variable.tformula = QCD.UPSILON_CORRECTED
+                #print "fields: ", fields
+                #print "fields[field]: ", fields[field]
+                #if field.name=="tau_0_upsilon":
+                #    mcc = field.mc_camp
+                #    field.tformula = QCD.UPSILON_CORRECTED
         
         if not categories:
             categories = self.config.categories

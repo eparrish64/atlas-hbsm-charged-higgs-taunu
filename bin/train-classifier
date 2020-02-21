@@ -317,7 +317,7 @@ if CLF_ARGS.backend=="sklearn":
                         with open(mpath, "w") as mcache:
                             cPickle.dump(sclf, mcache, protocol=2)
                             cPickle.dump(Keras_model, mcache, protocol=2)
-                                        
+                    
                     #train_model(sclf, weight_sample=False, balanced=False, scale_features=False, outdir=CLF_ARGS.outdir)
                     train_model(sclf, weight_sample=False, balanced=True, scale_features=False, outdir=CLF_ARGS.outdir)
 
@@ -325,7 +325,7 @@ if CLF_ARGS.backend=="sklearn":
         if CLF_ARGS.parallel:
             ## - - run
             log.info("**"*30 + " Submitting %i jobs "%len(jobs) + "**"*30)
-            run_pool(jobs, n_jobs=-1)
+            #run_pool(jobs, n_jobs=-1)
 
         if CLF_ARGS.cluster:
             if CLF_ARGS.rs_manager=="TORQUE":
@@ -453,7 +453,6 @@ if CLF_ARGS.backend=="sklearn":
                                                                                     CLF_ARGS.balanced
                                                                                 )
                     )
-
 
                     # os.close(jfile)
 

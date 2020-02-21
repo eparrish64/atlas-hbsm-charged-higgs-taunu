@@ -269,34 +269,53 @@ def dataset_hists_direct(hist_worker,
     for systematic in systematics:
         for syst_var in systematic.variations:
             for var in fields:
-                if hist_templates and var.name in hist_templates:
-                    if not var.name in hist_templates_tformuals:
-                        hist_templates_tformuals[var.name] = hist_templates[var.name].GetName(
-                        )
-                for category in categories:
+                for variable in fields[var]:
+                    #print "fields: ", fields
+                    #print "var: ", var
                     if hist_templates and var.name in hist_templates:
-                        hist = hist_templates[var.name]
-                    else:
-                        if var.bins:
-                            hist = ROOT.TH1F(
-                                "syst_%s_category_%s_var_%s" % (
-                                    syst_var.name, category.name, var.name), var.name, len(var.bins)-1, array.array("d", var.bins))
+                        if not var.name in hist_templates_tformuals:
+                            hist_templates_tformuals[var.name] = hist_templates[var.name].GetName(
+                            )
+                    for category in categories:
+                        if hist_templates and var.name in hist_templates:
+                            hist = hist_templates[var.name]
                         else:
-                            hist = ROOT.TH1F(
-                                "syst_%s_category_%s_var_%s" % (
-                                    syst_var.name, category.name, var.name), var.name, *var.binning)
+                        #print "var: ", var
+                        #print "syst_var.name: ", syst_var.name
+                        #print "category.name: ", category.name
+                        #print "var.name: ", var.name
+                        #for variable in fields[var]:
+                            if variable.bins:
+                                hist = ROOT.TH1F(
+                                    "syst_%s_category_%s_var_%s" % (
+                                        syst_var.name, category.name, variable.name), variable.name, len(variable.bins)-1, array.array("d", variable.bins))
+                            else:
+                                print "variable.binning", variable.binning
+                                #print "*variable.binning:", *variable.binning
+                                hist = ROOT.TH1F(
+                                    "syst_%s_category_%s_var_%s" % (
+                                        #syst_var.name, category.name, variable.name), variable.name, variable.binning)
+                                        syst_var.name, category.name, variable.name), variable.name, 1000, 0, 1)
+#                        if var.bins:
+#                            hist = ROOT.TH1F(
+#                                "syst_%s_category_%s_var_%s" % (
+#                                    syst_var.name, category.name, var.name), var.name, len(var.bins)-1, array.array("d", var.bins))
+#                        else:
+#                            hist = ROOT.TH1F(
+#                                "syst_%s_category_%s_var_%s" % (
+#                                    syst_var.name, category.name, var.name), var.name, *var.binning)
 
-                    hset = Histset(
-                        name=outname,
-                        sample=outname,
-                        variable=var.name,
-                        category=category.name,
-                        hist=hist.Clone(),  # <! a copy per category
-                        systematic=syst_var.name)
+                        hset = Histset(
+                            name=outname,
+                            sample=outname,
+                            variable=variable.name,
+                            category=category.name,
+                            hist=hist.Clone(),  # <! a copy per category
+                            systematic=syst_var.name)
 
-                    # - - make sure the newly created hist has no dummy value
-                    hset.hist.Reset()
-                    hist_set.append(hset)
+                        # - - make sure the newly created hist has no dummy value
+                        hset.hist.Reset()
+                        hist_set.append(hset)
 
     if not dataset.files:
         log.warning("%s dataset is empty!!"%dataset.name)

@@ -181,6 +181,11 @@ def main():
             #models = get_models(ECLF_ARGS.models)
             models, Keras_models = get_models(ECLF_ARGS.models)
             ## prepare hist workers 
+            #print "fields: ", fields
+            #print "fields.name: ", fields.name
+            #for field in fields:
+            #    print "field", field
+
             analysis.setWorkers(samples=samples, fields=fields, categories=categories, systematics=systematics)
             ana_workers = analysis.getWorkers()
 

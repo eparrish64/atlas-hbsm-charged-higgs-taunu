@@ -16,14 +16,16 @@ from root_numpy import root2array, tree2array
 import numpy as np
 import pandas as pd
 import pickle, cPickle
+import sklearn.utils
 
 ## local 
 from hpana import log 
-from hpana.categories import CLASSIFIER_CATEGORIES, TAU_IS_TRUE, ANTI_TAU
 
 ## ROOT 
 import ROOT
 from ROOT import TMVA
+
+from hpana.mva import TRAINING_MASS_BINS
 
 ##----------------------------------------------------------------------------------
 ## Base classifier class
@@ -485,9 +487,36 @@ def train_model(model,
     b_df = tr_df[tr_df["class_label"]==0]
     s_df = tr_df[tr_df["class_label"]==1]
 
+#    print "b_df:"
+#    print b_df
+#    print "s_df:"
+#    print s_df
+
+    s_df["SampleWeight"] = 1.
     s_df["TruthMass"] = s_df.index.get_level_values(0)
     s_df["TruthMass"] = pd.to_numeric(s_df.TruthMass.replace({"Hplus": ""}, regex=True))
-    b_df["TruthMass"] = np.random.choice( a=s_df["TruthMass"], size=b_df.shape[0] )
+#    b_df["TruthMass"] = np.random.choice( a=s_df["TruthMass"], size=b_df.shape[0] )
+
+    train_masses = np.unique(s_df["TruthMass"].values)
+    print "train_masses: ", train_masses
+
+    for i in train_masses:
+#    for i in [80]:
+#        print "i = ", i
+#        print 's_df.loc[s_df["TruthMass"]==i].shape[0] = ', s_df.loc[s_df["TruthMass"]==i].shape[0]
+#        print "b_df.shape[0] = ", b_df.shape[0]
+#        print 's_df.loc[s_df["TruthMass"]==i].shape[0]/b_df.shape[0] = ', float(s_df.loc[s_df["TruthMass"]==i].shape[0])/b_df.shape[0]
+#        print 'b_df["SampleWeight"]:'
+#        print b_df["SampleWeight"]
+        b_df["SampleWeight"] = float(s_df.loc[s_df["TruthMass"]==i].shape[0])/b_df.shape[0]
+        b_df["TruthMass"] = i
+        if (i==80): b_df_masses = b_df.copy()
+        else: b_df_masses = pd.concat([b_df_masses, b_df])
+
+#    print "b_df_masses:"
+#    print b_df_masses
+#    print "s_df:"
+#    print s_df
 
     if balanced: 
         ## Set training weight of bkg events to 1. Signal events to N_bkg / N_sig.
@@ -501,7 +530,9 @@ def train_model(model,
 
     background_weight = float(s_df.shape[0])/b_df.shape[0]
     train_weights = {0: background_weight, 1: 1}
-    tr_df_ud = pd.concat([b_df, s_df], axis=0)
+#    tr_df_ud = pd.concat([b_df, s_df], axis=0)
+    tr_df_ud = pd.concat([b_df_masses, s_df], axis=0)
+    tr_df_ud = sklearn.utils.shuffle(tr_df_ud, random_state=123)
 
     ## - - training arrays
     X_train = tr_df_ud[[ft.name for ft in features]]    
@@ -532,6 +563,7 @@ def train_model(model,
             model = cPickle.load(cache)
             Keras_model = cPickle.load(cache)
             is_trained =  model.is_trained
+            print "Tu jestem"
             if is_trained:
                 log.warning("The %s model is already trained! set overwrite=True, if you want to overwrite it"%mpath)
                 if overwrite:
@@ -544,7 +576,7 @@ def train_model(model,
         #    model = model.fit(X_train.values, Y_train.values, sample_weight=X_weight if weight_sample else None)
         #except:
         #    model = model.fit(X_train, Y_train.values, sample_weight=X_weight if weight_sample else None)
-        Keras_model.fit(X_train.values, Y_train.values, batch_size=256, epochs=40, class_weight=train_weights, verbose=1)
+        Keras_model.fit(X_train.values, Y_train.values, batch_size=256, epochs=40, sample_weight=tr_df_ud["SampleWeight"].values, verbose=1)
         model.is_trained = True
         if save_model:
             mpath = os.path.join(outdir, model.name)

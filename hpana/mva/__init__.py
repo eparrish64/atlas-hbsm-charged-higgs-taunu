@@ -51,6 +51,9 @@ TRAINING_MASS_BINS = {
         tuple(range(500, 1100, 100)), 
         tuple(range(1200, 2200, 200) + [2500, 3000]), #< high mass II
     ], 
+
+    # train per mass point
+    "ALL": [tuple(range(80, 210, 10) + [225, 250, 275, 300, 350] + range(400, 1100, 100) + range(1200, 2200, 200) + [2500, 3000])],
 } 
 
 ## - - Hyperparameters for GradientBoosting (used in GridSearc for hyperparams)
@@ -62,6 +65,12 @@ GB_HYPERPARAMS = {
     "min_samples_split": [0.01, 0.002, 0.004],
     "max_depth": [10, 20, 30],
 }
+
+NN_HYPERPARAMS = {
+    "batch_size": 256, 
+    "epochs": 40,
+}
+
 
 ## cores for GridSearch hyperparams optimization 
 N_OPT_CORES = 2

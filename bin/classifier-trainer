@@ -25,6 +25,6 @@ if __name__=="__main__":
 
         # - - get the hists 
         start_time = time.time()
-        train_model(model, outdir="./", weight_sample=False, scale_features=False, balanced=sys.argv[2])
+        train_model(model, outdir="./", weight_sample=False, scale_features=False, balanced=sys.argv[2], is_NN=sys.argv[3])
         end_time = time.time()
         print "Execution Time:\t  %0.2f"%(end_time - start_time)

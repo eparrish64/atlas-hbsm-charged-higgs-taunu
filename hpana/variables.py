@@ -12,7 +12,9 @@ __all__ = [
     "rQCD_VARS",
     "tau_0_pt",
     "tau_0_n_charged_tracks",
-    "tau_0_jet_rnn_score_trans"]
+    # "tau_0_jet_bdt_score_trans"
+    "tau_0_jet_rnn_score_trans"
+    ]
 
 ## FIXME: tmp workaround for missing bjet p4 in (2015-2017) systematics 
 BJET_P4_STR = "((jet_0_b_tag_score>0.83)*jet_0_p4->{0}+"\
@@ -249,10 +251,8 @@ tau_pol_cms = Variable(
     binning=(3000, -1.0, 2.0),
     plot_bins=np.arange(-1, 1.2, 0.05))
 
-
-
 tau_0_jet_rnn_score = Variable(
-    "tau_0_jet_rmm_score",
+    "tau_0_jet_rnn_score",
     title='#font[152]{#tau}_{1} #font[52]{Jet RNN score}',
     binning=(100, -1., 1.))
 
@@ -260,7 +260,7 @@ tau_0_jet_rnn_score_trans = Variable(
     "tau_0_jet_rnn_score_trans",
     title='#font[152]{#tau}_{1} #font[52]{Jet RNN score signal transformed}',
     tformula = {
-        "mc15": "tau_0_jet_bdt_score_sig",
+        "mc15": "tau_0_jet_rnn_score_sig",
         "mc16": "tau_0_jet_rnn_score_trans",
     },
     binning=(20, 0, 1.), )
@@ -764,6 +764,14 @@ bjet_0_lep_0_dr = Variable(
     binning=(60, 0, 6.)
     )
 
+##############################################
+# - - - - - - - TruthMass
+##############################################
+TruthMass = Variable(
+    "TruthMass",
+    title="TruthMass",
+    binning=(300, 0., 3000.)
+    )
 
 ##-----------------------------------------------------------------
 # - - - - - - - - taujet channel variables list
@@ -874,6 +882,7 @@ CLF_FEATURES = {
             bjet_0_tau_0_dr,
             met_jet_dphi_ratio,
             tau_0_upsilon,
+            TruthMass,
         ],
         
         "HIGH": [ #<! above 400 [GeV]
@@ -884,6 +893,7 @@ CLF_FEATURES = {
             bjet_0_met_dphi,
             bjet_0_tau_0_dr,
             met_jet_dphi_ratio,
+            TruthMass,
         ],
     },
 
@@ -900,6 +910,7 @@ CLF_FEATURES = {
             bjet_0_lep_0_dr,
             met_jet_dphi_ratio,
             tau_0_upsilon,
+            # TruthMass,
         ],
         "HIGH": [ #<! above 400 [GeV]
             tau_0_pt,
@@ -912,6 +923,7 @@ CLF_FEATURES = {
             tau_0_lep_0_dr,
             bjet_0_lep_0_dr,
             met_jet_dphi_ratio,
+            # TruthMass,
         ],
     }        
 }
@@ -1379,42 +1391,96 @@ clf_score_GB200_mass_2500to3000 = Variable(
     plot_bins=np.arange(0,1.1,0.1),
 )
 
-BDT_SCORES = {
-    "taujet":[
-        clf_score_GB200_mass_80to80,
-        clf_score_GB200_mass_90to90,
-        clf_score_GB200_mass_100to100,
-        clf_score_GB200_mass_110to110,
-        clf_score_GB200_mass_120to120,
-        clf_score_GB200_mass_130to130,
-        clf_score_GB200_mass_140to140,
-        clf_score_GB200_mass_150to150,
-        clf_score_GB200_mass_160to160,
-        clf_score_GB200_mass_170to170,
-        clf_score_GB200_mass_180to180,         
-        clf_score_GB200_mass_190to190,
-        clf_score_GB200_mass_200to200,
-        clf_score_GB200_mass_225to225,
-        clf_score_GB200_mass_250to250,
-        clf_score_GB200_mass_275to275,
-        clf_score_GB200_mass_300to300,
-        clf_score_GB200_mass_350to350,
-        clf_score_GB200_mass_400to400,
-        clf_score_GB200_mass_500to500,
-        clf_score_GB200_mass_600to600,
-        clf_score_GB200_mass_700to700,
-        clf_score_GB200_mass_800to800,
-        clf_score_GB200_mass_900to900,
-        clf_score_GB200_mass_1000to1000,
-        clf_score_GB200_mass_1200to1200,
-        clf_score_GB200_mass_1400to1400,
-        clf_score_GB200_mass_1600to1600,
-        clf_score_GB200_mass_1800to1800,
-        clf_score_GB200_mass_2000to2000,
-        clf_score_GB200_mass_2500to2500,
-        clf_score_GB200_mass_3000to3000,
+#### SINGLE
+clf_score_GB200_mass_80to3000 = Variable(
+    "clf_score_GB200_mass_80to3000",
+    title='BDT score (80 to 3000 [GeV])',
+    binning=(1000, 0, 1),
+    plot_bins=np.arange(0, 1.1, 0.1),
+)
 
-    ],
+BDT_SCORES = {
+    "taujet":{
+        "NOM":[
+            clf_score_GB200_mass_80to120,
+            clf_score_GB200_mass_130to160,
+            clf_score_GB200_mass_170to190,
+            clf_score_GB200_mass_200to400,
+            clf_score_GB200_mass_500to3000,
+                ],
+        "SINGLE":[
+            clf_score_GB200_mass_80to80,
+            clf_score_GB200_mass_90to90,
+            clf_score_GB200_mass_100to100,
+            clf_score_GB200_mass_110to110,
+            clf_score_GB200_mass_120to120,
+            clf_score_GB200_mass_130to130,
+            clf_score_GB200_mass_140to140,
+            clf_score_GB200_mass_150to150,
+            clf_score_GB200_mass_160to160,
+            clf_score_GB200_mass_170to170,
+            clf_score_GB200_mass_180to180,         
+            clf_score_GB200_mass_190to190,
+            clf_score_GB200_mass_200to200,
+            clf_score_GB200_mass_225to225,
+            clf_score_GB200_mass_250to250,
+            clf_score_GB200_mass_275to275,
+            clf_score_GB200_mass_300to300,
+            clf_score_GB200_mass_350to350,
+            clf_score_GB200_mass_400to400,
+            clf_score_GB200_mass_500to500,
+            clf_score_GB200_mass_600to600,
+            clf_score_GB200_mass_700to700,
+            clf_score_GB200_mass_800to800,
+            clf_score_GB200_mass_900to900,
+            clf_score_GB200_mass_1000to1000,
+            clf_score_GB200_mass_1200to1200,
+            clf_score_GB200_mass_1400to1400,
+            clf_score_GB200_mass_1600to1600,
+            clf_score_GB200_mass_1800to1800,
+            clf_score_GB200_mass_2000to2000,
+            clf_score_GB200_mass_2500to2500,
+            clf_score_GB200_mass_3000to3000,
+            ],
+        "UP_DOWN":[
+            clf_score_GB200_mass_80to90,
+            clf_score_GB200_mass_80to100,
+            clf_score_GB200_mass_90to110,
+            clf_score_GB200_mass_100to120,
+            clf_score_GB200_mass_110to130,
+            clf_score_GB200_mass_120to140,
+            clf_score_GB200_mass_130to150,
+            clf_score_GB200_mass_140to160,
+            clf_score_GB200_mass_150to170,
+            clf_score_GB200_mass_160to180,
+            clf_score_GB200_mass_170to190,
+            clf_score_GB200_mass_180to200,
+            clf_score_GB200_mass_190to225,
+            clf_score_GB200_mass_200to250,
+            clf_score_GB200_mass_225to275,
+            clf_score_GB200_mass_250to300,
+            clf_score_GB200_mass_275to350,
+            clf_score_GB200_mass_300to400,
+            clf_score_GB200_mass_350to500,
+            clf_score_GB200_mass_400to600,
+            clf_score_GB200_mass_500to700,
+            clf_score_GB200_mass_600to800,
+            clf_score_GB200_mass_700to900,
+            clf_score_GB200_mass_800to1000,
+            clf_score_GB200_mass_900to1200,
+            clf_score_GB200_mass_1000to1400,
+            clf_score_GB200_mass_1200to1600,
+            clf_score_GB200_mass_1400to1800,
+            clf_score_GB200_mass_1600to2000,
+            clf_score_GB200_mass_1800to2500,
+            clf_score_GB200_mass_2000to3000,
+            clf_score_GB200_mass_2500to3000,
+            ],        
+        "ALL":[
+            clf_score_GB200_mass_80to3000,
+            ],
+        },
+
     "taulep":{
         "NOM":[
             clf_score_GB200_mass_80to120,
@@ -1490,9 +1556,13 @@ BDT_SCORES = {
             clf_score_GB200_mass_1800to2500,
             clf_score_GB200_mass_2000to3000,
             clf_score_GB200_mass_2500to3000,
+            ],        
+        "ALL":[
+            clf_score_GB200_mass_80to3000,
             ],
     }
 }
+
 
 
 ##-----------------------------------------------------------------

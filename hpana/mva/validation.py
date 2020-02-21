@@ -14,6 +14,20 @@ from sklearn.model_selection import StratifiedKFold
 from sklearn.metrics import roc_curve, auc
 from sklearn.feature_selection import RFECV
 
+#ak
+from os import environ
+# #environ['KERAS_BACKEND'] = 'theano'
+# environ['KERAS_BACKEND'] = 'tensorflow'
+# # Set architecture of system (AVX instruction set is not supported on SWAN)
+# environ['THEANO_FLAGS'] = 'gcc.cxxflags=-march=corei7'
+# from keras.models import Sequential
+# from keras.layers import Dense, Activation
+# from keras.regularizers import l2
+# from keras import initializers
+# from keras.optimizers import SGD
+# from keras.wrappers.scikit_learn import KerasClassifier
+#ak
+
 ## local
 from hpana.mva import plt 
 from hpana import log
@@ -48,7 +62,6 @@ def plot_sig_dist(sdframe, signals=[], outdir=".", outname=None, formats=["png",
         plt.savefig(outname+"."+fmt, format=fmt, dpi=600)
 
     plt.close()
-    return
 
 def plot_bkg_dist(bdframe, backgrounds=[], outdir=".", outname=None, formats=["png", "pdf", "eps"]):
     names = []
@@ -85,6 +98,8 @@ def plot_bkg_dist(bdframe, backgrounds=[], outdir=".", outname=None, formats=["p
     plt.close()
 
     return
+
+
 
 ##--------------------------------------------------------------------------
 ## plot samples weight distribution  

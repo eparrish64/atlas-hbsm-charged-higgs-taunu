@@ -162,7 +162,7 @@ def get_plotting_parser(base_parser=None):
     plotting_parser.add_argument('--bdt-only', action="store_true",
                                 help='Plot only bdt scores')
     
-    plotting_parser.add_argument("--bin-scheme", default="NOM", choices=["NOM", "UP_DOWN", "SINGLE", "ALT"], 
+    plotting_parser.add_argument("--bin-scheme", default="NOM", choices=["NOM", "UP_DOWN", "SINGLE", "ALT", "ALL"], 
                             help="mass binning scheme for training clfs ")
     return plotting_parser
 
@@ -342,7 +342,7 @@ def get_clf_parser():
     clf_parser.add_argument("--mass-range", nargs=2, default=[80, 3000], 
                             help="signals' mass range")
 
-    clf_parser.add_argument("--bin-scheme", default="NOM", choices=["NOM", "UP_DOWN", "SINGLE", "ALT"], 
+    clf_parser.add_argument("--bin-scheme", default="NOM", choices=["NOM", "UP_DOWN", "SINGLE", "ALT", "ALL"], 
                             help="mass binning scheme for training clfs ")
 
     clf_parser.add_argument("--dry-run", action="store_true",
@@ -374,6 +374,9 @@ def get_clf_parser():
 
     clf_parser.add_argument("--parse-auc", action="store_true",
                             help="Only parse optimization output txt files")
+
+    clf_parser.add_argument("--plot-sample-size", action="store_true",
+                            help="Plot the size (number of events) of background and signal samples")
 
     return clf_parser
 

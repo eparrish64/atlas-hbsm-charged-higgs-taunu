@@ -26,7 +26,6 @@ class Weight(object):
         "weight_total": ("weight_total", )
     }
     W_TAU = {
-
         # "tau_0_sf_NOMINAL_TauEffSF_JetBDTmedium": ( 
         #     W_STR_FMT.format("n_taus", "tau_0_sf_NOMINAL_TauEffSF_JetBDTmedium"),  #<! NOMINAL
 
@@ -161,6 +160,7 @@ class Weight(object):
             ("MUON_EFF_ISO_SYS_1down", W_STR_FMT.format("n_muons", "mu_0_sf_MUON_EFF_ISO_SYS_1down_MuEffSF_IsoFCTight_FixedRad")),
             ("MUON_EFF_ISO_SYS_1up", W_STR_FMT.format("n_muons", "mu_0_sf_MUON_EFF_ISO_SYS_1up_MuEffSF_IsoFCTight_FixedRad")),
         ),
+
 
         "mu_0_sf_NOMINAL_MuEffSF_Reco_QualTight": (
             W_STR_FMT.format("n_muons", "mu_0_sf_NOMINAL_MuEffSF_Reco_QualTight"),

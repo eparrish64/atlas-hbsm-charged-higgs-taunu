@@ -3,6 +3,9 @@
 ## stdl
 import sys, os, re, gc, glob, argparse
 import cPickle, dill
+from os import environ
+import numpy as np
+import pandas as pd
 
 ## - -  parse ana args (needed before ROOT)
 from hpana.cmd import get_evalclf_parser 
@@ -22,6 +25,22 @@ from hpana.mva.classifier import Classifier, SClassifier
 from hpana.mva import N_TRACKS, PKL_FILE_PATTERN, XML_FILE_PATTERN, ALL_FEATS, BRANCHES 
 from hpana.mva.evaluation import AppendJob, plot_scores, get_models, evaluate_scores_on_trees
 
+#ak
+#environ['KERAS_BACKEND'] = 'theano'
+environ['KERAS_BACKEND'] = 'tensorflow'
+# Set architecture of system (AVX instruction set is not supported on SWAN)
+environ['THEANO_FLAGS'] = 'gcc.cxxflags=-march=corei7'
+import tensorflow as tf
+import keras
+from keras.models import Sequential
+from keras.layers import Dense, Activation, BatchNormalization
+from keras.regularizers import l2
+from keras import initializers
+from keras.optimizers import SGD
+from keras.wrappers.scikit_learn import KerasClassifier
+from keras.models import load_model
+#ak
+
 ## setup logger
 from hpana import log
 log.setLevel(ECLF_ARGS.log)
@@ -35,7 +54,7 @@ ROOT.gROOT.SetBatch(True)
 #-----------------------------------------------
 # consts
 #-----------------------------------------------
-TMP_DATASETS = [  
+TMP_DATASETS = [
     "LepFakes.Wtaunu.Sherpa_221_NNPDF30NNLO_Wtaunu_MAXHTPTV140_280_BFilter_9364__001",
     "LepFakes.Ztautau.Sherpa_221_NNPDF30NNLO_Ztautau_MAXHTPTV500_1000_9364",
     "Wtaunu.Sherpa_221_NNPDF30NNLO_Wtaunu_MAXHTPTV280_500_CVetoBVeto_9364",
@@ -78,7 +97,8 @@ def main():
     os.system("mkdir -p %s"%ECLF_ARGS.outdir)
 
     if ECLF_ARGS.plot_scores:
-        models = get_models(ECLF_ARGS.models)
+        #models = get_models(ECLF_ARGS.models)
+        models, Keras_models = get_models(ECLF_ARGS.models)
         # - -  build analysis main configuration object
         config = Configuration(ECLF_ARGS.channel, data_streams=ECLF_ARGS.data_streams, db_version=ECLF_ARGS.db_version)
         
@@ -96,22 +116,29 @@ def main():
         if ECLF_ARGS.mass_range:
             signals = filter(lambda s:int(ECLF_ARGS.mass_range[0]) <= s.mass <= int(ECLF_ARGS.mass_range[1]), signals)   
     
-
         dframe = SClassifier.prepare_data(backgrounds, signals, ALL_FEATS[ECLF_ARGS.channel], data_lumi=config.data_lumi,
                                       channel=ECLF_ARGS.channel, branches=BRANCHES[ECLF_ARGS.channel], train_data=ECLF_ARGS.train_data)
 
-        jobs = []
-        for mtag, trained_models in models.iteritems():
-            # print trained_models
-            jobs += [Job(plot_scores, trained_models, dframe=dframe,
-                backgrounds=backgrounds, signals=signals, outdir=ECLF_ARGS.outdir, formats=[".pdf", ".png", ".eps"], inclusive_trks=ECLF_ARGS.inc_trks)]
+        b_df = dframe[dframe["class_label"]==0]
+        s_df = dframe[dframe["class_label"]==1]
+        s_df["TruthMass"] = s_df.index.get_level_values(0)
+        s_df["TruthMass"] = pd.to_numeric(s_df.TruthMass.replace({"Hplus": ""}, regex=True))
+        b_df["TruthMass"] = np.random.choice( a=s_df["TruthMass"], size=b_df.shape[0] )
+        dframe = pd.concat([b_df, s_df], axis=0)
 
-        if ECLF_ARGS.parallel:
-            log.info("************** submitting %i jobs  ************" % len(jobs))
-            log.info("***********************************************")
-            run_pool(jobs, n_jobs=ECLF_ARGS.ncpu)
-        else:
-            run_pool(jobs, n_jobs=1)
+        jobs = []
+        #for mtag, trained_models in models.iteritems():
+        for trained_models, trained_Keras_models in zip(models.values(), Keras_models.values()): 
+            plot_scores(trained_models, trained_Keras_models, dframe=dframe, backgrounds=backgrounds, signals=signals, outdir=ECLF_ARGS.outdir, formats=[".pdf", ".png"], inclusive_trks=ECLF_ARGS.inc_trks)
+            #jobs += [Job(plot_scores, trained_models, trained_Keras_models, 
+            #    dframe=dframe, backgrounds=backgrounds, signals=signals, outdir=ECLF_ARGS.outdir, formats=[".pdf", ".png"], inclusive_trks=ECLF_ARGS.inc_trks)]
+
+        # if ECLF_ARGS.parallel:
+        #    log.info("************** submitting %i jobs  ************" % len(jobs))
+        #    log.info("***********************************************")
+        #    run_pool(jobs, n_jobs=ECLF_ARGS.ncpu)
+        # else:
+        #    run_pool(jobs, n_jobs=1)
 
     if ECLF_ARGS.indirect:
 
@@ -168,9 +195,6 @@ def main():
 
 
 
-
-
-
     if ECLF_ARGS.direct:
         # - -  build analysis main configuration object
         config = Configuration(ECLF_ARGS.channel, data_streams=ECLF_ARGS.data_streams, db_version=ECLF_ARGS.db_version)
@@ -209,18 +233,20 @@ def main():
 
         ## multicore processing 
         if ECLF_ARGS.parallel:
-            models = get_models(ECLF_ARGS.models)
+            #models = get_models(ECLF_ARGS.models)
+            models, Keras_models = get_models(ECLF_ARGS.models)
             ## prepare hist workers 
             analysis.setWorkers(samples=samples, fields=fields, categories=categories, systematics=systematics)
             ana_workers = analysis.getWorkers()
 
             jobs = []
             for w in ana_workers:
-                jobs.append(Job(dataset_hists_direct, w, clf_models=models, write_hists=True, outdir=ECLF_ARGS.outdir))
+                # jobs.append(Job(dataset_hists_direct, w, clf_models=models, clf_Keras_models=Keras_models, write_hists=True, outdir=ECLF_ARGS.outdir))
+                dataset_hists_direct (w, clf_models=models, clf_Keras_models=Keras_models, write_hists=True, outdir=ECLF_ARGS.outdir)
 
-            log.info("************** submitting %i jobs  ************" % len(jobs))
-            log.info("***********************************************")
-            run_pool(jobs, n_jobs=ECLF_ARGS.ncpu)
+            # log.info("************** submitting %i jobs  ************" % len(jobs))
+            # log.info("***********************************************")
+            # run_pool(jobs, n_jobs=ECLF_ARGS.ncpu)
 
         ## submit to the batch system 
         if ECLF_ARGS.cluster:
@@ -258,7 +284,6 @@ def main():
 
             if ECLF_ARGS.rs_manager=="SLURM":
                 from hpana.cluster.job_template import SLURM_JOB_TEMPLATE
-
                 for aw in ana_workers:
                     if ECLF_ARGS.dry_run:
                         print "--"*100
@@ -303,15 +328,10 @@ def main():
                 os.close(submit_file)
                 log.warning("Submission not supported from within container.")
                 log.warning("Please launch outside container via:")
-                log.warning("\t sh {0}".format(submitfile_name))        
+                log.warning("\t sh {0}".format(submitfile_name))       
 
             elif ECLF_ARGS.rs_manager == "CONDOR":
                 from hpana.cluster.job_template import CONDOR_JOB_TEMPLATE
-
-                # wrkDirectory = "/nfs/work/pt3wrk0/eparrish/databank/"
-
-                # log.info("Creating databank directory ")
-                # os.system("if [ ! -d '%s' ]; then mkdir -p '%s'; fi" %(wrkDirectory,wrkDirectory)) 
 
                 ## zip source code
                 log.info("Creating source code tarball...")
@@ -324,24 +344,6 @@ def main():
                 os.system("cd {src_dir} && tar -cf {target_tar} {source_files} && cd - && tar --append --file={target_tar}".format(
                     src_dir=__HERE+"/../", target_tar=source_code_tarball, source_files=src_ds))
 
-                # log.info("Copying source code tar to node")
-                # os.system("rsync -axvH --no-g --no-p %s %s; cd %s; tar -xvf source_code.tar.gz; cd -" %(source_code_tarball, wrkDirectory, wrkDirectory))
-
-                # nodes = ["pt3wrk0", "pt3wrk1", "pt3wrk2", "pt3wrk3", "pt3wrk4"]
-                # nodes = ["pt3wrk3", "pt3wrk4"]
-
-                # for node in nodes:
-                    # globWrkDirectory = "/nfs/work/{0}/eparrish/databank/".format(node)
-
-                    # log.info("Creating databank directory ")
-                    # os.system("if [ ! -d '%s' ]; then mkdir -p '%s'; fi" %(globWrkDirectory,globWrkDirectory)) 
-
-                    # log.info("Copying source code tar to node")
-                    # os.system("rsync -axvH --no-g --no-p %s %s; cd %s; tar -xvf source_code.tar.gz; cd -" %(source_code_tarball, globWrkDirectory, globWrkDirectory))
-
-                    # for model in ECLF_ARGS.models:
-                    #     log.info("Transfering model file %s to %s" %(os.path.basename(model),globWrkDirectory))
-                    #     os.system("rsync -av %s '%s'"%(model, globWrkDirectory))
 
                 wrkDirectory = "/disk/eparrish/databank/"
                 # - - setup the submit dir
@@ -446,26 +448,17 @@ def main():
                     log.warning("Submission not supported from within container.")
                     log.warning("Please launch outside container via:")
                     log.warning("\t condor_submit {0}".format(submit_file_name)) 
+   
 
-
-    if ECLF_ARGS.merge_hists:
-        config = Configuration(ECLF_ARGS.channel, data_streams=ECLF_ARGS.data_streams, db_version=ECLF_ARGS.db_version)
-
-        # - -  instantiate the analysis
-        analysis = Analysis(config, compile_cxx=True)
-        if ECLF_ARGS.samples:
-            samples = filter(lambda s: s.name in ECLF_ARGS.samples, analysis.samples)
-        else:
-            samples = analysis.samples #get_signals()
-        log.info(
-            "************** merging histograms  ************")
-        log.info(
-            "***********************************************")
-        analysis.merge_hists(samples=samples, histsdir=ECLF_ARGS.outdir, overwrite=True, write=True)
+        if ECLF_ARGS.merge_hists:
+            log.info(
+                "************** merging histograms  ************")
+            log.info(
+                "***********************************************")
+            analysis.merge_hists(samples=samples, histsdir=ECLF_ARGS.outdir, overwrite=True, write=True)
 
 
     if ECLF_ARGS.append:
-        models = get_models(ECLF_ARGS.models)
         ## sort files based on size to start the heavier ones sooner.
         ECLF_ARGS.files.sort(key=lambda f: os.path.getsize(f), reverse=True)
         jobs = [AppendJob(f, models, copy_file=COPY_FILE, outdir=ECLF_ARGS.outdir) for f in ECLF_ARGS.files]

@@ -92,22 +92,16 @@ CONDOR_JOB_TEMPLATE="""
 ##########################################################################################################################################################
 ## Condor job description file to launch on any free node
 ##########################################################################################################################################################
-requirements                = (Arch == "SL7x64") && ((Machine == "pt3wrk0.nicadd.niu.edu") || (Machine == "pt3wrk1.nicadd.niu.edu") || (Machine == "pt3wrk2.nicadd.niu.edu") || (Machine == "pt3wrk3.nicadd.niu.edu") || (Machine == "pt3wrk4.nicadd.niu.edu"))
-#
-#
 executable                  = {execScript}
 output                      = {logsdir}/out/$(Process).out
 error                       = {logsdir}/err/$(Process).err
 log                         = {logsdir}/log/$(Process).log
 universe                    = vanilla
 getenv                      = true
-request_cpus                = 1
-+JobFlavour                 = "espresso"
-RequestMemory               = {memory}
-should_transfer_files       = YES
-when_to_transfer_files      = ON_EXIT
-# notify_user                 = {userEmail}
-notification                = always
-submit_nicadd_job.shGetEnv  = True
+#
+# RequestMemory               = {memory}
+# request_GPUs            = 1
+request_cpus            = 1
++JobFlavour             = "espresso"
 
 """

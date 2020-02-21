@@ -176,6 +176,9 @@ def get_hparams(channel, mass_range=(), bin_scheme="NOM", model_type="GB"):
                 "1800to2500": {'n_estimators': 100, 'learning_rate': 0.1, 'max_depth':10, 'min_samples_leaf':0.005, 'min_samples_split':0.01},
             },
             "SINGLE":{},
+            "ALL":{
+                "80to3000": {'n_estimators': 100, 'learning_rate': 0.1, 'max_depth':10, 'min_samples_leaf':0.005, 'min_samples_split':0.01},
+            },
 
         },
         "taulep": {
@@ -262,7 +265,9 @@ def get_hparams(channel, mass_range=(), bin_scheme="NOM", model_type="GB"):
                 "2500to2500": {'n_estimators': 200, 'learning_rate': 0.1, 'max_depth':20, 'min_samples_leaf':0.001, 'min_samples_split':0.002},
                 "3000to3000": {'n_estimators': 200, 'learning_rate': 0.1, 'max_depth':20, 'min_samples_leaf':0.001, 'min_samples_split':0.002},
             },
-
+            "ALL":{
+                "80to3000": {'n_estimators': 100, 'learning_rate': 0.1, 'max_depth':10, 'min_samples_leaf':0.005, 'min_samples_split':0.01},
+            },
         },
     }
 
@@ -278,4 +283,3 @@ def get_hparams(channel, mass_range=(), bin_scheme="NOM", model_type="GB"):
 
     else:
         raise RuntimeError("Hyperparameters for classifier of type %s are not tuned yet!"%model_type)
-

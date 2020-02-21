@@ -1,0 +1,113 @@
+## YMAL DOESN'T ALLOW \t ; USE SPACES !
+"2015":
+  common:
+    grl: ""
+    
+  taujet:
+    mc_path: /eos/atlas/atlascerngroupdisk/phys-higgs/HSG6/Htaunu/rnnTest/taujets/mc16/
+    mc_prefix: #"user."
+    mc_pattern: '*.root*'
+    mc_treename: 'NOMINAL'
+    mc_sampletype:
+    data_path: /eos/atlas/atlascerngroupdisk/phys-higgs/HSG6/Htaunu/rnnTest/taujets/data/
+    data_prefix: # "user." 
+    data_pattern: '*.root*'
+    data_treename: 'NOMINAL'
+    data_sampletype:
+
+  taulep:
+    mc_path: /eos/atlas/atlascerngroupdisk/phys-higgs/HSG6/Htaunu/rnnTest/taulep/mc16/
+    mc_prefix: #"user."
+    mc_pattern: '*.root*'
+    mc_treename: 'NOMINAL'
+    mc_sampletype:
+    data_path: /eos/atlas/atlascerngroupdisk/phys-higgs/HSG6/Htaunu/rnnTest/taulep/data/
+    data_prefix: # "user." 
+    data_pattern: '*.root*'
+    data_treename: 'NOMINAL'
+    data_sampletype:
+
+"2016":
+  common:
+    grl: ""
+    
+  taujet:
+    mc_path: /eos/atlas/atlascerngroupdisk/phys-higgs/HSG6/Htaunu/rnnTest/taujets/mc16/
+    mc_prefix: #"user."
+    mc_pattern: '*.root*'
+    mc_treename: 'NOMINAL'
+    mc_sampletype:
+    data_path: /eos/atlas/atlascerngroupdisk/phys-higgs/HSG6/Htaunu/rnnTest/taujets/data/
+    data_prefix: # "user." 
+    data_pattern: '*.root*'
+    data_treename: 'NOMINAL'
+    data_sampletype:
+
+  taulep:
+    mc_path: /eos/atlas/atlascerngroupdisk/phys-higgs/HSG6/Htaunu/rnnTest/taulep/mc16/
+    mc_prefix: #"user."
+    mc_pattern: '*.root*'
+    mc_treename: 'NOMINAL'
+    mc_sampletype:
+    data_path: /eos/atlas/atlascerngroupdisk/phys-higgs/HSG6/Htaunu/rnnTest/taulep/data/
+    data_prefix: # "user." 
+    data_pattern: '*.root*'
+    data_treename: 'NOMINAL'
+    data_sampletype:
+
+"2017":
+  common:
+    grl: ""
+    
+  taujet:
+    mc_path: /eos/atlas/atlascerngroupdisk/phys-higgs/HSG6/Htaunu/rnnTest/taujets/mc16/
+    mc_prefix: #"user."
+    mc_pattern: '*.root*'
+    mc_treename: 'NOMINAL'
+    mc_sampletype:
+    data_path: /eos/atlas/atlascerngroupdisk/phys-higgs/HSG6/Htaunu/rnnTest/taujets/data/
+    data_prefix: # "user." 
+    data_pattern: '*.root*'
+    data_treename: 'NOMINAL'
+    data_sampletype:
+      
+  taulep:
+    mc_path: /eos/atlas/atlascerngroupdisk/phys-higgs/HSG6/Htaunu/rnnTest/taulep/mc16/
+    mc_prefix: #"user."
+    mc_pattern: '*.root*'
+    mc_treename: 'NOMINAL'
+    mc_sampletype:
+    data_path: /eos/atlas/atlascerngroupdisk/phys-higgs/HSG6/Htaunu/rnnTest/taulep/data/
+    data_prefix: # "user." 
+    data_pattern: '*.root*'
+    data_treename: 'NOMINAL'
+    data_sampletype:
+
+"2018":
+  common:
+    grl: ""
+   
+  taujet:
+    mc_path: /eos/atlas/atlascerngroupdisk/phys-higgs/HSG6/Htaunu/rnnTest/taujets/mc16/
+    mc_prefix: #"user."
+    mc_pattern: '*.root*'
+    mc_treename: 'NOMINAL'
+    mc_sampletype:
+    data_path: /eos/atlas/atlascerngroupdisk/phys-higgs/HSG6/Htaunu/rnnTest/taujets/data/
+    data_prefix: # "user."
+    data_pattern: '*.root*'
+    data_treename: 'NOMINAL'
+    data_sampletype:
+            
+  taulep:
+    mc_path: /eos/atlas/atlascerngroupdisk/phys-higgs/HSG6/Htaunu/rnnTest/taulep/mc16/
+    mc_prefix: #"user."
+    mc_pattern: '*.root*'
+    mc_treename: 'NOMINAL'
+    mc_sampletype:
+    data_path: /eos/atlas/atlascerngroupdisk/phys-higgs/HSG6/Htaunu/rnnTest/taulep/data/
+    data_prefix: # "user."
+    data_pattern: '*.root*'
+    data_treename: 'NOMINAL'
+    data_sampletype:
+            

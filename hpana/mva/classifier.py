@@ -20,6 +20,7 @@ import pickle, cPickle
 ## local 
 from hpana import log 
 from hpana.categories import CLASSIFIER_CATEGORIES, TAU_IS_TRUE, ANTI_TAU
+from hpana.mva import NN_HYPERPARAMS
 
 ## ROOT 
 import ROOT
@@ -160,9 +161,9 @@ class SClassifier(GradientBoostingClassifier):
     """
     """
     # try:
-    MODEL_NAME_STR_FORMAT = "model_{0}_channel_{1}_mass_{2}_ntracks_{3}_nfolds_{4}_fold_{5}_nvars_{6}_learnRate_{7}_minSampsLeaf_{8}_nEst_{9}_minSampsSplit_{10}_maxDepth_{11}.pkl" #<! name, channel, ntracks, nfolds, fold, n_vars
+    # MODEL_NAME_STR_FORMAT = "model_{0}_channel_{1}_mass_{2}_ntracks_{3}_nfolds_{4}_fold_{5}_nvars_{6}_learnRate_{7}_minSampsLeaf_{8}_nEst_{9}_minSampsSplit_{10}_maxDepth_{11}.pkl" #<! name, channel, ntracks, nfolds, fold, n_vars
     # except:
-    # MODEL_NAME_STR_FORMAT = "model_{0}_channel_{1}_mass_{2}_ntracks_{3}_nfolds_{4}_fold_{5}_nvars_{6}.pkl"
+    MODEL_NAME_STR_FORMAT = "model_{0}_channel_{1}_mass_{2}_ntracks_{3}_nfolds_{4}_fold_{5}_nvars_{6}.pkl"
     
     def __init__(self, channel, 
                     name="GB", 
@@ -219,7 +220,6 @@ class SClassifier(GradientBoostingClassifier):
                      truth_match_tau=True):
         """Training input as pandas DataFrame
         """
-
         ## first check if all the samples are already available in the training Dataframe
         missing_bkgs = []
         missing_sigs = []
@@ -338,14 +338,14 @@ class SClassifier(GradientBoostingClassifier):
                 for ds in bkg.datasets:
                     log.debug("**"*30 + ds.name + "**"*30)
                     bfiles = ds.files
-                    if truth_match_tau:
-                        cuts = category.cuts + TAU_IS_TRUE 
                     if not bfiles:
                         log.warning("No root file is found for %s"%ds.name)
                         continue
                     if empty_tree(bfiles, treename=treename):
                         log.warning("%s tree is empty for %s dataset; skipping!"%(treename, ds.name))
                         continue
+                    if truth_match_tau:
+                        cuts = category.cuts + TAU_IS_TRUE 
 
                     ## common Scale Factors
                     ws = bkg.weights(categories=[category]).values()[0]
@@ -355,14 +355,13 @@ class SClassifier(GradientBoostingClassifier):
                     if ds.lumi_weight:
                         lumi_weight = bkg.data_lumi(ds.stream) * ds.lumi_weight
                     else: 
-                        lumi_weight = (bkg.data_lumi(ds.stream) * ds.xsec_kfact_effic) / ds.events                        
+                        lumi_weight = (bkg.data_lumi(ds.stream) * ds.xsec_kfact_effic) / ds.events  
                     ws = ws + "*{}".format(lumi_weight)
                     pool_ws += [ws] #<! @NOTE each dataset has a different weight --> keep them to properly rename all to 'weight'
-
                     selection = (trigger + cuts).GetTitle()
                     log.debug("Cut: %r\n"%selection)
                     log.debug("Weight: %r\n"%ws)
-                    kargs = {"treename": treename, "branches": branches+[ws], "selection": selection, "warn_missing_tree": True}    
+                    kargs = {"treename": treename, "branches": branches+[ws], "selection": selection, "warn_missing_tree": True}
                     pool_res += [pool.apply_async(root2array, (bfiles,), dict(kargs))]
 
                 ## close the pool and wait for the workers to finish
@@ -467,7 +466,8 @@ def train_model(model,
     weight_sample=False, 
     scale_features=True, 
     save_model=True, 
-    overwrite=False):
+    overwrite=False,
+    is_NN=False):
     """ Train a classifier and produce some validation plots.
     Parameters
     ----------
@@ -499,39 +499,30 @@ def train_model(model,
     b_df = tr_df[tr_df["class_label"]==0]
     s_df = tr_df[tr_df["class_label"]==1]
 
-    
-    s_e_overlap = pd.merge(b_df, s_df, how="inner")
-
-    if s_e_overlap.empty:
-        print s_e_overlap
-        print "No Overlap in train and evaluate"
-
-    else:
-        print s_e_overlap
-        raise Excpetion("Overlap in train and evaluate")
-
-    # print b_df
-    # print s_df
+    if is_NN:
+        s_df["TruthMass"] = s_df.index.get_level_values(0)
+        s_df["TruthMass"] = pd.to_numeric(s_df.TruthMass.replace({"Hplus": ""}, regex=True))
+        b_df["TruthMass"] = np.random.choice( a=s_df["TruthMass"], size=b_df.shape[0] )
 
     if balanced: 
         ## Set training weight of bkg events to 1. Signal events to N_bkg / N_sig.
         weight_sample = False  
         b_df["BDT_Weight"] = 1
         s_df["BDT_Weight"] = float(b_df.shape[0])/float(s_df.shape[0])
-        log.info("Balancing training classes via weights in BDT. Setting signal weights to %s" %(float(b_df.shape[0])/float(s_df.shape[0])))
+        # X_weight = tr_df_ud["BDT_Weight"]
+        log.info("Balancing training classes via weights in classifier. Setting signal weights to %s" %(float(b_df.shape[0])/float(s_df.shape[0])))
 
     else:
         log.info("Unbalanced training classes; signal events:{} | bkg events: {}".format(s_df.shape[0], b_df.shape[0]))
 
+    background_weight = float(s_df.shape[0])/b_df.shape[0]
+    train_weights = {0: background_weight, 1: 1}
     tr_df_ud = pd.concat([b_df, s_df], axis=0)
 
     ## - - training arrays
-    # print features
-    # print tr_df_ud
     X_train = tr_df_ud[[ft.name for ft in features]]    
     Y_train = tr_df_ud["class_label"]
-    # print X_train
-    # print Y_train
+
     if weight_sample:
         log.info("Using event weight for training, events with negative weight are thrown away")        
         X_weight = tr_df_ud["weight"] 
@@ -539,10 +530,6 @@ def train_model(model,
         if positive_weights: 
             log.info("using abs(weights)!")
             X_weight = np.absolute(X_weight.values)
-
-    if balanced:
-        ## Set training weight of bkg events to 1. Signal events to N_bkg / N_sig.
-        X_weight = tr_df_ud["BDT_Weight"]
 
     if scale_features:
         log.info("Scaling features using StandardScaler ...")
@@ -555,6 +542,9 @@ def train_model(model,
         log.info("Loading %s model from disk ..."%mpath)
         with open(mpath, "r") as cache:
             model = cPickle.load(cache)
+            if is_NN:
+                Keras_model = cPickle.load(cache)
+                
             is_trained =  model.is_trained
             if is_trained:
                 log.warning("The %s model is already trained! set overwrite=True, if you want to overwrite it"%mpath)
@@ -563,18 +553,28 @@ def train_model(model,
                     is_trained = False                                    
 
     if not is_trained:
-        # print X_train
-        # print Y_train
         ## train the model,
         try:
-            model = model.fit(X_train.values, Y_train.values, sample_weight=X_weight if weight_sample else None)
+            if is_NN:
+                Keras_model.fit(X_train.values, Y_train.values, batch_size=NN_HYPERPARAMS["batch_size"], epochs=NN_HYPERPARAMS["epochs"], class_weight=train_weights, verbose=1)
+            else:
+                model = model.fit(X_train.values, Y_train.values, sample_weight=X_weight if weight_sample else None)
         except:
-            model = model.fit(X_train, Y_train.values, sample_weight=X_weight if weight_sample else None)
+            if is_NN:
+                log.info(Keras_model)
+                Keras_model.fit(X_train, Y_train.values, batch_size=NN_HYPERPARAMS["batch_size"], epochs=NN_HYPERPARAMS["epochs"], class_weight=train_weights, verbose=1)
+            else:
+                model = model.fit(X_train, Y_train.values, sample_weight=X_weight if weight_sample else None)
+
         model.is_trained = True
         if save_model:
             mpath = os.path.join(outdir, model.name)
+            mpathh5 = mpath.replace("pkl", "h5")
             with open(mpath, "w") as cache:
                 cPickle.dump(model, cache, protocol=2)
+                if is_NN:
+                    cPickle.dump(Keras_model, cache, protocol=2)
+                    Keras_model.save(mpathh5)
     
     log.info("Trained %s model"%(model.name))
     return model
@@ -587,12 +587,24 @@ def empty_tree(files, treename="NOMINAL"):
     """ given a list of ROOT files see if at least one of them has treename 
     """
     evts = 0
+    log.debug(files)
     for fl in files:
-        tf = ROOT.TFile(fl)
+        log.debug(fl)
+        if not os.path.isfile(fl):
+            raise Exception("%s does not exist" %(fl))
+        tf = ROOT.TFile(fl, "READ")
+        log.debug("line 584")
+        if not tf.GetListOfKeys().Contains(treename):
+            raise Exception("%s does not contain %s tree"%(fl,treename))
+        if tf.IsZombie():
+            raise Exception("%s is a Zombie." %(fl))
+        log.debug("line 587")
         tr = tf.Get(treename)
+        log.debug("line 589")
         if tr:
             evts += tr.GetEntries()
-
+        log.debug("**"*100)
+        tf.Close()
     return evts==0
 
 

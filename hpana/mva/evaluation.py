@@ -983,6 +983,8 @@ def fill_scores_mult(tree, all_models, all_Keras_models, hist_templates, event_l
           if feat.name in clf_feats_tf: continue
           if correct_upsilon and "upsilon" in feat.name.lower():
               clf_feats_tf[feat.name] = ROOT.TTreeFormula(feat.name, QCD.UPSILON_CORRECTED["mc16"], tree)
+          elif feat.name == "TruthMass":
+              clf_feats_tf[feat.name] = ROOT.TTreeFormula(feat.name, "80.", tree)
           else:
               clf_feats_tf[feat.name] = ROOT.TTreeFormula(feat.name, feat.tformula, tree)
       for f_tf in clf_feats_tf.values():

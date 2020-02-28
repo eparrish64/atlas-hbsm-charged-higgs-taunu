@@ -882,7 +882,7 @@ CLF_FEATURES = {
             bjet_0_tau_0_dr,
             met_jet_dphi_ratio,
             tau_0_upsilon,
-            TruthMass,
+            # TruthMass,
         ],
         
         "HIGH": [ #<! above 400 [GeV]
@@ -893,7 +893,7 @@ CLF_FEATURES = {
             bjet_0_met_dphi,
             bjet_0_tau_0_dr,
             met_jet_dphi_ratio,
-            TruthMass,
+            # TruthMass,
         ],
     },
 

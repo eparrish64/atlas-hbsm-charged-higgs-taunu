@@ -30,7 +30,7 @@ case $USER in
 		VENVPATH=/afs/cern.ch/work/k/klimek/private/Charged_H/Analysis_EoR2/hpana_test2_dev-taulep/PythonPackags/Venvs/hpanaVenv_test2_dev-taulep/
 		;;
 	eparrish)
-		VENVPATH=/afs/cern.ch/user/e/eparrish/workarea/public/HPlusTauNu/PythonPackages/Venvs/hpanaVenvNN_6_14_08/
+		VENVPATH=/afs/cern.ch/user/e/eparrish/workarea/public/HPlusTauNu/PythonPackages/Venvs/hpanaVenv/
 		;;
 	*)
 		VENVPATH=""

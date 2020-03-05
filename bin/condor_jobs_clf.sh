@@ -11,7 +11,7 @@ fail(){
     echo "failed";
     cd ..;
     rm -rf "$JOBSCRATCH";
-    exit 1;
+    # exit 1;
 }
 
 
@@ -26,7 +26,7 @@ rsync -axvH --no-g --no-p "${3}/${1}" ./ || fail;
 source setup.sh || fail;
 
 
-python ${2} "${1}" ${4} ${5}|| fail;
+python ${2} "${1}" ${4} ${5} || fail;
 
 files="$JOBSCRATCH"/*.pkl
 if [ ${#files[@]} -eq 0 ]; then
@@ -43,5 +43,5 @@ else
     cd ..;
     rm -rf {JOBSCRATCH} || fail;
     echo "Job finished and cleaned up after itself";
-    exit 0;
+    # exit 0;
 fi

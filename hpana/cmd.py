@@ -431,4 +431,7 @@ def get_evalclf_parser(base_parser=None):
     evalclf_parser.add_argument("--pickled-analysis", type=str, default="ANALYSIS.pkl",
                             help="main analysis object pickled to be shipped to the worker nodes")
 
+    evalclf_parser.add_argument("--eval-nn", action="store_true",
+                                help="Evaluate the neural net")
+
     return evalclf_parser

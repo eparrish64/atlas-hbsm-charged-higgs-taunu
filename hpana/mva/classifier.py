@@ -499,7 +499,7 @@ def train_model(model,
     b_df = tr_df[tr_df["class_label"]==0]
     s_df = tr_df[tr_df["class_label"]==1]
 
-    if is_NN:
+    if is_NN == True:
         s_df["TruthMass"] = s_df.index.get_level_values(0)
         s_df["TruthMass"] = pd.to_numeric(s_df.TruthMass.replace({"Hplus": ""}, regex=True))
         b_df["TruthMass"] = np.random.choice( a=s_df["TruthMass"], size=b_df.shape[0] )
@@ -542,9 +542,14 @@ def train_model(model,
         log.info("Loading %s model from disk ..."%mpath)
         with open(mpath, "r") as cache:
             model = cPickle.load(cache)
-            if is_NN:
-                Keras_model = cPickle.load(cache)
-                
+            log.info(is_NN)
+            if is_NN == True:
+                try:
+                    Keras_model = cPickle.load(cache)
+                except:
+                    pass
+            else:
+                Keras_model = None
             is_trained =  model.is_trained
             if is_trained:
                 log.warning("The %s model is already trained! set overwrite=True, if you want to overwrite it"%mpath)
@@ -555,13 +560,12 @@ def train_model(model,
     if not is_trained:
         ## train the model,
         try:
-            if is_NN:
+            if is_NN == True:
                 Keras_model.fit(X_train.values, Y_train.values, batch_size=NN_HYPERPARAMS["batch_size"], epochs=NN_HYPERPARAMS["epochs"], class_weight=train_weights, verbose=1)
             else:
                 model = model.fit(X_train.values, Y_train.values, sample_weight=X_weight if weight_sample else None)
         except:
-            if is_NN:
-                log.info(Keras_model)
+            if is_NN == True:
                 Keras_model.fit(X_train, Y_train.values, batch_size=NN_HYPERPARAMS["batch_size"], epochs=NN_HYPERPARAMS["epochs"], class_weight=train_weights, verbose=1)
             else:
                 model = model.fit(X_train, Y_train.values, sample_weight=X_weight if weight_sample else None)
@@ -572,7 +576,7 @@ def train_model(model,
             mpathh5 = mpath.replace("pkl", "h5")
             with open(mpath, "w") as cache:
                 cPickle.dump(model, cache, protocol=2)
-                if is_NN:
+                if is_NN == True:
                     cPickle.dump(Keras_model, cache, protocol=2)
                     Keras_model.save(mpathh5)
     

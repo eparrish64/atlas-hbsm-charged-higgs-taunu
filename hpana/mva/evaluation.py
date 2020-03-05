@@ -16,17 +16,17 @@ import cPickle
 import csv
 import pandas as pd
 
-# Keras
-#environ['KERAS_BACKEND'] = 'theano'
-environ['KERAS_BACKEND'] = 'tensorflow'
-# Set architecture of system (AVX instruction set is not supported on SWAN)
-environ['THEANO_FLAGS'] = 'gcc.cxxflags=-march=corei7'
-from keras.models import Sequential, load_model
-from keras.layers import Dense, Activation
-from keras.regularizers import l2
-from keras import initializers
-from keras.optimizers import SGD
-from keras.wrappers.scikit_learn import KerasClassifier
+# # Keras
+# #environ['KERAS_BACKEND'] = 'theano'
+# environ['KERAS_BACKEND'] = 'tensorflow'
+# # Set architecture of system (AVX instruction set is not supported on SWAN)
+# environ['THEANO_FLAGS'] = 'gcc.cxxflags=-march=corei7'
+# from keras.models import Sequential, load_model
+# from keras.layers import Dense, Activation
+# from keras.regularizers import l2
+# from keras import initializers
+# from keras.optimizers import SGD
+# from keras.wrappers.scikit_learn import KerasClassifier
 
 
 ## local
@@ -421,12 +421,13 @@ def get_models(model_files, backend="sklearn", isNN=False):
 
             models[mass][fold]["%s_mass_%s_ntracks_%i"%(name, mass, ntracks)] = clf
         else:
-            if isNN == True:
-                mfileh5 = model_file.replace("pkl", "h5")
+            # if isNN == True:
+            #     mfileh5 = model_file.replace("pkl", "h5")
             with open(model_file, "r") as mfile:
                 model = cPickle.load(mfile)
                 if isNN == True:
-                    Keras_model = load_model(mfileh5)
+                    # Keras_model = load_model(mfileh5)
+                    Keras_model = cPickle.load(mfile)
                 if mass in wname and "ntracks_%i"%ntracks in wname:
                     models[mass] += [model]
                     if isNN == True:
@@ -436,7 +437,7 @@ def get_models(model_files, backend="sklearn", isNN=False):
     if isNN == True:
         return models, Keras_models
     else:
-        return models
+        return models, None
 
 ##-----------------------------------------------
 ##
@@ -602,8 +603,8 @@ def fill_scores_histogram(tree, models, hist_template=None, event_selection=None
 ##-----------------------------------------------
 ## 
 ##-----------------------------------------------
-def fill_scores_mult(tree, all_models, all_Keras_models=None, hist_templates, 
-    event_list, event_weight=None, correct_upsilon=False, isNN=False):
+def fill_scores_mult(tree, all_models, hist_templates, 
+    event_list, all_Keras_models=None, event_weight=None, correct_upsilon=False, isNN=False):
     """ evaluate scores from a model on a tree and fill a histogram
     Parameters
     ----------
@@ -678,22 +679,36 @@ def fill_scores_mult(tree, all_models, all_Keras_models=None, hist_templates,
                   old = infos[mtag][kfolds][fold]
                   infos[mtag][kfolds][fold][0] = np.array(infos[mtag][kfolds][fold][0])
 
-    #for mtag in all_models:
-    for mtag, mtag_Keras in zip(all_models, all_Keras_models):
-      #for model in all_models[mtag]:
-      for model, Keras_model in zip(all_models[mtag], all_Keras_models[mtag_Keras]):
-          # Loop over models, evaluating events and filling trees
-          # In theory we could do this periodically while looping over events, if memory becomes a problem
-          events = infos[mtag][model.kfolds][model.fold_num]
-          if len(events[0]) == 0: continue # No events passed the selection
-          #scores = model.predict_proba(events[0])
-          #scores = model.predict(scaler.fit_transform(events[0]))
-          scores = Keras_model.predict(events[0])
-          for idx in xrange(len(scores)):
-              #hist_templates[mtag].Fill(scores[idx][1], events[1][idx]) # <! probability of belonging to class 1 (SIGNAL)
-              hist_templates[mtag].Fill(scores[idx], events[1][idx]) # <! probability of belonging to class 1 (SIGNAL) 
-              if idx%100000==0:
-                  log.debug("%r : %r "%(events[0][idx], scores[idx]))
+    if isNN == True:
+        #for mtag in all_models:
+        for mtag, mtag_Keras in zip(all_models, all_Keras_models):
+          #for model in all_models[mtag]:
+          for model, Keras_model in zip(all_models[mtag], all_Keras_models[mtag_Keras]):
+              # Loop over models, evaluating events and filling trees
+              # In theory we could do this periodically while looping over events, if memory becomes a problem
+              events = infos[mtag][model.kfolds][model.fold_num]
+              if len(events[0]) == 0: continue # No events passed the selection
+              #scores = model.predict_proba(events[0])
+              #scores = model.predict(scaler.fit_transform(events[0]))
+              scores = Keras_model.predict(events[0])
+              for idx in xrange(len(scores)):
+                  #hist_templates[mtag].Fill(scores[idx][1], events[1][idx]) # <! probability of belonging to class 1 (SIGNAL)
+                  hist_templates[mtag].Fill(scores[idx], events[1][idx]) # <! probability of belonging to class 1 (SIGNAL) 
+                  if idx%100000==0:
+                      log.debug("%r : %r "%(events[0][idx], scores[idx]))
+    else:  
+        for mtag in all_models:
+          for model in all_models[mtag]:
+              # Loop over models, evaluating events and filling trees
+              # In theory we could do this periodically while looping over events, if memory becomes a problem
+              events = infos[mtag][model.kfolds][model.fold_num]
+              if len(events[0]) == 0: continue # No events passed the selection
+              scores = model.predict_proba(events[0])
+              for idx in xrange(len(scores)):
+                  hist_templates[mtag].Fill(scores[idx][1], events[1][idx]) # <! probability of belonging to class 1 (SIGNAL)
+                  if idx%100000==0:
+                      log.debug("%r : %r "%(events[0][idx], scores[idx]))
+
     # End loop over models
 
 ##-----------------------------------------------

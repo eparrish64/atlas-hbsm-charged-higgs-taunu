@@ -18,22 +18,6 @@ fail(){
 mkdir -p "$JOBSCRATCH" || fail;
 cd "$JOBSCRATCH" || fail;
 
-# rsync -axvH --no-g --no-p ${2}  ./ || fail;
-# tar -xvf ${2} || fail;
-# source setup.sh || fail;
-
-
-# for model in $(echo ${7} | sed "s/,/ /g")
-#     do
-#         echo "Copying the input model ${6}/$model"
-#         rsync -axvH --no-g --no-p "${6}/$model" ./ || fail;
-#     done
-
-
-# rsync -axvH --no-g --no-p ${6}/*.pkl ./ || fail;
-
-
-# source "/disk/$MYUSERNAME/databank/setup.sh" || fail;
 
 rsync -axvH --no-g --no-p  ${4}/source_code.tar.gz ./ || fail; tar -xvf source_code.tar.gz || fail;
 

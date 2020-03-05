@@ -1,8 +1,9 @@
 # source this file
 
 # ROOT version should be set manually 
-export ALRB_rootVersion=6.18.00-x86_64-centos7-gcc8-opt
 # export ALRB_rootVersion=6.18.00-x86_64-centos7-gcc8-opt
+# export ALRB_rootVersion=6.18.00-x86_64-centos7-gcc8-opt
+export ALRB_rootVersion=6.14.08-x86_64-centos7-gcc8-opt
 
 # determine path to this script
 # http://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-stored-in
@@ -27,6 +28,9 @@ case $USER in
         ;;
     klimek)
 		VENVPATH=/afs/cern.ch/work/k/klimek/private/Charged_H/Analysis_EoR2/hpana_test2_dev-taulep/PythonPackags/Venvs/hpanaVenv_test2_dev-taulep/
+		;;
+	eparrish)
+		VENVPATH=/afs/cern.ch/user/e/eparrish/workarea/public/HPlusTauNu/PythonPackages/Venvs/hpanaVenv/
 		;;
 	*)
 		VENVPATH=""

@@ -4,7 +4,7 @@ from math import pi
 from collections import OrderedDict
 
 import ROOT
-from ROOT import TCut
+# from ROOT import TCut
 
 from hpana.db.decorators import cached_property
 from hpana import log, MC_CAMPAIGN
@@ -21,112 +21,118 @@ PLEASE NOTE THAT THE UNIT IS CHANGED FROM MeV to GeV as of version 18v04 of the 
 
 # - - - - - - - - event 
 CLEAN_EVT = {
-    "mc15": TCut("(event_clean==1) && (n_vx>=1) && (bsm_tj_dirty_jet==0)"),
-    "mc16": TCut("n_pvx > 0"),
+    "mc15": ROOT.TCut("(event_clean==1) && (n_vx>=1) && (bsm_tj_dirty_jet==0)"),
+    "mc16": ROOT.TCut("n_pvx > 0"),
 }
 
 ##------------------------------------------------------------------------------------
 ##  - - mT and MET
 ##------------------------------------------------------------------------------------
 MET50 = {
-    "mc15": TCut("met_et>50000"),
-    "mc16": TCut("met_p4->Et() > 50"),
+    "mc15": ROOT.TCut("met_et>50000"),
+    "mc16": ROOT.TCut("met_p4->Et() > 50"),
 }
 MET100 = {
-    "mc15": TCut("met_et>100000"),
-    "mc16": TCut("met_p4->Et() > 100"),
+    "mc15": ROOT.TCut("met_et>100000"),
+    "mc16": ROOT.TCut("met_p4->Et() > 100"),
 }
     
 MET150 = {
-    "mc15": TCut("met_et > 150000"),
-    "mc16": TCut("met_p4->Et() > 150"),
+    "mc15": ROOT.TCut("met_et > 150000"),
+    "mc16": ROOT.TCut("met_p4->Et() > 150"),
 }
 
 MET200 = {
-    "mc15": TCut("met_et > 200000"),
-    "mc16": TCut("met_p4->Et() > 200"),
+    "mc15": ROOT.TCut("met_et > 200000"),
+    "mc16": ROOT.TCut("met_p4->Et() > 200"),
 }
 
 MET_MAX150 = {
-    "mc15": TCut("met_et < 150000"),
-    "mc16": TCut("met_p4->Et() < 150"),
+    "mc15": ROOT.TCut("met_et < 150000"),
+    "mc16": ROOT.TCut("met_p4->Et() < 150"),
 }
 MET_MAX80 = {
-    "mc15": TCut("met_et < 80000"),
-    "mc16": TCut("met_p4->Et() < 80"),
+    "mc15": ROOT.TCut("met_et < 80000"),
+    "mc16": ROOT.TCut("met_p4->Et() < 80"),
 }
 
 MT50 = {
-    "mc15": TCut("tau_0_met_mt > 50000"),
-    "mc16": TCut("tau_0_met_mt > 50")
+    "mc15": ROOT.TCut("tau_0_met_mt > 50000"),
+    "mc16": ROOT.TCut("tau_0_met_mt > 50")
 }
 MT_MAX100 = {
-    "mc15": TCut("tau_0_met_mt < 100000"),
-    "mc16": TCut("tau_0_met_mt < 100")
+    "mc15": ROOT.TCut("tau_0_met_mt < 100000"),
+    "mc16": ROOT.TCut("tau_0_met_mt < 100")
 }
 
  
 ##------------------------------------------------------------------------------------
 ##  - - tau
 ##------------------------------------------------------------------------------------
-TAU_Q = TCut("abs(tau_0_q)==1")
-TAU_DECAY_MODE = TCut("tau_0_decay_mode==0")
+TAU_Q = ROOT.TCut("abs(tau_0_q)==1")
+TAU_DECAY_MODE = ROOT.TCut("tau_0_decay_mode==0")
 
-TAUID_LOOSE = TCut("tau_0_jet_bdt_loose==1")
-TAUID_MEDIUM = TCut("tau_0_jet_bdt_medium==1")
-TAUID_TIGHT = TCut("tau_0_jet_bdt_tight==1")
+# TAUID_LOOSE = ROOT.TCut("tau_0_jet_bdt_loose==1")
+# TAUID_MEDIUM = ROOT.TCut("tau_0_jet_bdt_medium==1")
+# TAUID_TIGHT = ROOT.TCut("tau_0_jet_bdt_tight==1")
+
+TAUID_LOOSE = ROOT.TCut("tau_0_jet_rnn_loose==1")
+TAUID_MEDIUM = ROOT.TCut("tau_0_jet_rnn_medium==1")
+TAUID_TIGHT = ROOT.TCut("tau_0_jet_rnn_tight==1")
 
 TAU_1_TRACK = {
-    "mc15": TCut("tau_0_n_tracks==1"),
-    "mc16": TCut("tau_0_n_charged_tracks==1"),
+    "mc15": ROOT.TCut("tau_0_n_tracks==1"),
+    "mc16": ROOT.TCut("tau_0_n_charged_tracks==1"),
 }
 TAU_3_TRACK = {
-    "mc15": TCut("tau_0_n_tracks==3"),
-    "mc16": TCut("tau_0_n_charged_tracks==3"),
+    "mc15": ROOT.TCut("tau_0_n_tracks==3"),
+    "mc16": ROOT.TCut("tau_0_n_charged_tracks==3"),
 }
+
 TAU_TRACKS = {
-    "mc15": TCut("tau_0_n_tracks==1"),# || tau_0_n_tracks==3"),
-    "mc16": TCut("tau_0_n_charged_tracks==1"),#||tau_0_n_charged_tracks==3"),
+    "mc15": ROOT.TCut("tau_0_n_tracks==1|| tau_0_n_tracks==3"),
+    "mc16": ROOT.TCut("tau_0_n_charged_tracks==1||tau_0_n_charged_tracks==3"),
 }
 
 TAU_PT30 = {
-    "mc15": TCut("tau_0_pt > 30000"),
-    "mc16": TCut("tau_0_p4->Pt() > 30") ,
+    "mc15": ROOT.TCut("tau_0_pt > 30000"),
+    "mc16": ROOT.TCut("tau_0_p4->Pt() > 30") ,
 }
 TAU_PT40 = {
-    "mc15": TCut("tau_0_pt > 40000"),
-    "mc16": TCut("tau_0_p4->Pt() > 40") ,
+    "mc15": ROOT.TCut("tau_0_pt > 40000"),
+    "mc16": ROOT.TCut("tau_0_p4->Pt() > 40") ,
 }
 TAU_ETA = {
-    "mc15": TCut("abs(tau_0_eta)<2.3 && !(abs(tau_0_eta)< 1.52 && abs(tau_0_eta)> 1.37)"),
-    "mc16": TCut("abs(tau_0_p4->Eta())<2.3 && !(abs(tau_0_p4->Eta())< 1.52 && abs(tau_0_p4->Eta())> 1.37)") ,
+    "mc15": ROOT.TCut("abs(tau_0_eta)<2.3 && !(abs(tau_0_eta)< 1.52 && abs(tau_0_eta)> 1.37)"),
+    "mc16": ROOT.TCut("abs(tau_0_p4->Eta())<2.3 && !(abs(tau_0_p4->Eta())< 1.52 && abs(tau_0_p4->Eta())> 1.37)") ,
 }
 
 ## tau truth lable
-TAU_IS_TRUE = TCut("true_tau_0_isHadTau")
-TAU_IS_LEP = TCut("true_tau_0_isMuon || true_tau_0_isEle")
-TAU_IS_EL = TCut("true_tau_0_isEle")
-TAU_IS_EL_OR_HAD = TCut("true_tau_0_isHadTau || true_tau_0_isEle")
-TAU_IS_LEP_OR_HAD = TCut("true_tau_0_isHadTau || true_tau_0_isEle || true_tau_0_isMuon")
+TAU_IS_TRUE = ROOT.TCut("true_tau_0_isHadTau")
+TAU_IS_LEP = ROOT.TCut("true_tau_0_isMuon || true_tau_0_isEle")
+TAU_IS_EL = ROOT.TCut("true_tau_0_isEle")
+TAU_IS_EL_OR_HAD = ROOT.TCut("true_tau_0_isHadTau || true_tau_0_isEle")
+TAU_IS_LEP_OR_HAD = ROOT.TCut("true_tau_0_isHadTau || true_tau_0_isEle || true_tau_0_isMuon")
 
 ## tau jet parton label 
-TAU_IS_LIGHT_QUARK = TCut("true_tau_0_jet_pdgId>0 && true_tau_0_jet_pdgId <4")
-TAU_IS_C_QUARK = TCut("true_tau_0_jet_pdgId==4")
-TAU_IS_B_QUARK = TCut("true_tau_0_jet_pdgId==5")
-TAU_IS_GLUON = TCut("true_tau_0_jet_pdgId==21")
-TAU_IS_OTHER = TCut("!(%s || %s || %s ||%s ||%s || %s)"%(
+TAU_IS_LIGHT_QUARK = ROOT.TCut("true_tau_0_jet_pdgId>0 && true_tau_0_jet_pdgId <4")
+TAU_IS_C_QUARK = ROOT.TCut("true_tau_0_jet_pdgId==4")
+TAU_IS_B_QUARK = ROOT.TCut("true_tau_0_jet_pdgId==5")
+TAU_IS_GLUON = ROOT.TCut("true_tau_0_jet_pdgId==21")
+TAU_IS_OTHER = ROOT.TCut("!(%s || %s || %s ||%s ||%s || %s)"%(
     TAU_IS_EL.GetTitle(), TAU_IS_LIGHT_QUARK, TAU_IS_C_QUARK, TAU_IS_B_QUARK, TAU_IS_GLUON, TAU_IS_TRUE))
 
 ## QCD fake tau
-TAU_IS_FAKE = TCut("!(%s || %s)"%(TAU_IS_TRUE, TAU_IS_LEP))
-ANTI_TAU = TCut("tau_0_jet_bdt_score_trans > 0.02 && tau_0_jet_bdt_loose==0")
+TAU_IS_FAKE = ROOT.TCut("!(%s || %s)"%(TAU_IS_TRUE, TAU_IS_LEP))
+# ANTI_TAU = ROOT.TCut("tau_0_jet_bdt_score_trans > 0.02 && tau_0_jet_bdt_loose==0")
+ANTI_TAU = ROOT.TCut("tau_0_jet_rnn_score_trans > 0.02 && tau_0_jet_rnn_loose==0")
 
 
 VETO_TAU = ROOT.TCut("n_taus==0")
 TAU_EL_OLR_PASS = {
-    "mc15": TCut("tau_0_ele_olr_pass==1"),
-    "mc16": TCut("tau_0_ele_bdt_medium==1"),
-    # "mc16": TCut("tau_0_ele_olr_pass==1"),
+    "mc15": ROOT.TCut("tau_0_ele_olr_pass==1"),
+    "mc16": ROOT.TCut("tau_0_ele_bdt_medium==1"),
+    # "mc16": ROOT.TCut("tau_0_ele_olr_pass==1"),
 
 }
 
@@ -138,24 +144,24 @@ for mcc in ["mc15", "mc16"]:
 ##  - - lepton
 ##------------------------------------------------------------------------------------
 LEP_VETO = {
-    "mc15": TCut("(n_electrons + n_muons)==0"),
-    "mc16": TCut("(n_electrons + n_muons)==0"),
+    "mc15": ROOT.TCut("(n_electrons + n_muons)==0"),
+    "mc16": ROOT.TCut("(n_electrons + n_muons)==0"),
 }
-ONE_LEP = TCut("(n_electrons + n_muons)==1")
+ONE_LEP = ROOT.TCut("(n_electrons + n_muons)==1")
 
 LEP_PT30 = {
-    "mc15": TCut("(mu_0_pt + el_0_pt)> 30000"),
-    "mc16": TCut("(mu_0_p4->Pt() + el_0_p4->Pt()) > 30") ,
+    "mc15": ROOT.TCut("(mu_0_pt + el_0_pt)> 30000"),
+    "mc16": ROOT.TCut("(mu_0_p4->Pt() + el_0_p4->Pt()) > 30") ,
 }
 
 # - - - - lep ID
 ELID_TIGHT = {
-    "mc15":TCut("n_electrons && el_0_id_tight"),
-    "mc16":TCut("n_electrons && el_0_id_tight"),
+    "mc15":ROOT.TCut("n_electrons && el_0_id_tight"),
+    "mc16":ROOT.TCut("n_electrons && el_0_id_tight"),
 }
 MUID_TIGHT = {
-    "mc15":TCut("n_muons && mu_0_id_tight"),
-    "mc16":TCut("n_muons && mu_0_id_tight"),
+    "mc15":ROOT.TCut("n_muons && mu_0_id_tight"),
+    "mc16":ROOT.TCut("n_muons && mu_0_id_tight"),
 }
 
 EL_BASE = {
@@ -165,13 +171,16 @@ EL_BASE = {
                       "&& (abs(el_0_p4->Eta()) < 2.47 && !(abs(el_0_p4->Eta()) < 1.52 && abs(el_0_p4->Eta()) > 1.37))"),
 }
 MU_BASE = {
-    "mc15": ROOT.TCut("n_muons==1 && mu_0_pt > 30000 && mu_0_id_tight && mu_0_iso_Gradient && abs(mu_0_eta) < 2.5"),
-    "mc16": ROOT.TCut("n_muons==1 && mu_0_p4->Pt() > 30 && mu_0_id_tight && mu_0_iso_Gradient && abs(mu_0_p4->Eta()) < 2.5"),
+#     "mc15": ROOT.TCut("n_muons==1 && mu_0_pt > 30000 && mu_0_id_tight && mu_0_iso_Gradient && abs(mu_0_eta) < 2.5"),
+#     "mc16": ROOT.TCut("n_muons==1 && mu_0_p4->Pt() > 30 && mu_0_id_tight && mu_0_iso_Gradient && abs(mu_0_p4->Eta()) < 2.5"),
+# Switching to mu_0_iso_FCTight_FixedRad
+    "mc15": ROOT.TCut("n_muons==1 && mu_0_pt > 30000 && mu_0_id_tight && mu_0_iso_FCTight_FixedRad && abs(mu_0_eta) < 2.5"),
+    "mc16": ROOT.TCut("n_muons==1 && mu_0_p4->Pt() > 30 && mu_0_id_tight && mu_0_iso_FCTight_FixedRad && abs(mu_0_p4->Eta()) < 2.5"),
 }
 
 LEP_BASE = {}
 for mc_camp in ["mc15", "mc16"]:
-    LEP_BASE[mc_camp] = TCut("%s &&(%s || %s)"%(ONE_LEP, EL_BASE[mc_camp], MU_BASE[mc_camp]))
+    LEP_BASE[mc_camp] = ROOT.TCut("%s &&(%s || %s)"%(ONE_LEP.GetTitle(), EL_BASE[mc_camp].GetTitle(), MU_BASE[mc_camp].GetTitle()))
 
 VETO_EL = ROOT.TCut("n_electrons==0")
 VETO_MU = ROOT.TCut("n_muons==0")
@@ -197,23 +206,23 @@ TAU_EL_MASS = ROOT.TCut("(40 < {0}) && ({0} < 140)".format(MASS_STR))
 
 # - - - - W lep
 W_LEP_MT_60 = {
-    "mc15": TCut("(sqrt(2. * el_0_pt * met_et"\
+    "mc15": ROOT.TCut("(sqrt(2. * el_0_pt * met_et"\
                       "* (1 - cos(met_phi - el_0_phi)))"\
                       "+ sqrt(2. * mu_0_pt * met_et"\
                       "* (1 - cos(met_phi - mu_0_phi) ) ) ) > 60000"),
     
-    "mc16": TCut("(sqrt(2. * el_0_p4->Pt() * met_p4->Et()"\
+    "mc16": ROOT.TCut("(sqrt(2. * el_0_p4->Pt() * met_p4->Et()"\
                  "* (1-cos(met_p4->Phi() - el_0_p4->Phi())))"\
                  "+ sqrt(2. * mu_0_p4->Pt() * met_p4->Et()"\
                  "* (1 - cos(met_p4->Phi()-mu_0_p4->Phi() ) ) ) ) > 60")
 }
 W_LEP_MT_MAX160 = {
-    "mc15": TCut("(sqrt(2. * el_0_pt * met_et"\
+    "mc15": ROOT.TCut("(sqrt(2. * el_0_pt * met_et"\
                       "* (1 - cos(met_phi - el_0_phi)))"\
                       "+ sqrt(2. * mu_0_pt * met_et"\
                       "* (1 - cos(met_phi - mu_0_phi) ) ) ) < 160000"),
     
-    "mc16": TCut("(sqrt(2. * el_0_p4->Pt() * met_p4->Et()"\
+    "mc16": ROOT.TCut("(sqrt(2. * el_0_p4->Pt() * met_p4->Et()"\
                  "* (1-cos(met_p4->Phi() - el_0_p4->Phi())))"\
                  "+ sqrt(2. * mu_0_p4->Pt() * met_p4->Et()"\
                  "* (1 - cos(met_p4->Phi()-mu_0_p4->Phi() ) ) ) ) < 160")
@@ -223,22 +232,22 @@ W_LEP_MT_MAX160 = {
 ##------------------------------------------------------------------------------------
 ##  - - jets
 ##------------------------------------------------------------------------------------
-NUM_JETS1  = TCut("n_jets > 0")
-NUM_JETS2  = TCut("n_jets > 1")
-NUM_JETS3  = TCut("n_jets > 2")
-NUM_JETS4  = TCut("n_jets > 3")
+NUM_JETS1  = ROOT.TCut("n_jets > 0")
+NUM_JETS2  = ROOT.TCut("n_jets > 1")
+NUM_JETS3  = ROOT.TCut("n_jets > 2")
+NUM_JETS4  = ROOT.TCut("n_jets > 3")
 
-NUM_BJETS1 = TCut("n_bjets > 0")
-NUM_BJETS2 = TCut("n_bjets > 1")
-BVETO = TCut("n_bjets==0")
+NUM_BJETS1 = ROOT.TCut("n_bjets > 0")
+NUM_BJETS2 = ROOT.TCut("n_bjets > 1")
+BVETO = ROOT.TCut("n_bjets==0")
 
 JET_PT25 = {
-    "mc15": TCut("jet_0_pt > 25000"),
-    "mc16": TCut("jet_0_p4->Pt() > 25"),
+    "mc15": ROOT.TCut("jet_0_pt > 25000"),
+    "mc16": ROOT.TCut("jet_0_p4->Pt() > 25"),
 }
 BJET_PT25 = {
-    "mc15": TCut("bjet_0_pt > 25000"),
-    "mc16": TCut("bjet_0_p4->Pt() > 25"),
+    "mc15": ROOT.TCut("bjet_0_pt > 25000"),
+    "mc16": ROOT.TCut("bjet_0_p4->Pt() > 25"),
 }
 
 ## negative MC weights 
@@ -776,10 +785,10 @@ CUTFLOW = {
     "taujet": OrderedDict(
         [
             # ("cleanEvent",  CLEAN_EVT),
-            ("trigger", TCut("1.>0")), #<! trigger is applied globally (just a place holder here)
-            ("tauID", TCut("tau_0_jet_bdt_medium==1")),
+            ("trigger", ROOT.TCut("1.>0")), #<! trigger is applied globally (just a place holder here)
+            ("tauID", ROOT.TCut("tau_0_jet_rnn_medium==1")),
             ("taupT40", TAU_PT40["mc16"]+TAU_BASE["mc16"]),  
-            ("lepVeto", TCut("(n_muons+n_electrons)==0 &&tau_0_ele_bdt_medium==1")),
+            ("lepVeto", ROOT.TCut("(n_muons+n_electrons)==0 &&tau_0_ele_bdt_medium==1")),
             # ("3jets", NUM_JETS3),
             # ("jetPt25", JET_PT25),
             ("1bjets", NUM_BJETS1),

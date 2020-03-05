@@ -4,6 +4,7 @@ Update the datasets database
 """
 from argparse import ArgumentParser
 import yaml
+import sys
 
 ##-----------------------------------------------------------------------
 ## setup cmd args
@@ -20,7 +21,7 @@ parser.add_argument('--info', action='store_true', default=False)
 parser.add_argument('--name', default='DB')
 parser.add_argument('--config', default='hpana/db/datasets_config.yml')
 parser.add_argument('-v', '--verbose', action='store_true', default=False)
-parser.add_argument('--version', type=str)
+parser.add_argument('--vers', type=str)
 parser.add_argument('--log', default="INFO", choices=("DEBUG", "INFO", "WARNING", "ERROR"))
 parser.add_argument('channel', choices=("taujet", "taulep"))
 args = parser.parse_args()
@@ -30,9 +31,7 @@ from hpana.db.datasets import Database
 from hpana import log
 
 # - - - - - - - - create a database 
-log.info("WHAT")
-print "WHAT"
-db = Database(name="%s_%s%s"%(args.name, args.channel, args.version),
+db = Database(name="%s_%s%s"%(args.name, args.channel, args.vers),
               verbose=args.verbose, log_level=args.log)
 
 # - - - - - - - - validate the database 
@@ -52,8 +51,8 @@ elif args.info:
     print "%i datasets in database" % len(db)
     for name in sorted(db.keys()):
         if len(db[name].files) == 0:
-            print "EMPTY DATASET"
-            sys.exit(1)
+            print "EMPTY DATASET: %s" %(name)
+            # sys.exit(1)
 
 # - - - - - - - - updated the datebase                     
 else:

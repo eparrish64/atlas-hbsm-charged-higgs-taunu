@@ -240,6 +240,7 @@ def dataset_hists_direct(hist_worker,
                   outdir="histsdir",
                   clf_models={},
                   clf_Keras_models={},
+                  isNN=False,
                   **kwargs):
     """ produces histograms for a dataset. 
     This static method is mainly used for parallel processing.
@@ -351,6 +352,7 @@ def dataset_hists_direct(hist_worker,
 
                     # - - cache only the events that pass the selections
                     selection = category.cuts.GetTitle()
+                    selection = selection.replace("Name: CUT Title: ", "")
                     event_selection = ROOT.TTreeFormula("event_selection", selection, tree)
 
 
@@ -386,10 +388,9 @@ def dataset_hists_direct(hist_worker,
                         correct_upsilon = False
                         if m_hists[0].sample.startswith("QCD"):
                             correct_upsilon = True
-
-                        #fill_scores_mult(tree, clf_models, hist_templates, event_list, event_weight=event_weight, correct_upsilon=correct_upsilon) 
-                        fill_scores_mult(tree, clf_models, clf_Keras_models, hist_templates, event_list, event_weight=event_weight, correct_upsilon=correct_upsilon)
-
+                        #fill_scores_mult(tree, clf_models, hist_templates, event_list, event_weight=event_weight,
+                        fill_scores_mult(tree, clf_models, hist_templates, event_list, all_Keras_models=clf_Keras_models, event_weight=event_weight,
+                            correct_upsilon=correct_upsilon, isNN=isNN) 
                     else:
                         # - - loop over the events
                         for i, event in enumerate(tree):

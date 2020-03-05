@@ -375,6 +375,9 @@ def get_clf_parser():
     clf_parser.add_argument("--parse-auc", action="store_true",
                             help="Only parse optimization output txt files")
 
+    clf_parser.add_argument("--plot-sample-size", action="store_true",
+                            help="Plot the size (number of events) of background and signal samples")
+
     return clf_parser
 
 def get_evalclf_parser(base_parser=None):
@@ -427,5 +430,8 @@ def get_evalclf_parser(base_parser=None):
 
     evalclf_parser.add_argument("--pickled-analysis", type=str, default="ANALYSIS.pkl",
                             help="main analysis object pickled to be shipped to the worker nodes")
+
+    evalclf_parser.add_argument("--eval-nn", action="store_true",
+                                help="Evaluate the neural net")
 
     return evalclf_parser

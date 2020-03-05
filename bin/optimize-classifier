@@ -143,6 +143,7 @@ if CLF_ARGS.parse_auc:
                         # f = "/xdata/eparrish/HPlusTauNuOutput/fullRun2/taulep_OptimizeClassifierCondor_SINGLE/AUC/%s_auc.txt" %(clf_name.replace(".pkl",""))
                         f = CLF_ARGS.outdir+"AUC/%s_auc.txt" %(clf_name.replace(".pkl",""))
                         # print f
+                        # print f
                         if os.path.isfile(f):
                             line = linecache.getline(f, 4)
                             # print line

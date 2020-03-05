@@ -222,7 +222,7 @@ def main():
                                  ANA_ARGS.outdir, ANA_ARGS.logsdir),
                              execScript=os.path.join(__HERE, "condor_jobs.sh"),
                              userEmail="Z1832314@students.niu.edu",
-                             memory="3GB",
+                             memory="1GB",
                              # jobname=aw.name,  #<! important - jobname steers which worker used from pickled ana
                              submitdir=__HERE,
                              source_code=source_code_tarball,
@@ -334,7 +334,7 @@ def draw_plots(hists_file, fields, categories):
         "signals":analysis.get_signals(masses=[140,160, 400, 2000]),        
         "signal_scale":1,
         "systematics":ANA_ARGS.systs,
-        "output_dir":"plots_"+ANA_ARGS.outdir,
+        "output_dir":ANA_ARGS.outdir+"plots",
         "logy":ANA_ARGS.logy,
         "logx":False,
         "show_ratio":True,

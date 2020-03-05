@@ -50,6 +50,6 @@ if __name__=="__main__":
 
         # - - get the hists 
         start_time = time.time()
-        dataset_hists_direct(worker, clf_models=pmodels, write_hists=True, outdir="./")
+        dataset_hists_direct(worker, clf_models=pmodels, write_hists=True, outdir="./", isNN=sys.argv[4])
         end_time = time.time()
         print "Execution Time:\t  %0.2f"%(end_time - start_time)

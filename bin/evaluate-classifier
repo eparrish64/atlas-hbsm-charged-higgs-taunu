@@ -25,20 +25,19 @@ from hpana.mva.classifier import Classifier, SClassifier
 from hpana.mva import N_TRACKS, PKL_FILE_PATTERN, XML_FILE_PATTERN, ALL_FEATS, BRANCHES 
 from hpana.mva.evaluation import AppendJob, plot_scores, get_models, evaluate_scores_on_trees
 
-# Keras
-#environ['KERAS_BACKEND'] = 'theano'
-environ['KERAS_BACKEND'] = 'tensorflow'
-# Set architecture of system (AVX instruction set is not supported on SWAN)
-environ['THEANO_FLAGS'] = 'gcc.cxxflags=-march=corei7'
-import tensorflow as tf
-import keras
-from keras.models import Sequential
-from keras.layers import Dense, Activation, BatchNormalization
-from keras.regularizers import l2
-from keras import initializers
-from keras.optimizers import SGD
-from keras.wrappers.scikit_learn import KerasClassifier
-from keras.models import load_model
+if ECLF_ARGS.eval_nn == True:
+    environ['KERAS_BACKEND'] = 'tensorflow'
+    # Set architecture of system (AVX instruction set is not supported on SWAN)
+    environ['THEANO_FLAGS'] = 'gcc.cxxflags=-march=corei7'
+    import tensorflow as tf
+    import keras
+    from keras.models import Sequential
+    from keras.layers import Dense, Activation, BatchNormalization
+    from keras.regularizers import l2
+    from keras import initializers
+    from keras.optimizers import SGD
+    from keras.wrappers.scikit_learn import KerasClassifier
+    from keras.models import load_model
 
 ## setup logger
 from hpana import log
@@ -53,7 +52,7 @@ ROOT.gROOT.SetBatch(True)
 #-----------------------------------------------
 # consts
 #-----------------------------------------------
-TMP_DATASETS = [  
+TMP_DATASETS = [
     "LepFakes.Wtaunu.Sherpa_221_NNPDF30NNLO_Wtaunu_MAXHTPTV140_280_BFilter_9364__001",
     "LepFakes.Ztautau.Sherpa_221_NNPDF30NNLO_Ztautau_MAXHTPTV500_1000_9364",
     "Wtaunu.Sherpa_221_NNPDF30NNLO_Wtaunu_MAXHTPTV280_500_CVetoBVeto_9364",
@@ -74,13 +73,13 @@ if ECLF_ARGS.backend=="tmva":
     ## initialize TMVA
     ROOT.TMVA.Tools.Instance()
     ROOT.TMVA.PyMethodBase.PyInitialize()
-if ECLF_ARGS.mtype=="keras":
-    METHOD_TYPE = TMVA.Types.kPyKeras
-    ## - -  Select Theano as backend for Keras
-    os.environ['KERAS_BACKEND'] = 'theano'
+# if ECLF_ARGS.mtype=="keras":
+#     METHOD_TYPE = TMVA.Types.kPyKeras
+#     ## - -  Select Theano as backend for Keras
+#     os.environ['KERAS_BACKEND'] = 'theano'
     
-    ## - - Set architecture of system (AVX instruction set is not supported on SWAN)
-    environ['THEANO_FLAGS'] = 'gcc.cxxflags=-march=corei7'
+#     ## - - Set architecture of system (AVX instruction set is not supported on SWAN)
+#     environ['THEANO_FLAGS'] = 'gcc.cxxflags=-march=corei7'
 
 
 ##-----------------------------------------------
@@ -96,8 +95,7 @@ def main():
     os.system("mkdir -p %s"%ECLF_ARGS.outdir)
 
     if ECLF_ARGS.plot_scores:
-        #models = get_models(ECLF_ARGS.models)
-        models, Keras_models = get_models(ECLF_ARGS.models)
+        models, Keras_models = get_models(ECLF_ARGS.models, isNN=ECLF_ARGS.eval_nn)
         # - -  build analysis main configuration object
         config = Configuration(ECLF_ARGS.channel, data_streams=ECLF_ARGS.data_streams, db_version=ECLF_ARGS.db_version)
         
@@ -120,82 +118,173 @@ def main():
 
         b_df = dframe[dframe["class_label"]==0]
         s_df = dframe[dframe["class_label"]==1]
-        s_df["TruthMass"] = s_df.index.get_level_values(0)
-        s_df["TruthMass"] = pd.to_numeric(s_df.TruthMass.replace({"Hplus": ""}, regex=True))
-        b_df["TruthMass"] = np.random.choice( a=s_df["TruthMass"], size=b_df.shape[0] )
+
+        if ECLF_ARGS.eval_nn:
+            s_df["TruthMass"] = s_df.index.get_level_values(0)
+            s_df["TruthMass"] = pd.to_numeric(s_df.TruthMass.replace({"Hplus": ""}, regex=True))
+            b_df["TruthMass"] = np.random.choice( a=s_df["TruthMass"], size=b_df.shape[0] )
+
         dframe = pd.concat([b_df, s_df], axis=0)
 
         jobs = []
-        #for mtag, trained_models in models.iteritems():
-        for trained_models, trained_Keras_models in zip(models.values(), Keras_models.values()):
-            plot_scores(trained_models, trained_Keras_models, dframe=dframe, backgrounds=backgrounds, signals=signals, outdir=ECLF_ARGS.outdir, formats=[".pdf", ".png"], inclusive_trks=ECLF_ARGS.inc_trks)
-            #jobs += [Job(plot_scores, trained_models, dframe=dframe,
-            #    backgrounds=backgrounds, signals=signals, outdir=ECLF_ARGS.outdir, formats=[".pdf", ".png", ".eps"], inclusive_trks=ECLF_ARGS.inc_trks)]
 
-        #if ECLF_ARGS.parallel:
-        #    log.info("************** submitting %i jobs  ************" % len(jobs))
-        #    log.info("***********************************************")
-        #    run_pool(jobs, n_jobs=ECLF_ARGS.ncpu)
-        #else:
-        #    run_pool(jobs, n_jobs=1)
+        if ECLF_ARGS.eval_nn:
+            for trained_models, trained_Keras_models in zip(models.values(), Keras_models.values()): 
+                plot_scores(trained_models, trained_Keras_models, dframe=dframe, backgrounds=backgrounds, signals=signals, outdir=ECLF_ARGS.outdir, formats=[".pdf", ".png"], inclusive_trks=ECLF_ARGS.inc_trks, isNN=ECLF_ARGS.eval_nn)
+        else:
+            for mtag, trained_models in models.iteritems():
+                jobs += [Job(plot_scores, trained_models,
+                   dframe=dframe, backgrounds=backgrounds, signals=signals, outdir=ECLF_ARGS.outdir, formats=[".pdf", ".png"], inclusive_trks=ECLF_ARGS.inc_trks)]
+
+            if ECLF_ARGS.parallel:
+               log.info("************** submitting %i jobs  ************" % len(jobs))
+               log.info("***********************************************")
+               run_pool(jobs, n_jobs=ECLF_ARGS.ncpu)
+            else:
+               run_pool(jobs, n_jobs=1)
 
     if ECLF_ARGS.indirect:
+        # - -  build analysis main configuration object
+        config = Configuration(ECLF_ARGS.channel, data_streams=ECLF_ARGS.data_streams, db_version=ECLF_ARGS.db_version)
+
+        # - -  instantiate the analysis
+        analysis = Analysis(config, compile_cxx=True)
+
+        # # - -  some checks on cmd args
+        if ECLF_ARGS.fields:
+            fields = filter(lambda v: v.name in ECLF_ARGS.fields, BDT_SCORES[ECLF_ARGS.channel][ECLF_ARGS.bin_scheme])
+        else:
+            fields = BDT_SCORES[ECLF_ARGS.channel][ECLF_ARGS.bin_scheme]
+
+        if ECLF_ARGS.categories:
+            categories = filter(
+                lambda c: c.name in ECLF_ARGS.categories, config.categories)
+        else:
+            categories = config.categories
+
+        ## systematics
+        all_systematics = config.systematics[:]  # <! common systematics
+        all_systematics += analysis.qcd.systematics  # <! QCD fakes only
+        if ECLF_ARGS.systematics:
+            systematics = filter(
+                lambda s: s.name in ECLF_ARGS.systematics, all_systematics)
+        elif ECLF_ARGS.systs:
+            systematics = []# all_systematics
+        else:
+            systematics = config.systematics[:1] #<! NOMINAL
+
+        # - -  if you wish to look at specific samples
+        if ECLF_ARGS.samples:
+            samples = filter(lambda s: s.name in ECLF_ARGS.samples, analysis.samples)
+        else:
+            samples = analysis.samples #get_signals()
 
         if ECLF_ARGS.cluster:
-            models = get_models(ECLF_ARGS.models)
-            # print models
-            # - - write jobs
-            from hpana.cluster.job_template import CONDOR_JOB_TEMPLATE
+            ## setup the submit dir
+            os.system("mkdir -p {0}/jobs  {0}/logs {0}/hists".format(ECLF_ARGS.outdir))
+            submitfile_name = "%s/%s.sh" % (ECLF_ARGS.outdir, "submitAllJobs")
+            submit_file = os.open(submitfile_name, os.O_CREAT | os.O_WRONLY, 0755)
 
-            ## zip source code
-            log.info("Creating source code tarball...")
-            source_code_tarball = os.path.abspath(ECLF_ARGS.outdir+"/source_code.tar.gz")
-            if os.path.isfile(source_code_tarball):
-                os.system("rm -rf %s"%source_code_tarball)
+            analysis.setWorkers(samples=samples, fields=fields, categories=categories, systematics=systematics)
+            ana_workers = analysis.getWorkers()
+            ## pickle the analysis: IF YOU DONT WANT TO SHIP THE WHOLE CODE TO THE NODES.
+            with open(ECLF_ARGS.pickled_analysis, "wb") as pfile:
+                dill.dump(analysis, pfile)
 
-            src_ds = ["bin", "hpana", "aux", "setup.sh"]
-            src_ds = " ".join(src_ds)
-            os.system("cd {src_dir} && tar -cf {target_tar} {source_files} && cd - && tar --append --file={target_tar}".format(
-                src_dir=__HERE+"/../", target_tar=source_code_tarball, source_files=src_ds))        
+            if ECLF_ARGS.rs_manager == "CONDOR":
+                from hpana.cluster.job_template import CONDOR_JOB_TEMPLATE
 
-            # - - setup the submit dir
-            os.system("mkdir -p {0}/jobs  {0}/logs {0}/hists {0}/logs/log {0}/logs/err {0}/logs/out".format(ECLF_ARGS.outdir))
+                ## zip source code
+                log.info("Creating source code tarball...")
+                source_code_tarball = os.path.abspath(ECLF_ARGS.outdir+"/source_code.tar.gz")
+                if os.path.isfile(source_code_tarball):
+                    os.system("rm -rf %s"%source_code_tarball)
 
-            log.info("************** creating %i jobs for HTCondor submission ************" % len(models))
-            log.info("**************************************************************")
-
-            submit_file_name = "%s/submitAllJobs.sh" % (ECLF_ARGS.outdir)
-            submit_file = open(submit_file_name, "w")
-            submit_file.write(
-                         CONDOR_JOB_TEMPLATE.format(
-                             logsdir=os.path.join(
-                                 ECLF_ARGS.outdir, ECLF_ARGS.logsdir),
-                             execScript=os.path.join(__HERE, "condor_jobs_clf.sh"),
-                             userEmail="Z1832314@students.niu.edu",
-                             memory="1GB",
-                         )
-                         )
-
-            for model in models.iteritems():
-                print model
-                submit_file.write("\nArguments = %s %s %s %s \nqueue\n" %(   model.name, 
-                                                                                os.path.join(__HERE, "classifier-evaluator"), 
-                                                                                os.path.join(os.getcwd(),ECLF_ARGS.outdir),
-                                                                                ECLF_ARGS.balanced
-                                                                            )
-                )
-
-                log.info("Writing to %s for job %s ..." %(submit_file_name, model.name))
-
-            submit_file.close()
-            log.warning("Submission not supported from within container.")
-            log.warning("Please launch outside container via:")
-            log.warning("\t condor_submit {0}".format(submit_file_name))
+                src_ds = ["bin", "hpana", "aux", "setup.sh", ECLF_ARGS.pickled_analysis]
+                src_ds = " ".join(src_ds)
+                os.system("cd {src_dir} && tar -cf {target_tar} {source_files} && cd - && tar --append --file={target_tar}".format(
+                    src_dir=__HERE+"/../", target_tar=source_code_tarball, source_files=src_ds))
 
 
+                # wrkDirectory = "/disk/eparrish/databank/"
+                # - - setup the submit dir
+                os.system("mkdir -p {0}/jobs  {0}/logs {0}/hists {0}/logs/log {0}/logs/err {0}/logs/out".format(ECLF_ARGS.outdir))
+
+                if ECLF_ARGS.bin_scheme == "SINGLE" or ECLF_ARGS.bin_scheme == "UP_DOWN":
+                    from hpana.mva import TRAINING_MASS_BINS
+                    indivmodels = {"%sto%s"%(i[0],i[-1]): [] for i in TRAINING_MASS_BINS[ECLF_ARGS.bin_scheme]}
+                    for mass_point in indivmodels.keys():
+                        for model in ECLF_ARGS.models:
+                            if mass_point in os.path.basename(model):
+                                indivmodels[mass_point].append(model)
+                            else:
+                                continue
+
+                    # log.info("************** creating %i jobs for HTCondor submission ************" % len(sum(len(v)for v in indivmodels.values())))
+                    # log.info("**************************************************************")
+
+                    for mass_point in indivmodels:
+
+                        submit_file_name = "%s/submitAllJobs%s.sh" % (ECLF_ARGS.outdir, mass_point)
+                        submit_file = open(submit_file_name, "w")
+                        submit_file.write(
+                                         CONDOR_JOB_TEMPLATE.format(
+                                             logsdir=os.path.join(
+                                                 ECLF_ARGS.outdir, mass_point, ECLF_ARGS.logsdir),
+                                             execScript=os.path.join(__HERE, "condor_jobs_clf_eval.sh"),
+                                             userEmail="Z1832314@students.niu.edu",
+                                             memory="3GB",
+                                         ))
+
+                        os.system("mkdir -p {0}/{1}/jobs  {0}/{1}/logs {0}/{1}/hists {0}/{1}/logs/log {0}/{1}/logs/err {0}/{1}/logs/out".format(ECLF_ARGS.outdir, mass_point))
+                        for aw in ana_workers:
+
+                            submit_file.write("\nArguments = %s %s %s %s %s \nqueue\n" %(     aw.name,  
+                                                                                            os.path.join(__HERE, "classifier-evaluator"), 
+                                                                                            os.path.join(os.getcwd(), ECLF_ARGS.outdir), 
+                                                                                            os.path.abspath(ECLF_ARGS.pickled_analysis), 
+                                                                                            ",".join([wrkDirectory+os.path.basename(m) for m in ECLF_ARGS.models])
+                                                                                            )
+                        )
+
+                        submit_file.close()
+                        log.warning("Submission not supported from within container.")
+                        log.warning("Please launch outside container via:")
+                        log.warning("\t condor_submit {0}".format(submit_file_name)) 
 
 
+                else:
+                    submit_file_name = "%s/submitAllJobs.sh" % (ECLF_ARGS.outdir)
+                    submit_file = open(submit_file_name, "w")
+                    submit_file.write(
+                                     CONDOR_JOB_TEMPLATE.format(
+                                         logsdir=os.path.join(
+                                             ECLF_ARGS.outdir, ECLF_ARGS.logsdir),
+                                         execScript=os.path.join(__HERE, "condor_jobs_clf_eval.sh"),
+                                         userEmail="Z1832314@students.niu.edu",
+                                         memory="3GB",
+                                     ))
+                    log.info("************** creating %i jobs for HTCondor submission ************" % len(ECLF_ARGS.models))
+                    log.info("**************************************************************")
 
+                    for aw in ana_workers:
+                        submit_file.write("\nArguments = %s %s %s %s %s \nqueue\n" %(     aw.name,  
+                                                                                            os.path.join(__HERE, "classifier-evaluator"), 
+                                                                                            os.path.join(os.getcwd(), ECLF_ARGS.outdir), 
+                                                                                            os.path.abspath(ECLF_ARGS.pickled_analysis), 
+                                                                                            ",".join([os.path.basename(m) for m in ECLF_ARGS.models])
+                                                                                            )
+                        )
+
+                        # - - - - write submission to file to be used outside container
+                        log.info("Writing to %s for job %s ..." %
+                                 (submit_file_name, aw.name))
+                        # os.write(submit_file, "sbatch %s\n" % jfile_name)
+
+                    submit_file.close()
+                    log.warning("Submission not supported from within container.")
+                    log.warning("Please launch outside container via:")
+                    log.warning("\t condor_submit {0}".format(submit_file_name))
 
     if ECLF_ARGS.direct:
         # - -  build analysis main configuration object
@@ -233,22 +322,27 @@ def main():
         else:
             samples = analysis.samples #get_signals()
 
-        ## multicore processing 
-        if ECLF_ARGS.parallel:
-            #models = get_models(ECLF_ARGS.models)
-            models, Keras_models = get_models(ECLF_ARGS.models)
+        if ECLF_ARGS.cluster == False:
+            models, Keras_models = get_models(ECLF_ARGS.models, isNN=ECLF_ARGS.eval_nn)
             ## prepare hist workers 
             analysis.setWorkers(samples=samples, fields=fields, categories=categories, systematics=systematics)
             ana_workers = analysis.getWorkers()
 
             jobs = []
             for w in ana_workers:
-                jobs.append(Job(dataset_hists_direct, w, clf_models=models, clf_Keras_models=Keras_models, write_hists=True, outdir=ECLF_ARGS.outdir))
-                dataset_hists_direct (w, clf_models=models, clf_Keras_models=Keras_models, write_hists=True, outdir=ECLF_ARGS.outdir)
+                if ECLF_ARGS.eval_nn:
+                    dataset_hists_direct (w, clf_models=models, clf_Keras_models=Keras_models, write_hists=True, outdir=ECLF_ARGS.outdir, isNN=ECLF_ARGS.eval_nn)
+                else:
+                    ## multicore processing 
+                    if ECLF_ARGS.parallel:
+                        jobs.append(Job(dataset_hists_direct, w, clf_models=models, clf_Keras_models=Keras_models, write_hists=True, outdir=ECLF_ARGS.outdir,isNN=ECLF_ARGS.eval_nn))
+                    else:
+                        dataset_hists_direct (w, clf_models=models, write_hists=True, outdir=ECLF_ARGS.outdir, isNN=ECLF_ARGS.eval_nn)
 
-            log.info("************** submitting %i jobs  ************" % len(jobs))
-            log.info("***********************************************")
-            #run_pool(jobs, n_jobs=ECLF_ARGS.ncpu)
+            if ECLF_ARGS.parallel:
+                log.info("************** submitting %i jobs  ************" % len(jobs))
+                log.info("***********************************************")
+                run_pool(jobs, n_jobs=ECLF_ARGS.ncpu)
 
         ## submit to the batch system 
         if ECLF_ARGS.cluster:
@@ -286,7 +380,6 @@ def main():
 
             if ECLF_ARGS.rs_manager=="SLURM":
                 from hpana.cluster.job_template import SLURM_JOB_TEMPLATE
-
                 for aw in ana_workers:
                     if ECLF_ARGS.dry_run:
                         print "--"*100
@@ -331,15 +424,10 @@ def main():
                 os.close(submit_file)
                 log.warning("Submission not supported from within container.")
                 log.warning("Please launch outside container via:")
-                log.warning("\t sh {0}".format(submitfile_name))        
+                log.warning("\t sh {0}".format(submitfile_name))       
 
             elif ECLF_ARGS.rs_manager == "CONDOR":
                 from hpana.cluster.job_template import CONDOR_JOB_TEMPLATE
-
-                # wrkDirectory = "/nfs/work/pt3wrk0/eparrish/databank/"
-
-                # log.info("Creating databank directory ")
-                # os.system("if [ ! -d '%s' ]; then mkdir -p '%s'; fi" %(wrkDirectory,wrkDirectory)) 
 
                 ## zip source code
                 log.info("Creating source code tarball...")
@@ -352,24 +440,6 @@ def main():
                 os.system("cd {src_dir} && tar -cf {target_tar} {source_files} && cd - && tar --append --file={target_tar}".format(
                     src_dir=__HERE+"/../", target_tar=source_code_tarball, source_files=src_ds))
 
-                # log.info("Copying source code tar to node")
-                # os.system("rsync -axvH --no-g --no-p %s %s; cd %s; tar -xvf source_code.tar.gz; cd -" %(source_code_tarball, wrkDirectory, wrkDirectory))
-
-                # nodes = ["pt3wrk0", "pt3wrk1", "pt3wrk2", "pt3wrk3", "pt3wrk4"]
-                # nodes = ["pt3wrk3", "pt3wrk4"]
-
-                # for node in nodes:
-                    # globWrkDirectory = "/nfs/work/{0}/eparrish/databank/".format(node)
-
-                    # log.info("Creating databank directory ")
-                    # os.system("if [ ! -d '%s' ]; then mkdir -p '%s'; fi" %(globWrkDirectory,globWrkDirectory)) 
-
-                    # log.info("Copying source code tar to node")
-                    # os.system("rsync -axvH --no-g --no-p %s %s; cd %s; tar -xvf source_code.tar.gz; cd -" %(source_code_tarball, globWrkDirectory, globWrkDirectory))
-
-                    # for model in ECLF_ARGS.models:
-                    #     log.info("Transfering model file %s to %s" %(os.path.basename(model),globWrkDirectory))
-                    #     os.system("rsync -av %s '%s'"%(model, globWrkDirectory))
 
                 wrkDirectory = "/disk/eparrish/databank/"
                 # - - setup the submit dir
@@ -474,26 +544,17 @@ def main():
                     log.warning("Submission not supported from within container.")
                     log.warning("Please launch outside container via:")
                     log.warning("\t condor_submit {0}".format(submit_file_name)) 
+   
 
-
-    if ECLF_ARGS.merge_hists:
-        config = Configuration(ECLF_ARGS.channel, data_streams=ECLF_ARGS.data_streams, db_version=ECLF_ARGS.db_version)
-
-        # - -  instantiate the analysis
-        analysis = Analysis(config, compile_cxx=True)
-        if ECLF_ARGS.samples:
-            samples = filter(lambda s: s.name in ECLF_ARGS.samples, analysis.samples)
-        else:
-            samples = analysis.samples #get_signals()
-        log.info(
-            "************** merging histograms  ************")
-        log.info(
-            "***********************************************")
-        analysis.merge_hists(samples=samples, histsdir=ECLF_ARGS.outdir, overwrite=True, write=True)
+        if ECLF_ARGS.merge_hists:
+            log.info(
+                "************** merging histograms  ************")
+            log.info(
+                "***********************************************")
+            analysis.merge_hists(samples=samples, histsdir=ECLF_ARGS.outdir, overwrite=True, write=True)
 
 
     if ECLF_ARGS.append:
-        models = get_models(ECLF_ARGS.models)
         ## sort files based on size to start the heavier ones sooner.
         ECLF_ARGS.files.sort(key=lambda f: os.path.getsize(f), reverse=True)
         jobs = [AppendJob(f, models, copy_file=COPY_FILE, outdir=ECLF_ARGS.outdir) for f in ECLF_ARGS.files]

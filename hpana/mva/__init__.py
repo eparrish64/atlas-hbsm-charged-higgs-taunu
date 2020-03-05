@@ -56,17 +56,24 @@ TRAINING_MASS_BINS = {
     "ALL": [tuple(range(80, 210, 10) + [225, 250, 275, 300, 350] + range(400, 1100, 100) + range(1200, 2200, 200) + [2500, 3000])],
 } 
 
-## - - Hyperparameters for GradientBoosting 
+## - - Hyperparameters for GradientBoosting (used in GridSearc for hyperparams)
 GB_HYPERPARAMS = {
     # "loss": ["deviance", "exponential"],
-    "learning_rate": [0.1, 0.2],
-    "n_estimators":[100, 200,], 
-    "min_samples_leaf": [0.01, 0.02],
-    "max_depth": [10, 15],
+    "learning_rate": [0.05, 0.1, 0.2],
+    "n_estimators":[100, 200, 300], 
+    "min_samples_leaf": [0.001, 0.002, 0.005],
+    "min_samples_split": [0.01, 0.002, 0.004],
+    "max_depth": [10, 20, 30],
 }
 
+NN_HYPERPARAMS = {
+    "batch_size": 256, 
+    "epochs": 40,
+}
+
+
 ## cores for GridSearch hyperparams optimization 
-N_OPT_CORES = 48
+N_OPT_CORES = 2
 
 BDT_FILE_PATTERN = re.compile(
     '^(?P<name>\w+)'

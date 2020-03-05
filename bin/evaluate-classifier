@@ -445,7 +445,7 @@ def main():
                 # - - setup the submit dir
                 os.system("mkdir -p {0}/jobs  {0}/logs {0}/hists {0}/logs/log {0}/logs/err {0}/logs/out".format(ECLF_ARGS.outdir))
 
-                if ECLF_ARGS.bin_scheme == "SINGLE" or ECLF_ARGS.bin_scheme == "UP_DOWN":
+                if ECLF_ARGS.bin_scheme == "SINGLE" or "ALL" or ECLF_ARGS.bin_scheme == "UP_DOWN":
                     from hpana.mva import TRAINING_MASS_BINS
                     indivmodels = {"%sto%s"%(i[0],i[-1]): [] for i in TRAINING_MASS_BINS[ECLF_ARGS.bin_scheme]}
                     for mass_point in indivmodels.keys():

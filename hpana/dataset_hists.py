@@ -255,7 +255,7 @@ def dataset_hists_direct(hist_worker,
     systematics = hist_worker.systematics
     outname = kwargs.pop("outname", hist_worker.name)
     hist_templates = hist_worker.hist_templates
-    
+
     log.debug("*********** processing %s dataset ***********" % dataset.name)
     if not dataset.files:
         log.warning("%s dataset is empty!!" % dataset.name)
@@ -369,16 +369,18 @@ def dataset_hists_direct(hist_worker,
                         eventweight = "(%s)*(%s)" % (eventweight, sw)
                     event_weight = ROOT.TTreeFormula("event_weight", eventweight, tree)
                     event_weight.SetQuickLoad(True)
-                    if clf_models:
+                    #if clf_models:
+                    if clf_Keras_models:
                         # - - create a TEventList of the events passing the selection
                         tree.Draw(">>event_list", selection)
                         event_list = ROOT.gDirectory.Get("event_list") # Used to skip over unselected events
                         hist_templates = dict()
-                        for mtag in clf_models:
+                        #for mtag in clf_models:
+                        for mtag in clf_Keras_models:
                             m_hists =  filter(lambda hs: mtag in hs.variable, cat_hists )
                             if len(m_hists)==0:
                                 continue
-                                
+
                             hist_tmp = m_hists[0].hist
                             hist_tmp.SetName("%s_category_%s_var_%s" %(outname, category.name, m_hists[0].variable))
                             hist_templates[mtag] = hist_tmp

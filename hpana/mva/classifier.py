@@ -27,6 +27,8 @@ from hpana.mva import NN_HYPERPARAMS
 import ROOT
 from ROOT import TMVA
 
+from hpana.mva import TRAINING_MASS_BINS
+
 ##----------------------------------------------------------------------------------
 ## Base classifier class
 ##----------------------------------------------------------------------------------
@@ -549,7 +551,7 @@ def train_model(model,
     if scale_features:
         log.info("Scaling features using StandardScaler ...")
         scaler = StandardScaler()
-        X_train = scaler.fit_transform(X_train.values)
+        #X_train = scaler.fit_transform(X_train.values)
 
     mpath = os.path.join(outdir, model.name)
     is_trained = False 
@@ -565,6 +567,7 @@ def train_model(model,
             else:
                 Keras_model = None
             is_trained =  model.is_trained
+            print "Tu jestem"
             if is_trained:
                 log.warning("The %s model is already trained! set overwrite=True, if you want to overwrite it"%mpath)
                 if overwrite:

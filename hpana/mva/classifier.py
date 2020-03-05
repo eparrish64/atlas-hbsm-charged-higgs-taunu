@@ -16,6 +16,7 @@ from root_numpy import root2array, tree2array
 import numpy as np
 import pandas as pd
 import pickle, cPickle
+from sklearn import utils
 
 ## local 
 from hpana import log 
@@ -503,6 +504,13 @@ def train_model(model,
         s_df["TruthMass"] = s_df.index.get_level_values(0)
         s_df["TruthMass"] = pd.to_numeric(s_df.TruthMass.replace({"Hplus": ""}, regex=True))
         b_df["TruthMass"] = np.random.choice( a=s_df["TruthMass"], size=b_df.shape[0] )
+        train_masses = np.unique(s_df["TruthMass"].values)
+        for i in train_masses:
+            b_df["SampleWeight"] = float(s_df.loc[s_df["TruthMass"]==i].shape[0])/b_df.shape[0]
+            b_df["TruthMass"] = i
+            if (i==80): b_df_masses = b_df.copy()
+            else: b_df_masses = pd.concat([b_df_masses, b_df])
+
 
     if balanced: 
         ## Set training weight of bkg events to 1. Signal events to N_bkg / N_sig.
@@ -517,7 +525,14 @@ def train_model(model,
 
     background_weight = float(s_df.shape[0])/b_df.shape[0]
     train_weights = {0: background_weight, 1: 1}
-    tr_df_ud = pd.concat([b_df, s_df], axis=0)
+
+    if is_NN == True:
+        tr_df_ud = pd.concat([b_df_masses, s_df], axis=0)
+    else:
+        tr_df_ud = pd.concat([b_df, s_df], axis=0)
+
+    tr_df_ud = sklearn.utils.shuffle(tr_df_ud, random_state=123)
+
 
     ## - - training arrays
     X_train = tr_df_ud[[ft.name for ft in features]]    
@@ -542,7 +557,6 @@ def train_model(model,
         log.info("Loading %s model from disk ..."%mpath)
         with open(mpath, "r") as cache:
             model = cPickle.load(cache)
-            log.info(is_NN)
             if is_NN == True:
                 try:
                     Keras_model = cPickle.load(cache)

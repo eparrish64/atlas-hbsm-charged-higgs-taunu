@@ -309,7 +309,7 @@ for signal_masses in train_masses:
 
 
 
-if CLF_ARGS.train_bdt:
+if CLF_ARGS.train_bdt or CLF_ARGS.train_nn:
     if CLF_ARGS.parallel and not CLF_ARGS.train_nn:
         ## - - run
         log.info("**"*30 + " Submitting %i jobs "%len(jobs) + "**"*30)

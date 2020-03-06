@@ -48,8 +48,8 @@ def plot_sig_dist(sdframe, signals=[], outdir=".", outname=None, formats=["png",
 
     fig, ax = plt.subplots()
     ax.scatter(np.array(masses), np.array(dist))
-    ax.set(xlabel=r'H^{\pm} mass(GeV)', ylabel=' # of events',
-        title='Signals Distribution')
+    ax.set(xlabel='mass(GeV)', ylabel=' # of events',
+        title='Signlas Distribution')
     ax.grid()
 
     ## save the plot
@@ -97,7 +97,6 @@ def plot_bkg_dist(bdframe, backgrounds=[], outdir=".", outname=None, formats=["p
 
     plt.close()
 
-    return
 
 
 

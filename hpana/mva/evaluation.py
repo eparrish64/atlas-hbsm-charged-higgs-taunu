@@ -29,6 +29,18 @@ import pandas as pd
 # from keras.wrappers.scikit_learn import KerasClassifier
 
 
+# Keras
+#environ['KERAS_BACKEND'] = 'theano'
+environ['KERAS_BACKEND'] = 'tensorflow'
+# Set architecture of system (AVX instruction set is not supported on SWAN)
+environ['THEANO_FLAGS'] = 'gcc.cxxflags=-march=corei7'
+from keras.models import Sequential, load_model
+from keras.layers import Dense, Activation
+from keras.regularizers import l2
+from keras import initializers
+from keras.optimizers import SGD
+from keras.wrappers.scikit_learn import KerasClassifier
+
 ## local
 from hpana.samples.fakes import QCD
 from hpana import log 
@@ -424,6 +436,7 @@ def get_models(model_files, backend="sklearn", isNN=False):
             # if isNN == True:
             #     mfileh5 = model_file.replace("pkl", "h5")
             with open(model_file, "r") as mfile:
+                #mfileh5 = mfile.replace("pkl", "h5")
                 model = cPickle.load(mfile)
                 if isNN == True:
                     # Keras_model = load_model(mfileh5)

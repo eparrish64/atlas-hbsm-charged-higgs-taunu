@@ -35,6 +35,16 @@ from hpana.mva.optimization import get_hparams
 from hpana.mva import N_TRACKS, FOLD_CUT_STR, TRAINING_MASS_BINS, BRANCHES, ALL_FEATS, GB_HYPERPARAMS
 from hpana.mva.validation import plot_sig_dist, plot_bkg_dist
 
+import tensorflow as tf
+import keras
+from keras.models import Sequential
+from keras.layers import Dense, Activation, BatchNormalization
+from keras.regularizers import l2
+from keras import initializers
+from keras.optimizers import SGD
+from keras.wrappers.scikit_learn import KerasClassifier
+from keras.models import load_model
+
 ## - - set log level
 from hpana import log
 log.setLevel(CLF_ARGS.log)

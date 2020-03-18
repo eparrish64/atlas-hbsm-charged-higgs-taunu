@@ -90,6 +90,8 @@ TAU_3_TRACK = {
 TAU_TRACKS = {
     "mc15": TCut("tau_0_n_tracks==1 || tau_0_n_tracks==3"),
     "mc16": TCut("tau_0_n_charged_tracks==1||tau_0_n_charged_tracks==3"),
+#    "mc15": TCut("tau_0_n_tracks==1 "),
+#    "mc16": TCut("tau_0_n_charged_tracks==1"),
 }
 
 TAU_PT30 = {
@@ -122,8 +124,8 @@ TAU_IS_OTHER = TCut("!(%s || %s || %s ||%s ||%s || %s)"%(
 
 ## QCD fake tau
 TAU_IS_FAKE = TCut("!(%s || %s)"%(TAU_IS_TRUE, TAU_IS_LEP))
-#LD ANTI_TAU = TCut("tau_0_jet_rnn_score_trans > 0.02 && tau_0_jet_rnn_loose==0")
-#ANTI_TAU = TCut("tau_0_jet_rnn_score_trans > 0.02 && tau_0_jet_rnn_medium==0")
+#ANTI_TAU = TCut("tau_0_jet_rnn_score_trans > 0.01 && tau_0_jet_rnn_loose==0")
+#ANTI_TAU = TCut("tau_0_jet_rnn_score_trans > 0.01 && tau_0_jet_rnn_medium==0")
 ANTI_TAU = TCut("tau_0_jet_rnn_loose==0")
 
 

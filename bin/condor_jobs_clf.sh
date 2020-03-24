@@ -11,7 +11,7 @@ fail(){
     echo "failed";
     cd ..;
     rm -rf "$JOBSCRATCH";
-    # exit 1;
+    exit 1;
 }
 
 
@@ -24,7 +24,6 @@ rsync -axvH --no-g --no-p  ${3}/source_code.tar.gz ./ || fail; tar -xvf source_c
 rsync -axvH --no-g --no-p "${3}/${1}" ./ || fail;
 
 source setup.sh || fail;
-
 
 python ${2} "${1}" ${4} ${5} || fail;
 
@@ -43,5 +42,5 @@ else
     cd ..;
     rm -rf {JOBSCRATCH} || fail;
     echo "Job finished and cleaned up after itself";
-    # exit 0;
+    exit 0;
 fi

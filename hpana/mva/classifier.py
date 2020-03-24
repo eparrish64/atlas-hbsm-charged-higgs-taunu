@@ -12,6 +12,7 @@ from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.metrics import roc_curve, roc_auc_score
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
+from sklearn.utils import shuffle
 from root_numpy import root2array, tree2array
 import numpy as np
 import pandas as pd
@@ -533,8 +534,7 @@ def train_model(model,
     else:
         tr_df_ud = pd.concat([b_df, s_df], axis=0)
 
-    tr_df_ud = sklearn.utils.shuffle(tr_df_ud, random_state=123)
-
+    tr_df_ud = shuffle(tr_df_ud, random_state=123)
 
     ## - - training arrays
     X_train = tr_df_ud[[ft.name for ft in features]]    
@@ -567,7 +567,6 @@ def train_model(model,
             else:
                 Keras_model = None
             is_trained =  model.is_trained
-            print "Tu jestem"
             if is_trained:
                 log.warning("The %s model is already trained! set overwrite=True, if you want to overwrite it"%mpath)
                 if overwrite:

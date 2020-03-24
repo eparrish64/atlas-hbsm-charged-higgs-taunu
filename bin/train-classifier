@@ -35,15 +35,15 @@ from hpana.mva.optimization import get_hparams
 from hpana.mva import N_TRACKS, FOLD_CUT_STR, TRAINING_MASS_BINS, BRANCHES, ALL_FEATS, GB_HYPERPARAMS
 from hpana.mva.validation import plot_sig_dist, plot_bkg_dist
 
-import tensorflow as tf
-import keras
-from keras.models import Sequential
-from keras.layers import Dense, Activation, BatchNormalization
-from keras.regularizers import l2
-from keras import initializers
-from keras.optimizers import SGD
-from keras.wrappers.scikit_learn import KerasClassifier
-from keras.models import load_model
+# import tensorflow as tf
+# import keras
+# from keras.models import Sequential
+# from keras.layers import Dense, Activation, BatchNormalization
+# from keras.regularizers import l2
+# from keras import initializers
+# from keras.optimizers import SGD
+# from keras.wrappers.scikit_learn import KerasClassifier
+# from keras.models import load_model
 
 ## - - set log level
 from hpana import log
@@ -87,6 +87,7 @@ os.system("mkdir -p %s"%CLF_ARGS.outdir)
 ## - - prepare training Dataframe
 DFRAME = SClassifier.prepare_data(BKGS, SIGS, ALL_FEATS[CLF_ARGS.channel], data_lumi=CONFIG.data_lumi,
                                   channel=CLF_ARGS.channel, branches=BRANCHES[CLF_ARGS.channel], train_data=CLF_ARGS.train_data)
+
 jobs = []
 models = []
 train_masses = TRAINING_MASS_BINS[CLF_ARGS.bin_scheme]
@@ -102,7 +103,7 @@ try:
 except ImportError:
     raise RuntimeError("Please install sklearn; (pip install sklearn)")
 
-if CLF_ARGS.train_nn:
+if CLF_ARGS.train_nn == True:
     ## - - instantiate the Keras model
     import tensorflow as tf
     import keras
@@ -156,12 +157,12 @@ for signal_masses in train_masses:
     ## - - different set of features for low mass and high mass
     ## - - if training PNN, need to add truth mass as a training variable
     if (len(signals)==1 and signals[0].mass > 400) or any([s.mass>500 for s in signals]):
-        if CLF_ARGS.train_nn:
+        if CLF_ARGS.train_nn == True:
             feats = CLF_FEATURES[CLF_ARGS.channel]["HIGH"] + [TruthMass]
         else:
             feats = CLF_FEATURES[CLF_ARGS.channel]["HIGH"]
     else:
-        if CLF_ARGS.train_nn:
+        if CLF_ARGS.train_nn == True:
             feats = CLF_FEATURES[CLF_ARGS.channel]["LOW"] + [TruthMass]
         else:
             feats = CLF_FEATURES[CLF_ARGS.channel]["LOW"]
@@ -274,7 +275,7 @@ for signal_masses in train_masses:
                     train_df=sdf, valid_df=vdf, eval_df=edf, name=clf_name, features=feats, weight_sample=False, mass_range=signal_masses, kfolds=CLF_ARGS.kfolds, fold_num=rem, **hyper_params)
                 models += [sclf]
 
-                if CLF_ARGS.train_nn:
+                if CLF_ARGS.train_nn == True:
                     input_features = [f.tformula for f in feats]
 
                     Keras_model_name = sclf.name.replace(".pkl", "")
@@ -299,7 +300,7 @@ for signal_masses in train_masses:
 
 
                 ## - - assign the job
-                if CLF_ARGS.parallel and not CLF_ARGS.train_nn:
+                if CLF_ARGS.parallel and CLF_ARGS.train_nn == False:
                     jobs.append(Job(train_model, sclf, weight_sample=False, balanced=CLF_ARGS.balanced, scale_features=False, outdir=CLF_ARGS.outdir, is_NN=CLF_ARGS.train_nn))
 
                 ## pickle the model                        
@@ -310,7 +311,7 @@ for signal_masses in train_masses:
                     log.info("Saving %s model to disk ..."%mpath)
                     with open(mpath, "w") as mcache:
                         cPickle.dump(sclf, mcache, protocol=2)
-                        if CLF_ARGS.train_nn:    
+                        if CLF_ARGS.train_nn == True:    
                             cPickle.dump(Keras_model, mcache, protocol=2)
 
                 if CLF_ARGS.train_nn and not CLF_ARGS.cluster:
@@ -319,8 +320,8 @@ for signal_masses in train_masses:
 
 
 
-if CLF_ARGS.train_bdt or CLF_ARGS.train_nn:
-    if CLF_ARGS.parallel and not CLF_ARGS.train_nn:
+if CLF_ARGS.train_bdt == True or CLF_ARGS.train_nn == True:
+    if CLF_ARGS.parallel == True and CLF_ARGS.train_nn == False:
         ## - - run
         log.info("**"*30 + " Submitting %i jobs "%len(jobs) + "**"*30)
         run_pool(jobs, n_jobs=CLF_ARGS.ncpu)

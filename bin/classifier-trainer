@@ -19,12 +19,12 @@ if __name__=="__main__":
             jobname = os.getenv("PBS_JOBNAME")
 
         with open(sys.argv[1], "rb") as pfile:
-                model = cPickle.load(pfile)
-        
+            model = cPickle.load(pfile)
+
         print "Model: ", model 
 
         # - - get the hists 
         start_time = time.time()
-        train_model(model, outdir="./", weight_sample=False, scale_features=False, balanced=sys.argv[2], is_NN=sys.argv[3])
+        train_model(model, outdir="./", weight_sample=False, scale_features=False, balanced=bool(sys.argv[2]), is_NN=bool(sys.argv[3]))
         end_time = time.time()
         print "Execution Time:\t  %0.2f"%(end_time - start_time)

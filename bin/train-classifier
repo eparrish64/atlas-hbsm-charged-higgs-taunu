@@ -48,6 +48,7 @@ from keras import initializers
 from keras.optimizers import SGD
 from keras.wrappers.scikit_learn import KerasClassifier
 from keras.models import load_model
+from keras.utils import multi_gpu_model
 
 ## - - set log level
 from hpana import log
@@ -66,6 +67,7 @@ K.tensorflow_backend._get_available_gpus()
 from tensorflow.python.client import device_lib
 print(device_lib.list_local_devices())
 print("GPU Available: ", tf.test.is_gpu_available())
+print("Num GPUs Available: ", len(tf.config.experimental.list_physical_devices('GPU')))
 
 ##-------------------------------------------------------------
 ## consts 
@@ -157,7 +159,9 @@ if CLF_ARGS.backend=="sklearn":
             feats = CLF_FEATURES[CLF_ARGS.channel]["HIGH"]
         else:
             feats = CLF_FEATURES[CLF_ARGS.channel]["LOW"]
-        
+
+        feats = CLF_FEATURES[CLF_ARGS.channel]["LOW"]        
+
         ## get tuned Hyperparameters
         hyper_params = get_hparams(CLF_ARGS.channel, mass_range=signal_masses, bin_scheme=CLF_ARGS.bin_scheme, model_type="GB")
         hyper_params["verbose"] = 1
@@ -319,7 +323,7 @@ if CLF_ARGS.backend=="sklearn":
                             cPickle.dump(Keras_model, mcache, protocol=2)
                     
                     #train_model(sclf, weight_sample=False, balanced=False, scale_features=False, outdir=CLF_ARGS.outdir)
-                    train_model(sclf, weight_sample=False, balanced=True, scale_features=False, outdir=CLF_ARGS.outdir)
+                    #train_model(sclf, weight_sample=False, balanced=True, scale_features=False, outdir=CLF_ARGS.outdir)
 
     if CLF_ARGS.train_bdt:
         if CLF_ARGS.parallel:
@@ -425,9 +429,6 @@ if CLF_ARGS.backend=="sklearn":
                 log.info("************** creating %i jobs for HTCondor submission ************" % len(models))
                 log.info("**************************************************************")
 
-
-
-                
                 submit_file_name = "%s/submitAllJobs.sh" % (CLF_ARGS.outdir)
                 submit_file = open(submit_file_name, "w")
                 submit_file.write(

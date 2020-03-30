@@ -985,6 +985,9 @@ def fill_scores_mult(tree, all_models, all_Keras_models, hist_templates, event_l
               clf_feats_tf[feat.name] = ROOT.TTreeFormula(feat.name, QCD.UPSILON_CORRECTED["mc16"], tree)
           elif feat.name == "TruthMass":
               clf_feats_tf[feat.name] = ROOT.TTreeFormula(feat.name, "80.", tree)
+              #Method 1: More elegant, but slower, modify also hpana/dataset_hists.py
+              #clf_feats_tf[feat.name] = ROOT.TTreeFormula(feat.name, hist_templates[mtag].GetTitle().split("to")[1], tree)
+              #Method 1: End
           else:
               clf_feats_tf[feat.name] = ROOT.TTreeFormula(feat.name, feat.tformula, tree)
       for f_tf in clf_feats_tf.values():
@@ -1041,14 +1044,25 @@ def fill_scores_mult(tree, all_models, all_Keras_models, hist_templates, event_l
           # In theory we could do this periodically while looping over events, if memory becomes a problem
           events = infos[mtag][model.kfolds][model.fold_num]
           if len(events[0]) == 0: continue # No events passed the selection
-          #scores = model.predict_proba(events[0])
-          scores = Keras_model.predict(events[0])
-          for idx in xrange(len(scores)):
-              #hist_templates[mtag].Fill(scores[idx][1], events[1][idx]) # <! probability of belonging to class 1 (SIGNAL)
-              hist_templates[mtag].Fill(scores[idx], events[1][idx]) # <! probability of belonging to class 1 (SIGNAL
-              if idx%100000==0:
-                  #log.debug("%r : %r "%(events[0][idx], scores[idx][1]))
-                  log.debug("%r : %r "%(events[0][idx], scores[idx]))
+
+          #Method 2: Hacked, less elegant, but faster, modify also hpana/dataset_hists.py
+          for key in list(hist_templates.keys()):
+              events[0][:,-1] = hist_templates[key].GetTitle().split("to")[1]
+              scores = Keras_model.predict(events[0])
+              for idx in xrange(len(scores)):
+                  hist_templates[key].Fill(scores[idx], events[1][idx]) # <! probability of belonging to class 1 (SIGNAL
+                  if idx%100000==0:
+                      log.debug("%r : %r "%(events[0][idx], scores[idx]))
+          #Method2: End
+
+          #Method 1: More elegant, but slower, modify also hpana/dataset_hists.py
+          #scores = Keras_model.predict(events[0])
+          #for idx in xrange(len(scores)):
+              #hist_templates[mtag].Fill(scores[idx], events[1][idx]) # <! probability of belonging to class 1 (SIGNAL)
+              #if idx%100000==0:
+              #    log.debug("%r : %r "%(events[0][idx], scores[idx]))
+          #Method1: End
+
     # End loop over models
 
 ##-----------------------------------------------

@@ -56,7 +56,6 @@ source setup.sh || fail;
 
 # echo `ls`;
 
-
 python ${2} "${1}" ${5}|| fail;
 
 files="$JOBSCRATCH"/*.pkl
@@ -67,6 +66,8 @@ else
     do
         echo copying the output="$file" to workdir="${4}/models";
         rsync -axvH --no-g --no-p "$file" ${4}/models/ || fail;
+        file_h5=`ls $file | sed "s,pkl$,h5,g"`
+        rsync -axvH --no-g --no-p "$file_h5" ${4}/models/ || fail;
     done
     
     # echo "$SLURM_JOB_ID succeeded";

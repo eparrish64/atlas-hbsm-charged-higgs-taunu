@@ -82,6 +82,13 @@ if ECLF_ARGS.mtype=="keras":
     ## - - Set architecture of system (AVX instruction set is not supported on SWAN)
     environ['THEANO_FLAGS'] = 'gcc.cxxflags=-march=corei7'
 
+def split(a, n):
+    k, m = divmod(len(a), n)
+    return (a[i * k + min(i, m):(i + 1) * k + min(i + 1, m)] for i in range(n))
+
+def chunks(a, n):
+    for i in xrange(0, len(a), n):
+        yield a[i:i+n]
 
 ##-----------------------------------------------
 ## main driver
@@ -375,7 +382,8 @@ def main():
                 # - - setup the submit dir
                 os.system("mkdir -p {0}/jobs  {0}/logs {0}/hists {0}/logs/log {0}/logs/err {0}/logs/out".format(ECLF_ARGS.outdir))
 
-                if ECLF_ARGS.bin_scheme == "SINGLE" or "ALL" or ECLF_ARGS.bin_scheme == "UP_DOWN":
+                #if ECLF_ARGS.bin_scheme == "SINGLE" or ECLF_ARGS.bin_scheme == "UP_DOWN":
+                if ECLF_ARGS.bin_scheme == "UP_DOWN":
                     from hpana.mva import TRAINING_MASS_BINS
                     indivmodels = {"%sto%s"%(i[0],i[-1]): [] for i in TRAINING_MASS_BINS[ECLF_ARGS.bin_scheme]}
                     for mass_point in indivmodels.keys():
@@ -442,9 +450,18 @@ def main():
                                      ))
                     log.info("************** creating %i jobs for HTCondor submission ************" % len(ECLF_ARGS.models))
                     log.info("**************************************************************")
-                    
 
-                    for aw in ana_workers:
+                    print "len(ana_workers): ", len(ana_workers)                    
+                    #splited_workers = list(split(ana_workers, 100))
+                    #print "len(splited_workers): ", len(splited_workers)
+                    splited_workers = list(chunks(ana_workers, 5))
+                    print "len(splited_workers): ", len(splited_workers)
+
+                    #for aw in splited_workers:
+                    #   print "printout: ", ",".join([m.name for m in aw])
+
+                    #for aw in ana_workers:
+                    for aw in splited_workers:
 
                         # submit_file.write("\nArguments = %s %s %s %s %s %s %s\nqueue\n" %(  aw.name, 
                         #                                                                     source_code_tarball, 
@@ -454,12 +471,13 @@ def main():
                         #                                                                     os.path.abspath(ECLF_ARGS.models_path[0]), 
                         #                                                                     ",".join([os.path.basename(m) for m in ECLF_ARGS.models])))
 
-
-                        submit_file.write("\nArguments = %s %s %s %s %s \nqueue\n" %(     aw.name,  
+                        #submit_file.write("\nArguments = %s %s %s %s %s \nqueue\n" %(     aw.name,  
+                        submit_file.write("\nArguments = %s %s %s %s %s \nqueue\n" %(     ",".join([m.name for m in aw]),
                                                                                             os.path.join(__HERE, "classifier-evaluator"), 
                                                                                             os.path.join(os.getcwd(), ECLF_ARGS.outdir), 
                                                                                             os.path.abspath(ECLF_ARGS.pickled_analysis), 
-                                                                                            ",".join([wrkDirectory+os.path.basename(m) for m in ECLF_ARGS.models])
+                                                                                            #",".join([wrkDirectory+os.path.basename(m) for m in ECLF_ARGS.models])
+                                                                                            ",".join([os.path.abspath(m) for m in ECLF_ARGS.models])
                                                                                             )
                         )
 
@@ -467,7 +485,8 @@ def main():
 
                         # - - - - write submission to file to be used outside container
                         log.info("Writing to %s for job %s ..." %
-                                 (submit_file_name, aw.name))
+                                 #(submit_file_name, aw.name))
+                                 (submit_file_name, ",".join([m.name for m in aw])))
                         # os.write(submit_file, "sbatch %s\n" % jfile_name)
 
                     submit_file.close()

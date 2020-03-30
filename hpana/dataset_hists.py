@@ -373,22 +373,29 @@ def dataset_hists_direct(hist_worker,
                         tree.Draw(">>event_list", selection)
                         event_list = ROOT.gDirectory.Get("event_list") # Used to skip over unselected events
                         hist_templates = dict()
-                        #for mtag in clf_models:
+                        correct_upsilon = False
+                        if cat_hists[0].sample.startswith("QCD"):
+                            correct_upsilon = True
+
                         for mtag in clf_Keras_models:
                             m_hists =  filter(lambda hs: mtag in hs.variable, cat_hists )
+                            m_hists =  cat_hists
                             if len(m_hists)==0:
                                 continue
 
-                            hist_tmp = m_hists[0].hist
-                            hist_tmp.SetName("%s_category_%s_var_%s" %(outname, category.name, m_hists[0].variable))
-                            hist_templates[mtag] = hist_tmp
-                        ##FIXME: quick fix for upsilon correction for QCD fakes; there should be a better way to do it
-                        correct_upsilon = False
-                        if m_hists[0].sample.startswith("QCD"):
-                            correct_upsilon = True
+                            for histogram in m_hists:
+                                hist_tmp = histogram.hist
+                                hist_tmp.SetName("%s_category_%s_var_%s" %(outname, category.name, histogram.variable))
+                                #Method 1: More elegant, but slower, modify also hpana/mva/evaluation.py
+                                #hist_templates[mtag] = hist_tmp
+                                #fill_scores_mult(tree, clf_models, clf_Keras_models, hist_templates, event_list, event_weight=event_weight, correct_upsilon=correct_upsilon)
+                                #Method 1: End
 
-                        #fill_scores_mult(tree, clf_models, hist_templates, event_list, event_weight=event_weight, correct_upsilon=correct_upsilon) 
+                                #Method 2: Hacked, less elegant, but faster, modify also hpana/mva/evaluation.py
+                                hist_templates[histogram.variable] = hist_tmp
+
                         fill_scores_mult(tree, clf_models, clf_Keras_models, hist_templates, event_list, event_weight=event_weight, correct_upsilon=correct_upsilon)
+                        #Method 2: End
 
                     else:
                         # - - loop over the events

@@ -2,7 +2,16 @@
 """
 simple script for submitting jobs to a cluster.
 """
- 
+import tensorflow as tf
+import keras
+print("Keras version: " + keras.__version__)
+print("TensorFlow version: " + tf.version.VERSION)
+from keras import backend as K
+K.tensorflow_backend._get_available_gpus()
+from tensorflow.python.client import device_lib
+print(device_lib.list_local_devices())
+print("GPU Available: ", tf.test.is_gpu_available())
+print("Num GPUs Available: ", len(tf.config.experimental.list_physical_devices('GPU'))) 
 
 if __name__=="__main__":
         import sys, os
@@ -32,24 +41,29 @@ if __name__=="__main__":
 
         # - - - - load cxx macros
         ana.compile_cxx()
-        workers = filter(lambda w: w.name==jobname, ana.getWorkers())
-        
+        #workers = filter(lambda w: w.name==jobname, ana.getWorkers())
+        workers = filter(lambda w: w.name in jobname.split(","), ana.getWorkers())
+
         if len(workers) < 1:
             raise RuntimeError("no worker with name %s is assigned for the job"%jobname)
 
-        if len(workers) > 1:
-            raise RuntimeError("%i workers with the same name %s are assigned the job"%(len(workers), jobname))        
+        #if len(workers) > 1:
+        #    raise RuntimeError("%i workers with the same name %s are assigned the job"%(len(workers), jobname))        
 
-        worker = workers[0]
-        print "WORKER: ", worker
+        #worker = workers[0]
+        #print "WORKER: ", worker
  
         ## load trained models
-        pmodels = get_models(models.split(",")) 
+        #pmodels = get_models(models.split(",")) 
+        pmodels, Keras_pmodels = get_models(models.split(","))
 
-        print "Trained Models: ", pmodels
+        #print "Trained Models: ", pmodels
+        #print "Trained Keras Models: ", Keras_pmodels
 
         # - - get the hists 
         start_time = time.time()
-        dataset_hists_direct(worker, clf_models=pmodels, write_hists=True, outdir="./")
+        #dataset_hists_direct(worker, clf_models=pmodels, clf_Keras_models=Keras_pmodels, write_hists=True, outdir="./")
+        for wor in workers:
+            dataset_hists_direct(wor, clf_models=pmodels, clf_Keras_models=Keras_pmodels, write_hists=True, outdir="./")
         end_time = time.time()
         print "Execution Time:\t  %0.2f"%(end_time - start_time)

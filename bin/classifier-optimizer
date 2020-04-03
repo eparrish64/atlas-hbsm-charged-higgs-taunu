@@ -28,17 +28,22 @@ if __name__=="__main__":
 
         with open(sys.argv[1], "rb") as pfile:
                 model = cPickle.load(pfile)
+                # if bool(sys.argv[3]) == True:
+                #     try:
+                Keras_model = cPickle.load(pfile)
+                    # except:
+                        # pass
         
         print "Model: ", model 
 
         start_time = time.time()
 
         # - - train model
-        trained_model = train_model(model, outdir="./", weight_sample=False, scale_features=False)
+        trained_model = train_model(model, outdir="./", weight_sample=False, scale_features=False, balanced=bool(sys.argv[2]), is_NN=bool(sys.argv[3]), batch_size=int(sys.argv[4]), epochs=int(sys.argv[5]))
 
         aucs = []
         for sig in model.sigs:
-            auc = calculate_scores(trained_model, backgrounds=model.bkgs, sig=sig, outdir="./")
+            auc = calculate_scores(model, backgrounds=model.bkgs, sig=sig, outdir="./", is_NN=bool(sys.argv[3]))
             aucs.append(auc)
             # log.info("Calculated roc_auc_score for %s %s"%(sig.name,auc))
         avgs_auc = np.mean(aucs)

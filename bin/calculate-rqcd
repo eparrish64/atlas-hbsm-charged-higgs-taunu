@@ -191,7 +191,8 @@ if __name__=="__main__":
         kparams = {
             "template_fields": FFS_TEMPLATE_VARS,
             "template_hist_bins":TAU_PT_BINS,
-            "tau_jet_bdt_score_trans_wps": {"NOMINAL":0.02, "BDT_1up": 0.01, "BDT_1down": 0.03},
+            # "tau_jet_bdt_score_trans_wps": {"NOMINAL":0.02, "BDT_1up": 0.01, "BDT_1down": 0.03},
+            "tau_jet_rnn_score_trans_wps": {"NOMINAL":0.00, "RNN_1up": 0.00, "RNN_1down": 0.0},
             "n_charged_tracks": N_CHARGED_TRACKS,
             "cache_file": FFs_ARGS.ffs_cr_cache,
             "subtract_mc": True,

@@ -12,7 +12,7 @@ import numpy as np
 
 ## local 
 from hpana import log
-from hpana.mva import GB_HYPERPARAMS, N_OPT_CORES
+from hpana.mva import GB_HYPERPARAMS, N_OPT_CORES, NN_HYPERPARAMS_GRID
 from hpana.mva import plt
 
 ##--------------------------------------------------------------------------
@@ -102,7 +102,7 @@ def get_hparam_grid():
     Returns a list of dictionary entries for all possible hparam combinations.
     """
     import itertools
-    keys, values = zip(*GB_HYPERPARAMS.items())
+    keys, values = zip(*NN_HYPERPARAMS_GRID.items())
     return [dict(zip(keys,v)) for v in itertools.product(*values)]
 
 

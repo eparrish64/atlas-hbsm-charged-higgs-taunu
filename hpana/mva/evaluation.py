@@ -109,7 +109,7 @@ def calculate_scores(model,
         outdir="", 
         outname=None,
         inclusive_trks=False,
-        isNN=False):
+        is_NN=False):
     """
     For single model. Will return roc_auc_score for given model.
     given dframe must be validation kfold.
@@ -118,12 +118,33 @@ def calculate_scores(model,
 
     if not dframe:
         dframe = model.valid_df
+
+    with open(model.name, "r") as cache:
+        model = cPickle.load(cache)
+        if is_NN == True:
+            try:
+                Keras_model = cPickle.load(cache)
+            except:
+                pass
+        else:
+            Keras_model = None
     
     b_dframe = dframe.loc[[bkg.name for bkg in backgrounds]]
     s_dframe = dframe.loc[[sig.name]]
     log.debug(30*"*" + " Testing Data Frame " + 30*"*")
     log.debug(dframe)
-   
+
+    if is_NN == True:
+        s_dframe["TruthMass"] = s_dframe.index.get_level_values(0)
+        s_dframe["TruthMass"] = pd.to_numeric(s_dframe.TruthMass.replace({"Hplus": ""}, regex=True))
+        b_dframe["TruthMass"] = np.random.choice( a=s_dframe["TruthMass"], size=b_dframe.shape[0] )
+        train_masses = np.unique(s_dframe["TruthMass"].values)
+        b_df_masses = b_dframe.copy()
+        for i in train_masses:
+            b_dframe["SampleWeight"] = float(s_dframe.loc[s_dframe["TruthMass"]==i].shape[0])/b_dframe.shape[0]
+            b_dframe["TruthMass"] = i
+            if (i!=80): b_df_masses = pd.concat([b_df_masses, b_dframe])
+
     masses = model.mass_range
     if not (masses[0] <= sig.mass <= masses[-1]):
         return None
@@ -134,9 +155,10 @@ def calculate_scores(model,
     s_test = s_dframe[[ft.name for ft in feats ]]
 
     ## evaluate score 
-    if isNN == True:
-        b_score = model.predict(b_test)
-        s_score = model.predict(s_test)
+    if is_NN == True:
+        # from 
+        b_score = Keras_model.predict(b_test)
+        s_score = Keras_model.predict(s_test)
     else:
         b_score = model.predict_proba(b_test)[:, 1]
         s_score = model.predict_proba(s_test)[:, 1]

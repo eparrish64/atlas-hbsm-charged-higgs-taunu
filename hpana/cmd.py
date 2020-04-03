@@ -302,6 +302,9 @@ def get_clf_parser():
 
     clf_parser.add_argument("--optimize-bdt", action="store_true",
                             help="optimize Boosted Decision Tree")
+
+    clf_parser.add_argument("--optimize-nn", action="store_true",
+                            help="optimize Neural Net")
     
     clf_parser.add_argument("--train-data", default=None,
                             help="training data ")

@@ -2,7 +2,7 @@
 
 MYUSERNAME="$USER"
 HOSTNAME_SHORT="\$(hostname -s)"
-DATE="$(date | sed 's/:/ /g' | awk '{print $2$3"_"$4_$5_$6}')"
+DATE="$(date | sed 's/:/ /g' | awk '{print $2$3"_"$3}')"
 PROJECT_SCRATCH_DIR="$( cd "$(dirname "$0")" ; pwd -P )"
 JOBSCRATCH="$PROJECT_SCRATCH_DIR/${1}_${DATE}"
 
@@ -13,41 +13,39 @@ fail(){
     exit 1;
 }
 
-# Creating scratch directory on a remote node
+
+Creating scratch directory on a remote node
 mkdir -p "$JOBSCRATCH" || fail;
 cd "$JOBSCRATCH" || fail;
 
-if [ ! -d "${3}" ]; then mkdir -p "${3}"; fi
+rsync -axvH --no-g --no-p  ${3}/source_code.tar.gz ./ || fail; tar -xvf source_code.tar.gz || fail;
 
-rsync -axvH --no-g --no-p  ${4}/source_code.tar.gz ./; tar -xvf source_code.tar.gz;
-
-rsync -axvH --no-g --no-p "${4}${1}" ${3}
+rsync -axvH --no-g --no-p "${3}/${1}" ./ || fail;
 
 source setup.sh || fail;
 
-python ${2} "${3}${1}" || fail;
+python ${2} "${1}" ${4} ${5} ${6} ${7} || fail;
 
-modelfiles="$JOBSCRATCH"/*.pkl
+files="$JOBSCRATCH"/*.pkl
 aucfiles="$JOBSCRATCH"/*.txt
-if [ ${#modelfiles[@]} -eq 0 ]; then
+if [ ${#files[@]} -eq 0 ]; then
    fail;
 else    
-    for file in $modelfiles
+    for file in $files
     do
-        echo copying the output="$file" to workdir="${4}/models";
-        rsync -axvH --no-g --no-p "$file" ${4}/models/ || fail;
+        echo copying the output="$file" to workdir="${3}/trained_models";
+        rsync -axvH --no-g --no-p "$file" ${3}/trained_models/ || fail;
     done
     for file in $aucfiles
     do
         echo copying the output="$file" to workdir="${4}/AUC";
-        rsync -axvH --no-g --no-p "$file" ${4}/AUC/ || fail;
+        rsync -axvH --no-g --no-p "$file" ${3}/AUC/ || fail;
     done
     
     echo "Succeeded";
     
     cd ..;
     rm -rf {JOBSCRATCH} || fail;
-    rm "${3}${1}"
     echo "Job finished and cleaned up after itself";
     exit 0;
 fi

@@ -167,8 +167,9 @@ class SClassifier(GradientBoostingClassifier):
     # try:
     # MODEL_NAME_STR_FORMAT = "model_{0}_channel_{1}_mass_{2}_ntracks_{3}_nfolds_{4}_fold_{5}_nvars_{6}_learnRate_{7}_minSampsLeaf_{8}_nEst_{9}_minSampsSplit_{10}_maxDepth_{11}.pkl" #<! name, channel, ntracks, nfolds, fold, n_vars
     # except:
-    MODEL_NAME_STR_FORMAT = "model_{0}_channel_{1}_mass_{2}_ntracks_{3}_nfolds_{4}_fold_{5}_nvars_{6}.pkl"
-    
+    # MODEL_NAME_STR_FORMAT = "model_{0}_channel_{1}_mass_{2}_ntracks_{3}_nfolds_{4}_fold_{5}_nvars_{6}.pkl"
+    # MODEL_NAME_STR_FORMAT = "model_{0}_channel_{1}_mass_{2}_ntracks_{3}_nfolds_{4}_fold_{5}_nvars_{6}_batch_size_{7}_epochs_{8}_dense_layer_size_{9}_activation_function_{11}.pkl" #<! name, channel, ntracks, nfolds, fold, n_vars
+    MODEL_NAME_STR_FORMAT = "model_{0}_channel_{1}_mass_{2}_ntracks_{3}_nfolds_{4}_fold_{5}_nvars_{6}_batch_size_{7}_epochs_{8}_dense_layer_size_{9}_activation_function_{10}.pkl"#_dense_layer_size_{9}_activation_function_{11}.pkl"
     def __init__(self, channel, 
                     name="GB", 
                     mass_range=[], 
@@ -184,6 +185,10 @@ class SClassifier(GradientBoostingClassifier):
                     optimize=False,
                     sigs=[],
                     bkgs=[],
+                    epochs=40,
+                    dense_layer_size=64,
+                    batch_size=256,
+                    activation_function="softsign",
                     **params):
         log.debug("Initializing SClassifier ...")
         self.kparams = params
@@ -203,11 +208,19 @@ class SClassifier(GradientBoostingClassifier):
         self.optimize = optimize
         self.sigs = sigs
         self.bkgs = bkgs
+        self.epochs = epochs
+        self.dense_layer_size = dense_layer_size
+        self.batch_size = batch_size
+        self.activation_function = activation_function
 
-        if self.optimize:
-            MODEL_NAME_STR_FORMAT = "model_{0}_channel_{1}_mass_{2}_ntracks_{3}_nfolds_{4}_fold_{5}_nvars_{6}_learnRate_{7}_minSampsLeaf_{8}_nEst_{9}_minSampsSplit_{10}_maxDepth_{11}.pkl" #<! name, channel, ntracks, nfolds, fold, n_vars
-        else:
-            MODEL_NAME_STR_FORMAT = "model_{0}_channel_{1}_mass_{2}_ntracks_{3}_nfolds_{4}_fold_{5}_nvars_{6}.pkl" #<! name, channel, ntracks, nfolds, fold, n_vars 
+        # if self.optimize == True:
+        # MODEL_NAME_STR_FORMAT = "model_{0}_channel_{1}_mass_{2}_ntracks_{3}_nfolds_{4}_fold_{5}_nvars_{6}_batch_size{7}_epochs_{8}_dense_layer_size_{10}_activation_function_{11}.pkl" #<! name, channel, ntracks, nfolds, fold, n_vars
+        # else:
+        #     MODEL_NAME_STR_FORMAT = "model_{0}_channel_{1}_mass_{2}_ntracks_{3}_nfolds_{4}_fold_{5}_nvars_{6}.pkl" #<! name, channel, ntracks, nfolds, fold, n_vars 
+
+                    #         ## - - instantiate the model
+                    # clf_name = SClassifier.MODEL_NAME_STR_FORMAT.format(
+                    # "GB%i"%200,CLF_ARGS.channel, mass_tag, ntracks, CLF_ARGS.kfolds, rem, len(feats), hparam['batch_size'], hparam['epochs'], hparam['dense_layer_size'], hparam['activation_function'])
 
         ## instantiate the base
         super(SClassifier, self).__init__(**params)
@@ -471,7 +484,9 @@ def train_model(model,
     scale_features=True, 
     save_model=True, 
     overwrite=False,
-    is_NN=False):
+    is_NN=False,
+    batch_size=NN_HYPERPARAMS["batch_size"],
+    epochs=NN_HYPERPARAMS["epochs"]):
     """ Train a classifier and produce some validation plots.
     Parameters
     ----------
@@ -537,6 +552,8 @@ def train_model(model,
     tr_df_ud = shuffle(tr_df_ud, random_state=123)
 
     ## - - training arrays
+    log.info("features: %s"%(features))
+    log.info("tr_df_ud columns:%s" %(tr_df_ud.columns))
     X_train = tr_df_ud[[ft.name for ft in features]]    
     Y_train = tr_df_ud["class_label"]
 
@@ -577,12 +594,12 @@ def train_model(model,
         ## train the model,
         try:
             if is_NN == True:
-                Keras_model.fit(X_train.values, Y_train.values, batch_size=NN_HYPERPARAMS["batch_size"], epochs=NN_HYPERPARAMS["epochs"], class_weight=train_weights, verbose=1)
+                Keras_model.fit(X_train.values, Y_train.values,batch_size=batch_size, epochs=epochs, class_weight=train_weights, verbose=1)
             else:
                 model = model.fit(X_train.values, Y_train.values, sample_weight=X_weight if weight_sample else None)
         except:
             if is_NN == True:
-                Keras_model.fit(X_train, Y_train.values, batch_size=NN_HYPERPARAMS["batch_size"], epochs=NN_HYPERPARAMS["epochs"], class_weight=train_weights, verbose=1)
+                Keras_model.fit(X_train, Y_train.values, batch_size=batch_size, epochs=epochs, class_weight=train_weights, verbose=1)
             else:
                 model = model.fit(X_train, Y_train.values, sample_weight=X_weight if weight_sample else None)
 

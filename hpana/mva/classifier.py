@@ -169,7 +169,7 @@ class SClassifier(GradientBoostingClassifier):
     # except:
     # MODEL_NAME_STR_FORMAT = "model_{0}_channel_{1}_mass_{2}_ntracks_{3}_nfolds_{4}_fold_{5}_nvars_{6}.pkl"
     # MODEL_NAME_STR_FORMAT = "model_{0}_channel_{1}_mass_{2}_ntracks_{3}_nfolds_{4}_fold_{5}_nvars_{6}_batch_size_{7}_epochs_{8}_dense_layer_size_{9}_activation_function_{11}.pkl" #<! name, channel, ntracks, nfolds, fold, n_vars
-    MODEL_NAME_STR_FORMAT = "model_{0}_channel_{1}_mass_{2}_ntracks_{3}_nfolds_{4}_fold_{5}_nvars_{6}_batch_size_{7}_epochs_{8}_dense_layer_size_{9}_activation_function_{10}.pkl"#_dense_layer_size_{9}_activation_function_{11}.pkl"
+    MODEL_NAME_STR_FORMAT = "model_{0}_channel_{1}_mass_{2}_ntracks_{3}_nfolds_{4}_fold_{5}_nvars_{6}_batch_size_{7}_epochs_{8}_dense_layer_size_{9}_activation_function_{10}_depth_{11}_loss_{12}_dropout_{13}.pkl"#_dense_layer_size_{9}_activation_function_{11}.pkl"
     def __init__(self, channel, 
                     name="GB", 
                     mass_range=[], 
@@ -189,6 +189,9 @@ class SClassifier(GradientBoostingClassifier):
                     dense_layer_size=64,
                     batch_size=256,
                     activation_function="softsign",
+                    depth=4,
+                    loss_function="binary_crossentropy",
+                    dropout=0.1,
                     **params):
         log.debug("Initializing SClassifier ...")
         self.kparams = params
@@ -212,6 +215,8 @@ class SClassifier(GradientBoostingClassifier):
         self.dense_layer_size = dense_layer_size
         self.batch_size = batch_size
         self.activation_function = activation_function
+        self.depth = depth
+        self.dropout = dropout
 
         # if self.optimize == True:
         # MODEL_NAME_STR_FORMAT = "model_{0}_channel_{1}_mass_{2}_ntracks_{3}_nfolds_{4}_fold_{5}_nvars_{6}_batch_size{7}_epochs_{8}_dense_layer_size_{10}_activation_function_{11}.pkl" #<! name, channel, ntracks, nfolds, fold, n_vars

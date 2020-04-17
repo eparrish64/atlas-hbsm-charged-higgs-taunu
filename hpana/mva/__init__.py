@@ -68,10 +68,13 @@ GB_HYPERPARAMS = {
 
 ## - - Hyperparameters for PNN (used in grid search for hyperparams)
 NN_HYPERPARAMS_GRID = {
-    "batch_size": [512],#, 256],
-    "epochs": [1],#, 2],
-    "dense_layer_size": [32],#, 64],
-    "activation_function": ["softsign"]
+    "batch_size": [256, 512],
+    "epochs": [1000],
+    "dense_layer_size": [64, 128],
+    "depth": [5,20],
+    "activation_function": ["softsign", "relu"],
+    "loss_function": ["binary_crossentropy", "mean_squared_error"],#,, "mean_absolute_error"]
+    "dropout": [0.1,0.3],
 }
 
 

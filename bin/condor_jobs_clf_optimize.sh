@@ -31,11 +31,11 @@ aucfiles="$JOBSCRATCH"/*.txt
 if [ ${#files[@]} -eq 0 ]; then
    fail;
 else    
-    for file in $files
-    do
-        echo copying the output="$file" to workdir="${3}/trained_models";
-        rsync -axvH --no-g --no-p "$file" ${3}/trained_models/ || fail;
-    done
+    # for file in $files
+    # do
+    #     echo copying the output="$file" to workdir="${3}/trained_models";
+    #     rsync -axvH --no-g --no-p "$file" ${3}/trained_models/ || fail;
+    # done
     for file in $aucfiles
     do
         echo copying the output="$file" to workdir="${4}/AUC";

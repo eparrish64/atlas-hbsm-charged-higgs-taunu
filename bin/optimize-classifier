@@ -47,6 +47,32 @@ ROOT.SetSignalPolicy(ROOT.kSignalFast)
 ROOT.gROOT.SetBatch(True)
 log.info("ROOT is in batch mode")
 
+##-------------------------------------------------------------
+## consts 
+##-------------------------------------------------------------
+__HERE = os.path.dirname(os.path.abspath(__file__))
+
+## - - build analysis main configuration object
+CONFIG = Configuration(CLF_ARGS.channel, db_version=CLF_ARGS.db_version, data_streams=CLF_ARGS.data_streams,)
+
+## - - instantiate Analysis
+ANALYSIS  = Analysis(CONFIG, compile_cxx=True)
+
+## - - training samples (no need for l-->tau fakes or MC j--> tau fakes for masses < 500GeV)
+BKGS = filter(lambda b: not b.name in ["LepFakes"], ANALYSIS.backgrounds)
+if CLF_ARGS.bkg:
+    BKGS = filter(lambda b: b.name in CLF_ARGS.bkg, BKGS)
+
+SIGS = ANALYSIS.get_signals()
+if CLF_ARGS.sig:
+    SIGS = filter(lambda s: s.name in CLF_ARGS.sig, SIGS)
+
+## different set of bkgs for different signals regions 
+TRAINING_BKGS = { 
+    "LOW": filter(lambda b: not b.name in ["QCD"] , BKGS),
+    "HIGH":  BKGS[:], #<! above 500 GeV
+}  
+
 """
 * This scripts provides functionalities for training a binary classifier in order to separate signal from background.
 * It's build on top of the MVA with the option for Pythonic keras & scikit-learn backends.
@@ -181,13 +207,13 @@ if CLF_ARGS.parse_auc:
             if CLF_ARGS.inc_trks:
                 ntracks = 13 #<! a dummy value for consistency 
                 for rem in range(CLF_ARGS.kfolds):
-                    clf_name = SClassifier.MODEL_NAME_STR_FORMAT.format(
-                            "GB%i"%hparam["n_estimators"],CLF_ARGS.channel, mass_tag, ntracks, CLF_ARGS.kfolds, rem, len(feats), hparam['learning_rate'], hparam['min_samples_leaf'], hparam['n_estimators'], hparam['min_samples_split'], hparam['max_depth'])
+                   clf_name = SClassifier.MODEL_NAME_STR_FORMAT.format(
+                    "GB%i"%hparam['batch_size'], CLF_ARGS.channel, mass_tag, ntracks, CLF_ARGS.kfolds, rem, len(feats), hparam['batch_size'], hparam['epochs'], hparam['dense_layer_size'], hparam['activation_function'], hparam["depth"], hparam["loss_function"], hparam["dropout"])
             else:
                 for ntracks in N_TRACKS:
                     for rem in range(CLF_ARGS.kfolds):
                         clf_name = SClassifier.MODEL_NAME_STR_FORMAT.format(
-                            "GB%i"%hparam["n_estimators"],CLF_ARGS.channel, mass_tag, ntracks, CLF_ARGS.kfolds, rem, len(feats), hparam['learning_rate'], hparam['min_samples_leaf'], hparam['n_estimators'], hparam['min_samples_split'], hparam['max_depth'])
+                            "GB%i"%hparam['batch_size'], CLF_ARGS.channel, mass_tag, ntracks, CLF_ARGS.kfolds, rem, len(feats), hparam['batch_size'], hparam['epochs'], hparam['dense_layer_size'], hparam['activation_function'], hparam["depth"], hparam["loss_function"], hparam["dropout"])
                         # print clf_name
                         # f = "/xdata/eparrish/HPlusTauNuOutput/fullRun2/taulep_OptimizeClassifierCondor_SINGLE/AUC/%s_auc.txt" %(clf_name.replace(".pkl",""))
                         f = CLF_ARGS.outdir+"AUC/%s_auc.txt" %(clf_name.replace(".pkl",""))
@@ -208,7 +234,7 @@ if CLF_ARGS.parse_auc:
             thisMassPointDict["%s"%hparam] = np.mean(this_hparam_aucs)
             hparamDF = pd.DataFrame(data=hparam, index=[0])
             hparams_aucs.append(np.mean(this_hparam_aucs))
-            # print hparamDF
+            # print hparamDF 
             # print thisMassPointDict
             masspointDF = masspointDF.append(hparamDF, sort=False)
             # maspointDF["AUC"] = 
@@ -226,35 +252,11 @@ if CLF_ARGS.parse_auc:
 
     for i in sorted(avgAUCs.keys()):
         print i
-        print avgAUCs[i].sort_values("AUC", ascending=False).head(5)
+        print avgAUCs[i].sort_values("AUC", ascending=False)
     # print avgAUCs
     sys.exit(0)
     
-##-------------------------------------------------------------
-## consts 
-##-------------------------------------------------------------
-__HERE = os.path.dirname(os.path.abspath(__file__))
 
-## - - build analysis main configuration object
-CONFIG = Configuration(CLF_ARGS.channel, db_version=CLF_ARGS.db_version, data_streams=CLF_ARGS.data_streams,)
-
-## - - instantiate Analysis
-ANALYSIS  = Analysis(CONFIG, compile_cxx=True)
-
-## - - training samples (no need for l-->tau fakes or MC j--> tau fakes for masses < 500GeV)
-BKGS = filter(lambda b: not b.name in ["LepFakes"], ANALYSIS.backgrounds)
-if CLF_ARGS.bkg:
-    BKGS = filter(lambda b: b.name in CLF_ARGS.bkg, BKGS)
-
-SIGS = ANALYSIS.get_signals()
-if CLF_ARGS.sig:
-    SIGS = filter(lambda s: s.name in CLF_ARGS.sig, SIGS)
-
-## different set of bkgs for different signals regions 
-TRAINING_BKGS = { 
-    "LOW": filter(lambda b: not b.name in ["QCD"] , BKGS),
-    "HIGH":  BKGS[:], #<! above 500 GeV
-}  
 
 ## - - setup outdir
 os.system("mkdir -p %s"%CLF_ARGS.outdir)
@@ -283,7 +285,7 @@ except ImportError:
 import tensorflow as tf
 import keras
 from keras.models import Sequential
-from keras.layers import Dense, Activation, BatchNormalization
+from keras.layers import Dense, Activation, BatchNormalization, Dropout
 from keras.regularizers import l2
 from keras import initializers
 from keras.optimizers import SGD
@@ -485,7 +487,7 @@ for signal_masses in train_masses:
 
                     ## - - instantiate the model
                     clf_name = SClassifier.MODEL_NAME_STR_FORMAT.format(
-                    "GB%i"%hparam['batch_size'], CLF_ARGS.channel, mass_tag, ntracks, CLF_ARGS.kfolds, rem, len(feats), hparam['batch_size'], hparam['epochs'], hparam['dense_layer_size'], hparam['activation_function'])
+                    "GB%i"%hparam['batch_size'], CLF_ARGS.channel, mass_tag, ntracks, CLF_ARGS.kfolds, rem, len(feats), hparam['batch_size'], hparam['epochs'], hparam['dense_layer_size'], hparam['activation_function'], hparam["depth"], hparam["loss_function"], hparam["dropout"])
 
                     log.info("Training in mass range:%s on ntracks=%i, nevents=%i, and nfeatures=%i\n\t\tHyperparams: %r\n"%(
                         mass_tag, ntracks, sdf.shape[0], sdf.shape[1]-4, hparam))
@@ -498,20 +500,35 @@ for signal_masses in train_masses:
                     if CLF_ARGS.optimize_nn == True:
                         input_features = [f.tformula for f in feats]
 
+                        early_stopping = tf.keras.callbacks.EarlyStopping(monitor="val_loss", min_delta=0.001, patience=10, mode="auto", restore_best_weights=True)
+
                         Keras_model_name = sclf.name.replace(".pkl", "")
-                        Keras_model = Sequential([
-                            BatchNormalization(input_shape=(len(input_features),)),
-                            Dense(hparam["dense_layer_size"], activation=hparam['activation_function'],input_shape=(len(input_features),)),
-                            Dense(hparam["dense_layer_size"], activation=hparam['activation_function']),
-                            BatchNormalization(),
-                            Dense(hparam["dense_layer_size"], activation=hparam['activation_function']),
-                            BatchNormalization(),
-                            Dense(1, activation='sigmoid'),
-                            ])
+
+                        Keras_model = Sequential()
+                        Keras_model.add(BatchNormalization(input_shape=(len(input_features),)))
+                        Keras_model.add(Dense(hparam["dense_layer_size"], activation=hparam['activation_function'],input_shape=(len(input_features),)))
+
+                        for lay in range(hparam["depth"]):
+                            Keras_model.add(Dense(hparam["dense_layer_size"], activation=hparam['activation_function']))
+                            Keras_model.add(Dropout(hparam["dropout"]))
+                            # Keras_model.add(BatchNormalization())
+
+                        Keras_model.add(Dense(1,activation='sigmoid'))
+
+                        # Keras_model = Sequential([
+                        #     BatchNormalization(input_shape=(len(input_features),)),
+                        #     Dense(hparam["dense_layer_size"], activation=hparam['activation_function'],input_shape=(len(input_features),)),
+                        #     Dense(hparam["dense_layer_size"], activation=hparam['activation_function']),
+                        #     BatchNormalization(),
+                        #     Dense(hparam["dense_layer_size"], activation=hparam['activation_function']),
+                        #     BatchNormalization(),
+                        #     Dense(1, activation='sigmoid'),
+                        #     ])
                         Keras_model.compile(
                             optimizer='Adam',
-                            loss='binary_crossentropy',
+                            loss=hparam["loss_function"],
                             metrics=['accuracy'],
+                            callbacks=[early_stopping]
                             )
                         Keras_model.name=Keras_model_name
 

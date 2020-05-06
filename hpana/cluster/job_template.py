@@ -102,6 +102,12 @@ getenv                      = true
 # RequestMemory               = {memory}
 # request_GPUs            = 1
 request_cpus            = 1
-+JobFlavour             = "espresso"
+#+JobFlavour             = "espresso"
+#+JobFlavour             = "microcentury"
++JobFlavour             = "longlunch" 
+#+JobFlavour             = "workday"
+#+JobFlavour             = "tomorrow"
+#+JobFlavour             = "testmatch"
+#+JobFlavour             = "nextweek"
 
 """

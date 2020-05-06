@@ -448,6 +448,7 @@ def get_models(model_files, backend="sklearn", isNN=False):
 
     assert models, "no trained model is found!; exiting!"
     if isNN == True:
+        log.info("Returning Keras Models")
         return models, Keras_models
     else:
         return models, None

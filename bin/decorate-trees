@@ -264,30 +264,47 @@ def skim_tree(file_name, selections=SELECTIONS, **kwargs):
 
 ##-------------------------------------------------------------------------------------
 ## 
-def compress_file(file_name, copy_input=False, merge_metadata=False, suffix=".cmp", overwrite=False,
-    out_keys=["NOMINAL", "h_metadata", "h_metadata_theory_weights", "h_metadata_htxs_weights", "EventLoop_FileExecuted", "EventLoop_JobStats"]):
+def compress_file(file_name, copy_input=False, merge_metadata=False, suffix=".cmp", overwrite=False, outdir="",
+    out_keys=["NOMINAL", "h_metadata", "h_metadata_theory_weights", "h_metadata_htxs_weights", "EventLoop_FileExecuted", "EventLoop_JobStats"], **kwargs):
     """
     """
-    ifile = ROOT.TFile(file_name, "READ")
-    ofile_name = file_name+suffix
+    # if ipath:
+    #     print "Opening input file: %s" %(ipath)
+    #     ifile = ROOT.TFile(file_name, "READ")
+    # else:
+    # print copy_input
+    # print outdir
+    # print file_name
+    # print file_name.split("/")
+    ofile_name = outdir+file_name.split("/")[-2]+"/"+file_name.split("/")[-1]+suffix
+    # print ofile_name
+    # ofile_name = file_name+suffix
     if os.path.isfile(ofile_name) and not overwrite:
         log.warning("%s already exists, set overwrite=True if you want to overwrite it"%ofile_name)
-    ofile = ROOT.TFile(ofile_name, "RECREATE")
+        return
+    else:
+        log.info("Creating output directory")
+        os.system("mkdir -p %s" %(file_name.split("/")[-2]))
+        log.info("Opening input file: %s" %(file_name))
+        ifile = ROOT.TFile(file_name, "READ")
 
-    keys = ifile.GetListOfKeys()
-    keys = filter(lambda k: k.GetName() in out_keys, keys)
-    for key in keys:
-        log.info("Writing %s to %s"%(key.name, ofile_name))
-        tobject = key.ReadObj()
-        if isinstance(tobject, ROOT.TTree):
-            tobject.SetAutoFlush(0)
-            cobject = tobject.CloneTree()
-        else:
-            cobject = tobject.Clone()
-        cobject.Write()
+        log.info("Creating output file: %s" %(ofile_name))
+        ofile = ROOT.TFile(ofile_name, "RECREATE") 
 
-    ofile.Close()
-    ifile.Close()
+        keys = ifile.GetListOfKeys()
+        keys = filter(lambda k: k.GetName() in out_keys, keys)
+        for key in keys:
+            log.info("Writing %s to %s"%(key.GetName(), ofile_name))
+            tobject = key.ReadObj()
+            if isinstance(tobject, ROOT.TTree):
+                tobject.SetAutoFlush(0)
+                cobject = tobject.CloneTree()
+            else:
+                cobject = tobject.Clone()
+            cobject.Write()
+
+        ofile.Close()
+        ifile.Close()
 
     return 
 
@@ -335,9 +352,10 @@ class Job(Process):
                 # - - only keep the structure of original ntuples
                 if reldir.startswith("user."):
                     self.outdir = os.path.join(self.outdir, reldir)
-                    print self.outdir 
+                    # print self.outdir 
                     if not os.path.isdir(self.outdir):
-                        os.mkdir(self.outdir)
+                        # os.mkdir(self.outdir)
+                        os.system("mkdir -p %s"%self.outdir)
                 opath = os.path.join(self.outdir, oname)
             if os.path.exists(opath):
                 log.warning(" {} already exists (will skip copying if file is in good shape)" .format(opath))
@@ -350,6 +368,24 @@ class Job(Process):
                 log.info("copying {0} to {1} ...".format(self.ipath, opath))
                 shutil.copy(self.ipath, opath)
         else:
+            # if self.outdir:
+            #     # opath = self.outdir
+            #     opath = "%s.%s"%(self.ipath, args.suffix)
+            #     print "opath:%s " %opath
+            #     reldir, oname = opath.split("/")[-2:]
+
+            #     print "reldir: %s, oname: %s" %(reldir, oname)
+                
+            # #     # - - only keep the structure of original ntuples
+            #     if reldir.startswith("user."):
+            #         self.outdir = os.path.join(self.outdir, reldir)
+            #         print "outdir: %s" %self.outdir 
+            #         if not os.path.isdir(self.outdir):
+            #             # os.mkdir(self.outdir)
+            #             os.system("mkdir -p %s"%self.outdir)
+            #     opath = os.path.join(self.outdir, oname)
+            #     print "opath: %s" %opath
+            # print self.outdir
             opath = self.ipath
         
         # - - - - the actual work happens here
@@ -396,6 +432,8 @@ if __name__=='__main__':
 
     elif args.action=="zip":
         workfunc_args['copy_input'] = False
+        # workfunc_args['outdir'] = args.outdir
+        # print "IN ARG CHECKER: %s" %(workfunc_args)
         workfunc = compress_file        
         
     else:

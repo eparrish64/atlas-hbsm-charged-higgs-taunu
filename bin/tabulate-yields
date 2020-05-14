@@ -121,9 +121,12 @@ if YIELDS_ARGS.yields_table:
 
                     if sample.name=="Data" and cat.name in analysis.data.blind_regions:
                         events = -1
-                    else:                        
+                    else:                       
                         hist = hfile.Get(hname)
-                        events = hist.Integral(0, hist.GetNbinsX()+1)
+                        if hist:
+                            events = hist.Integral(0, hist.GetNbinsX()+1)
+                        else:
+                            events = 0
                     yields.append(
                         Yield(sample=sample.name, category=cat.name, systematic=syst_var.name, events=events))
 

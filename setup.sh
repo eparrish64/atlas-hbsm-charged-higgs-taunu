@@ -1,8 +1,9 @@
 # source this file
 
 # ROOT version should be set manually 
+# export ALRB_rootVersion=6.18.00-x86_64-centos7-gcc8-opt
+# export ALRB_rootVersion=6.18.00-x86_64-centos7-gcc8-opt
 export ALRB_rootVersion=6.14.08-x86_64-centos7-gcc8-opt
-
 
 # determine path to this script
 # http://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-stored-in
@@ -26,11 +27,15 @@ case $USER in
         VENVPATH=/project/6024950/sbahrase/PythonPackages/VirtualEnvs/hpana_venv/
         ;;
     klimek)
-        VENVPATH=/afs/cern.ch/work/k/klimek/private/Charged_H/Analysis_EoR2/hpana/PythonPackags/Venvs/hpanaVenv/
-        ;;
+		VENVPATH=/afs/cern.ch/work/k/klimek/private/Charged_H/Analysis_EoR2/hpana_test2_dev-taulep/PythonPackags/Venvs/hpanaVenv_test2_dev-taulep/
+		;;
+	eparrish)
+		VENVPATH=/afs/cern.ch/user/e/eparrish/workarea/public/HPlusTauNu/PythonPackages/Venvs/hpanaVenv/
+		;;
 	*)
 		VENVPATH=""
 		echo "User not found when setting virtual envrionment, adjust setup file."
+
 esac
 
 case "$(hostname)" in
@@ -41,8 +46,11 @@ case "$(hostname)" in
 		;;
 	*)
 		echo "Installing ROOT ..."
-        source $ATLAS_LOCAL_ROOT_BASE/user/atlasLocalSetup.sh
-		source $ATLAS_LOCAL_ROOT_BASE/packageSetups/atlasLocalROOTSetup.sh 		
+		# export ATLAS_LOCAL_ROOT_BASE=/cvmfs/atlas.cern.ch/repo/ATLASLocalRootBase
+  #       source $ATLAS_LOCAL_ROOT_BASE/user/atlasLocalSetup.sh
+		# source $ATLAS_LOCAL_ROOT_BASE/packageSetups/atlasLocalROOTSetup.sh 		
+		setupATLAS
+		lsetup root
 		;;
 esac
 

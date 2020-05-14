@@ -239,6 +239,8 @@ def dataset_hists(hist_worker,
 def dataset_hists_direct(hist_worker,
                   outdir="histsdir",
                   clf_models={},
+                  clf_Keras_models={},
+                  isNN=False,
                   **kwargs):
     """ produces histograms for a dataset. 
     This static method is mainly used for parallel processing.
@@ -253,7 +255,7 @@ def dataset_hists_direct(hist_worker,
     systematics = hist_worker.systematics
     outname = kwargs.pop("outname", hist_worker.name)
     hist_templates = hist_worker.hist_templates
-    
+
     log.debug("*********** processing %s dataset ***********" % dataset.name)
     if not dataset.files:
         log.warning("%s dataset is empty!!" % dataset.name)
@@ -350,6 +352,7 @@ def dataset_hists_direct(hist_worker,
 
                     # - - cache only the events that pass the selections
                     selection = category.cuts.GetTitle()
+                    selection = selection.replace("Name: CUT Title: ", "")
                     event_selection = ROOT.TTreeFormula("event_selection", selection, tree)
 
 
@@ -366,16 +369,18 @@ def dataset_hists_direct(hist_worker,
                         eventweight = "(%s)*(%s)" % (eventweight, sw)
                     event_weight = ROOT.TTreeFormula("event_weight", eventweight, tree)
                     event_weight.SetQuickLoad(True)
-                    if clf_models:
+                    #if clf_models:
+                    if clf_Keras_models:
                         # - - create a TEventList of the events passing the selection
                         tree.Draw(">>event_list", selection)
                         event_list = ROOT.gDirectory.Get("event_list") # Used to skip over unselected events
                         hist_templates = dict()
-                        for mtag in clf_models:
+                        #for mtag in clf_models:
+                        for mtag in clf_Keras_models:
                             m_hists =  filter(lambda hs: mtag in hs.variable, cat_hists )
                             if len(m_hists)==0:
                                 continue
-                                
+
                             hist_tmp = m_hists[0].hist
                             hist_tmp.SetName("%s_category_%s_var_%s" %(outname, category.name, m_hists[0].variable))
                             hist_templates[mtag] = hist_tmp
@@ -383,8 +388,9 @@ def dataset_hists_direct(hist_worker,
                         correct_upsilon = False
                         if m_hists[0].sample.startswith("QCD"):
                             correct_upsilon = True
-                        fill_scores_mult(tree, clf_models, hist_templates, event_list, event_weight=event_weight,
-                            correct_upsilon=correct_upsilon) 
+                        #fill_scores_mult(tree, clf_models, hist_templates, event_list, event_weight=event_weight,
+                        fill_scores_mult(tree, clf_models, hist_templates, event_list, all_Keras_models=clf_Keras_models, event_weight=event_weight,
+                            correct_upsilon=correct_upsilon, isNN=isNN) 
                     else:
                         # - - loop over the events
                         for i, event in enumerate(tree):

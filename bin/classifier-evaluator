@@ -18,8 +18,13 @@ if __name__=="__main__":
 
         if 'cedar' in socket.gethostname():
             jobname = os.getenv("SLURM_JOB_NAME")
+            models = sys.argv[2]
+        elif 'niu' in socket.gethostname() or 'cern' in socket.gethostname():
+            models = sys.argv[2]
+            jobname = sys.argv[3]
         else:
             jobname = os.getenv("PBS_JOBNAME")
+            models = sys.argv[2]
 
         ## load analysis
         with open(sys.argv[1], "rb") as pfile:
@@ -27,25 +32,32 @@ if __name__=="__main__":
 
         # - - - - load cxx macros
         ana.compile_cxx()
-        workers = filter(lambda w: w.name==jobname, ana.getWorkers())
+        # workers = filter(lambda w: w.name==jobname, ana.getWorkers())
+        workers = filter(lambda w: w.name in jobname.split(","), ana.getWorkers())
         
         if len(workers) < 1:
             raise RuntimeError("no worker with name %s is assigned for the job"%jobname)
 
-        if len(workers) > 1:
-            raise RuntimeError("%i workers with the same name %s are assigned the job"%(len(workers), jobname))        
+        # if len(workers) > 1:
+        #     raise RuntimeError("%i workers with the same name %s are assigned the job"%(len(workers), jobname))        
 
-        worker = workers[0]
-        print "WORKER: ", worker
+        # worker = workers[0]
+        # print "WORKER: ", worker
  
-        ## load trained models 
-        pmodels = get_models(sys.argv[2].split(",")) 
+        ## load trained models
+        # pmodels = get_models(models.split(",")) 
+        # try:
+        pmodels, Keras_pmodels = get_models(models.split(","), isNN=True)
+        # except:
+        #     pmodels = get_models(models.split(","), isNN=True)
+        #     Keras_pmodels = None
 
-        print "Trained Models: ", pmodels
-
+        # print "Trained Models: ", pmodels
 
         # - - get the hists 
         start_time = time.time()
-        dataset_hists_direct(worker, clf_models=pmodels, write_hists=True, outdir="./")
+
+        for worker in workers:
+            dataset_hists_direct(worker, clf_models=pmodels, clf_Keras_models=Keras_pmodels, write_hists=True, outdir="./", isNN=bool(sys.argv[4]))
         end_time = time.time()
         print "Execution Time:\t  %0.2f"%(end_time - start_time)

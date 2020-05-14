@@ -86,3 +86,28 @@ export ALRB_CONT_RUNPAYLOAD=\"{payload}\"
 #execute (by setting up container)
 setupATLAS -c slc6
 """
+
+
+CONDOR_JOB_TEMPLATE="""
+##########################################################################################################################################################
+## Condor job description file to launch on any free node
+##########################################################################################################################################################
+executable                  = {execScript}
+output                      = {logsdir}/out/$(Process).out
+error                       = {logsdir}/err/$(Process).err
+log                         = {logsdir}/log/$(Process).log
+universe                    = vanilla
+getenv                      = true
+#
+# RequestMemory               = {memory}
+# request_GPUs            = 1
+request_cpus            = 1
+#+JobFlavour             = "espresso"
+#+JobFlavour             = "microcentury"
++JobFlavour             = "longlunch" 
+#+JobFlavour             = "workday"
+#+JobFlavour             = "tomorrow"
+#+JobFlavour             = "testmatch"
+#+JobFlavour             = "nextweek"
+
+"""

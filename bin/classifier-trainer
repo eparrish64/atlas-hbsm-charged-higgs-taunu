@@ -9,20 +9,22 @@ if __name__=="__main__":
         import time
         import cPickle
 
-        from hpana.classifier import train_model
+        from hpana.mva.classifier import train_model
 
         if 'cedar' in socket.gethostname():
             jobname = os.getenv("SLURM_JOB_NAME")
+        elif 'niu' in socket.gethostname() or 'cern' in socket.gethostname():
+            jobname = sys.argv[1]
         else:
             jobname = os.getenv("PBS_JOBNAME")
 
         with open(sys.argv[1], "rb") as pfile:
-                model = cPickle.load(pfile)
-        
+            model = cPickle.load(pfile)
+
         print "Model: ", model 
 
         # - - get the hists 
         start_time = time.time()
-        train_model(model, outdir="./")
+        train_model(model, outdir="./", weight_sample=False, scale_features=False, balanced=bool(sys.argv[2]), is_NN=bool(sys.argv[3]))
         end_time = time.time()
         print "Execution Time:\t  %0.2f"%(end_time - start_time)

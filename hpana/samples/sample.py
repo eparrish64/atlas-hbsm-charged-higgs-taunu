@@ -427,11 +427,10 @@ class Sample(object):
         log.info("merging %s hists"%self.name)
 
         if not hist_set:
-            log.info("reading dataset hists from %s"%histsdir)
+            log.info("reading dataset hists from %s/%s"%(histsdir, self.name))
             assert histsdir, "hists dir is not provided!"
             # - - retrieve the samples hists
             hfiles = glob.glob("%s/%s.*"%(histsdir, self.name))
-
             if not hfiles:
                 log.warning("no hists found for the %s in %s dir"%(self.name, histsdir))
                 return []

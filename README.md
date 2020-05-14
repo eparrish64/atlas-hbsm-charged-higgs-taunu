@@ -10,7 +10,7 @@ Setup
 Setting up Python virtualenv for clean PyPI packages setup. 
 
     - setupATLAS; lsetup "root 6.14.08-x86_64-centos7-gcc8-opt" (this is to make sure you have the right Python 2.7; by default on some lxplus machines we have Python 2.6! )
-    - get a stable virtualenv release from here, https://virtualenv.pypa.io/en/stable/installation/
+    - Check the newest stable release and replaced 16.7.2 in the following commands, https://virtualenv.pypa.io/en/stable/installation/
     - somewhere outside the hpana code do: mkdir -p PythonPackags/Venvs; cd PythonPackags  
     - wget https://pypi.python.org/packages/source/v/virtualenv/virtualenv-16.7.2.tar.gz 
     - tar xzvf virtualenv-16.7.2.tar.gz ; cd virtualenv-16.7.2
@@ -30,14 +30,16 @@ After the ntuples are finished and downloaded, update the paths in
 ``hpana/db/datasets_config.yml`` and update the datasets database
 
 - to see all the options exectute ``create-database --help``
-- example: ``create-database taujet --reset --version 18v01 --config <PATH TO datasets_config.yml>``
+- example: ``create-database taujet --reset --vers v09 --config <PATH TO datasets_config.yml>``
 
 #### running the analysis
 After you have the database ready, you can produce all the histograms with
 the following
 
 - to see all the options exectute ``run-analysis --help``
-- example: ``run-analysis --db-version 18v01 --channel taujet --data-streams 2015 2016 --samples DiBoson --categories SR_TAUJET --parallel --merge-hists --outdir lT01`` 
+- example in parallel: ``run-analysis --db-version v09 --data-streams 2015 2016 --samples DiBoson --categories SR_TAUJET --parallel --merge-hists --outdir lT01`` 
+- example via condor:  ``run-analysis --db-version v09 --data-streams 2015 2016 --samples DiBoson --categories SR_TAUJET --cluster --rs-manager CONDOR --outdir myOutDir``
+- If running via condor, will have to rerun after jobs are done with --merge-hists option
 
 
 #### plotting 
@@ -61,6 +63,8 @@ After you have the database for the two channels ready (if the caches are alread
 
 
 #### MVA
-- training a model: ``train-classifier --db-version 18v04r01 --train-bdt --outdir clfout/ --train-data TRAIN_DATA.pkl --kfolds 5 --validation-plots --parallel`` 
-- appending CLF scores to the TTrees:
-  ``evaluate-classifier --models clfout/model_GB100_channel_taujet_mass_400to400_ntracks_*.pkl  --files <ROOT FILES> --kfolds 5``
+- training a model (PNN): ``train-classifier --channel taulep --data-streams 2015 2016 --db-version v09 --train-nn --bin-scheme ALL --train-data TRAIN_DATA.pkl --cluster --rs-manager CONDOR --outdir myOutDirClf`` 
+- Evaluating models (PNN):
+  ``evaluate-classifier evaluate-classifier --channel taulep --db-version v09 --data-streams 2015 2016 --train-data TRAIN_DATA_taulep.pkl --bin-scheme ALL --cluster --rs-manager CONDOR --models myOutDirClf/trained_models/model*.pkl --direct --eval-nn --outdir myOutDirClfEval``
+
+- If running via condor, will have to rerun after jobs are done with --merge-hists option

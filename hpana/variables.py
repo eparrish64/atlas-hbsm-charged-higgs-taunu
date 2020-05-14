@@ -12,7 +12,9 @@ __all__ = [
     "rQCD_VARS",
     "tau_0_pt",
     "tau_0_n_charged_tracks",
-    "tau_0_jet_rnn_score_trans"]
+    # "tau_0_jet_bdt_score_trans"
+    "tau_0_jet_rnn_score_trans"
+    ]
 
 ## FIXME: tmp workaround for missing bjet p4 in (2015-2017) systematics 
 BJET_P4_STR = "((jet_0_b_tag_score>0.83)*jet_0_p4->{0}+"\
@@ -190,11 +192,12 @@ tau_0_pt = Variable(
     binning=(200, 0, 1000),
     plot_bins={
         "COMMON": range(40, 300, 20) + range(300, 500, 50),
-        "FF_CR_MULTIJET": [30, 35, 40, 45, 50, 60, 80, 100, 200, 3500],
-        "FF_CR_WJETS": [30, 35, 40, 45, 50, 60, 80, 100, 200, 3500],
+        # "FF_CR_MULTIJET": [30, 35, 40, 45, 50, 60, 80, 100, 200, 3500],
+        # "FF_CR_WJETS": [30, 35, 40, 45, 50, 60, 80, 100, 200, 3500],
     },
     unit='[GeV]',
     scale=1.)
+
 
 tau_0_eta = Variable(
     "tau_0_eta" , 
@@ -203,7 +206,7 @@ tau_0_eta = Variable(
         "mc16": "tau_0_p4->Eta()",
         "mc15": "tau_0_eta"},
     binning=(120, -3., 3.),
-    plot_bins=np.arange(-2.5, 2.5, 0.1))
+    plot_bins=np.arange(-2.5,2.5,0.1))
 
 tau_0_phi = Variable(
     "tau_0_phi" , 
@@ -234,6 +237,16 @@ tau_0_upsilon = Variable(
     tformula = {
         "mc15": '(tau_0_n_tracks==1)*(2.0*tau_0_allTrk_pt/tau_0_pt-1) + -111*(tau_0_n_tracks!=1)',
         "mc16": "(-999*(tau_0_n_charged_tracks!=1)) + (tau_0_upsilon_pt_based*(tau_0_n_charged_tracks==1))",
+    },
+    binning=(3000, -1.0, 2.0),
+    plot_bins=np.arange(-1, 1.2, 0.05))
+
+tau_pol_cms = Variable(
+    "tau_pol_cms", 
+    title='#font[52]{polcms}',
+    latex=r"$polcms$",
+    tformula = {
+        "mc16": "tau_0_allTrk_pt/tau_0_p4->Pt()",
     },
     binning=(3000, -1.0, 2.0),
     plot_bins=np.arange(-1, 1.2, 0.05))
@@ -331,6 +344,24 @@ mu_0_pt = Variable(
     unit='[GeV]',
     scale=1.)
 
+mu_0_eta = Variable(
+    "mu_0_eta",
+    title='#font[152]{#eta}(#mu_{1})',
+    tformula={
+        "mc16":"mu_0_p4->Eta()",
+        "mc15":"mu_0_p4->Eta()",},
+    binning=(120, -3., 3.)
+    )
+    
+mu_0_phi = Variable(
+    "mu_0_phi",
+    title='#font[152]{#phi}(#mu_{1})',
+    tformula={
+        "mc16":"mu_0_p4->Phi()",
+        "mc15":"mu_0_p4->Phi()",},
+    binning=(60, -3, 3)
+    )
+
 
 ##############################################
 # - - - - - - - electron
@@ -338,11 +369,29 @@ mu_0_pt = Variable(
 el_0_pt = Variable(
     "el_0_pt", 
     title='#font[52]{p}_{T}(e_{1}) [GeV]',
-    tformula="mu_0_p4->Pt()",
+    tformula="el_0_p4->Pt()",
     binning=(20, 0, 400),
     unit='[GeV]',
-    scale=1.)
+    scale=1.
+    )
+
+el_0_eta = Variable(
+    "el_0_eta",
+    title='#font[152]{#eta}(e_{1})',
+    tformula={
+        "mc16":"el_0_p4->Eta()",
+        "mc15":"el_0_p4->Eta()",},
+    binning=(120, -3., 3.)
+    )
     
+el_0_phi = Variable(
+    "el_0_phi",
+    title='#font[152]{#phi}(e_{1})',
+    tformula={
+        "mc16":"el_0_p4->Phi()",
+        "mc15":"el_0_p4->Phi()",},
+    binning=(60, -3, 3)
+    )
 
 ##############################################
 # - - - - - - - - jets
@@ -373,8 +422,8 @@ bjet_0_pt =  Variable(
     title='#font[52]{p}_{T}lead b-jet [GeV]',
     latex=r"$b-jet_{p_T}$",
     tformula=BJET_P4_STR.format("Pt()"),
-    binning=(1000, 0, 1000),
-    plot_bins=range(25, 500, 25),
+    binning=(200, 0, 1000),
+    # plot_bins=range(25, 500, 25),
     scale=1.,
     unit='[GeV]')
 
@@ -424,8 +473,8 @@ met_et = Variable(
     tformula={
         "mc16":"met_p4->Et()",
         "mc15": "met_et"},
-    binning=(1000, 0, 1000),
-    plot_bins=range(100, 300, 20) + range(300, 500, 50),
+    binning=(200, 0, 1000),
+    plot_bins=range(50, 300, 20) + range(300, 500, 50),
     scale=1.,
     unit='[GeV]')
 
@@ -493,8 +542,8 @@ met_jet_dphi_ratio = Variable(
     tformula="(TMath::Pi() - fabs( fabs( tau_0_p4->Phi() - met_p4->Phi() ) - TMath::Pi() ))/ "\
     "(1 + TMath::Pi() - fabs( fabs( jet_0_p4->Phi() - met_p4->Phi() ) - TMath::Pi() )"\
     "+ TMath::Pi() - fabs( fabs( jet_1_p4->Phi() - met_p4->Phi() ) - TMath::Pi() ))",
-    binning = (400, -2, 2),
-    plot_bins=np.arange(0, 1, 0.05),   
+    binning = (20, -2, 2),
+    # plot_bins=np.arange(0, 1, 0.05),   
 )
 
 tau_met_jet_dphi_min = Variable(
@@ -506,6 +555,91 @@ tau_met_jet_dphi_min = Variable(
     ", (TMath::Pi() - fabs( tau_0_p4->Phi() - met_p4->Phi()) )**2 + ( jet_1_p4->Phi() - met_p4->Phi())**2) ",
     binning=(20, 0, 10),
 )
+
+###########################AK
+## FIX me! Only NOT b-tagged jets to be used
+tau0_met_dp = Variable(
+    "tau0_met_dp",
+    title='#Delta#phi(#tau, E^{miss}_{T})',
+    latex=r"$\Delta\phi(\tau, E^{miss}_{T})$",
+    tformula="((fabs(tau_0_p4->Phi() - met_p4->Phi())) > TMath::Pi())*(2* TMath::Pi() - fabs(tau_0_p4->Phi() - met_p4->Phi())) + ((fabs(tau_0_p4->Phi() - met_p4->Phi())) <= TMath::Pi())*(fabs(tau_0_p4->Phi() - met_p4->Phi()))", 
+    ##
+    #tformula="(fabs(tau_0_p4->Phi() - met_p4->Phi() )) > TMath::Pi() ? 2* TMath::Pi() - fabs(tau_0_p4->Phi() - met_p4->Phi() )  : fabs(tau_0_p4->Phi() - met_p4->Phi() )",
+    #tformula="2* 3.14 - fabs(tau_0_p4->Phi() - met_p4->Phi() )",
+    binning=(20, -1, 4),
+)
+
+jet0_met_dp = Variable(
+    "jet0_met_dp",
+    title='#Delta#phi(#jet0, E^{miss}_{T})',
+    latex=r"$\Delta\phi(jet0, E^{miss}_{T})$",
+    tformula="((fabs(jet_0_p4->Phi() - met_p4->Phi())) > TMath::Pi())*(2* TMath::Pi() - fabs(jet_0_p4->Phi() - met_p4->Phi())) + ((fabs(jet_0_p4->Phi() - met_p4->Phi())) <= TMath::Pi())*(fabs(jet_0_p4->Phi() - met_p4->Phi()))",
+    #tformula="(fabs(jet_0_p4->Phi() - met_p4->Phi())) > 3.14 ? 2* 3.14 - fabs(jet_0_p4->Phi() - met_p4->Phi())  : fabs(jet_0_p4->Phi() - met_p4->Phi())",
+    #tformula="(fabs(jet_0_p4->Phi() - met_p4->Phi())) > TMath::Pi() ? 2* TMath::Pi() - fabs(jet_0_p4->Phi() - met_p4->Phi())  : fabs(jet_0_p4->Phi() - met_p4->Phi())",
+    binning=(20, -1, 4),
+)
+
+jet1_met_dp = Variable(
+    "jet1_met_dp",
+    title='#Delta#phi(#jet1, E^{miss}_{T})',
+    latex=r"$\Delta\phi(jet1, E^{miss}_{T})$",
+    tformula="((fabs(jet_1_p4->Phi() - met_p4->Phi())) > TMath::Pi())*(2* TMath::Pi() - fabs(jet_1_p4->Phi() - met_p4->Phi())) + ((fabs(jet_1_p4->Phi() - met_p4->Phi())) <= TMath::Pi())*(fabs(jet_1_p4->Phi() - met_p4->Phi()))",
+    #tformula="(fabs(jet_1_p4->Phi() - met_p4->Phi())) > TMath::Pi() ? 2* TMath::Pi() - fabs(jet_1_p4->Phi() - met_p4->Phi())  : fabs(jet_1_p4->Phi() - met_p4->Phi())",
+    binning=(20, -1, 4),
+    #plot_bins=np.arange(-2, 2.4, .4)
+)
+
+jet2_met_dp = Variable(
+    "jet2_met_dp",
+    title='#Delta#phi(#jet2, E^{miss}_{T})',
+    latex=r"$\Delta\phi(jet2, E^{miss}_{T})$",
+    tformula="((fabs(jet_2_p4->Phi() - met_p4->Phi())) > TMath::Pi())*(2* TMath::Pi() - fabs(jet_2_p4->Phi() - met_p4->Phi())) + ((fabs(jet_2_p4->Phi() - met_p4->Phi())) <= TMath::Pi())*(fabs(jet_2_p4->Phi() - met_p4->Phi()))",
+    #tformula="(fabs(jet_2_p4->Phi() - met_p4->Phi())) > TMath::Pi() ? 2* TMath::Pi() - fabs(jet_2_p4->Phi() - met_p4->Phi())  : fabs(jet_2_p4->Phi() - met_p4->Phi())",
+    binning=(20, -1, 4),
+)
+
+taujet0_dp  = Variable(
+    "taujet0_dp",
+    title='taujet0_dp)',
+    latex="taujet0_dp",
+    tformula="sqrt((TMath::Pi()-"+tau0_met_dp.tformula+")**2+ "+jet0_met_dp.tformula+"**2)",
+    binning=(20, -1, 4),
+)
+
+taujet1_dp  = Variable(
+    "taujet1_dp",
+    title='taujet1_dp)',
+    latex="taujet1_dp",
+    tformula="sqrt((TMath::Pi()-"+tau0_met_dp.tformula+")**2+ "+jet1_met_dp.tformula+"**2)",
+    binning=(20, -1, 4),
+)
+
+taujet2_dp  = Variable(
+    "taujet2_dp",
+    title='taujet2_dp)',
+    latex="taujet2_dp",
+    tformula="sqrt((TMath::Pi()-"+tau0_met_dp.tformula+")**2+ "+jet2_met_dp.tformula+"**2)",
+    binning=(20, -1, 4),
+)
+
+r_min = Variable(
+    "r_min",
+    title="r_min_bb",
+    latex="r_min_bb",
+    tformula="min(min("+taujet0_dp.tformula+","+taujet1_dp.tformula+"),"+taujet2_dp.tformula+")",
+    binning=(20, 0, 10),
+)
+
+
+r_min_cut = Variable(
+    "r_min_cut",
+    title="r_min_bb",
+    latex="r_min_bb",
+    tformula="((tau_0_allTrk_pt/tau_0_p4->Pt() > 0.75)*(min(min("+taujet0_dp.tformula+","+taujet1_dp.tformula+"),"+taujet2_dp.tformula+")))",
+    binning=(20, 0, 10),
+)
+
+##########################AK
 
 bjet_0_met_dphi = Variable(
     "bjet_0_met_dphi", 
@@ -537,9 +671,27 @@ lep_0_pt = Variable(
     title='#font[52]{p}_{T}(l_{1}) [GeV]',
     latex=r"$\ell_{p_T}$",
     tformula="mu_0_p4->Pt()+el_0_p4->Pt()",
-    binning=(1000, 0, 1000),
+    binning=(20, 0, 1000),
     unit='[GeV]',
     scale=1.)
+
+lep_0_eta = Variable(
+    "tau_0_eta" , 
+    title='#font[52]#eta(l_{1})',
+    tformula={
+        "mc16": "mu_0_p4->Eta()+el_0_p4->Eta()",
+        "mc15": "mu_0_p4->Eta()+el_0_p4->Eta()"},
+    binning=(120, -4., 4.),
+    plot_bins=np.arange(-2.5, 2.5, 0.1))
+
+lep_0_phi = Variable(
+    "lep_0_phi" , 
+    title='#font[52]#phi(l_{1})',
+    tformula={
+        "mc16": "mu_0_p4->Phi()+el_0_p4->Phi()",
+        "mc15": "mu_0_p4->Phi()+el_0_p4->Phi()"},
+    binning=(20, -3.2, 3.2),
+    plot_bins=np.arange(-2.5, 2.5, 0.1))
 
 tau_0_lep_0_mass = Variable(
     "tau_0_lep_0_mass", 
@@ -595,7 +747,7 @@ lep_0_met_mt = Variable(
     "lep_0_met_mt",
     title='m_{T}(l, E^{miss}_{T})[GeV]',
     latex=r"$m_{T}(\ell, E^{miss}_{T}$)",
-    binning=(1000, 0, 1000),
+    binning=(200, 0, 1000),
     plot_bins=range(60, 160, 5),
     tformula="sqrt(2 * (el_0_p4->Pt() + mu_0_p4->Pt()) * met_p4->Et() * (1 - cos(met_p4->Phi() - el_0_p4->Phi() - mu_0_p4->Phi() ) ) )", 
     unit='[GeV]')
@@ -612,6 +764,14 @@ bjet_0_lep_0_dr = Variable(
     binning=(60, 0, 6.)
     )
 
+##############################################
+# - - - - - - - TruthMass
+##############################################
+TruthMass = Variable(
+    "TruthMass",
+    title="TruthMass",
+    binning=(300, 0., 3000.)
+    )
 
 ##-----------------------------------------------------------------
 # - - - - - - - - taujet channel variables list
@@ -621,6 +781,7 @@ VARIABLES_TAUJET = [
 
     tau_0_pt,
     tau_0_eta,
+    tau_0_phi,
     tau_0_n_charged_tracks,
     tau_0_q, 
     tau_0_upsilon,
@@ -643,11 +804,19 @@ VARIABLES_TAUJET = [
     bjet_0_met_dphi,
     bjet_0_tau_0_dr,
     met_jet_dphi_ratio,
+
+    tau0_met_dp,
+    jet0_met_dp,
+    jet1_met_dp,
+    jet2_met_dp,
+    r_min,
+    r_min_cut,
+    tau_pol_cms,
 ]
 
 ##-----------------------------------------------------------------
 # - - - - - - - - taulep channel variables list
-##-----------------------------------------------------------------
+##----------------------------------------------------------b-------
 VARIABLES_TAULEP = [
     n_avg_int_cor,
     n_actual_int_cor,
@@ -659,6 +828,16 @@ VARIABLES_TAULEP = [
     tau_0_upsilon,
 
     lep_0_pt,
+    lep_0_eta,
+    lep_0_phi,
+
+    el_0_pt,
+    el_0_eta,
+    el_0_phi,
+
+    mu_0_pt,
+    mu_0_eta,
+    mu_0_phi,
 
     met_et,
     tau_0_met_mt,
@@ -703,6 +882,7 @@ CLF_FEATURES = {
             bjet_0_tau_0_dr,
             met_jet_dphi_ratio,
             tau_0_upsilon,
+            # TruthMass,
         ],
         
         "HIGH": [ #<! above 400 [GeV]
@@ -713,6 +893,7 @@ CLF_FEATURES = {
             bjet_0_met_dphi,
             bjet_0_tau_0_dr,
             met_jet_dphi_ratio,
+            # TruthMass,
         ],
     },
 
@@ -729,6 +910,7 @@ CLF_FEATURES = {
             bjet_0_lep_0_dr,
             met_jet_dphi_ratio,
             tau_0_upsilon,
+            # TruthMass,
         ],
         "HIGH": [ #<! above 400 [GeV]
             tau_0_pt,
@@ -741,6 +923,7 @@ CLF_FEATURES = {
             tau_0_lep_0_dr,
             bjet_0_lep_0_dr,
             met_jet_dphi_ratio,
+            # TruthMass,
         ],
     }        
 }
@@ -748,6 +931,8 @@ CLF_FEATURES = {
 ##-----------------------------------------------------------------
 # - - - - - - - -  BDT scores (fine binning for WS; rebin for plots)
 ##-----------------------------------------------------------------
+
+#### NOMINAL
 clf_score_GB200_mass_80to120 = Variable(
     "clf_score_GB200_mass_80to120",    
     title='BDT score (80 to 120 [GeV])', 
@@ -781,22 +966,603 @@ clf_score_GB200_mass_500to3000 = Variable(
     plot_bins=np.arange(0, 1.1, 0.1),
 )
 
+
+clf_score_GB200_mass_80to80 = Variable(
+    "clf_score_GB200_mass_80to80",    
+    title='BDT score (80 to 80 [GeV])', 
+    binning=(1000, 0, 1), 
+    plot_bins=np.arange(0, 1.1, 0.1),
+)
+
+#### SINGLE
+clf_score_GB200_mass_90to90 = Variable(
+    "clf_score_GB200_mass_90to90",
+    title='BDT score (90 to 90 [GeV])',
+    binning=(1000, 0, 1),
+    plot_bins=np.arange(0, 1.1, 0.1),
+)
+
+clf_score_GB200_mass_100to100 = Variable(
+    "clf_score_GB200_mass_100to100",
+    title='BDT score (100 to 100 [GeV])',
+    binning=(1000, 0, 1),
+    plot_bins=np.arange(0, 1.1, 0.1),
+)
+
+clf_score_GB200_mass_110to110 = Variable(
+    "clf_score_GB200_mass_110to110",
+    title='BDT score (110 to 110 [GeV])',
+    binning=(1000, 0, 1),
+    plot_bins=np.arange(0, 1.1, 0.1),
+)
+
+clf_score_GB200_mass_120to120 = Variable(
+    "clf_score_GB200_mass_120to120",
+    title='BDT score (120 to 120 [GeV])',
+    binning=(1000, 0, 1),
+    plot_bins=np.arange(0, 1.1, 0.1),
+)
+
+clf_score_GB200_mass_130to130 = Variable(
+    "clf_score_GB200_mass_130to130",    
+    title='BDT score (130 to 130 [GeV])', 
+    binning=(1000, 0, 1), 
+    plot_bins=np.arange(0, 1.1, 0.1),
+)
+
+clf_score_GB200_mass_140to140 = Variable(
+    "clf_score_GB200_mass_140to140",
+    title='BDT score (140 to 140 [GeV])',
+    binning=(1000, 0, 1),
+    plot_bins=np.arange(0, 1.1, 0.1),
+)
+
+clf_score_GB200_mass_150to150 = Variable(
+    "clf_score_GB200_mass_150to150",
+    title='BDT score (150 to 150 [GeV])',
+    binning=(1000, 0, 1),
+    plot_bins=np.arange(0, 1.1, 0.1),
+)
+
+clf_score_GB200_mass_160to160 = Variable(
+    "clf_score_GB200_mass_160to160",
+    title='BDT score (160 to 160 [GeV])',
+    binning=(1000, 0, 1),
+    plot_bins=np.arange(0, 1.1, 0.1),
+)
+
+clf_score_GB200_mass_170to170 = Variable(
+    "clf_score_GB200_mass_170to170",    
+    title='BDT score (170 to 170 [GeV])',
+    binning=(1000, 0, 1), 
+    plot_bins=np.arange(0, 1.1, 0.1),
+)
+
+clf_score_GB200_mass_180to180 = Variable(
+    "clf_score_GB200_mass_180to180",
+    title='BDT score (180 to 180 [GeV])',
+    binning=(1000, 0, 1),
+    plot_bins=np.arange(0, 1.1, 0.1),
+)
+
+clf_score_GB200_mass_190to190 = Variable(
+    "clf_score_GB200_mass_190to190",
+    title='BDT score (190 to 190 [GeV])',
+    binning=(1000, 0, 1),
+    plot_bins=np.arange(0, 1.1, 0.1),
+)
+
+clf_score_GB200_mass_200to200 = Variable(
+    "clf_score_GB200_mass_200to200",    
+    title='BDT score ( 200 to 200 [GeV])',
+    binning=(1000, 0, 1), 
+    plot_bins=np.arange(0, 1.1, 0.1),
+)
+
+clf_score_GB200_mass_225to225 = Variable(
+    "clf_score_GB200_mass_225to225",
+    title='BDT score ( 225 to 225 [GeV])',
+    binning=(1000, 0, 1),
+    plot_bins=np.arange(0, 1.1, 0.1),
+)
+
+clf_score_GB200_mass_250to250 = Variable(
+    "clf_score_GB200_mass_250to250",
+    title='BDT score ( 250 to 250 [GeV])',
+    binning=(1000, 0, 1),
+    plot_bins=np.arange(0, 1.1, 0.1),
+)
+
+clf_score_GB200_mass_275to275 = Variable(
+    "clf_score_GB200_mass_275to275",
+    title='BDT score ( 275 to 275 [GeV])',
+    binning=(1000, 0, 1),
+    plot_bins=np.arange(0, 1.1, 0.1),
+)
+
+clf_score_GB200_mass_300to300 = Variable(
+    "clf_score_GB200_mass_300to300",
+    title='BDT score ( 300 to 300 [GeV])',
+    binning=(1000, 0, 1),
+    plot_bins=np.arange(0, 1.1, 0.1),
+)
+
+clf_score_GB200_mass_350to350 = Variable(
+    "clf_score_GB200_mass_350to350",
+    title='BDT score ( 350 to 350 [GeV])',
+    binning=(1000, 0, 1),
+    plot_bins=np.arange(0, 1.1, 0.1),
+)
+
+clf_score_GB200_mass_400to400 = Variable(
+    "clf_score_GB200_mass_400to400",
+    title='BDT score ( 400 to 400 [GeV])',
+    binning=(1000, 0, 1),
+    plot_bins=np.arange(0, 1.1, 0.1),
+)
+
+clf_score_GB200_mass_500to500 = Variable(
+    "clf_score_GB200_mass_500to500",
+    title='BDT score ( 500 to 500 [GeV])',
+    binning=(1000, 0, 1),
+    plot_bins=np.arange(0, 1.1, 0.1),
+)
+
+
+clf_score_GB200_mass_600to600 = Variable(
+    "clf_score_GB200_mass_600to600",
+    title='BDT score ( 600 to 600 [GeV])',
+    binning=(1000, 0, 1),
+    plot_bins=np.arange(0, 1.1, 0.1),
+)
+
+
+clf_score_GB200_mass_700to700 = Variable(
+    "clf_score_GB200_mass_700to700",
+    title='BDT score ( 700 to 700 [GeV])',
+    binning=(1000, 0, 1),
+    plot_bins=np.arange(0, 1.1, 0.1),
+)
+
+
+clf_score_GB200_mass_800to800 = Variable(
+    "clf_score_GB200_mass_800to800",
+    title='BDT score ( 800 to 800 [GeV])',
+    binning=(1000, 0, 1),
+    plot_bins=np.arange(0, 1.1, 0.1),
+)
+
+
+clf_score_GB200_mass_900to900 = Variable(
+    "clf_score_GB200_mass_900to900",
+    title='BDT score ( 900 to 900 [GeV])',
+    binning=(1000, 0, 1),
+    plot_bins=np.arange(0, 1.1, 0.1),
+)
+
+clf_score_GB200_mass_1000to1000 = Variable(
+    "clf_score_GB200_mass_1000to1000",    
+    title='BDT score (1000 to 1000 [GeV])',
+    binning=(1000, 0, 1), 
+    plot_bins=np.arange(0, 1.1, 0.1),
+)
+
+clf_score_GB200_mass_1200to1200 = Variable(
+    "clf_score_GB200_mass_1200to1200",
+    title='BDT score (1200 to 1200 [GeV])',
+    binning=(1000, 0, 1),
+    plot_bins=np.arange(0, 1.1, 0.1),
+)
+
+clf_score_GB200_mass_1400to1400 = Variable(
+    "clf_score_GB200_mass_1400to1400",
+    title='BDT score (1400 to 1400 [GeV])',
+    binning=(1000, 0, 1),
+    plot_bins=np.arange(0, 1.1, 0.1),
+)
+
+clf_score_GB200_mass_1600to1600 = Variable(
+    "clf_score_GB200_mass_1600to1600",
+    title='BDT score (1600 to 1600 [GeV])',
+    binning=(1000, 0, 1),
+    plot_bins=np.arange(0, 1.1, 0.1),
+)
+
+clf_score_GB200_mass_1800to1800 = Variable(
+    "clf_score_GB200_mass_1800to1800",
+    title='BDT score (1800 to 1800 [GeV])',
+    binning=(1000, 0, 1),
+    plot_bins=np.arange(0, 1.1, 0.1),
+)
+
+clf_score_GB200_mass_2000to2000 = Variable(
+    "clf_score_GB200_mass_2000to2000",
+    title='BDT score (2000 to 2000 [GeV])',
+    binning=(1000, 0, 1),
+    plot_bins=np.arange(0, 1.1, 0.1),
+)
+
+clf_score_GB200_mass_2500to2500 = Variable(
+    "clf_score_GB200_mass_2500to2500",
+    title='BDT score (2500 to 2500 [GeV])',
+    binning=(1000, 0, 1),
+    plot_bins=np.arange(0, 1.1, 0.1),
+)
+
+
+clf_score_GB200_mass_3000to3000 = Variable(
+    "clf_score_GB200_mass_3000to3000",
+    title='BDT score (3000 to 3000 [GeV])',
+    binning=(1000, 0, 1),
+    plot_bins=np.arange(0, 1.1, 0.1),
+)
+
+#### UP_DOWN (Sliding Window)
+clf_score_GB200_mass_80to90 = Variable(
+    'clf_score_GB200_mass_80to90',
+    title='BDT score (80 to 90 [GeV])',
+    bining=(1000,0,1),
+    plot_bins=np.arange(0,1.1,0.1),
+)
+clf_score_GB200_mass_80to100 = Variable(
+    'clf_score_GB200_mass_80to100',
+    title='BDT score (80 to 100 [GeV])',
+    bining=(1000,0,1),
+    plot_bins=np.arange(0,1.1,0.1),
+)
+clf_score_GB200_mass_90to110 = Variable(
+    'clf_score_GB200_mass_90to110',
+    title='BDT score (90 to 110 [GeV])',
+    bining=(1000,0,1),
+    plot_bins=np.arange(0,1.1,0.1),
+)
+clf_score_GB200_mass_100to120 = Variable(
+    'clf_score_GB200_mass_100to120',
+    title='BDT score (100 to 120 [GeV])',
+    bining=(1000,0,1),
+    plot_bins=np.arange(0,1.1,0.1),
+)
+clf_score_GB200_mass_110to130 = Variable(
+    'clf_score_GB200_mass_110to130',
+    title='BDT score (110 to 130 [GeV])',
+    bining=(1000,0,1),
+    plot_bins=np.arange(0,1.1,0.1),
+)
+clf_score_GB200_mass_120to140 = Variable(
+    'clf_score_GB200_mass_120to140',
+    title='BDT score (120 to 140 [GeV])',
+    bining=(1000,0,1),
+    plot_bins=np.arange(0,1.1,0.1),
+)
+clf_score_GB200_mass_130to150 = Variable(
+    'clf_score_GB200_mass_130to150',
+    title='BDT score (130 to 150 [GeV])',
+    bining=(1000,0,1),
+    plot_bins=np.arange(0,1.1,0.1),
+)
+clf_score_GB200_mass_140to160 = Variable(
+    'clf_score_GB200_mass_140to160',
+    title='BDT score (140 to 160 [GeV])',
+    bining=(1000,0,1),
+    plot_bins=np.arange(0,1.1,0.1),
+)
+clf_score_GB200_mass_150to170 = Variable(
+    'clf_score_GB200_mass_150to170',
+    title='BDT score (150 to 170 [GeV])',
+    bining=(1000,0,1),
+    plot_bins=np.arange(0,1.1,0.1),
+)
+clf_score_GB200_mass_160to180 = Variable(
+    'clf_score_GB200_mass_160to180',
+    title='BDT score (160 to 180 [GeV])',
+    bining=(1000,0,1),
+    plot_bins=np.arange(0,1.1,0.1),
+)
+# clf_score_GB200_mass_170to190 = Variable(
+#     'clf_score_GB200_mass_170to190',
+#     title='BDT score (170 to 190 [GeV])',
+#     bining=(1000,0,1),
+#     plot_bins=np.arange(0,1.1,0.1),
+# )
+clf_score_GB200_mass_180to200 = Variable(
+    'clf_score_GB200_mass_180to200',
+    title='BDT score (180 to 200 [GeV])',
+    bining=(1000,0,1),
+    plot_bins=np.arange(0,1.1,0.1),
+)
+clf_score_GB200_mass_190to225 = Variable(
+    'clf_score_GB200_mass_190to225',
+    title='BDT score (190 to 225 [GeV])',
+    bining=(1000,0,1),
+    plot_bins=np.arange(0,1.1,0.1),
+)
+clf_score_GB200_mass_200to250 = Variable(
+    'clf_score_GB200_mass_200to250',
+    title='BDT score (200 to 250 [GeV])',
+    bining=(1000,0,1),
+    plot_bins=np.arange(0,1.1,0.1),
+)
+clf_score_GB200_mass_225to275 = Variable(
+    'clf_score_GB200_mass_225to275',
+    title='BDT score (225 to 275 [GeV])',
+    bining=(1000,0,1),
+    plot_bins=np.arange(0,1.1,0.1),
+)
+clf_score_GB200_mass_250to300 = Variable(
+    'clf_score_GB200_mass_250to300',
+    title='BDT score (250 to 300 [GeV])',
+    bining=(1000,0,1),
+    plot_bins=np.arange(0,1.1,0.1),
+)
+clf_score_GB200_mass_275to350 = Variable(
+    'clf_score_GB200_mass_275to350',
+    title='BDT score (275 to 350 [GeV])',
+    bining=(1000,0,1),
+    plot_bins=np.arange(0,1.1,0.1),
+)
+clf_score_GB200_mass_300to400 = Variable(
+    'clf_score_GB200_mass_300to400',
+    title='BDT score (300 to 400 [GeV])',
+    bining=(1000,0,1),
+    plot_bins=np.arange(0,1.1,0.1),
+)
+clf_score_GB200_mass_350to500 = Variable(
+    'clf_score_GB200_mass_350to500',
+    title='BDT score (350 to 500 [GeV])',
+    bining=(1000,0,1),
+    plot_bins=np.arange(0,1.1,0.1),
+)
+clf_score_GB200_mass_400to600 = Variable(
+    'clf_score_GB200_mass_400to600',
+    title='BDT score (400 to 600 [GeV])',
+    bining=(1000,0,1),
+    plot_bins=np.arange(0,1.1,0.1),
+)
+clf_score_GB200_mass_500to700 = Variable(
+    'clf_score_GB200_mass_500to700',
+    title='BDT score (500 to 700 [GeV])',
+    bining=(1000,0,1),
+    plot_bins=np.arange(0,1.1,0.1),
+)
+clf_score_GB200_mass_600to800 = Variable(
+    'clf_score_GB200_mass_600to800',
+    title='BDT score (600 to 800 [GeV])',
+    bining=(1000,0,1),
+    plot_bins=np.arange(0,1.1,0.1),
+)
+clf_score_GB200_mass_700to900 = Variable(
+    'clf_score_GB200_mass_700to900',
+    title='BDT score (700 to 900 [GeV])',
+    bining=(1000,0,1),
+    plot_bins=np.arange(0,1.1,0.1),
+)
+clf_score_GB200_mass_800to1000 = Variable(
+    'clf_score_GB200_mass_800to1000',
+    title='BDT score (800 to 1000 [GeV])',
+    bining=(1000,0,1),
+    plot_bins=np.arange(0,1.1,0.1),
+)
+clf_score_GB200_mass_900to1200 = Variable(
+    'clf_score_GB200_mass_900to1200',
+    title='BDT score (900 to 1200 [GeV])',
+    bining=(1000,0,1),
+    plot_bins=np.arange(0,1.1,0.1),
+)
+clf_score_GB200_mass_1000to1400 = Variable(
+    'clf_score_GB200_mass_1000to1400',
+    title='BDT score (1000 to 1400 [GeV])',
+    bining=(1000,0,1),
+    plot_bins=np.arange(0,1.1,0.1),
+)
+clf_score_GB200_mass_1200to1600 = Variable(
+    'clf_score_GB200_mass_1200to1600',
+    title='BDT score (1200 to 1600 [GeV])',
+    bining=(1000,0,1),
+    plot_bins=np.arange(0,1.1,0.1),
+)
+clf_score_GB200_mass_1400to1800 = Variable(
+    'clf_score_GB200_mass_1400to1800',
+    title='BDT score (1400 to 1800 [GeV])',
+    bining=(1000,0,1),
+    plot_bins=np.arange(0,1.1,0.1),
+)
+clf_score_GB200_mass_1600to2000 = Variable(
+    'clf_score_GB200_mass_1600to2000',
+    title='BDT score (1600 to 2000 [GeV])',
+    bining=(1000,0,1),
+    plot_bins=np.arange(0,1.1,0.1),
+)
+clf_score_GB200_mass_1800to2500 = Variable(
+    'clf_score_GB200_mass_1800to2500',
+    title='BDT score (1800 to 2500 [GeV])',
+    bining=(1000,0,1),
+    plot_bins=np.arange(0,1.1,0.1),
+)
+clf_score_GB200_mass_2000to3000 = Variable(
+    'clf_score_GB200_mass_2000to3000',
+    title='BDT score (2000 to 3000 [GeV])',
+    bining=(1000,0,1),
+    plot_bins=np.arange(0,1.1,0.1),
+)
+clf_score_GB200_mass_2500to3000 = Variable(
+    'clf_score_GB200_mass_2500to3000',
+    title='BDT score (2500 to 3000 [GeV])',
+    bining=(1000,0,1),
+    plot_bins=np.arange(0,1.1,0.1),
+)
+
+#### SINGLE
+clf_score_GB200_mass_80to3000 = Variable(
+    "clf_score_GB200_mass_80to3000",
+    title='BDT score (80 to 3000 [GeV])',
+    binning=(1000, 0, 1),
+    plot_bins=np.arange(0, 1.1, 0.1),
+)
+
 BDT_SCORES = {
-    "taujet":[
-        clf_score_GB200_mass_80to120,
-        clf_score_GB200_mass_130to160,
-        clf_score_GB200_mass_170to190,
-        clf_score_GB200_mass_200to400,
-        clf_score_GB200_mass_500to3000,
-    ],
-    "taulep":[
-        clf_score_GB200_mass_80to120,
-        clf_score_GB200_mass_130to160,
-        clf_score_GB200_mass_170to190,
-        clf_score_GB200_mass_200to400,
-        clf_score_GB200_mass_500to3000,
-    ],
+    "taujet":{
+        "NOM":[
+            clf_score_GB200_mass_80to120,
+            clf_score_GB200_mass_130to160,
+            clf_score_GB200_mass_170to190,
+            clf_score_GB200_mass_200to400,
+            clf_score_GB200_mass_500to3000,
+                ],
+        "SINGLE":[
+            clf_score_GB200_mass_80to80,
+            clf_score_GB200_mass_90to90,
+            clf_score_GB200_mass_100to100,
+            clf_score_GB200_mass_110to110,
+            clf_score_GB200_mass_120to120,
+            clf_score_GB200_mass_130to130,
+            clf_score_GB200_mass_140to140,
+            clf_score_GB200_mass_150to150,
+            clf_score_GB200_mass_160to160,
+            clf_score_GB200_mass_170to170,
+            clf_score_GB200_mass_180to180,         
+            clf_score_GB200_mass_190to190,
+            clf_score_GB200_mass_200to200,
+            clf_score_GB200_mass_225to225,
+            clf_score_GB200_mass_250to250,
+            clf_score_GB200_mass_275to275,
+            clf_score_GB200_mass_300to300,
+            clf_score_GB200_mass_350to350,
+            clf_score_GB200_mass_400to400,
+            clf_score_GB200_mass_500to500,
+            clf_score_GB200_mass_600to600,
+            clf_score_GB200_mass_700to700,
+            clf_score_GB200_mass_800to800,
+            clf_score_GB200_mass_900to900,
+            clf_score_GB200_mass_1000to1000,
+            clf_score_GB200_mass_1200to1200,
+            clf_score_GB200_mass_1400to1400,
+            clf_score_GB200_mass_1600to1600,
+            clf_score_GB200_mass_1800to1800,
+            clf_score_GB200_mass_2000to2000,
+            clf_score_GB200_mass_2500to2500,
+            clf_score_GB200_mass_3000to3000,
+            ],
+        "UP_DOWN":[
+            clf_score_GB200_mass_80to90,
+            clf_score_GB200_mass_80to100,
+            clf_score_GB200_mass_90to110,
+            clf_score_GB200_mass_100to120,
+            clf_score_GB200_mass_110to130,
+            clf_score_GB200_mass_120to140,
+            clf_score_GB200_mass_130to150,
+            clf_score_GB200_mass_140to160,
+            clf_score_GB200_mass_150to170,
+            clf_score_GB200_mass_160to180,
+            clf_score_GB200_mass_170to190,
+            clf_score_GB200_mass_180to200,
+            clf_score_GB200_mass_190to225,
+            clf_score_GB200_mass_200to250,
+            clf_score_GB200_mass_225to275,
+            clf_score_GB200_mass_250to300,
+            clf_score_GB200_mass_275to350,
+            clf_score_GB200_mass_300to400,
+            clf_score_GB200_mass_350to500,
+            clf_score_GB200_mass_400to600,
+            clf_score_GB200_mass_500to700,
+            clf_score_GB200_mass_600to800,
+            clf_score_GB200_mass_700to900,
+            clf_score_GB200_mass_800to1000,
+            clf_score_GB200_mass_900to1200,
+            clf_score_GB200_mass_1000to1400,
+            clf_score_GB200_mass_1200to1600,
+            clf_score_GB200_mass_1400to1800,
+            clf_score_GB200_mass_1600to2000,
+            clf_score_GB200_mass_1800to2500,
+            clf_score_GB200_mass_2000to3000,
+            clf_score_GB200_mass_2500to3000,
+            ],        
+        "ALL":[
+            clf_score_GB200_mass_80to3000,
+            ],
+        },
+
+    "taulep":{
+        "NOM":[
+            clf_score_GB200_mass_80to120,
+            clf_score_GB200_mass_130to160,
+            clf_score_GB200_mass_170to190,
+            clf_score_GB200_mass_200to400,
+            clf_score_GB200_mass_500to3000,
+                ],
+        "SINGLE":[
+            clf_score_GB200_mass_80to80,
+            clf_score_GB200_mass_90to90,
+            clf_score_GB200_mass_100to100,
+            clf_score_GB200_mass_110to110,
+            clf_score_GB200_mass_120to120,
+            clf_score_GB200_mass_130to130,
+            clf_score_GB200_mass_140to140,
+            clf_score_GB200_mass_150to150,
+            clf_score_GB200_mass_160to160,
+            clf_score_GB200_mass_170to170,
+            clf_score_GB200_mass_180to180,         
+            clf_score_GB200_mass_190to190,
+            clf_score_GB200_mass_200to200,
+            clf_score_GB200_mass_225to225,
+            clf_score_GB200_mass_250to250,
+            clf_score_GB200_mass_275to275,
+            clf_score_GB200_mass_300to300,
+            clf_score_GB200_mass_350to350,
+            clf_score_GB200_mass_400to400,
+            clf_score_GB200_mass_500to500,
+            clf_score_GB200_mass_600to600,
+            clf_score_GB200_mass_700to700,
+            clf_score_GB200_mass_800to800,
+            clf_score_GB200_mass_900to900,
+            clf_score_GB200_mass_1000to1000,
+            clf_score_GB200_mass_1200to1200,
+            clf_score_GB200_mass_1400to1400,
+            clf_score_GB200_mass_1600to1600,
+            clf_score_GB200_mass_1800to1800,
+            clf_score_GB200_mass_2000to2000,
+            clf_score_GB200_mass_2500to2500,
+            clf_score_GB200_mass_3000to3000,
+            ],
+        "UP_DOWN":[
+            clf_score_GB200_mass_80to90,
+            clf_score_GB200_mass_80to100,
+            clf_score_GB200_mass_90to110,
+            clf_score_GB200_mass_100to120,
+            clf_score_GB200_mass_110to130,
+            clf_score_GB200_mass_120to140,
+            clf_score_GB200_mass_130to150,
+            clf_score_GB200_mass_140to160,
+            clf_score_GB200_mass_150to170,
+            clf_score_GB200_mass_160to180,
+            clf_score_GB200_mass_170to190,
+            clf_score_GB200_mass_180to200,
+            clf_score_GB200_mass_190to225,
+            clf_score_GB200_mass_200to250,
+            clf_score_GB200_mass_225to275,
+            clf_score_GB200_mass_250to300,
+            clf_score_GB200_mass_275to350,
+            clf_score_GB200_mass_300to400,
+            clf_score_GB200_mass_350to500,
+            clf_score_GB200_mass_400to600,
+            clf_score_GB200_mass_500to700,
+            clf_score_GB200_mass_600to800,
+            clf_score_GB200_mass_700to900,
+            clf_score_GB200_mass_800to1000,
+            clf_score_GB200_mass_900to1200,
+            clf_score_GB200_mass_1000to1400,
+            clf_score_GB200_mass_1200to1600,
+            clf_score_GB200_mass_1400to1800,
+            clf_score_GB200_mass_1600to2000,
+            clf_score_GB200_mass_1800to2500,
+            clf_score_GB200_mass_2000to3000,
+            clf_score_GB200_mass_2500to3000,
+            ],        
+        "ALL":[
+            clf_score_GB200_mass_80to3000,
+            ],
+    }
 }
+
 
 
 ##-----------------------------------------------------------------

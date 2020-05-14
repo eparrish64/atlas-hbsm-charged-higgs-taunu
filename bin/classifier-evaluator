@@ -44,7 +44,6 @@ if __name__=="__main__":
         # worker = workers[0]
         # print "WORKER: ", worker
  
-        print models
         ## load trained models
         # pmodels = get_models(models.split(",")) 
         # try:
@@ -53,7 +52,7 @@ if __name__=="__main__":
         #     pmodels = get_models(models.split(","), isNN=True)
         #     Keras_pmodels = None
 
-        print "Trained Models: ", pmodels
+        # print "Trained Models: ", pmodels
 
         # - - get the hists 
         start_time = time.time()

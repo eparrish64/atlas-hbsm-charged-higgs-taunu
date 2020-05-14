@@ -696,20 +696,27 @@ def fill_scores_mult(tree, all_models, hist_templates,
     if isNN == True:
         #for mtag in all_models:
         for mtag, mtag_Keras in zip(all_models, all_Keras_models):
-          #for model in all_models[mtag]:
-          for model, Keras_model in zip(all_models[mtag], all_Keras_models[mtag_Keras]):
-              # Loop over models, evaluating events and filling trees
-              # In theory we could do this periodically while looping over events, if memory becomes a problem
-              events = infos[mtag][model.kfolds][model.fold_num]
-              if len(events[0]) == 0: continue # No events passed the selection
-              #scores = model.predict_proba(events[0])
-              #scores = model.predict(scaler.fit_transform(events[0]))
-              scores = Keras_model.predict(events[0])
-              for idx in xrange(len(scores)):
-                  #hist_templates[mtag].Fill(scores[idx][1], events[1][idx]) # <! probability of belonging to class 1 (SIGNAL)
-                  hist_templates[mtag].Fill(scores[idx], events[1][idx]) # <! probability of belonging to class 1 (SIGNAL) 
-                  if idx%100000==0:
-                      log.debug("%r : %r "%(events[0][idx], scores[idx]))
+            #for model in all_models[mtag]:
+            for model, Keras_model in zip(all_models[mtag], all_Keras_models[mtag_Keras]):
+                # Loop over models, evaluating events and filling trees
+                # In theory we could do this periodically while looping over events, if memory becomes a problem
+                events = infos[mtag][model.kfolds][model.fold_num]
+                if len(events[0]) == 0: continue # No events passed the selection
+                #scores = model.predict_proba(events[0])
+                #scores = model.predict(scaler.fit_transform(events[0]))
+
+                events = infos[mtag][model.kfolds][model.fold_num]
+                if len(events[0]) == 0: continue # No events passed the selection
+
+                #Method 2: Hacked, less elegant, but faster, modify also hpana/dataset_hists.py
+                for key in list(hist_templates.keys()):
+                  events[0][:,-1] = hist_templates[key].GetTitle().split("to")[1]
+                  scores = Keras_model.predict(events[0])
+                  for idx in xrange(len(scores)):
+                      hist_templates[key].Fill(scores[idx], events[1][idx]) # <! probability of belonging to class 1 (SIGNAL
+                      if idx%100000==0:
+                          log.debug("%r : %r "%(events[0][idx], scores[idx]))
+
     else:  
         for mtag in all_models:
           for model in all_models[mtag]:

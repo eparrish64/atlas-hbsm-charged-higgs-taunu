@@ -1560,9 +1560,6 @@ BDT_SCORES = {
         "ALL":[
             clf_score_GB200_mass_80to3000,
             ],
-        "ALL":[
-            clf_score_GB200_mass_80to3000,
-            ],
     }
 }
 

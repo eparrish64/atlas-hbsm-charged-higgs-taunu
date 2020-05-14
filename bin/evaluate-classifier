@@ -520,11 +520,11 @@ def main():
                                      ))
 
                     
-                    print "len(ana_workers): ", len(ana_workers)                    
+                    log.debug("len(ana_workers): ", len(ana_workers))
                     #split_workers = list(split(ana_workers, 100))
                     #print "len(split_workers): ", len(split_workers)
                     split_workers = list(chunks(ana_workers, 20))
-                    print "len(split_workers): ", len(split_workers)
+                    log.debug("len(split_workers): ", len(split_workers))
 
                     log.info("************** creating %i jobs for HTCondor submission ************" % len(split_workers))
                     log.info("**************************************************************")

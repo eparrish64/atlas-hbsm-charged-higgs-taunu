@@ -30,6 +30,9 @@ def calculate_chi2(target_hist, template_hist, min_evts=10):
     """
     Chi squared/ndf  
     """
+    #MB
+    nbins_real= 0
+    #MB
     chi2 = 0
     nbins = target_hist.GetNbinsX()
     for i in range(nbins):
@@ -45,10 +48,15 @@ def calculate_chi2(target_hist, template_hist, min_evts=10):
         #     continue
         if tr_cont==0 or tm_cont==0:
             continue
+        #MB
+        nbins_real += 1
+        #MB
         chi2 += ((tr_cont-tm_cont)**2)/(tr_err**2 + tm_err**2)
         
-    return chi2/nbins
-
+    #return chi2/nbins
+    #MB
+    return chi2/nbins_real , nbins_real
+    #MB
 
 ##--------------------------------------------------------------------------
 ## - - chi2 fit error 
@@ -72,21 +80,37 @@ def chi2_error(chi2_graph, template_bins=20):
 
     ## small number of bins 
     # std = (2./template_bins)
-
-    err_up = std
+    
+    #err_up = std
+    #for n in range(xmin_index+1, len(xarr)):
+     #   if err_up < (xarr[n]- xmin):
+      #      err_up = xarr[n] - xmin
+          #  break
+        
+    #err_dn = std
+    #n = xmin_index-1
+    #while n > 0:
+     #   if err_dn < (xmin - xarr[n]):
+      #      err_dn = xmin - xarr[n]
+       #     break
+        #n -= 1
+    
+    #MB 
+    
+    err_up =0
     for n in range(xmin_index+1, len(xarr)):
-        if err_up < (xarr[n]- xmin):
+        if std <(yarr[n]- ymin):
             err_up = xarr[n] - xmin
             break
         
-    err_dn = std
+    err_dn = 0
     n = xmin_index-1
     while n > 0:
-        if err_dn < (xmin - xarr[n]):
+        if std < (yarr[n]-ymin):
             err_dn = xmin - xarr[n]
             break
         n -= 1
-        
+    #MB
     return xmin, err_up, err_dn
         
 ##--------------------------------------------------------------------------
@@ -132,8 +156,9 @@ def fake_sources(samples, category, ftypes={}, tauid=None, antitau=None):
 ##--------------------------------------------------------------------------
 def get_cr_ffs(hist_sets, 
                 control_regions=[], 
-                tau_jet_bdt_score_trans_wps={"NOMINAL":0.02, "1up": 0.01, "1down": 0.03}, 
-                n_charged_tracks=[], 
+            #LD tau_jet_bdt_score_trans_wps={"NOMINAL":0.02, "1up": 0.01, "1down": 0.03}, 
+              	tau_jet_rnn_score_trans_wps={"NOMINAL":0.00, "RNN_1up": 0.00, "RNN_1down": 0.00}, 
+	 	n_charged_tracks=[], 
                 subtract_mc=True,
                 cache_file=None,
                 write_cxx_macro=True,
@@ -255,7 +280,8 @@ def get_cr_ffs(hist_sets,
             canvas.Close()
         
         # - - gather hists per tau pT and ntracks bin and also tau_jet_bdt_score WPs
-        for jkey, jbs_wp in tau_jet_bdt_score_trans_wps.iteritems():
+        #LD for jkey, jbs_wp in tau_jet_bdt_score_trans_wps.iteritems(): switch to RNN
+	for jkey, jbs_wp in tau_jet_rnn_score_trans_wps.iteritems():
             # jkey = "tauJetBDT_0%i"%(100*jbs_wp)
             ffs_dict[cr_name][jkey] = {}
             if jkey=="NOMINAL" and subtract_mc:
@@ -269,7 +295,7 @@ def get_cr_ffs(hist_sets,
                     ffs_dict[cr_name]["MCSubt_1up"][tkey] = {}
                     ffs_dict[cr_name]["MCSubt_1down"][tkey] = {}
                 
-                # - - keep jet BDT score along X (only a lower cut)
+                # - - keep jet RNN score along X (only a lower cut)
                 x_low = htmp_X.FindBin(jbs_wp)
                 x_high = -1 #<! to include overflow bin too
                 
@@ -529,6 +555,7 @@ def fit_alpha(cr_hists, target_hists, regions,
                 target_hist.Sumw2()   
                 # - - - - varying the coefficient
                 chi2 = []
+                
                 alpha = np.arange (-5, 5, 0.01)
 
                 # - - - - fit to aP_mj + (1-a)P_wj
@@ -542,7 +569,7 @@ def fit_alpha(cr_hists, target_hists, regions,
                     
                     ## force fit range 
                     if itk==3:
-                        template_hist.GetXaxis().SetRangeUser(0.02, 0.25)
+                        template_hist.GetXaxis().SetRangeUser(0.00, 0.25)
 
                     if template_hist.Integral()==0 or target_hist.Integral()==0:
                         log.warning("target or template hist is zero, wont fit anything")
@@ -551,7 +578,10 @@ def fit_alpha(cr_hists, target_hists, regions,
                     template_hist.Sumw2()
                     
                     # - - - - CHI2 fit; other option: KolmogorovTest(template_hist, "U O") 
-                    c2 = target_hist.Chi2Test(template_hist, "WW CHI2/NDF ")
+                    #c2 = target_hist.Chi2Test(template_hist, "WW CHI2/NDF ")
+                    #MB
+                    c2, nbins_real =calculate_chi2(target_hist, template_hist, min_evts=10)
+                    #MB
                     chi2.append((a, c2))
                     
                     scaled_mj_hist.Delete()
@@ -565,8 +595,9 @@ def fit_alpha(cr_hists, target_hists, regions,
                 chi2_graph.SetName("chi2_graph")
                 chi2s[tkey][pkey][hs.category] = chi2_graph
 
-                alpha, err_up, err_down = chi2_error(chi2_graph, template_bins=len(fitting_sub_bins))
-                
+                #alpha, err_up, err_down = chi2_error(chi2_graph, template_bins=len(fitting_sub_bins))
+                #MB
+                alpha, err_up, err_down = chi2_error(chi2_graph, nbins_real)
                 # - - - - keep alpha corresponding to min Chi2 distribution        
                 if not hs.category in alphas[tkey][pkey]:
                     alphas[tkey][pkey][hs.category] = {"NOMINAL":0, "1up":0, "1down":0}
@@ -645,7 +676,7 @@ def fit_alpha(cr_hists, target_hists, regions,
 ## - - control regions Fake Factors plotting funtions 
 ##--------------------------------------------------------------------------
 def plot_cr_ffs(cr_ffs, cr_labels={},
-                jet_bdt_key="NOMINAL", suffix="", pdir="", pname="FFs_inclusive_tracks_pT.png",
+                jet_rnn_key="NOMINAL", suffix="", pdir="", pname="FFs_inclusive_tracks_pT.png",
                 logy=True, logx=True, formats=[".png"], data_info="#sqrt{13} TeV",
                 colors=[ROOT.kBlack, ROOT.kGreen, ROOT.kRed, ROOT.kBlue,]):
     """
@@ -657,22 +688,22 @@ def plot_cr_ffs(cr_ffs, cr_labels={},
     # - - - - retrive hists 
     graphs = []
     for cr in cr_ffs.keys():
-        for itk, bins in cr_ffs[cr][jet_bdt_key].iteritems():
+        for itk, bins in cr_ffs[cr][jet_rnn_key].iteritems():
             bin_keys = sorted([float(b) for b in bins.keys()])
             e_graph = ROOT.TGraphAsymmErrors(len(bins)-1)
             for n in range(len(bin_keys)-1):
                 pt = bin_keys[n]
 
                 ## NOMINAL 
-                ff = float(cr_ffs[cr][jet_bdt_key][itk]["%i"%pt])
+                ff = float(cr_ffs[cr][jet_rnn_key][itk]["%i"%pt])
 
                 ## syst error (variation of LOOSE TAU)
-                ff_up = float(cr_ffs[cr][jet_bdt_key.replace("NOMINAL", "BDT_1up")][itk]["%i"%pt])
-                ff_dn = float(cr_ffs[cr][jet_bdt_key.replace("NOMINAL", "BDT_1down")][itk]["%i"%pt])
+                ff_up = float(cr_ffs[cr][jet_rnn_key.replace("NOMINAL", "RNN_1up")][itk]["%i"%pt])
+                ff_dn = float(cr_ffs[cr][jet_rnn_key.replace("NOMINAL", "RNN_1down")][itk]["%i"%pt])
 
                 ## syst error (varaition of MC subtraction) 
-                ff_mcsubt_up = float(cr_ffs[cr][jet_bdt_key.replace("NOMINAL", "MCSubt_1up")][itk]["%i"%pt])
-                ff_mcsubt_dn = float(cr_ffs[cr][jet_bdt_key.replace("NOMINAL", "MCSubt_1down")][itk]["%i"%pt])
+                ff_mcsubt_up = float(cr_ffs[cr][jet_rnn_key.replace("NOMINAL", "MCSubt_1up")][itk]["%i"%pt])
+                ff_mcsubt_dn = float(cr_ffs[cr][jet_rnn_key.replace("NOMINAL", "MCSubt_1down")][itk]["%i"%pt])
 
                 up = math.sqrt((ff-ff_up)**2 + (ff-ff_mcsubt_up)**2)
                 dn = math.sqrt((ff-ff_dn)**2 + (ff-ff_mcsubt_dn)**2)
@@ -764,7 +795,7 @@ def validate_template_fit(cr_hists_dict, target_hists_dict, chi2s,
                                 data_info=dinfo,
                                 atlas_label="",
                                 textsize=15,)
-            binning_label = ROOT.TLatex(pad.GetLeftMargin() + 0.02, 1 - pad.GetTopMargin() - 0.15,
+            binning_label = ROOT.TLatex(pad.GetLeftMargin() + 0.0, 1 - pad.GetTopMargin() - 0.15,
                                        "%ip; %i GeV < p^{#tau}_{T} < %i GeV"%(itk, int(pt_bins[n-1]), int(pt_bins[n])))
             binning_label.SetNDC()
             binning_label.SetTextFont(43)
@@ -792,8 +823,8 @@ def validate_template_fit(cr_hists_dict, target_hists_dict, chi2s,
             wj_hist.SetLineColor(ROOT.kRed)
             wj_hist.GetXaxis().SetTitle(var.title)
             if itk==3:
-                wj_hist.GetXaxis().SetRangeUser(0.02, 0.25)
-                mj_hist.GetXaxis().SetRangeUser(0.02, 0.25)
+                wj_hist.GetXaxis().SetRangeUser(0.00, 0.25)
+                mj_hist.GetXaxis().SetRangeUser(0.00, 0.25)
 
             wj_hist.GetYaxis().SetTitle("fraction of events")
             cr_legend.AddEntry(wj_hist, "W-jets CR", "P")
@@ -826,8 +857,8 @@ def validate_template_fit(cr_hists_dict, target_hists_dict, chi2s,
                 target_hist, target_fit = target_hists_dict[tkey][pkey][cat]
 
                 if itk==3:
-                    target_fit.GetXaxis().SetLimits(0.025, 0.25)
-                    target_hist.GetXaxis().SetRangeUser(0.025, 0.25)
+                    target_fit.GetXaxis().SetLimits(0.00, 0.25)
+                    target_hist.GetXaxis().SetRangeUser(0.00, 0.25)
 
                 tr_ymax = 1.5* target_hist.GetMaximum()
                 target_fit.GetYaxis().SetRangeUser(0, tr_ymax)
@@ -962,11 +993,11 @@ def plot_alpha(alphas, cr_ffs,
                 ff_mj_nom = float(cr_ffs["FF_CR_MULTIJET"]["NOMINAL"][itk][pkey])
                 ff_wj_nom = float(cr_ffs["FF_CR_WJETS"]["NOMINAL"][itk][pkey])
 
-                ff_mj_up = abs(ff_mj_nom - float(cr_ffs["FF_CR_MULTIJET"]["BDT_1up"][itk][pkey]))
-                ff_wj_up = abs(ff_wj_nom - float(cr_ffs["FF_CR_WJETS"]["BDT_1up"][itk][pkey]))
+                ff_mj_up = abs(ff_mj_nom - float(cr_ffs["FF_CR_MULTIJET"]["RNN_1up"][itk][pkey]))
+                ff_wj_up = abs(ff_wj_nom - float(cr_ffs["FF_CR_WJETS"]["RNN_1up"][itk][pkey]))
 
-                ff_mj_down = abs(ff_mj_nom - float(cr_ffs["FF_CR_MULTIJET"]["BDT_1down"][itk][pkey]))
-                ff_wj_down = abs(ff_wj_nom - float(cr_ffs["FF_CR_WJETS"]["BDT_1down"][itk][pkey]))
+                ff_mj_down = abs(ff_mj_nom - float(cr_ffs["FF_CR_MULTIJET"]["RNN_1down"][itk][pkey]))
+                ff_wj_down = abs(ff_wj_nom - float(cr_ffs["FF_CR_WJETS"]["RNN_1down"][itk][pkey]))
 
                 ## error propagation 
                 ff = alpha*ff_mj_nom + (1-alpha)*ff_wj_nom 

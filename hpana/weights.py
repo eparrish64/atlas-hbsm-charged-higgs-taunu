@@ -172,6 +172,7 @@ class Weight(object):
             ("MUON_EFF_RECO_SYS_1up", W_STR_FMT.format("n_muons", "mu_0_sf_MUON_EFF_RECO_SYS_1up_MuEffSF_Reco_QualTight")), 
         ),
 
+# FIXME!!!!
         "mu_0_sf_MuEffSF_Trig": (
           W_STR_FMT.format("n_muons", 
             "mu_0_sf_NOMINAL_MuEffSF_HLT_mu26_ivarmedium_QualTight_IsoNone"),

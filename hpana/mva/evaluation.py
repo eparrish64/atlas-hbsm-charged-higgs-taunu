@@ -349,9 +349,9 @@ def plot_scores(models,
             ## plot roc 
             plt.figure(1)
             plt.plot([0, 1], [0, 1], 'k--')
-            plt.plot(fpr_grd-1, tpr_grd, label="AUC = %.4f"%auc)
+            plt.plot(fpr_grd, tpr_grd, label="AUC = %.4f"%auc)
             if train_score:
-                plt.plot(fpr_train_grd-1, tpr_train_grd, label="train-AUC = %.4f"%auc_train, color="r")
+                plt.plot(fpr_train_grd, tpr_train_grd, label="train-AUC = %.4f"%auc_train, color="r")
 
             plt.ylabel('Signal efficiency ')
             plt.xlabel('Background rejection ')

@@ -47,7 +47,7 @@ if __name__=="__main__":
             for sig in model.sigs:
                 auc = calculate_scores(model, backgrounds=model.bkgs, sig=sig, outdir="./", is_NN=bool(sys.argv[3]))
                 aucs.append(auc)
-                f.write("\t%s\n"%(sig.name))
+                f.write("\t%s\t%s\n"%(sig.name, auc))
                 # log.info("Calculated roc_auc_score for %s %s"%(sig.name,auc))
             avgs_auc = np.mean(aucs)
 

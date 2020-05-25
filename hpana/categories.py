@@ -123,10 +123,10 @@ TAU_IS_OTHER = ROOT.TCut("!(%s || %s || %s ||%s ||%s || %s)"%(
     TAU_IS_EL.GetTitle(), TAU_IS_LIGHT_QUARK, TAU_IS_C_QUARK, TAU_IS_B_QUARK, TAU_IS_GLUON, TAU_IS_TRUE))
 
 ## QCD fake tau
-TAU_IS_FAKE = TCut("!(%s || %s)"%(TAU_IS_TRUE, TAU_IS_LEP))
-#ANTI_TAU = TCut("tau_0_jet_rnn_score_trans > 0.01 && tau_0_jet_rnn_loose==0")
-#ANTI_TAU = TCut("tau_0_jet_rnn_score_trans > 0.01 && tau_0_jet_rnn_medium==0")
-ANTI_TAU = TCut("tau_0_jet_rnn_loose==0")
+TAU_IS_FAKE = ROOT.TCut("!(%s || %s)"%(TAU_IS_TRUE, TAU_IS_LEP))
+#ANTI_TAU = ROOT.TCut("tau_0_jet_rnn_score_trans > 0.01 && tau_0_jet_rnn_loose==0")
+#ANTI_TAU = ROOT.TCut("tau_0_jet_rnn_score_trans > 0.01 && tau_0_jet_rnn_medium==0")
+ANTI_TAU = ROOT.TCut("tau_0_jet_rnn_loose==0")
 
 
 VETO_TAU = ROOT.TCut("n_taus==0")
@@ -787,9 +787,9 @@ CUTFLOW = {
     "taujet": OrderedDict(
         [
             # ("cleanEvent",  CLEAN_EVT),
-            ("trigger", TCut("1.>0")), #<! trigger is applied globally (just a place holder here)
+            ("trigger", ROOT.TCut("1.>0")), #<! trigger is applied globally (just a place holder here)
             #ak ("tauID", TCut("tau_0_jet_bdt_medium==1")),
-            ("tauID", TCut("tau_0_jet_rnn_medium==1")),
+            ("tauID", ROOT.TCut("tau_0_jet_rnn_medium==1")),
             ("taupT40", TAU_PT40["mc16"]+TAU_BASE["mc16"]),  
             ("lepVeto", ROOT.TCut("(n_muons+n_electrons)==0 &&tau_0_ele_bdt_medium==1")),
             # ("3jets", NUM_JETS3),

@@ -577,12 +577,14 @@ def train_model(model,
         ## train the model,
         try:
             if is_NN == True:
-                Keras_model.fit(X_train.values, Y_train.values, batch_size=NN_HYPERPARAMS["batch_size"], epochs=NN_HYPERPARAMS["epochs"], class_weight=train_weights, verbose=1)
+                # Keras_model.fit(X_train.values, Y_train.values, batch_size=NN_HYPERPARAMS["batch_size"], epochs=NN_HYPERPARAMS["epochs"], class_weight=train_weights, verbose=1)
+                Keras_model.fit(X_train.values, Y_train.values, batch_size=NN_HYPERPARAMS["batch_size"], epochs=NN_HYPERPARAMS["epochs"], sample_weight=tr_df_ud["SampleWeight"].values, verbose=1)
             else:
                 model = model.fit(X_train.values, Y_train.values, sample_weight=X_weight if weight_sample else None)
         except:
             if is_NN == True:
-                Keras_model.fit(X_train, Y_train.values, batch_size=NN_HYPERPARAMS["batch_size"], epochs=NN_HYPERPARAMS["epochs"], class_weight=train_weights, verbose=1)
+                # Keras_model.fit(X_train, Y_train.values, batch_size=NN_HYPERPARAMS["batch_size"], epochs=NN_HYPERPARAMS["epochs"], class_weight=train_weights, verbose=1)
+                Keras_model.fit(X_train.values, Y_train.values, batch_size=NN_HYPERPARAMS["batch_size"], epochs=NN_HYPERPARAMS["epochs"], sample_weight=tr_df_ud["SampleWeight"].values, verbose=1)
             else:
                 model = model.fit(X_train, Y_train.values, sample_weight=X_weight if weight_sample else None)
 

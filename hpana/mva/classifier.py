@@ -504,9 +504,10 @@ def train_model(model,
     s_df = tr_df[tr_df["class_label"]==1]
 
     if is_NN == True:
+        s_df["SampleWeight"] = 1.
         s_df["TruthMass"] = s_df.index.get_level_values(0)
         s_df["TruthMass"] = pd.to_numeric(s_df.TruthMass.replace({"Hplus": ""}, regex=True))
-        b_df["TruthMass"] = np.random.choice( a=s_df["TruthMass"], size=b_df.shape[0] )
+        #b_df["TruthMass"] = np.random.choice( a=s_df["TruthMass"], size=b_df.shape[0] )
         train_masses = np.unique(s_df["TruthMass"].values)
         for i in train_masses:
             b_df["SampleWeight"] = float(s_df.loc[s_df["TruthMass"]==i].shape[0])/b_df.shape[0]

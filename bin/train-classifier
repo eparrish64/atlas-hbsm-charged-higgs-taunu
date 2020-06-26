@@ -117,7 +117,7 @@ if CLF_ARGS.train_nn == True:
     log.info("Keras version: %s" %keras.__version__)
     log.info("TensorFlow version: %s" %tf.version.VERSION)
     from keras import backend as K
-    K.tensorflow_backend._get_available_gpus()
+    #K.tensorflow_backend._get_available_gpus()
     from tensorflow.python.client import device_lib
     log.info(device_lib.list_local_devices())
     log.info("GPU Available: %s" %tf.test.is_gpu_available())

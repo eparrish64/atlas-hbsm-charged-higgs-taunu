@@ -439,8 +439,9 @@ def get_models(model_files, backend="sklearn", isNN=False):
                 #mfileh5 = mfile.replace("pkl", "h5")
                 model = cPickle.load(mfile)
                 if isNN == True:
-                    # Keras_model = load_model(mfileh5)
-                    Keras_model = cPickle.load(mfile)
+                    mfileh5 = model_file.replace("pkl", "h5")
+                    Keras_model = load_model(mfileh5)
+                    #Keras_model = cPickle.load(mfile)
                 if mass in wname and "ntracks_%i"%ntracks in wname:
                     models[mass] += [model]
                     if isNN == True:
@@ -645,6 +646,9 @@ def fill_scores_mult(tree, all_models, hist_templates,
               clf_feats_tf[feat.name] = ROOT.TTreeFormula(feat.name, QCD.UPSILON_CORRECTED["mc16"], tree)
           elif feat.name.lower() == "truthmass":
             clf_feats_tf[feat.name] = ROOT.TTreeFormula(feat.name, "80.", tree)
+            #Method 1: More elegant, but slower, modify also hpana/dataset_hists.py
+            #clf_feats_tf[feat.name] = ROOT.TTreeFormula(feat.name, hist_templates[mtag].GetTitle().split("to")[1], tree)
+            #Method 1: End
           else:
               clf_feats_tf[feat.name] = ROOT.TTreeFormula(feat.name, feat.tformula, tree)
       for f_tf in clf_feats_tf.values():
@@ -702,11 +706,6 @@ def fill_scores_mult(tree, all_models, hist_templates,
                 # In theory we could do this periodically while looping over events, if memory becomes a problem
                 events = infos[mtag][model.kfolds][model.fold_num]
                 if len(events[0]) == 0: continue # No events passed the selection
-                #scores = model.predict_proba(events[0])
-                #scores = model.predict(scaler.fit_transform(events[0]))
-
-                events = infos[mtag][model.kfolds][model.fold_num]
-                if len(events[0]) == 0: continue # No events passed the selection
 
                 #Method 2: Hacked, less elegant, but faster, modify also hpana/dataset_hists.py
                 for key in list(hist_templates.keys()):
@@ -716,6 +715,15 @@ def fill_scores_mult(tree, all_models, hist_templates,
                       hist_templates[key].Fill(scores[idx], events[1][idx]) # <! probability of belonging to class 1 (SIGNAL
                       if idx%100000==0:
                           log.debug("%r : %r "%(events[0][idx], scores[idx]))
+                #Method2: End
+
+                #Method 1: More elegant, but slower, modify also hpana/dataset_hists.py
+                #scores = Keras_model.predict(events[0])
+                #for idx in xrange(len(scores)):
+                #    hist_templates[mtag].Fill(scores[idx], events[1][idx]) # <! probability of belonging to class 1 (SIGNAL)
+                #    if idx%100000==0:
+                #        log.debug("%r : %r "%(events[0][idx], scores[idx]))
+                #Method1: End
 
     else:  
         for mtag in all_models:

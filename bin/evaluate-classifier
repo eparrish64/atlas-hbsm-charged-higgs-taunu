@@ -141,7 +141,7 @@ def main():
         else:
             for mtag, trained_models in models.iteritems():
                 jobs += [Job(plot_scores, trained_models,
-                   dframe=dframe, backgrounds=backgrounds, signals=signals, outdir=ECLF_ARGS.outdir, formats=[".pdf", ".png"], inclusive_trks=ECLF_ARGS.inc_trks)]
+                   dframe=dframe, backgrounds=backgrounds, signals=signals, outdir=ECLF_ARGS.outdir, formats=[".pdf", ".eps"], inclusive_trks=ECLF_ARGS.inc_trks)]
 
             if ECLF_ARGS.parallel:
                log.info("************** submitting %i jobs  ************" % len(jobs))
@@ -523,7 +523,7 @@ def main():
                     log.debug("len(ana_workers): ", len(ana_workers))
                     #split_workers = list(split(ana_workers, 100))
                     #print "len(split_workers): ", len(split_workers)
-                    split_workers = list(chunks(ana_workers, 20))
+                    split_workers = list(chunks(ana_workers, 5))
                     log.debug("len(split_workers): ", len(split_workers))
 
                     log.info("************** creating %i jobs for HTCondor submission ************" % len(split_workers))

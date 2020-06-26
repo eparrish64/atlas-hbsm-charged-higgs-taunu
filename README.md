@@ -65,6 +65,6 @@ After you have the database for the two channels ready (if the caches are alread
 #### MVA
 - training a model (PNN): ``train-classifier --channel taulep --data-streams 2015 2016 --db-version v09 --train-nn --bin-scheme ALL --train-data TRAIN_DATA.pkl --cluster --rs-manager CONDOR --outdir myOutDirClf`` 
 - Evaluating models (PNN):
-  ``evaluate-classifier evaluate-classifier --channel taulep --db-version v09 --data-streams 2015 2016 --train-data TRAIN_DATA_taulep.pkl --bin-scheme ALL --cluster --rs-manager CONDOR --models myOutDirClf/trained_models/model*.pkl --direct --eval-nn --outdir myOutDirClfEval``
+  ``evaluate-classifier --channel taulep --db-version v01 --data-streams 2015 2016 2017 2018 --train-data TRAIN_DATA_taulep_fullRun2.pkl --bin-scheme SINGLE --models myOutDirClf/trained_models/model*.pkl --direct --eval-nn --outdir myOutDirClfEval --categories SR_TAUEL SR_TAUMU DILEP_BTAG --cluster --rs-manager CONDOR``
 
 - If running via condor, will have to rerun after jobs are done with --merge-hists option

@@ -296,7 +296,7 @@ for signal_masses in train_masses:
                     Keras_model.name=Keras_model_name
 
                     from keras.utils import plot_model
-                    plot_model(Keras_model, to_file='%s.png'%(CLF_ARGS.outdir+"/"+Keras_model_name), show_shapes=True, show_layer_names=True)
+                    plot_model(Keras_model, to_file='%s.eps'%(CLF_ARGS.outdir+"/"+Keras_model_name), show_shapes=True, show_layer_names=True)
 
 
                 ## - - assign the job

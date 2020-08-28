@@ -58,6 +58,6 @@ if __name__=="__main__":
         start_time = time.time()
 
         for worker in workers:
-            dataset_hists_direct(worker, clf_models=pmodels, clf_Keras_models=Keras_pmodels, write_hists=True, outdir="./", isNN=bool(sys.argv[4]))
+            dataset_hists_direct(worker, clf_models=pmodels, clf_Keras_models=Keras_pmodels, write_hists=True, outdir="./", is_NN=bool(int(sys.argv[4])))
         end_time = time.time()
         print "Execution Time:\t  %0.2f"%(end_time - start_time)

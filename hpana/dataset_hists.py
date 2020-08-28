@@ -355,7 +355,6 @@ def dataset_hists_direct(hist_worker,
                     selection = selection.replace("Name: CUT Title: ", "")
                     event_selection = ROOT.TTreeFormula("event_selection", selection, tree)
 
-
                     # - - event weight
                     # - - if weights is provided to the worker directly, then it's taken from systematic (the case for FFs weights)
                     eventweight = "1."

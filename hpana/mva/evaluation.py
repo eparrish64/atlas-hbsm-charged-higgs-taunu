@@ -651,6 +651,7 @@ def fill_scores_mult(tree, all_models, hist_templates,
             #Method 1: End
           else:
               clf_feats_tf[feat.name] = ROOT.TTreeFormula(feat.name, feat.tformula, tree)
+
       for f_tf in clf_feats_tf.values():
           f_tf.SetQuickLoad(True)
 
@@ -658,16 +659,21 @@ def fill_scores_mult(tree, all_models, hist_templates,
     tree.SetCacheSize(32*2**20)
     tree.SetCacheLearnEntries()
     infos = dict()
+
     for mtag in all_models:
       infos[mtag] = dict() # Cache of features for events passing selection, indexed by folds    
       for model in all_models[mtag]:
-          if model.kfolds not in infos[mtag]: infos[mtag][model.kfolds] = dict()
-          if model.fold_num not in infos[mtag][model.kfolds]: infos[mtag][model.kfolds][model.fold_num] = [[], []] # Features and weights
+          if model.ntracks not in infos[mtag]: infos[mtag][model.ntracks] = dict()
+          if model.kfolds not in infos[mtag][model.ntracks]: infos[mtag][model.ntracks][model.kfolds] = dict()
+          if model.fold_num not in infos[mtag][model.ntracks][model.kfolds]: infos[mtag][model.ntracks][model.kfolds][model.fold_num] = [[], []] # Features and weights
+          #if model.kfolds not in infos[mtag]: infos[mtag][model.kfolds] = dict()
+          #if model.fold_num not in infos[mtag][model.kfolds]: infos[mtag][model.kfolds][model.fold_num] = [[], []] # Features and weights
     entries = []
+
     for entry in xrange(event_list.GetN()):
       entries.append(event_list.GetEntry(entry))
-    for entry in entries:
 
+    for entry in entries:
         tree.LoadTree(entry)
 
         # Logging output
@@ -679,23 +685,44 @@ def fill_scores_mult(tree, all_models, hist_templates,
         weight = event_weight.EvalInstance()
         eventnum = event_number.EvalInstance()
 
+        tau_0_n_tracks =  ROOT.TTreeFormula("tau_0_n_charged_tracks", "tau_0_n_charged_tracks", tree)
+
         ## - - build features vectors per fold
         for mtag in all_models:
-          event_feats = [feats[feat.name] for feat in all_models[mtag][0].features]
-          for kfolds in infos[mtag]:
-              for fold in infos[mtag][kfolds]:
-                  if eventnum % kfolds == fold:
-                      infos[mtag][kfolds][fold][0].append(event_feats)
-                      infos[mtag][kfolds][fold][1].append(weight)
+            #event_feats = [feats[feat.name] for feat in all_models[mtag][0].features]
+            for ntracks in infos[mtag]:
+                for model in all_models[mtag]:
+                    if model.ntracks == ntracks:
+                        event_feats = [feats[feat.name] for feat in model.features]
+                        break
+                for kfolds in infos[mtag][ntracks]:
+                    for fold in infos[mtag][ntracks][kfolds]:
+                        #if eventnum % kfolds == fold:
+                        # tau_0_n_tracks.EvalInstance() == 0 means that there are no taus, e.g. in DILEP_BTAG region
+                        if ( ntracks == tau_0_n_tracks.EvalInstance() or (ntracks == 3 and tau_0_n_tracks.EvalInstance() == 0) ) and eventnum % kfolds == fold:
+                            infos[mtag][ntracks][kfolds][fold][0].append(event_feats)
+                            infos[mtag][ntracks][kfolds][fold][1].append(weight)
+#          for kfolds in infos[mtag]:
+#              for fold in infos[mtag][kfolds]:
+#                  if eventnum % kfolds == fold:
+#                      infos[mtag][kfolds][fold][0].append(event_feats)
+#                      infos[mtag][kfolds][fold][1].append(weight)
+
     # End loop over entries
 
     ## - - convert to np.array
     for mtag in infos:
-      for kfolds in infos[mtag]:
-          for fold in infos[mtag][kfolds]:
-              if len(infos[mtag][kfolds][fold][0]) > 0:
-                  old = infos[mtag][kfolds][fold]
-                  infos[mtag][kfolds][fold][0] = np.array(infos[mtag][kfolds][fold][0])
+        for ntracks in infos[mtag]:
+            for kfolds in infos[mtag][ntracks]:
+                for fold in infos[mtag][ntracks][kfolds]:
+                    if len(infos[mtag][ntracks][kfolds][fold][0]) > 0:
+                        old = infos[mtag][ntracks][kfolds][fold]
+                        infos[mtag][ntracks][kfolds][fold][0] = np.array(infos[mtag][ntracks][kfolds][fold][0])
+#      for kfolds in infos[mtag]:
+#          for fold in infos[mtag][kfolds]:
+#              if len(infos[mtag][kfolds][fold][0]) > 0:
+#                  old = infos[mtag][kfolds][fold]
+#                  infos[mtag][kfolds][fold][0] = np.array(infos[mtag][kfolds][fold][0])
 
     if isNN == True:
         #for mtag in all_models:
@@ -704,7 +731,8 @@ def fill_scores_mult(tree, all_models, hist_templates,
             for model, Keras_model in zip(all_models[mtag], all_Keras_models[mtag_Keras]):
                 # Loop over models, evaluating events and filling trees
                 # In theory we could do this periodically while looping over events, if memory becomes a problem
-                events = infos[mtag][model.kfolds][model.fold_num]
+                events = infos[mtag][model.ntracks][model.kfolds][model.fold_num]
+                #events = infos[mtag][model.kfolds][model.fold_num]
                 if len(events[0]) == 0: continue # No events passed the selection
 
                 #Method 2: Hacked, less elegant, but faster, modify also hpana/dataset_hists.py

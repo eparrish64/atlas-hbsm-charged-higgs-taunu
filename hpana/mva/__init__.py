@@ -13,7 +13,8 @@ from hpana.variables import CLF_FEATURES
 ##----------------------------------------------------------------------------------
 ## consts
 ##----------------------------------------------------------------------------------
-N_TRACKS = [1]
+#N_TRACKS = [1]
+N_TRACKS = [1, 3]
 FOLD_CUT_STR = "event_number%{0}!={1}"
 
 ## - - complete list of training features irrespective of the mass region (to get a complete Dataframe for training)
@@ -69,6 +70,8 @@ GB_HYPERPARAMS = {
 NN_HYPERPARAMS = {
     "batch_size": 256, 
     "epochs": 40,
+    #"batch_size": 2048,
+    #"epochs": 1,
 }
 
 

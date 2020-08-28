@@ -492,31 +492,62 @@ def train_model(model,
     """
     if weight_sample:
         balanced = False
-
     if train_df is None:
         tr_df = model.train_df
     else:
         tr_df = train_df
     if not features :
         features = model.features
-
+    print 'tr_df.index.get_level_values(0).drop_duplicates():\n', tr_df.index.get_level_values(0).drop_duplicates()
     b_df = tr_df[tr_df["class_label"]==0]
     s_df = tr_df[tr_df["class_label"]==1]
+    print 'b_df.shape[0]: ', b_df.shape[0]
+    print 's_df.shape[0]: ', s_df.shape[0]
 
+    print 'b_df.index.get_level_values(0).drop_duplicates():\n', b_df.index.get_level_values(0).drop_duplicates()
+    print 's_df.index.get_level_values(0).drop_duplicates():\n', s_df.index.get_level_values(0).drop_duplicates()
+
+    print 'balanced: ', balanced
+    print "is_NN:", is_NN
+    print 'weight_sample:', weight_sample
+
+    oversample = False
     if is_NN == True:
         s_df["SampleWeight"] = 1.
         s_df["TruthMass"] = s_df.index.get_level_values(0)
         s_df["TruthMass"] = pd.to_numeric(s_df.TruthMass.replace({"Hplus": ""}, regex=True))
+        MassPointWeight = [80./mass for mass in s_df["TruthMass"].values]
+        s_df.insert(s_df.shape[1]-1, 'MassPointWeight', MassPointWeight)
         #b_df["TruthMass"] = np.random.choice( a=s_df["TruthMass"], size=b_df.shape[0] )
         train_masses = np.unique(s_df["TruthMass"].values)
+        for mass in np.unique(s_df["TruthMass"].values):
+            print('s_df.loc[[Hplus', mass,']].shape[0]: ', s_df.loc[["Hplus"+str(mass)]].shape[0])
+
         for i in train_masses:
-            b_df["SampleWeight"] = float(s_df.loc[s_df["TruthMass"]==i].shape[0])/b_df.shape[0]
+            if weight_sample == True:
+                b_df["SampleWeight"] = float(s_df.loc[s_df["TruthMass"]==i].shape[0])*b_df['weight'].abs() / b_df['weight'].abs().sum()
+            else:
+                b_df["SampleWeight"] = float(s_df.loc[s_df["TruthMass"]==i].shape[0])/b_df.shape[0]
+            b_df["MassPointWeight"] = 80./i
             b_df["TruthMass"] = i
             if (i==80): b_df_masses = b_df.copy()
             else: b_df_masses = pd.concat([b_df_masses, b_df])
+            if oversample:
+                multiplication = b_df.shape[0] // s_df.loc[["Hplus"+str(i)]].shape[0]
+                print('multiplication: ', multiplication)
+                s_df_tmp = s_df.loc["Hplus"+str(i)]
+                s_df_tmp_2 = s_df.loc["Hplus"+str(i)]
+                for _ in range(multiplication-1):
+                    s_df_tmp_2 = pd.concat([s_df_tmp_2, s_df_tmp])
+                s_df_tmp_2 = pd.concat([s_df_tmp_2, s_df_tmp[:(b_df.shape[0]-s_df_tmp_2.shape[0])]])
+                print 'concat ', i
+                if (i==80): s_df_oversampled = s_df_tmp_2
+                else: s_df_oversampled = pd.concat([s_df_oversampled, s_df_tmp_2])
+                print 's_df_tmp_2.shape: ', s_df_tmp_2.shape
+                print 's_df_oversampled.shape: ', s_df_oversampled.shape
+            print 'b_df_masses.shape: ', b_df_masses.shape
 
-
-    if balanced: 
+    if balanced and not is_NN: 
         ## Set training weight of bkg events to 1. Signal events to N_bkg / N_sig.
         weight_sample = False  
         b_df["BDT_Weight"] = 1
@@ -529,19 +560,22 @@ def train_model(model,
 
     background_weight = float(s_df.shape[0])/b_df.shape[0]
     train_weights = {0: background_weight, 1: 1}
-
     if is_NN == True:
-        tr_df_ud = pd.concat([b_df_masses, s_df], axis=0)
+        if oversample:
+            tr_df_ud = pd.concat([b_df_masses, s_df_oversampled], axis=0)
+        else:
+            tr_df_ud = pd.concat([b_df_masses, s_df], axis=0)
     else:
         tr_df_ud = pd.concat([b_df, s_df], axis=0)
 
+    print('tr_df_ud.info()', tr_df_ud.info())
     tr_df_ud = shuffle(tr_df_ud, random_state=123)
 
     ## - - training arrays
     X_train = tr_df_ud[[ft.name for ft in features]]    
     Y_train = tr_df_ud["class_label"]
 
-    if weight_sample:
+    if weight_sample and not is_NN:
         log.info("Using event weight for training, events with negative weight are thrown away")        
         X_weight = tr_df_ud["weight"] 
         ## in order to avoid events with negative weight thrown away        
@@ -579,7 +613,8 @@ def train_model(model,
         try:
             if is_NN == True:
                 # Keras_model.fit(X_train.values, Y_train.values, batch_size=NN_HYPERPARAMS["batch_size"], epochs=NN_HYPERPARAMS["epochs"], class_weight=train_weights, verbose=1)
-                Keras_model.fit(X_train.values, Y_train.values, batch_size=NN_HYPERPARAMS["batch_size"], epochs=NN_HYPERPARAMS["epochs"], sample_weight=tr_df_ud["SampleWeight"].values, verbose=1)
+                #Keras_model.fit(X_train.values, Y_train.values, batch_size=NN_HYPERPARAMS["batch_size"], epochs=NN_HYPERPARAMS["epochs"], sample_weight=tr_df_ud["SampleWeight"].values * tr_df_ud["MassPointWeight"].values, verbose=1)
+                Keras_model.fit(X_train.values, Y_train.values, batch_size=NN_HYPERPARAMS["batch_size"], epochs=NN_HYPERPARAMS["epochs"], sample_weight=tr_df_ud["SampleWeight"].values if not oversample else None, verbose=1)
             else:
                 model = model.fit(X_train.values, Y_train.values, sample_weight=X_weight if weight_sample else None)
         except:

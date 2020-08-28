@@ -523,7 +523,7 @@ def main():
                     log.debug("len(ana_workers): ", len(ana_workers))
                     #split_workers = list(split(ana_workers, 100))
                     #print "len(split_workers): ", len(split_workers)
-                    split_workers = list(chunks(ana_workers, 5))
+                    split_workers = list(chunks(ana_workers, 100))
                     log.debug("len(split_workers): ", len(split_workers))
 
                     log.info("************** creating %i jobs for HTCondor submission ************" % len(split_workers))
@@ -544,7 +544,7 @@ def main():
                         #                                                                     ",".join([os.path.basename(m) for m in ECLF_ARGS.models])))
 
                         #submit_file.write("\nArguments = %s %s %s %s %s \nqueue\n" %(     aw.name,  
-                        submit_file.write("\nArguments = %s %s %s %s %s %s \nqueue\n" %(     ",".join([m.name for m in aw]),
+                        submit_file.write("\nArguments = %s %s %s %s %s %d \nqueue\n" %(     ",".join([m.name for m in aw]),
                                                                                             os.path.join(__HERE, "classifier-evaluator"), 
                                                                                             os.path.join(os.getcwd(), ECLF_ARGS.outdir), 
                                                                                             os.path.abspath(ECLF_ARGS.pickled_analysis), 

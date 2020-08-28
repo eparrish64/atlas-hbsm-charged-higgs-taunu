@@ -370,7 +370,10 @@ def get_clf_parser():
                             help="train on both 1p and 3p taus ?")
 
     clf_parser.add_argument("--balanced", action="store_true",
-                            help="Do not balance training classes")
+                            help="Balance training classes")
+
+    clf_parser.add_argument("--weight-sample", action="store_true",
+                            help="Apply weights (FF, x-sec, lumi, etc) for background samples")
 
     clf_parser.add_argument("--parse-auc", action="store_true",
                             help="Only parse optimization output txt files")

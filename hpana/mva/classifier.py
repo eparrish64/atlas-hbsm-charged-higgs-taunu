@@ -511,7 +511,7 @@ def train_model(model,
     print "is_NN:", is_NN
     print 'weight_sample:', weight_sample
 
-    oversample = False
+    oversample = True
     if is_NN == True:
         s_df["SampleWeight"] = 1.
         s_df["TruthMass"] = s_df.index.get_level_values(0)

@@ -321,7 +321,8 @@ for signal_masses in train_masses:
                     Keras_model.add(BatchNormalization())
                     Keras_model.add(Dense(1, activation='sigmoid'))
                     Keras_model.compile(
-                        optimizer='Adam',
+                        #optimizer='Adam',
+                        optimizer=SGD(learning_rate=0.1),
                         loss='binary_crossentropy',
                         metrics=['accuracy'],
                         )
@@ -329,7 +330,6 @@ for signal_masses in train_masses:
 
                     from keras.utils import plot_model
                     plot_model(Keras_model, to_file='%s.eps'%(CLF_ARGS.outdir+"/"+Keras_model_name), show_shapes=True, show_layer_names=True)
-
 
                 ## - - assign the job
                 if CLF_ARGS.parallel and CLF_ARGS.train_nn == False:

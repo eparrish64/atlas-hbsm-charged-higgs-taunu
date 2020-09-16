@@ -7,6 +7,7 @@ PROJECT_SCRATCH_DIR="$( cd "$(dirname "$0")" ; pwd -P )"
 JOBSCRATCH="$PROJECT_SCRATCH_DIR/${1}_${DATE}"
 JOBSCRATCH=(${JOBSCRATCH//,/ })
 JOBSCRATCH=${JOBSCRATCH[0]}"_${DATE}"
+BASESUBMISSIONDIR="$(echo ${3} | rev | cut -d'/' -f2- | rev)"
 
 
 fail(){
@@ -20,8 +21,8 @@ fail(){
 mkdir -p "$JOBSCRATCH" || fail;
 cd "$JOBSCRATCH" || fail;
 
-echo "rsync -axvH --no-g --no-p  ${3}/source_code.tar.gz ./ || fail; tar -xvf source_code.tar.gz || fail;"
-rsync -axvH --no-g --no-p  ${3}/source_code.tar.gz ./ || fail; tar -xvf source_code.tar.gz || fail;
+echo "rsync -axvH --no-g --no-p  $BASESUBMISSIONDIR/source_code.tar.gz ./ || fail; tar -xvf source_code.tar.gz || fail;"
+rsync -axvH --no-g --no-p  $BASESUBMISSIONDIR/source_code.tar.gz ./ || fail; tar -xvf source_code.tar.gz || fail;
 
 echo "rsync -axvH --no-g --no-p ${4} ./ || fail;"
 

@@ -5,6 +5,7 @@ HOSTNAME_SHORT="\$(hostname -s)"
 DATE="$(date | sed 's/:/ /g' | awk '{print $2$3"_"$4_$5_$6}')"
 PROJECT_SCRATCH_DIR="$( cd "$(dirname "$0")" ; pwd -P )"
 JOBSCRATCH="$PROJECT_SCRATCH_DIR/${1}_${DATE}"
+# JOBSCRATCH="testing"
 #
 
 fail(){

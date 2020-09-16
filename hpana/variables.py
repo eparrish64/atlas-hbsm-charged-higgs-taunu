@@ -1199,193 +1199,193 @@ clf_score_GB200_mass_3000to3000 = Variable(
 clf_score_GB200_mass_80to90 = Variable(
     'clf_score_GB200_mass_80to90',
     title='BDT score (80 to 90 [GeV])',
-    bining=(1000,0,1),
+    binning=(1000,0,1),
     plot_bins=np.arange(0,1.1,0.1),
 )
 clf_score_GB200_mass_80to100 = Variable(
     'clf_score_GB200_mass_80to100',
     title='BDT score (80 to 100 [GeV])',
-    bining=(1000,0,1),
+    binning=(1000,0,1),
     plot_bins=np.arange(0,1.1,0.1),
 )
 clf_score_GB200_mass_90to110 = Variable(
     'clf_score_GB200_mass_90to110',
     title='BDT score (90 to 110 [GeV])',
-    bining=(1000,0,1),
+    binning=(1000,0,1),
     plot_bins=np.arange(0,1.1,0.1),
 )
 clf_score_GB200_mass_100to120 = Variable(
     'clf_score_GB200_mass_100to120',
     title='BDT score (100 to 120 [GeV])',
-    bining=(1000,0,1),
+    binning=(1000,0,1),
     plot_bins=np.arange(0,1.1,0.1),
 )
 clf_score_GB200_mass_110to130 = Variable(
     'clf_score_GB200_mass_110to130',
     title='BDT score (110 to 130 [GeV])',
-    bining=(1000,0,1),
+    binning=(1000,0,1),
     plot_bins=np.arange(0,1.1,0.1),
 )
 clf_score_GB200_mass_120to140 = Variable(
     'clf_score_GB200_mass_120to140',
     title='BDT score (120 to 140 [GeV])',
-    bining=(1000,0,1),
+    binning=(1000,0,1),
     plot_bins=np.arange(0,1.1,0.1),
 )
 clf_score_GB200_mass_130to150 = Variable(
     'clf_score_GB200_mass_130to150',
     title='BDT score (130 to 150 [GeV])',
-    bining=(1000,0,1),
+    binning=(1000,0,1),
     plot_bins=np.arange(0,1.1,0.1),
 )
 clf_score_GB200_mass_140to160 = Variable(
     'clf_score_GB200_mass_140to160',
     title='BDT score (140 to 160 [GeV])',
-    bining=(1000,0,1),
+    binning=(1000,0,1),
     plot_bins=np.arange(0,1.1,0.1),
 )
 clf_score_GB200_mass_150to170 = Variable(
     'clf_score_GB200_mass_150to170',
     title='BDT score (150 to 170 [GeV])',
-    bining=(1000,0,1),
+    binning=(1000,0,1),
     plot_bins=np.arange(0,1.1,0.1),
 )
 clf_score_GB200_mass_160to180 = Variable(
     'clf_score_GB200_mass_160to180',
     title='BDT score (160 to 180 [GeV])',
-    bining=(1000,0,1),
+    binning=(1000,0,1),
     plot_bins=np.arange(0,1.1,0.1),
 )
 # clf_score_GB200_mass_170to190 = Variable(
 #     'clf_score_GB200_mass_170to190',
 #     title='BDT score (170 to 190 [GeV])',
-#     bining=(1000,0,1),
+#     binning=(1000,0,1),
 #     plot_bins=np.arange(0,1.1,0.1),
 # )
 clf_score_GB200_mass_180to200 = Variable(
     'clf_score_GB200_mass_180to200',
     title='BDT score (180 to 200 [GeV])',
-    bining=(1000,0,1),
+    binning=(1000,0,1),
     plot_bins=np.arange(0,1.1,0.1),
 )
 clf_score_GB200_mass_190to225 = Variable(
     'clf_score_GB200_mass_190to225',
     title='BDT score (190 to 225 [GeV])',
-    bining=(1000,0,1),
+    binning=(1000,0,1),
     plot_bins=np.arange(0,1.1,0.1),
 )
 clf_score_GB200_mass_200to250 = Variable(
     'clf_score_GB200_mass_200to250',
     title='BDT score (200 to 250 [GeV])',
-    bining=(1000,0,1),
+    binning=(1000,0,1),
     plot_bins=np.arange(0,1.1,0.1),
 )
 clf_score_GB200_mass_225to275 = Variable(
     'clf_score_GB200_mass_225to275',
     title='BDT score (225 to 275 [GeV])',
-    bining=(1000,0,1),
+    binning=(1000,0,1),
     plot_bins=np.arange(0,1.1,0.1),
 )
 clf_score_GB200_mass_250to300 = Variable(
     'clf_score_GB200_mass_250to300',
     title='BDT score (250 to 300 [GeV])',
-    bining=(1000,0,1),
+    binning=(1000,0,1),
     plot_bins=np.arange(0,1.1,0.1),
 )
 clf_score_GB200_mass_275to350 = Variable(
     'clf_score_GB200_mass_275to350',
     title='BDT score (275 to 350 [GeV])',
-    bining=(1000,0,1),
+    binning=(1000,0,1),
     plot_bins=np.arange(0,1.1,0.1),
 )
 clf_score_GB200_mass_300to400 = Variable(
     'clf_score_GB200_mass_300to400',
     title='BDT score (300 to 400 [GeV])',
-    bining=(1000,0,1),
+    binning=(1000,0,1),
     plot_bins=np.arange(0,1.1,0.1),
 )
 clf_score_GB200_mass_350to500 = Variable(
     'clf_score_GB200_mass_350to500',
     title='BDT score (350 to 500 [GeV])',
-    bining=(1000,0,1),
+    binning=(1000,0,1),
     plot_bins=np.arange(0,1.1,0.1),
 )
 clf_score_GB200_mass_400to600 = Variable(
     'clf_score_GB200_mass_400to600',
     title='BDT score (400 to 600 [GeV])',
-    bining=(1000,0,1),
+    binning=(1000,0,1),
     plot_bins=np.arange(0,1.1,0.1),
 )
 clf_score_GB200_mass_500to700 = Variable(
     'clf_score_GB200_mass_500to700',
     title='BDT score (500 to 700 [GeV])',
-    bining=(1000,0,1),
+    binning=(1000,0,1),
     plot_bins=np.arange(0,1.1,0.1),
 )
 clf_score_GB200_mass_600to800 = Variable(
     'clf_score_GB200_mass_600to800',
     title='BDT score (600 to 800 [GeV])',
-    bining=(1000,0,1),
+    binning=(1000,0,1),
     plot_bins=np.arange(0,1.1,0.1),
 )
 clf_score_GB200_mass_700to900 = Variable(
     'clf_score_GB200_mass_700to900',
     title='BDT score (700 to 900 [GeV])',
-    bining=(1000,0,1),
+    binning=(1000,0,1),
     plot_bins=np.arange(0,1.1,0.1),
 )
 clf_score_GB200_mass_800to1000 = Variable(
     'clf_score_GB200_mass_800to1000',
     title='BDT score (800 to 1000 [GeV])',
-    bining=(1000,0,1),
+    binning=(1000,0,1),
     plot_bins=np.arange(0,1.1,0.1),
 )
 clf_score_GB200_mass_900to1200 = Variable(
     'clf_score_GB200_mass_900to1200',
     title='BDT score (900 to 1200 [GeV])',
-    bining=(1000,0,1),
+    binning=(1000,0,1),
     plot_bins=np.arange(0,1.1,0.1),
 )
 clf_score_GB200_mass_1000to1400 = Variable(
     'clf_score_GB200_mass_1000to1400',
     title='BDT score (1000 to 1400 [GeV])',
-    bining=(1000,0,1),
+    binning=(1000,0,1),
     plot_bins=np.arange(0,1.1,0.1),
 )
 clf_score_GB200_mass_1200to1600 = Variable(
     'clf_score_GB200_mass_1200to1600',
     title='BDT score (1200 to 1600 [GeV])',
-    bining=(1000,0,1),
+    binning=(1000,0,1),
     plot_bins=np.arange(0,1.1,0.1),
 )
 clf_score_GB200_mass_1400to1800 = Variable(
     'clf_score_GB200_mass_1400to1800',
     title='BDT score (1400 to 1800 [GeV])',
-    bining=(1000,0,1),
+    binning=(1000,0,1),
     plot_bins=np.arange(0,1.1,0.1),
 )
 clf_score_GB200_mass_1600to2000 = Variable(
     'clf_score_GB200_mass_1600to2000',
     title='BDT score (1600 to 2000 [GeV])',
-    bining=(1000,0,1),
+    binning=(1000,0,1),
     plot_bins=np.arange(0,1.1,0.1),
 )
 clf_score_GB200_mass_1800to2500 = Variable(
     'clf_score_GB200_mass_1800to2500',
     title='BDT score (1800 to 2500 [GeV])',
-    bining=(1000,0,1),
+    binning=(1000,0,1),
     plot_bins=np.arange(0,1.1,0.1),
 )
 clf_score_GB200_mass_2000to3000 = Variable(
     'clf_score_GB200_mass_2000to3000',
     title='BDT score (2000 to 3000 [GeV])',
-    bining=(1000,0,1),
+    binning=(1000,0,1),
     plot_bins=np.arange(0,1.1,0.1),
 )
 clf_score_GB200_mass_2500to3000 = Variable(
     'clf_score_GB200_mass_2500to3000',
     title='BDT score (2500 to 3000 [GeV])',
-    bining=(1000,0,1),
+    binning=(1000,0,1),
     plot_bins=np.arange(0,1.1,0.1),
 )
 

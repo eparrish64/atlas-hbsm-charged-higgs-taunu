@@ -89,14 +89,11 @@ DFRAME = SClassifier.prepare_data(BKGS, SIGS, ALL_FEATS[CLF_ARGS.channel], data_
                                   channel=CLF_ARGS.channel, branches=BRANCHES[CLF_ARGS.channel], train_data=CLF_ARGS.train_data)
 
 jobs = []
-models = []
+model_names = []
 train_masses = TRAINING_MASS_BINS[CLF_ARGS.bin_scheme]
 if CLF_ARGS.plot_sample_size:
     plot_sig_dist(DFRAME, signals=SIGS, outdir=CLF_ARGS.outdir)
     plot_bkg_dist(DFRAME, backgrounds=BKGS, outdir=CLF_ARGS.outdir)
-# ak
-i = 0
-# ak
     
 try:
     import sklearn
@@ -122,29 +119,16 @@ if CLF_ARGS.train_nn == True:
     log.info(device_lib.list_local_devices())
     log.info("GPU Available: %s" %tf.test.is_gpu_available())
 
+
 for signal_masses in train_masses:
     mass_tag = "%ito%i"%(signal_masses[0], signal_masses[-1]) if signal_masses else "ALL_MASSES"
 
     if CLF_ARGS.bin_scheme=="UP_DOWN":
-        # ak
         log.info("%s, %s, %s"%(signal_masses[0],signal_masses[-1],signal_masses))
-        f_sig = 0
-        l_sig = 0
-        if (signal_masses[0] == 80):
-            f_sig = signal_masses[0]
-        else:
-            f_sig = train_masses[i-1][0]
-
-        if (signal_masses[0] == 3000):
-            l_sig = signal_masses[0]
-        else:
-            l_sig = train_masses[i+1][0]
-        
-        # print f_sig,l_sig
+        f_sig = signal_masses[0]
+        l_sig = signal_masses[-1]
         
         signals = filter(lambda s:f_sig <= s.mass <= l_sig, SIGS)
-        i = i +1
-        # # ak
     else:
         signals = filter(lambda s: s.mass in signal_masses, SIGS)
 
@@ -177,6 +161,44 @@ for signal_masses in train_masses:
     else:
         reg_bkgs = TRAINING_BKGS["LOW"]
 
+    makeModelFiles = False
+    for ntracks in N_TRACKS:
+        for rem in range(CLF_ARGS.kfolds): #<@NOTE 1 obviously is all
+
+            ## Check if model file exists. This should reduce runtime when model files have already been created.
+            clf_name = SClassifier.MODEL_NAME_STR_FORMAT.format("GB%i"%hyper_params["n_estimators"],CLF_ARGS.channel, mass_tag, ntracks, CLF_ARGS.kfolds, rem, len(feats))
+            modelpath = os.path.join(CLF_ARGS.outdir, clf_name)
+            model_names.append(clf_name)
+            if os.path.isfile(modelpath):
+                log.warning("Found %s model; skipping the preparation..."%modelpath)
+                
+                ## - - assign the job
+                if CLF_ARGS.parallel and CLF_ARGS.train_nn == False:
+                    with open(modelpath, "rb") as pfile:
+                        try:
+                            sclf = cPickle.load(pfile)
+                        # except EOFError: 
+                        #     os.system("rm %s" %(modelpath))
+                        except:
+                            raise IOError("There was an issue with the file: %s" %(modelpath))
+                    jobs.append(Job(train_model, sclf, weight_sample=False, balanced=CLF_ARGS.balanced, scale_features=False, outdir=CLF_ARGS.outdir, is_NN=CLF_ARGS.train_nn))
+                if CLF_ARGS.train_nn and not CLF_ARGS.cluster:
+                    with open(modelpath, "rb") as pfile:
+                        try:
+                            sclf = cPickle.load(pfile)
+                        # except EOFError: 
+                        #     os.system("rm %s" %(modelpath))
+                        except:
+                            raise IOError("There was an issue with the file: %s" %(modelpath))
+                    train_model(sclf, weight_sample=False, balanced=True, scale_features=False, outdir=CLF_ARGS.outdir, is_NN=CLF_ARGS.train_nn)
+
+            else:
+                makeModelFiles = True   
+    if makeModelFiles == False:
+        continue
+    else:
+        pass
+
     ## retrive Dataframe     
     dframe = DFRAME.loc[[bkg.name for bkg in reg_bkgs]+[sig.name for sig in signals]]
     s_dframe = DFRAME.loc[[sig.name for sig in signals]]
@@ -203,7 +225,7 @@ for signal_masses in train_masses:
                 "GB%i"%hyper_params["n_estimators"],CLF_ARGS.channel, mass_tag, ntracks, CLF_ARGS.kfolds, rem, len(feats))
             sclf = SClassifier(CLF_ARGS.channel, 
                 train_df=sdf, name=clf_name, features=feats, weight_sample=False, mass_range=signal_masses, kfolds=CLF_ARGS.kfolds, fold_num=rem, **hyper_params)
-            models += [sclf]
+            model_names += [sclf.name]
 
             ## - - assign the job
             if CLF_ARGS.train_bdt and CLF_ARGS.parallel:
@@ -221,82 +243,98 @@ for signal_masses in train_masses:
     else:
         for ntracks in N_TRACKS:
             for rem in range(CLF_ARGS.kfolds): #<@NOTE 1 obviously is all
-            
-                if CLF_ARGS.kfolds==1:
-                    where = (dframe["tau_0_n_charged_tracks"]==ntracks)
-                    vdf = None
-                    edf = None
-                    raise Exception("Need more than 1 kfold to optimize")
-                else:
-                    if CLF_ARGS.kfolds-1==(rem):
-                        v_where = (dframe["event_number"]%CLF_ARGS.kfolds==0) & (dframe["tau_0_n_charged_tracks"]==ntracks)
-                        where = (dframe["event_number"]%CLF_ARGS.kfolds!=rem) & (dframe["tau_0_n_charged_tracks"]==ntracks) & (dframe["event_number"]%CLF_ARGS.kfolds!=0)
-                        e_where = ((dframe["event_number"]%CLF_ARGS.kfolds==rem) & (dframe["tau_0_n_charged_tracks"]==ntracks))
 
+                ## Check if model file exists. This should reduce runtime when model files have already been created.
+                clf_name = SClassifier.MODEL_NAME_STR_FORMAT.format("GB%i"%hyper_params["n_estimators"],CLF_ARGS.channel, mass_tag, ntracks, CLF_ARGS.kfolds, rem, len(feats))
+                modelpath = os.path.join(CLF_ARGS.outdir, clf_name)
+                model_names.append(clf_name)
+                if os.path.isfile(modelpath):
+                    log.warning("Found %s model; skipping the preparation..."%modelpath)
+                    with open(modelpath, "rb") as pfile:
+                        try:
+                            sclf = cPickle.load(pfile)
+                        # except EOFError: 
+                        #     os.system("rm %s" %(modelpath))
+                        except:
+                            raise IOError("There was an issue with the file: %s" %(modelpath))
+                    # continue
+                else:
+                    if CLF_ARGS.kfolds==1:
+                        where = (dframe["tau_0_n_charged_tracks"]==ntracks)
+                        vdf = None
+                        edf = None
+                        raise Exception("Need more than 1 kfold to optimize")
                     else:
-                        v_where = (dframe["event_number"]%CLF_ARGS.kfolds==(rem+1)) & (dframe["tau_0_n_charged_tracks"]==ntracks)
-                        where = (dframe["event_number"]%CLF_ARGS.kfolds!=rem) & (dframe["tau_0_n_charged_tracks"]==ntracks) & (dframe["event_number"]%CLF_ARGS.kfolds!=(rem+1))
-                        e_where = ((dframe["event_number"]%CLF_ARGS.kfolds==rem) & (dframe["tau_0_n_charged_tracks"]==ntracks))
+                        if CLF_ARGS.kfolds-1==(rem):
+                            v_where = (dframe["event_number"]%CLF_ARGS.kfolds==0) & (dframe["tau_0_n_charged_tracks"]==ntracks)
+                            where = (dframe["event_number"]%CLF_ARGS.kfolds!=rem) & (dframe["tau_0_n_charged_tracks"]==ntracks) & (dframe["event_number"]%CLF_ARGS.kfolds!=0)
+                            e_where = ((dframe["event_number"]%CLF_ARGS.kfolds==rem) & (dframe["tau_0_n_charged_tracks"]==ntracks))
 
-                sdf = dframe[where]
-                vdf = dframe[v_where]
-                edf = dframe[e_where]
+                        else:
+                            v_where = (dframe["event_number"]%CLF_ARGS.kfolds==(rem+1)) & (dframe["tau_0_n_charged_tracks"]==ntracks)
+                            where = (dframe["event_number"]%CLF_ARGS.kfolds!=rem) & (dframe["tau_0_n_charged_tracks"]==ntracks) & (dframe["event_number"]%CLF_ARGS.kfolds!=(rem+1))
+                            e_where = ((dframe["event_number"]%CLF_ARGS.kfolds==rem) & (dframe["tau_0_n_charged_tracks"]==ntracks))
 
-                s_v_overlap = pd.merge(sdf, vdf, how="inner")
-                s_e_overlap = pd.merge(sdf, edf, how="inner")
-                v_e_overlap = pd.merge(vdf, edf, how="inner")
+                    sdf = dframe[where]
+                    vdf = dframe[v_where]
+                    edf = dframe[e_where]
 
-                if s_e_overlap.empty:
-                    # print s_e_overlap
-                    # print "No Overlap in train and evaluate"
-                    pass
-                else:
-                    log.info(s_e_overlap)
-                    raise Excpetion("Overlap in train and evaluate")
+                    s_v_overlap = pd.merge(sdf, vdf, how="inner")
+                    s_e_overlap = pd.merge(sdf, edf, how="inner")
+                    v_e_overlap = pd.merge(vdf, edf, how="inner")
 
-                if s_v_overlap.empty:
-                    pass
-                else:
-                    log.info(s_v_overlap)
-                    raise Excpetion("Overlap in train and validation")
+                    if s_e_overlap.empty:
+                        # print s_e_overlap
+                        # print "No Overlap in train and evaluate"
+                        pass
+                    else:
+                        log.info(s_e_overlap)
+                        raise Excpetion("Overlap in train and evaluate")
 
-                if v_e_overlap.empty:
-                    pass
-                else:
-                    log.info(v_e_overlap)
-                    raise Excpetion("Overlap in evaluation and validation")
+                    if s_v_overlap.empty:
+                        pass
+                    else:
+                        log.info(s_v_overlap)
+                        raise Excpetion("Overlap in train and validation")
+
+                    if v_e_overlap.empty:
+                        pass
+                    else:
+                        log.info(v_e_overlap)
+                        raise Excpetion("Overlap in evaluation and validation")
 
                            
-                log.info("Training in mass range:%s on ntracks=%i, nevents=%i, and nfeatures=%i\n\t\tHyperparams: %r\n"%(
-                    mass_tag, ntracks, sdf.shape[0], sdf.shape[1]-4, hyper_params))
-                ## - - instantiate the model
-                clf_name = SClassifier.MODEL_NAME_STR_FORMAT.format("GB%i"%hyper_params["n_estimators"],CLF_ARGS.channel, mass_tag, ntracks, CLF_ARGS.kfolds, rem, len(feats))
-                sclf = SClassifier(CLF_ARGS.channel, 
+                    log.info("Training in mass range:%s on ntracks=%i, nevents=%i, and nfeatures=%i\n\t\tHyperparams: %r\n"%(
+                        mass_tag, ntracks, sdf.shape[0], sdf.shape[1]-4, hyper_params))
+                    ## - - instantiate the model
+
+                    sclf = SClassifier(CLF_ARGS.channel, 
                     train_df=sdf, valid_df=vdf, eval_df=edf, name=clf_name, features=feats, weight_sample=False, mass_range=signal_masses, kfolds=CLF_ARGS.kfolds, fold_num=rem, **hyper_params)
-                models += [sclf]
 
-                if CLF_ARGS.train_nn == True:
-                    input_features = [f.tformula for f in feats]
+                    # model_names += [sclf]
 
-                    Keras_model_name = sclf.name.replace(".pkl", "")
-                    Keras_model = Sequential([
-                        BatchNormalization(input_shape=(len(input_features),)),
-                        Dense(64, activation='softsign',input_shape=(len(input_features),)),
-                        Dense(64, activation='softsign'),
-                        BatchNormalization(),
-                        Dense(64, activation='softsign'),
-                        BatchNormalization(),
-                        Dense(1, activation='sigmoid'),
-                        ])
-                    Keras_model.compile(
-                        optimizer='Adam',
-                        loss='binary_crossentropy',
-                        metrics=['accuracy'],
-                        )
-                    Keras_model.name=Keras_model_name
+                    if CLF_ARGS.train_nn == True:
+                        input_features = [f.tformula for f in feats]
 
-                    from keras.utils import plot_model
-                    plot_model(Keras_model, to_file='%s.eps'%(CLF_ARGS.outdir+"/"+Keras_model_name), show_shapes=True, show_layer_names=True)
+                        Keras_model_name = sclf.name.replace(".pkl", "")
+                        Keras_model = Sequential([
+                            BatchNormalization(input_shape=(len(input_features),)),
+                            Dense(64, activation='softsign',input_shape=(len(input_features),)),
+                            Dense(64, activation='softsign'),
+                            BatchNormalization(),
+                            Dense(64, activation='softsign'),
+                            BatchNormalization(),
+                            Dense(1, activation='sigmoid'),
+                            ])
+                        Keras_model.compile(
+                            optimizer='Adam',
+                            loss='binary_crossentropy',
+                            metrics=['accuracy'],
+                            )
+                        Keras_model.name=Keras_model_name
+
+                        from keras.utils import plot_model
+                        plot_model(Keras_model, to_file='%s.eps'%(CLF_ARGS.outdir+"/"+Keras_model_name), show_shapes=True, show_layer_names=True)
 
 
                 ## - - assign the job
@@ -306,7 +344,7 @@ for signal_masses in train_masses:
                 ## pickle the model                        
                 mpath = os.path.join(CLF_ARGS.outdir, sclf.name)
                 if os.path.isfile(mpath):
-                    log.warning("Found %s model; skipping the preparation..."%mpath)
+                    log.warning("Found %s model; skipping file saving..."%mpath)
                 else:
                     log.info("Saving %s model to disk ..."%mpath)
                     with open(mpath, "w") as mcache:
@@ -330,60 +368,60 @@ if CLF_ARGS.train_bdt == True or CLF_ARGS.train_nn == True:
         if CLF_ARGS.rs_manager=="TORQUE":
             raise RuntimeError("Not implemented yet ...")
 
-        elif CLF_ARGS.rs_manager == "SLURM":
-            # - - write jobs
-            from hpana.cluster.job_template import SLURM_JOB_TEMPLATE
+        # elif CLF_ARGS.rs_manager == "SLURM":
+        #     # - - write jobs
+        #     from hpana.cluster.job_template import SLURM_JOB_TEMPLATE
 
-            # - - setup the submit dir
-            os.system(
-                "mkdir -p {0}/jobs  {0}/logs {0}/trained_models".format(CLF_ARGS.outdir))
-            log.info(
-                "************** submitting %i jobs to the cluster ************" % len(models))
-            log.info(
-                "**************************************************************")
+        #     # - - setup the submit dir
+        #     os.system(
+        #         "mkdir -p {0}/jobs  {0}/logs {0}/trained_models".format(CLF_ARGS.outdir))
+        #     log.info(
+        #         "************** submitting %i jobs to the cluster ************" % len(models))
+        #     log.info(
+        #         "**************************************************************")
 
-            os.system("mkdir -p %s %s/jobs/" %
-                    (os.path.join(CLF_ARGS.outdir, CLF_ARGS.logsdir), CLF_ARGS.outdir))
-            submitfile_name = "%s/%s.sh" % (CLF_ARGS.outdir, "submitAllJobs")
-            submit_file = os.open(
-                submitfile_name, os.O_CREAT | os.O_WRONLY, 0755)
+        #     os.system("mkdir -p %s %s/jobs/" %
+        #             (os.path.join(CLF_ARGS.outdir, CLF_ARGS.logsdir), CLF_ARGS.outdir))
+        #     submitfile_name = "%s/%s.sh" % (CLF_ARGS.outdir, "submitAllJobs")
+        #     submit_file = os.open(
+        #         submitfile_name, os.O_CREAT | os.O_WRONLY, 0755)
 
-            # - -  create the job scripts and run them. Returns Analysis workers
-            for model in models:
-                # - - payload for container
-                payload = "source {job_script} {pickled_model} {script_path}".format(
-                    job_script=os.path.join(__HERE, "slurm_job_clf.sh"),
-                    pickled_model=os.path.abspath(os.path.join(CLF_ARGS.outdir, model.name)),
-                    script_path=os.path.join(__HERE, script),
-                )
+        #     # - -  create the job scripts and run them. Returns Analysis workers
+        #     for model in models:
+        #         # - - payload for container
+        #         payload = "source {job_script} {pickled_model} {script_path}".format(
+        #             job_script=os.path.join(__HERE, "slurm_job_clf.sh"),
+        #             pickled_model=os.path.abspath(os.path.join(CLF_ARGS.outdir, model.name)),
+        #             script_path=os.path.join(__HERE, script),
+        #         )
 
-                # - - write the job submission script with right permissions
-                jfile_name = "%s/jobs/%s.slurm" % (CLF_ARGS.outdir, model.name)
-                jfile = os.open(jfile_name, os.O_CREAT | os.O_WRONLY, 0755)
-                os.write(jfile,
-                        SLURM_JOB_TEMPLATE.format(
-                            logsdir=os.path.join(CLF_ARGS.outdir, CLF_ARGS.logsdir),
-                            outdir=CLF_ARGS.outdir,
-                            local_scratch=CLF_ARGS.local_scratch,
-                            time="6:0:0",
-                            cores=1,
-                            memory="1GB",
-                            jobname=model.name, 
-                            payload=payload,
-                            project=CLF_ARGS.rs_project)
-                        )
+        #         # - - write the job submission script with right permissions
+        #         jfile_name = "%s/jobs/%s.slurm" % (CLF_ARGS.outdir, model.name)
+        #         jfile = os.open(jfile_name, os.O_CREAT | os.O_WRONLY, 0755)
+        #         os.write(jfile,
+        #                 SLURM_JOB_TEMPLATE.format(
+        #                     logsdir=os.path.join(CLF_ARGS.outdir, CLF_ARGS.logsdir),
+        #                     outdir=CLF_ARGS.outdir,
+        #                     local_scratch=CLF_ARGS.local_scratch,
+        #                     time="6:0:0",
+        #                     cores=1,
+        #                     memory="1GB",
+        #                     jobname=model.name, 
+        #                     payload=payload,
+        #                     project=CLF_ARGS.rs_project)
+        #                 )
 
-                os.close(jfile)
+        #         os.close(jfile)
 
-                # - - - - write submission to file to be used outside container
-                log.info("Writing to %s for job %s ..." %
-                        (submitfile_name, model.name))
-                os.write(submit_file, "sbatch %s\n" % jfile_name)
+        #         # - - - - write submission to file to be used outside container
+        #         log.info("Writing to %s for job %s ..." %
+        #                 (submitfile_name, model.name))
+        #         os.write(submit_file, "sbatch %s\n" % jfile_name)
 
-            os.close(submit_file)
-            log.warning("Submission not supported from within container.")
-            log.warning("Please launch outside container via:")
-            log.warning("\t sh {0}".format(submitfile_name))
+        #     os.close(submit_file)
+        #     log.warning("Submission not supported from within container.")
+        #     log.warning("Please launch outside container via:")
+        #     log.warning("\t sh {0}".format(submitfile_name))
 
         elif CLF_ARGS.rs_manager=="CONDOR":
             # - - write jobs
@@ -403,7 +441,7 @@ if CLF_ARGS.train_bdt == True or CLF_ARGS.train_nn == True:
             # - - setup the submit dir
             os.system("mkdir -p {0}/jobs  {0}/logs {0}/hists {0}/logs/log {0}/logs/err {0}/logs/out {0}/trained_models".format(CLF_ARGS.outdir))
 
-            log.info("************** creating %i jobs for HTCondor submission ************" % len(models))
+            log.info("************** creating %i jobs for HTCondor submission ************" % len(model_names))
             log.info("**************************************************************")
 
             
@@ -418,9 +456,9 @@ if CLF_ARGS.train_bdt == True or CLF_ARGS.train_nn == True:
                          )
                          )
 
-            for model in models:
+            for model in model_names:
 
-                submit_file.write("\nArguments = %s %s %s %s %s \nqueue\n" %(   model.name, 
+                submit_file.write("\nArguments = %s %s %s %s %s \nqueue\n" %(   model, 
                                                                                 os.path.join(__HERE, "classifier-trainer"), 
                                                                                 os.path.join(os.getcwd(),CLF_ARGS.outdir),
                                                                                 CLF_ARGS.balanced,
@@ -433,7 +471,7 @@ if CLF_ARGS.train_bdt == True or CLF_ARGS.train_nn == True:
 
                 # - - - - write submission to file to be used outside container
                 log.info("Writing to %s for job %s ..." %
-                         (submit_file_name, model.name))
+                         (submit_file_name, model))
                 # os.write(submit_file, "sbatch %s\n" % jfile_name)
 
             submit_file.close()

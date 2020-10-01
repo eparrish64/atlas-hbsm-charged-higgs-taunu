@@ -260,9 +260,9 @@ def main():
 
                 if istops == True:
                     smaller_workers = list(chunks(aw,2))
-                    print len(smaller_workers)
+                    # print len(smaller_workers)
                     for wrks in smaller_workers:
-                        print len(wrks)
+                        # print len(wrks)
                         submit_file.write("\nArguments = %s %s %s %s %s\nqueue\n" %(",".join([m.name for m in wrks]),
                                                                             source_code_tarball, 
                                                                             os.path.join(__HERE, "process-dataset"), 

@@ -26,7 +26,7 @@ rsync -axvH --no-g --no-p "${3}/${1}" ./  || fail;
 
 source setup.sh || fail;
 
-python ${2} "${1}" ${4} ${5} || fail;
+python ${2} "${1}" ${4} ${5} ${6} || fail;
 
 files="$JOBSCRATCH"/*.pkl
 if [ ${#files[@]} -eq 0 ]; then

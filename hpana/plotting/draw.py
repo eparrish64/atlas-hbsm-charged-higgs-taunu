@@ -491,7 +491,7 @@ def draw(var, category,
     if logy:
         output_name += '_logy'
     if output_formats is None:
-        output_formats = ('png',)
+        output_formats = ('eps',)
         
     # - - - - - - - -save the figure
     if output_dir is None:

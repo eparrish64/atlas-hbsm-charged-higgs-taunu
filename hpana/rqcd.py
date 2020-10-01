@@ -157,7 +157,7 @@ def fake_sources(samples, category, ftypes={}, tauid=None, antitau=None):
 def get_cr_ffs(hist_sets, 
                 control_regions=[], 
             #LD tau_jet_bdt_score_trans_wps={"NOMINAL":0.02, "1up": 0.01, "1down": 0.03}, 
-              	tau_jet_rnn_score_trans_wps={"NOMINAL":0.00, "RNN_1up": 0.00, "RNN_1down": 0.00}, 
+              	tau_jet_rnn_score={"NOMINAL":0.0, "1up": 0.0, "1down": 0.0}, 
 	 	n_charged_tracks=[], 
                 subtract_mc=True,
                 cache_file=None,
@@ -281,7 +281,7 @@ def get_cr_ffs(hist_sets,
         
         # - - gather hists per tau pT and ntracks bin and also tau_jet_bdt_score WPs
         #LD for jkey, jbs_wp in tau_jet_bdt_score_trans_wps.iteritems(): switch to RNN
-	for jkey, jbs_wp in tau_jet_rnn_score_trans_wps.iteritems():
+	for jkey, jbs_wp in tau_jet_rnn_score.iteritems():
             # jkey = "tauJetBDT_0%i"%(100*jbs_wp)
             ffs_dict[cr_name][jkey] = {}
             if jkey=="NOMINAL" and subtract_mc:
@@ -295,7 +295,7 @@ def get_cr_ffs(hist_sets,
                     ffs_dict[cr_name]["MCSubt_1up"][tkey] = {}
                     ffs_dict[cr_name]["MCSubt_1down"][tkey] = {}
                 
-                # - - keep jet RNN score along X (only a lower cut)
+                # - - keep jet BDT score along X (only a lower cut)
                 x_low = htmp_X.FindBin(jbs_wp)
                 x_high = -1 #<! to include overflow bin too
                 
@@ -568,8 +568,8 @@ def fit_alpha(cr_hists, target_hists, regions,
                     template_hist.Add(scaled_wj_hist, 1 - a)
                     
                     ## force fit range 
-                    if itk==3:
-                        template_hist.GetXaxis().SetRangeUser(0.00, 0.25)
+                    if itk==3 or itk==1:
+                        template_hist.GetXaxis().SetRangeUser(0.0, 0.25)
 
                     if template_hist.Integral()==0 or target_hist.Integral()==0:
                         log.warning("target or template hist is zero, wont fit anything")
@@ -600,7 +600,7 @@ def fit_alpha(cr_hists, target_hists, regions,
                 alpha, err_up, err_down = chi2_error(chi2_graph, nbins_real)
                 # - - - - keep alpha corresponding to min Chi2 distribution        
                 if not hs.category in alphas[tkey][pkey]:
-                    alphas[tkey][pkey][hs.category] = {"NOMINAL":0, "1up":0, "1down":0}
+                    alphas[tkey][pkey][hs.category] = {"NOMINAL":0.0, "1up":0.0, "1down":0.0}
                     
                 alphas[tkey][pkey][hs.category]["NOMINAL"] = alpha
                 alphas[tkey][pkey][hs.category]["1up"] = alpha + err_up
@@ -698,8 +698,8 @@ def plot_cr_ffs(cr_ffs, cr_labels={},
                 ff = float(cr_ffs[cr][jet_rnn_key][itk]["%i"%pt])
 
                 ## syst error (variation of LOOSE TAU)
-                ff_up = float(cr_ffs[cr][jet_rnn_key.replace("NOMINAL", "RNN_1up")][itk]["%i"%pt])
-                ff_dn = float(cr_ffs[cr][jet_rnn_key.replace("NOMINAL", "RNN_1down")][itk]["%i"%pt])
+                ff_up = float(cr_ffs[cr][jet_rnn_key.replace("NOMINAL", "1up")][itk]["%i"%pt])
+                ff_dn = float(cr_ffs[cr][jet_rnn_key.replace("NOMINAL", "1down")][itk]["%i"%pt])
 
                 ## syst error (varaition of MC subtraction) 
                 ff_mcsubt_up = float(cr_ffs[cr][jet_rnn_key.replace("NOMINAL", "MCSubt_1up")][itk]["%i"%pt])
@@ -739,8 +739,8 @@ def plot_cr_ffs(cr_ffs, cr_labels={},
         gr.SetMarkerColor(cl)
         gr.SetLineColor(cl)
         if n==0:
-            gr.SetMaximum(10)
-            gr.SetMinimum(0.01)
+            gr.SetMaximum(0)
+            gr.SetMinimum(0.0001)
             gr.Draw("APSAME")
             canvas.Update()
             gr.SetTitle("")
@@ -822,9 +822,9 @@ def validate_template_fit(cr_hists_dict, target_hists_dict, chi2s,
             wj_hist.SetMarkerColor(ROOT.kRed)
             wj_hist.SetLineColor(ROOT.kRed)
             wj_hist.GetXaxis().SetTitle(var.title)
-            if itk==3:
-                wj_hist.GetXaxis().SetRangeUser(0.00, 0.25)
-                mj_hist.GetXaxis().SetRangeUser(0.00, 0.25)
+            if itk==3 or itk==1:
+                wj_hist.GetXaxis().SetRangeUser(0.0, 0.25)
+                mj_hist.GetXaxis().SetRangeUser(0.0, 0.25)
 
             wj_hist.GetYaxis().SetTitle("fraction of events")
             cr_legend.AddEntry(wj_hist, "W-jets CR", "P")
@@ -856,9 +856,9 @@ def validate_template_fit(cr_hists_dict, target_hists_dict, chi2s,
                 tr_legend = ROOT.TLegend(0.6, 0.8, 0.9, 0.9) 
                 target_hist, target_fit = target_hists_dict[tkey][pkey][cat]
 
-                if itk==3:
-                    target_fit.GetXaxis().SetLimits(0.00, 0.25)
-                    target_hist.GetXaxis().SetRangeUser(0.00, 0.25)
+                if itk==3 or itk==1:
+                    target_fit.GetXaxis().SetLimits(0.0, 0.25)
+                    target_hist.GetXaxis().SetRangeUser(0.0, 0.25)
 
                 tr_ymax = 1.5* target_hist.GetMaximum()
                 target_fit.GetYaxis().SetRangeUser(0, tr_ymax)
@@ -993,11 +993,11 @@ def plot_alpha(alphas, cr_ffs,
                 ff_mj_nom = float(cr_ffs["FF_CR_MULTIJET"]["NOMINAL"][itk][pkey])
                 ff_wj_nom = float(cr_ffs["FF_CR_WJETS"]["NOMINAL"][itk][pkey])
 
-                ff_mj_up = abs(ff_mj_nom - float(cr_ffs["FF_CR_MULTIJET"]["RNN_1up"][itk][pkey]))
-                ff_wj_up = abs(ff_wj_nom - float(cr_ffs["FF_CR_WJETS"]["RNN_1up"][itk][pkey]))
+                ff_mj_up = abs(ff_mj_nom - float(cr_ffs["FF_CR_MULTIJET"]["MCSubt_1up"][itk][pkey]))
+                ff_wj_up = abs(ff_wj_nom - float(cr_ffs["FF_CR_WJETS"]["MCSubt_1up"][itk][pkey]))
 
-                ff_mj_down = abs(ff_mj_nom - float(cr_ffs["FF_CR_MULTIJET"]["RNN_1down"][itk][pkey]))
-                ff_wj_down = abs(ff_wj_nom - float(cr_ffs["FF_CR_WJETS"]["RNN_1down"][itk][pkey]))
+                ff_mj_down = abs(ff_mj_nom - float(cr_ffs["FF_CR_MULTIJET"]["MCSubt_1down"][itk][pkey]))
+                ff_wj_down = abs(ff_wj_nom - float(cr_ffs["FF_CR_WJETS"]["MCSubt_1down"][itk][pkey]))
 
                 ## error propagation 
                 ff = alpha*ff_mj_nom + (1-alpha)*ff_wj_nom 
@@ -1038,7 +1038,7 @@ def plot_alpha(alphas, cr_ffs,
         ah.GetYaxis().SetTitle("#alpha_{MJ}")
         ah.GetXaxis().SetTitle("p^{#tau}_{T} [GeV]")
         ah.GetXaxis().SetRangeUser(30, 4000)
-        ah.GetYaxis().SetRangeUser(-1, 6) 
+        ah.GetYaxis().SetRangeUser(-1, 5) 
             
     for label in labels:
         label.Draw("SAME")

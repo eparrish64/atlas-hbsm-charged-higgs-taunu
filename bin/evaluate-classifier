@@ -597,7 +597,7 @@ def main():
                             smaller_workers = list(chunks(aw,2))
                             print len(smaller_workers)
                             for wrks in smaller_workers:
-                                submit_file.write("\nArguments = %s %s %s %s %s %s \nqueue\n" %(     ",".join([m.name for m in wrks]),
+                                submit_file.write("\nArguments = %s %s %s %s %s %d \nqueue\n" %(     ",".join([m.name for m in wrks]),
                                                                                             os.path.join(__HERE, "classifier-evaluator"), 
                                                                                             os.path.join(os.getcwd(), ECLF_ARGS.outdir), 
                                                                                             os.path.abspath(ECLF_ARGS.pickled_analysis), 
@@ -607,18 +607,9 @@ def main():
                                                                                             )
                                 )
 
-
-                        # submit_file.write("\nArguments = %s %s %s %s %s %s %s\nqueue\n" %(  aw.name, 
-                        #                                                                     source_code_tarball, 
-                        #                                                                     os.path.join(__HERE, "classifier-evaluator"), 
-                        #                                                                     os.path.join(os.getcwd(), ECLF_ARGS.outdir), 
-                        #                                                                     os.path.abspath(ECLF_ARGS.pickled_analysis), 
-                        #                                                                     os.path.abspath(ECLF_ARGS.models_path[0]), 
-                        #                                                                     ",".join([os.path.basename(m) for m in ECLF_ARGS.models])))
-
-                        #submit_file.write("\nArguments = %s %s %s %s %s \nqueue\n" %(     aw.name,  
                         else:
-                            submit_file.write("\nArguments = %s %s %s %s %s %s \nqueue\n" %(     ",".join([m.name for m in aw]),
+
+                            submit_file.write("\nArguments = %s %s %s %s %s %d \nqueue\n" %(     ",".join([m.name for m in aw]),
                                                                                             os.path.join(__HERE, "classifier-evaluator"), 
                                                                                             os.path.join(os.getcwd(), ECLF_ARGS.outdir), 
                                                                                             os.path.abspath(ECLF_ARGS.pickled_analysis), 

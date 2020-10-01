@@ -779,6 +779,8 @@
 410545	 PowhegHerwig7EvtGen_H7UE_tt_hdamp258p75_nonallhad	 730.17	 0.54393	 1.0	 1.0
 410546	 PowhegHerwig7EvtGen_H7UE_tt_hdamp258p75_nonallhad	 730.16	 1.0	 1.0	 1.0
 410555	 PowhegHerwig7EvtGen_H7UE_tt_hdamp258p75_701_nonallhad	 730.17	 0.54393	 1.0	 1.0
+410557	 PowhegHerwig7EvtGen_H7UE_tt_hdamp258p75_704_singlelepton	 730.14	 0.43853	 1.0	 1.0
+410558	 PowhegHerwig7EvtGen_H7UE_tt_hdamp258p75_704_dilepton	 730.15	 0.10537	 1.0	 1.0
 410568	 PowhegPy8EvtGen_A14v3cUp_tt_hdamp517p5_nonallhad_cfil_bst	 824.5	 0.003872	 1.0	 1.0
 410569	 PowhegPy8EvtGen_A14v3cDo_tt_hdamp258p75_nonallhad_cfil_bst	 640.39	 0.0028742	 1.0	 1.0
 410692	 aMcAtNloPythia8EvtGen_NNPDF30ME_A14_2LepFilter_Q2uHVVbWm	 43.716	 0.18525	 1.0	 1.0

@@ -105,7 +105,7 @@ if CLF_ARGS.train_nn == True:
     import tensorflow as tf
     import keras
     from keras.models import Sequential
-    from keras.layers import Dense, Activation, BatchNormalization
+    from keras.layers import Dense, Activation, BatchNormalization, Dropout
     from keras.regularizers import l2
     from keras import initializers
     from keras.optimizers import SGD
@@ -114,6 +114,7 @@ if CLF_ARGS.train_nn == True:
     log.info("Keras version: %s" %keras.__version__)
     log.info("TensorFlow version: %s" %tf.version.VERSION)
     from keras import backend as K
+    from keras.layers import LeakyReLU  
     #K.tensorflow_backend._get_available_gpus()
     from tensorflow.python.client import device_lib
     log.info(device_lib.list_local_devices())
@@ -316,20 +317,60 @@ for signal_masses in train_masses:
                     if CLF_ARGS.train_nn == True:
                         input_features = [f.tformula for f in feats]
 
+                        early_stopping = tf.keras.callbacks.EarlyStopping(monitor="loss", min_delta=0.001, patience=10, mode="auto", restore_best_weights=True)
+
                         Keras_model_name = sclf.name.replace(".pkl", "")
-                        Keras_model = Sequential([
-                            BatchNormalization(input_shape=(len(input_features),)),
-                            Dense(64, activation='softsign',input_shape=(len(input_features),)),
-                            Dense(64, activation='softsign'),
-                            BatchNormalization(),
-                            Dense(64, activation='softsign'),
-                            BatchNormalization(),
-                            Dense(1, activation='sigmoid'),
-                            ])
+                        # Keras_model = Sequential([
+                        #     BatchNormalization(input_shape=(len(input_features),)),
+                        #     Dense(128, activation='softsign',input_shape=(len(input_features),)),
+                        #     Dense(128, activation='softsign'),
+                        #     # BatchNormalization(),
+                        #     # Dense(64, activation='softsign'),
+                        #     # BatchNormalization(),
+                        #     # Dense(1, activation='sigmoid'),
+                        #     ])
+                        # Keras_model.compile(
+                        #     optimizer='Adam',
+                        #     loss='binary_crossentropy',
+                        #     metrics=['accuracy'],
+                        #     )
+                        # Keras_model.name=Keras_model_name
+
+                        Keras_model = Sequential()
+                        Keras_model.add(BatchNormalization(input_shape=(len(input_features),)))                      
+                        Keras_model.add(Dense(128,input_shape=(len(input_features),)))
+                        Keras_model.add(LeakyReLU(alpha=0.050))
+                        Keras_model.add(Dense(128))
+                        Keras_model.add(LeakyReLU(alpha=0.050))
+                        Keras_model.add(Dropout(0.1))   
+                        Keras_model.add(Dense(128))
+                        Keras_model.add(LeakyReLU(alpha=0.050))
+                        Keras_model.add(Dropout(0.1)) 
+                        Keras_model.add(Dense(128))
+                        Keras_model.add(LeakyReLU(alpha=0.050))
+                        Keras_model.add(Dropout(0.1)) 
+                        Keras_model.add(Dense(128))
+                        Keras_model.add(LeakyReLU(alpha=0.050))
+                        Keras_model.add(Dropout(0.1)) 
+                        Keras_model.add(Dense(128))
+                        Keras_model.add(LeakyReLU(alpha=0.050))
+                        Keras_model.add(Dropout(0.1)) 
+                        Keras_model.add(Dense(1,activation='sigmoid'))
+
+                        # Keras_model = Sequential([
+                        #     BatchNormalization(input_shape=(len(input_features),)),
+                        #     Dense(hparam["dense_layer_size"], activation=hparam['activation_function'],input_shape=(len(input_features),)),
+                        #     Dense(hparam["dense_layer_size"], activation=hparam['activation_function']),
+                        #     BatchNormalization(),
+                        #     Dense(hparam["dense_layer_size"], activation=hparam['activation_function']),
+                        #     BatchNormalization(),
+                        #     Dense(1, activation='sigmoid'),
+                        #     ])
                         Keras_model.compile(
                             optimizer='Adam',
-                            loss='binary_crossentropy',
+                            loss="binary_crossentropy",
                             metrics=['accuracy'],
+                            callbacks=[early_stopping]
                             )
                         Keras_model.name=Keras_model_name
 
@@ -368,60 +409,60 @@ if CLF_ARGS.train_bdt == True or CLF_ARGS.train_nn == True:
         if CLF_ARGS.rs_manager=="TORQUE":
             raise RuntimeError("Not implemented yet ...")
 
-        # elif CLF_ARGS.rs_manager == "SLURM":
-        #     # - - write jobs
-        #     from hpana.cluster.job_template import SLURM_JOB_TEMPLATE
+        elif CLF_ARGS.rs_manager == "SLURM":
+            # - - write jobs
+            from hpana.cluster.job_template import SLURM_JOB_TEMPLATE
 
-        #     # - - setup the submit dir
-        #     os.system(
-        #         "mkdir -p {0}/jobs  {0}/logs {0}/trained_models".format(CLF_ARGS.outdir))
-        #     log.info(
-        #         "************** submitting %i jobs to the cluster ************" % len(models))
-        #     log.info(
-        #         "**************************************************************")
+            # - - setup the submit dir
+            os.system(
+                "mkdir -p {0}/jobs  {0}/logs {0}/trained_models".format(CLF_ARGS.outdir))
+            log.info(
+                "************** submitting %i jobs to the cluster ************" % len(models))
+            log.info(
+                "**************************************************************")
 
-        #     os.system("mkdir -p %s %s/jobs/" %
-        #             (os.path.join(CLF_ARGS.outdir, CLF_ARGS.logsdir), CLF_ARGS.outdir))
-        #     submitfile_name = "%s/%s.sh" % (CLF_ARGS.outdir, "submitAllJobs")
-        #     submit_file = os.open(
-        #         submitfile_name, os.O_CREAT | os.O_WRONLY, 0755)
+            os.system("mkdir -p %s %s/jobs/" %
+                    (os.path.join(CLF_ARGS.outdir, CLF_ARGS.logsdir), CLF_ARGS.outdir))
+            submitfile_name = "%s/%s.sh" % (CLF_ARGS.outdir, "submitAllJobs")
+            submit_file = os.open(
+                submitfile_name, os.O_CREAT | os.O_WRONLY, 0755)
 
-        #     # - -  create the job scripts and run them. Returns Analysis workers
-        #     for model in models:
-        #         # - - payload for container
-        #         payload = "source {job_script} {pickled_model} {script_path}".format(
-        #             job_script=os.path.join(__HERE, "slurm_job_clf.sh"),
-        #             pickled_model=os.path.abspath(os.path.join(CLF_ARGS.outdir, model.name)),
-        #             script_path=os.path.join(__HERE, script),
-        #         )
+            # - -  create the job scripts and run them. Returns Analysis workers
+            for model in models:
+                # - - payload for container
+                payload = "source {job_script} {pickled_model} {script_path}".format(
+                    job_script=os.path.join(__HERE, "slurm_job_clf.sh"),
+                    pickled_model=os.path.abspath(os.path.join(CLF_ARGS.outdir, model.name)),
+                    script_path=os.path.join(__HERE, script),
+                )
 
-        #         # - - write the job submission script with right permissions
-        #         jfile_name = "%s/jobs/%s.slurm" % (CLF_ARGS.outdir, model.name)
-        #         jfile = os.open(jfile_name, os.O_CREAT | os.O_WRONLY, 0755)
-        #         os.write(jfile,
-        #                 SLURM_JOB_TEMPLATE.format(
-        #                     logsdir=os.path.join(CLF_ARGS.outdir, CLF_ARGS.logsdir),
-        #                     outdir=CLF_ARGS.outdir,
-        #                     local_scratch=CLF_ARGS.local_scratch,
-        #                     time="6:0:0",
-        #                     cores=1,
-        #                     memory="1GB",
-        #                     jobname=model.name, 
-        #                     payload=payload,
-        #                     project=CLF_ARGS.rs_project)
-        #                 )
+                # - - write the job submission script with right permissions
+                jfile_name = "%s/jobs/%s.slurm" % (CLF_ARGS.outdir, model.name)
+                jfile = os.open(jfile_name, os.O_CREAT | os.O_WRONLY, 0755)
+                os.write(jfile,
+                        SLURM_JOB_TEMPLATE.format(
+                            logsdir=os.path.join(CLF_ARGS.outdir, CLF_ARGS.logsdir),
+                            outdir=CLF_ARGS.outdir,
+                            local_scratch=CLF_ARGS.local_scratch,
+                            time="6:0:0",
+                            cores=1,
+                            memory="1GB",
+                            jobname=model.name, 
+                            payload=payload,
+                            project=CLF_ARGS.rs_project)
+                        )
 
-        #         os.close(jfile)
+                os.close(jfile)
 
-        #         # - - - - write submission to file to be used outside container
-        #         log.info("Writing to %s for job %s ..." %
-        #                 (submitfile_name, model.name))
-        #         os.write(submit_file, "sbatch %s\n" % jfile_name)
+                # - - - - write submission to file to be used outside container
+                log.info("Writing to %s for job %s ..." %
+                        (submitfile_name, model.name))
+                os.write(submit_file, "sbatch %s\n" % jfile_name)
 
-        #     os.close(submit_file)
-        #     log.warning("Submission not supported from within container.")
-        #     log.warning("Please launch outside container via:")
-        #     log.warning("\t sh {0}".format(submitfile_name))
+            os.close(submit_file)
+            log.warning("Submission not supported from within container.")
+            log.warning("Please launch outside container via:")
+            log.warning("\t sh {0}".format(submitfile_name))
 
         elif CLF_ARGS.rs_manager=="CONDOR":
             # - - write jobs
@@ -461,8 +502,8 @@ if CLF_ARGS.train_bdt == True or CLF_ARGS.train_nn == True:
                 submit_file.write("\nArguments = %s %s %s %s %s \nqueue\n" %(   model, 
                                                                                 os.path.join(__HERE, "classifier-trainer"), 
                                                                                 os.path.join(os.getcwd(),CLF_ARGS.outdir),
-                                                                                CLF_ARGS.balanced,
-                                                                                CLF_ARGS.train_nn,
+                                                                                int(CLF_ARGS.balanced),
+                                                                                int(CLF_ARGS.train_nn),
                                                                             )
                 )
 

@@ -465,7 +465,7 @@ def train_model(model,
     train_df=None,
     features=[], 
     positive_weights=True, 
-    balanced=False,
+    balanced=True,
     outdir="", 
     weight_sample=False, 
     scale_features=True, 
@@ -503,12 +503,16 @@ def train_model(model,
     b_df = tr_df[tr_df["class_label"]==0]
     s_df = tr_df[tr_df["class_label"]==1]
 
+    log.info("is_NN=%s"%is_NN)
+    log.info("type(is_NN) %s" %type(is_NN))
+    log.info("is_NN==True %s"%(is_NN == True))
     if is_NN == True:
         s_df["SampleWeight"] = 1.
         s_df["TruthMass"] = s_df.index.get_level_values(0)
         s_df["TruthMass"] = pd.to_numeric(s_df.TruthMass.replace({"Hplus": ""}, regex=True))
         #b_df["TruthMass"] = np.random.choice( a=s_df["TruthMass"], size=b_df.shape[0] )
         train_masses = np.unique(s_df["TruthMass"].values)
+        log.info("I am in the is_NN conditional statement in classifier.py")
         for i in train_masses:
             b_df["SampleWeight"] = float(s_df.loc[s_df["TruthMass"]==i].shape[0])/b_df.shape[0]
             b_df["TruthMass"] = i
@@ -576,16 +580,21 @@ def train_model(model,
 
     if not is_trained:
         ## train the model,
+
         try:
             if is_NN == True:
+                import tensorflow as tf
+                early_stopping = tf.keras.callbacks.EarlyStopping(monitor="loss", min_delta=0.00001, patience=10, mode="auto", restore_best_weights=True)
                 # Keras_model.fit(X_train.values, Y_train.values, batch_size=NN_HYPERPARAMS["batch_size"], epochs=NN_HYPERPARAMS["epochs"], class_weight=train_weights, verbose=1)
-                Keras_model.fit(X_train.values, Y_train.values, batch_size=NN_HYPERPARAMS["batch_size"], epochs=NN_HYPERPARAMS["epochs"], sample_weight=tr_df_ud["SampleWeight"].values, verbose=1)
+                Keras_model.fit(X_train.values, Y_train.values, batch_size=1024, epochs=1000, sample_weight=tr_df_ud["SampleWeight"].values, verbose=1, callbacks=[early_stopping])
             else:
                 model = model.fit(X_train.values, Y_train.values, sample_weight=X_weight if weight_sample else None)
         except:
             if is_NN == True:
+                import tensorflow as tf
+                early_stopping = tf.keras.callbacks.EarlyStopping(monitor="loss", min_delta=0.00001, patience=10, mode="auto", restore_best_weights=True)
                 # Keras_model.fit(X_train, Y_train.values, batch_size=NN_HYPERPARAMS["batch_size"], epochs=NN_HYPERPARAMS["epochs"], class_weight=train_weights, verbose=1)
-                Keras_model.fit(X_train.values, Y_train.values, batch_size=NN_HYPERPARAMS["batch_size"], epochs=NN_HYPERPARAMS["epochs"], sample_weight=tr_df_ud["SampleWeight"].values, verbose=1)
+                Keras_model.fit(X_train.values, Y_train.values, batch_size=1024, epochs=1000, sample_weight=tr_df_ud["SampleWeight"].values, verbose=1, callbacks=[early_stopping])
             else:
                 model = model.fit(X_train, Y_train.values, sample_weight=X_weight if weight_sample else None)
 

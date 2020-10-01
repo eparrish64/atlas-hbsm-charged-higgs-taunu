@@ -22,7 +22,7 @@ cd "$JOBSCRATCH" || fail;
 
 rsync -axvH --no-g --no-p  ${3}/source_code.tar.gz ./ || fail; tar -xvf source_code.tar.gz || fail;
 
-rsync -axvH --no-g --no-p "${3}/${1}" ./ || fail;
+rsync -axvH --no-g --no-p "${3}/${1}" ./  || fail;
 
 source setup.sh || fail;
 

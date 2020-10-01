@@ -206,7 +206,7 @@ tau_0_eta = Variable(
         "mc16": "tau_0_p4->Eta()",
         "mc15": "tau_0_eta"},
     binning=(120, -3., 3.),
-    plot_bins=np.arange(-2.5,2.5,0.1))
+    plot_bins=np.arange(-3.,3.,0.1))
 
 tau_0_phi = Variable(
     "tau_0_phi" , 
@@ -215,6 +215,22 @@ tau_0_phi = Variable(
         "mc16": "tau_0_p4->Phi()",
         "mc15": "tau_0_phi"},
     binning=(20, -3.2, 3.2))
+
+tau_0_E = Variable(
+    "tau_0_E", 
+    title='#font[52]{E}(#tau_{1}) [GeV]',
+    latex=r"$\tau_{E}$",
+    tformula={
+        "mc16": "tau_0_p4->E()",
+        "mc15": "0.001*tau_0_E"},
+    binning=(200, 0, 1000),
+    plot_bins={
+        "COMMON": range(40, 300, 20) + range(300, 500, 50),
+        # "FF_CR_MULTIJET": [30, 35, 40, 45, 50, 60, 80, 100, 200, 3500],
+        # "FF_CR_WJETS": [30, 35, 40, 45, 50, 60, 80, 100, 200, 3500],
+    },
+    unit='[GeV]',
+    scale=1.)
 
 tau_0_n_charged_tracks = Variable(
     "tau_0_n_charged_tracks",
@@ -362,6 +378,14 @@ mu_0_phi = Variable(
     binning=(60, -3, 3)
     )
 
+mu_0_E = Variable(
+    "mu_0_E", 
+    title='#font[52]{E}(#mu_{1}) [GeV]',
+    tformula="mu_0_p4->E()",
+    binning=(20, 0, 400),
+    unit='[GeV]',
+    scale=1.)
+
 
 ##############################################
 # - - - - - - - electron
@@ -393,6 +417,15 @@ el_0_phi = Variable(
     binning=(60, -3, 3)
     )
 
+el_0_E = Variable(
+    "el_0_E", 
+    title='#font[52]{E}(e_{1}) [GeV]',
+    tformula="el_0_p4->E()",
+    binning=(20, 0, 400),
+    unit='[GeV]',
+    scale=1.
+    )
+
 ##############################################
 # - - - - - - - - jets
 ##############################################
@@ -406,6 +439,42 @@ n_bjets = Variable(
     title='#font[52]{Number of Selected b-Jets}',
     binning= (10, -.5, 9.5))
 
+bjet_0_pt =  Variable(
+    "bjet_0_pt",
+    title='#font[52]{p}_{T}lead b-jet [GeV]',
+    latex=r"$b-jet_{p_T}$",
+    tformula=BJET_P4_STR.format("Pt()"),
+    binning=(200, 25, 1000),
+    plot_bins=range(25, 1000, 25),
+    scale=1.,
+    unit='[GeV]')
+
+bjet_0_eta = Variable(
+    "bjet_0_eta",
+    title='#font[152]{#eta}(bj_{1})',
+    tformula={
+        "mc16":BJET_P4_STR.format("Eta()"),
+        "mc15":"bjet_0_eta",},
+    binning=(50, -3., 3.))
+
+bjet_0_phi = Variable(
+    "bjet_0_phi",
+    title='#font[152]{#phi}(bj_{1})',
+    tformula={
+        "mc16":BJET_P4_STR.format("Phi()"),
+        "mc15":"bjet_0_phi",},
+    binning=(20, -3.2, 3.2))
+
+bjet_0_E =  Variable(
+    "bjet_0_E",
+    title='#font[52]{E} lead b-jet [GeV]',
+    latex=r"$b-jet_{E}$",
+    tformula=BJET_P4_STR.format("E()"),
+    binning=(200, 0, 1000),
+    # plot_bins=range(25, 500, 25),
+    scale=1.,
+    unit='[GeV]')
+
 jet_0_pt =  Variable(
     "jet_0_pt",
     title='#font[52]{p}_{T}(j_{1}) [GeV]',
@@ -417,13 +486,30 @@ jet_0_pt =  Variable(
     scale=1.,
     unit='[GeV]')
 
-bjet_0_pt =  Variable(
-    "bjet_0_pt",
-    title='#font[52]{p}_{T}lead b-jet [GeV]',
-    latex=r"$b-jet_{p_T}$",
-    tformula=BJET_P4_STR.format("Pt()"),
-    binning=(200, 0, 1000),
-    # plot_bins=range(25, 500, 25),
+jet_0_eta = Variable(
+    "jet_0_eta",
+    title='#font[152]{#eta}(j_{1})',
+    tformula={
+        "mc16":"jet_0_p4->Eta()",
+        "mc15":"jet_0_eta",},
+    binning=(60, -3., 3.))
+
+jet_0_phi = Variable(
+    "jet_0_phi",
+    title='#font[152]{#phi}(j_{1})',
+    tformula={
+        "mc16":"jet_0_p4->Phi()",
+        "mc15":"jet_0_phi",},
+    binning=(20, -3.2, 3.2))
+
+jet_0_E =  Variable(
+    "jet_0_E",
+    title='#font[52]{E}(j_{1}) [GeV]',
+    latex=r"$j^{0}_{E}$",
+    tformula={
+        "mc16": "jet_0_p4->E()",
+        "mc15": "jet_0_pt",},
+    binning=(20, 25, 525),
     scale=1.,
     unit='[GeV]')
 
@@ -438,29 +524,7 @@ jet_1_pt = Variable(
     scale=1.,
     unit='[GeV]')
 
-jet_0_eta = Variable(
-    "jet_0_eta",
-    title='#font[152]{#eta}(j_{1})',
-    tformula={
-        "mc16":"jet_0_p4->Eta()",
-        "mc15":"jet_0_eta",},
-    binning=(60, -4, 4))
 
-jet_0_phi = Variable(
-    "jet_0_phi",
-    title='#font[152]{#phi}(j_{1})',
-    tformula={
-        "mc16":"jet_0_p4->Phi()",
-        "mc15":"jet_0_phi",},
-    binning=(20, -3.2, 3.2))
-
-bjet_0_eta = Variable(
-    "bjet_0_eta",
-    title='#font[152]{#phi}(bj_{1})',
-    tformula={
-        "mc16":BJET_P4_STR.format("Eta()"),
-        "mc15":"bjet_0_eta",},
-    binning=(50, -2.5, 2.5))
 
 
 ##############################################
@@ -676,13 +740,13 @@ lep_0_pt = Variable(
     scale=1.)
 
 lep_0_eta = Variable(
-    "tau_0_eta" , 
-    title='#font[52]#eta(l_{1})',
+    "lep_0_eta" , 
+    title='#font[52]{#eta}(l_{1})',
     tformula={
         "mc16": "mu_0_p4->Eta()+el_0_p4->Eta()",
         "mc15": "mu_0_p4->Eta()+el_0_p4->Eta()"},
-    binning=(120, -4., 4.),
-    plot_bins=np.arange(-2.5, 2.5, 0.1))
+    binning=(120, -3., 3.),
+    plot_bins=np.arange(-3., 3., 0.1))
 
 lep_0_phi = Variable(
     "lep_0_phi" , 
@@ -692,6 +756,15 @@ lep_0_phi = Variable(
         "mc15": "mu_0_p4->Phi()+el_0_p4->Phi()"},
     binning=(20, -3.2, 3.2),
     plot_bins=np.arange(-2.5, 2.5, 0.1))
+
+lep_0_E = Variable(
+    "lep_0_E", 
+    title='#font[52]{E}(l_{1}) [GeV]',
+    latex=r"$\ell_{E}$",
+    tformula="mu_0_p4->E()+el_0_p4-E()",
+    binning=(20, 0, 1000),
+    unit='[GeV]',
+    scale=1.)
 
 tau_0_lep_0_mass = Variable(
     "tau_0_lep_0_mass", 
@@ -823,6 +896,8 @@ VARIABLES_TAULEP = [
 
     tau_0_pt,
     tau_0_eta,
+    tau_0_phi,
+    tau_0_E,
     tau_0_n_charged_tracks,
     tau_0_q, 
     tau_0_upsilon,
@@ -830,16 +905,20 @@ VARIABLES_TAULEP = [
     lep_0_pt,
     lep_0_eta,
     lep_0_phi,
+    lep_0_E,
 
     el_0_pt,
     el_0_eta,
     el_0_phi,
+    el_0_E,
 
     mu_0_pt,
     mu_0_eta,
     mu_0_phi,
+    mu_0_E,
 
     met_et,
+    met_phi,
     tau_0_met_mt,
     tau_0_met_dphi,
     lep_0_met_mt,
@@ -850,9 +929,14 @@ VARIABLES_TAULEP = [
     n_bjets,    
     jet_0_pt,
     jet_0_eta,
+    jet_0_phi,
+    jet_0_E,
     jet_1_pt,
 
     bjet_0_pt,
+    bjet_0_eta,
+    bjet_0_phi,
+    bjet_0_E,
     
     bjet_0_met_dphi,
     bjet_0_tau_0_dr,
@@ -899,6 +983,26 @@ CLF_FEATURES = {
 
     "taulep": {
         "LOW": [
+            # tau_0_pt,
+            # tau_0_eta,
+            # tau_0_phi,
+            # tau_0_E,
+            # lep_0_pt,
+            # lep_0_eta,
+            # lep_0_phi,
+            # lep_0_E,
+            # bjet_0_pt,
+            # bjet_0_eta,
+            # bjet_0_phi,
+            # bjet_0_E,
+            # met_et,
+            # met_phi,
+            # jet_0_pt,
+            # jet_0_eta,
+            # jet_0_phi,
+            # jet_0_E,
+
+            jet_0_E,
             tau_0_pt,
             lep_0_pt,
             bjet_0_pt,
@@ -913,6 +1017,24 @@ CLF_FEATURES = {
             # TruthMass,
         ],
         "HIGH": [ #<! above 400 [GeV]
+            # tau_0_pt,
+            # tau_0_eta,
+            # tau_0_phi,
+            # tau_0_E,
+            # lep_0_pt,
+            # lep_0_eta,
+            # lep_0_phi,
+            # lep_0_E,
+            # bjet_0_pt,
+            # bjet_0_eta,
+            # bjet_0_phi,
+            # bjet_0_E,
+            # met_et,
+            # met_phi,
+            # jet_0_pt,
+            # jet_0_eta,
+            # jet_0_phi,
+            jet_0_E,
             tau_0_pt,
             lep_0_pt,
             bjet_0_pt,

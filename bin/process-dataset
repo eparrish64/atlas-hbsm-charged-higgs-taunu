@@ -68,20 +68,24 @@ if __name__=="__main__":
         ## get the worker
         analysis.setWorkers(samples=samples, fields=fields, categories=categories, systematics=systematics)
         ana_workers = analysis.getWorkers()
-
-        workers = filter(lambda w: w.name==jobname, ana_workers)
         
-        if len(workers) < 1:
-            raise RuntimeError("no worker with name %s is assigned for the job"%jobname)
-
-        if len(workers) > 1:
-            raise RuntimeError("%i workers with the same name %s are assigned the job"%(len(workers), jobname))        
-
-        worker = workers[0]
-        print "WORKER: ", worker
-
-        # - - get the hists 
         start_time = time.time()
-        dataset_hists(worker, write_hists=True, outdir="./")
+
+        for wrk in jobname.split(","):
+        # print jobname.split(",")
+
+            workers = filter(lambda w: w.name==wrk, ana_workers)
+            
+            if len(workers) < 1:
+                raise RuntimeError("no worker with name %s is assigned for the job"%wrk)
+
+            if len(workers) > 1:
+                raise RuntimeError("%i workers with the same name %s are assigned the job"%(len(workers), wrk))        
+
+            worker = workers[0]
+            print "WORKER: ", worker
+
+            # - - get the hists 
+            dataset_hists(worker, write_hists=True, outdir="./")
         end_time = time.time()
         print "Execution Time:\t %0.2f"%(end_time - start_time)

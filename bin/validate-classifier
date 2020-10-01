@@ -16,7 +16,7 @@ clf_parser = get_clf_parser()
 clf_parser.add_argument("--models", nargs="+", 
     help="pickled models")
 clf_parser.add_argument("--plot-weights", action="store_true")
-clf_parser.add_argument("--plot-sample-size", action="store_true")
+# clf_parser.add_argument("--plot-sample-size", action="store_true")
 CLF_ARGS = clf_parser.parse_args()
 
 ## local
@@ -36,7 +36,8 @@ from hpana.mva.validation import (
     features_ranking, 
     features_correlation, 
     check_overfitting,
-    select_features) 
+    select_features,
+    explainNN) 
 
 ## - - set log level
 from hpana import log
@@ -104,84 +105,93 @@ if __name__=="__main__":
 
     ## features ranking ?
     if CLF_ARGS.rank_feats:
-        models = get_models(CLF_ARGS.models)
-        for masses in TRAINING_MASS_BINS["NOM"]:
-            mtag = "%ito%i"%(masses[0], masses[-1])
-            for model in models[mtag]:
-                features_ranking(model, outdir=CLF_ARGS.outdir,)
+        # models = get_models(CLF_ARGS.models)
+        # for masses in TRAINING_MASS_BINS["NOM"]:
+        #     mtag = "%ito%i"%(masses[0], masses[-1])
+        #     for model in models[mtag]:
+        #         features_ranking(model, outdir=CLF_ARGS.outdir,)
+        models, Keras_models = get_models(CLF_ARGS.models, isNN=CLF_ARGS.train_nn)
+        # log.info(models)
+        # log.info(Keras_models)
+        model = models["80to3000"][0]
+        log.info(model)
+        # for sig in model.sigs:
+        sig = SIGS[0]
+        explainNN(model, Keras_models["80to3000"][0], backgrounds=BKGS[0], sig=sig, outdir="./", is_NN=CLF_ARGS.train_nn)
 
-    ## overfitting checks 
-    jobs = []
-    train_masses = TRAINING_MASS_BINS[CLF_ARGS.bin_scheme]
-    for signal_masses in train_masses:
-        mass_tag = "%ito%i"%(signal_masses[0], signal_masses[-1]) if signal_masses else "ALL_MASSES"
-        signals = filter(lambda s: s.mass in signal_masses, SIGS)
-        p_title = r"$ %i \leq m_{H^+} \leq %i [GeV]$"%(signal_masses[0], signal_masses[-1])
+    
+    # ## overfitting checks 
+    # jobs = []
+    # train_masses = TRAINING_MASS_BINS[CLF_ARGS.bin_scheme]
+    # for signal_masses in train_masses:
+    #     mass_tag = "%ito%i"%(signal_masses[0], signal_masses[-1]) if signal_masses else "ALL_MASSES"
+    #     signals = filter(lambda s: s.mass in signal_masses, SIGS)
+    #     p_title = r"$ %i \leq m_{H^+} \leq %i [GeV]$"%(signal_masses[0], signal_masses[-1])
 
-        if CLF_ARGS.mass_range:
-            signals = filter(lambda s:int(CLF_ARGS.mass_range[0]) <= s.mass <= int(CLF_ARGS.mass_range[1]), signals)   
-        if not signals:
-            log.info("No signal in %s mass range; skipping!"%mass_tag)
-            continue
+    #     if CLF_ARGS.mass_range:
+    #         signals = filter(lambda s:int(CLF_ARGS.mass_range[0]) <= s.mass <= int(CLF_ARGS.mass_range[1]), signals)   
+    #     if not signals:
+    #         log.info("No signal in %s mass range; skipping!"%mass_tag)
+    #         continue
 
-        ## - - different set of features for low mass and high mass
-        if (len(signals)==1 and signals[0].mass > 400) or any([s.mass>500 for s in signals]):
-            feats = CLF_FEATURES[CLF_ARGS.channel]["HIGH"]
-        else:
-            feats = CLF_FEATURES[CLF_ARGS.channel]["LOW"]
+    #     ## - - different set of features for low mass and high mass
+    #     if (len(signals)==1 and signals[0].mass > 400) or any([s.mass>500 for s in signals]):
+    #         feats = CLF_FEATURES[CLF_ARGS.channel]["HIGH"]
+    #     else:
+    #         feats = CLF_FEATURES[CLF_ARGS.channel]["LOW"]
         
-        ## get list of backgrounds to be used in this signal region 
-        if max(signal_masses) > 400:
-            reg_bkgs = TRAINING_BKGS["HIGH"]
-        else:
-            reg_bkgs = TRAINING_BKGS["LOW"]
+    #     ## get list of backgrounds to be used in this signal region 
+    #     if max(signal_masses) > 400:
+    #         reg_bkgs = TRAINING_BKGS["HIGH"]
+    #     else:
+    #         reg_bkgs = TRAINING_BKGS["LOW"]
 
-        ## retrive Dataframe     
-        dframe = DFRAME.loc[[bkg.name for bkg in reg_bkgs]+[sig.name for sig in signals]]
-        s_dframe = DFRAME.loc[[sig.name for sig in signals]]
-        log.info("*"*80)
-        log.info("Signals: {0} | #events: {1} ; backgrounds: {2} | #events: {3}".format(
-            [s.name for s in signals], s_dframe.shape[0], [b.name for b in reg_bkgs], dframe.shape[0]-s_dframe.shape[0]))
-        log.debug(30*"*" + " Training Data Frame " + 30*"*")
-        log.debug(dframe)
-        for rem in range(CLF_ARGS.kfolds): 
-            if rem!=0: #<! should be enough
-                continue
-            where = (dframe["event_number"]%CLF_ARGS.kfolds!=rem)
-            sdf = dframe[where]
+    #     ## retrive Dataframe     
+    #     dframe = DFRAME.loc[[bkg.name for bkg in reg_bkgs]+[sig.name for sig in signals]]
+    #     s_dframe = DFRAME.loc[[sig.name for sig in signals]]
+    #     log.info("*"*80)
+    #     log.info("Signals: {0} | #events: {1} ; backgrounds: {2} | #events: {3}".format(
+    #         [s.name for s in signals], s_dframe.shape[0], [b.name for b in reg_bkgs], dframe.shape[0]-s_dframe.shape[0]))
+    #     log.debug(30*"*" + " Training Data Frame " + 30*"*")
+    #     log.debug(dframe)
+    #     for rem in range(CLF_ARGS.kfolds): 
+    #         if rem!=0: #<! should be enough
+    #             continue
+    #         where = (dframe["event_number"]%CLF_ARGS.kfolds!=rem)
+    #         sdf = dframe[where]
 
-            ## tree depth checks
-            jobs.append(Job(
-                check_overfitting, feats, train_data=dframe, check_tree_depth=True, title=p_title, formats=["png", "eps", "pdf"],
-                max_depths=np.linspace(1, 30, 30, endpoint=True), suffix=mass_tag+"_fold_%i"%rem, outdir=CLF_ARGS.outdir))
+    #         ## tree depth checks
+    #         jobs.append(Job(
+    #             check_overfitting, feats, train_data=dframe, check_tree_depth=True, title=p_title, formats=["png", "eps", "pdf"],
+    #             max_depths=np.linspace(1, 30, 30, endpoint=True), suffix=mass_tag+"_fold_%i"%rem, outdir=CLF_ARGS.outdir))
 
-            ## min samples per split
-            jobs.append(Job(
-                check_overfitting, feats, train_data=dframe, check_min_samples_split=True, title=p_title, formats=["png", "eps", "pdf"],
-                 min_samples_splits=np.linspace(0.001, .1, 40, endpoint=True) , suffix=mass_tag+"_fold_%i"%rem, outdir=CLF_ARGS.outdir))
+    #         ## min samples per split
+    #         jobs.append(Job(
+    #             check_overfitting, feats, train_data=dframe, check_min_samples_split=True, title=p_title, formats=["png", "eps", "pdf"],
+    #              min_samples_splits=np.linspace(0.001, .1, 40, endpoint=True) , suffix=mass_tag+"_fold_%i"%rem, outdir=CLF_ARGS.outdir))
 
-            ## min samples per leaf
-            jobs.append(Job(
-                check_overfitting, feats, train_data=dframe, check_min_samples_leaf=True, title=p_title, formats=["png", "eps", "pdf"],
-                 min_samples_leafs=np.linspace(0.001, .1, 40, endpoint=True) , suffix=mass_tag+"_fold_%i"%rem, outdir=CLF_ARGS.outdir))
+    #         ## min samples per leaf
+    #         jobs.append(Job(
+    #             check_overfitting, feats, train_data=dframe, check_min_samples_leaf=True, title=p_title, formats=["png", "eps", "pdf"],
+    #              min_samples_leafs=np.linspace(0.001, .1, 40, endpoint=True) , suffix=mass_tag+"_fold_%i"%rem, outdir=CLF_ARGS.outdir))
             
 
-            # get tuned Hyperparameters
-            hyper_params = get_hparams(CLF_ARGS.channel, mass_range=signal_masses, bin_scheme=CLF_ARGS.bin_scheme, model_type="GB")
-            hyper_params["verbose"] = 1
+    #         # get tuned Hyperparameters
+    #         hyper_params = get_hparams(CLF_ARGS.channel, mass_range=signal_masses, bin_scheme=CLF_ARGS.bin_scheme, model_type="GB")
+    #         hyper_params["verbose"] = 1
 
-            ## number of Trees for boosting 
-            jobs.append(Job(
-                check_overfitting, feats, train_data=dframe, hyper_params=dict(hyper_params), check_num_trees=True, title=p_title, formats=["png", "eps", "pdf"],
-                 num_trees=range(40, 220, 20) , suffix=mass_tag+"_fold_%i"%rem, outdir=CLF_ARGS.outdir))
+    #         ## number of Trees for boosting 
+    #         jobs.append(Job(
+    #             check_overfitting, feats, train_data=dframe, hyper_params=dict(hyper_params), check_num_trees=True, title=p_title, formats=["png", "eps", "pdf"],
+    #              num_trees=range(40, 220, 20) , suffix=mass_tag+"_fold_%i"%rem, outdir=CLF_ARGS.outdir))
 
-            ## features selection 
-            jobs.append(Job(
-                select_features, feats, train_data=dframe, hyper_params=dict(hyper_params), title=p_title, formats=["png", "eps", "pdf"],
-                suffix=mass_tag+"_fold_%i"%rem, outdir=CLF_ARGS.outdir))
+    #         ## features selection 
+    #         jobs.append(Job(
+    #             select_features, feats, train_data=dframe, hyper_params=dict(hyper_params), title=p_title, formats=["png", "eps", "pdf"],
+    #             suffix=mass_tag+"_fold_%i"%rem, outdir=CLF_ARGS.outdir))
 
-    ## run jobs
-    log.info("**"*30 + " Submitting %i jobs "%len(jobs) + "**"*30)
-    run_pool(jobs, n_jobs=-1)
+    # ## run jobs
+    # log.info("**"*30 + " Submitting %i jobs "%len(jobs) + "**"*30)
+    # run_pool(jobs, n_jobs=-1)
      
 

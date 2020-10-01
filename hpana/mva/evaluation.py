@@ -440,8 +440,10 @@ def get_models(model_files, backend="sklearn", isNN=False):
                 model = cPickle.load(mfile)
                 if isNN == True:
                     mfileh5 = model_file.replace("pkl", "h5")
-                    Keras_model = load_model(mfileh5)
-                    #Keras_model = cPickle.load(mfile)
+                    try:
+                        Keras_model = load_model(mfileh5)
+                    except:
+                        Keras_model = cPickle.load(mfile)
                 if mass in wname and "ntracks_%i"%ntracks in wname:
                     models[mass] += [model]
                     if isNN == True:

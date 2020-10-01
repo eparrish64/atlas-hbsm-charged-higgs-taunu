@@ -57,7 +57,11 @@ data = analysis.data
 if PLOTTING_ARGS.fields:
     fields = filter(lambda v: v.name in PLOTTING_ARGS.fields , config.variables+BDT_SCORES[PLOTTING_ARGS.channel])
 else:
-    fields = config.variables # BDT_SCORES[PLOTTING_ARGS.channel] #      
+    fields = config.variables # BDT_SCORES[PLOTTING_ARGS.channel] #   
+
+# for f in fields:
+#     print f.name
+# raise Exception("AHHH")   
 
 if PLOTTING_ARGS.bdt_only:
     fields = BDT_SCORES[PLOTTING_ARGS.channel][PLOTTING_ARGS.bin_scheme]
@@ -120,4 +124,4 @@ for var in fields:
             jparams["blind_range"] = ()
 
         jobs += [Job(draw, var, cat, **jparams)]
-run_pool(jobs, n_jobs=-1)
+run_pool(jobs, n_jobs=1)

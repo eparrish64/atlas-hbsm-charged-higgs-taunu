@@ -14,6 +14,7 @@ from sklearn.model_selection import StratifiedKFold
 from sklearn.metrics import roc_curve, auc
 from sklearn.feature_selection import RFECV
 
+from sklearn.utils import shuffle
 #ak
 from os import environ
 # #environ['KERAS_BACKEND'] = 'theano'
@@ -508,3 +509,86 @@ def check_overfitting(features,
 
 
     return 
+
+def explainNN(model,
+    Keras_model,
+    dframe=None, 
+    backgrounds=[], 
+    sig=None, 
+    fold_var="event_number", 
+    n_tracks_var="tau_0_n_charged_tracks",
+    train_score=True,
+    outdir="", 
+    outname=None,
+    inclusive_trks=False,
+    is_NN=False):
+    """
+    Using the lime package will help explain the internals of the PNN.
+    """
+    from lime import lime_tabular as lime
+    import cPickle
+
+
+    # with open(model.name, "r") as cache:
+    #     model = cPickle.load(cache)
+    #     if is_NN == True:
+    #         mfileh5 = model_name.replace("pkl", "h5")
+    #         try:
+    #             Keras_model = load_model(mfileh5)
+    #         except:
+    #             Keras_model = cPickle.load(cache)
+    #     else:
+    #         Keras_model = None
+
+    if not dframe:
+        dframe = model.valid_df
+
+    log.info(dframe.head())
+    log.info(backgrounds)
+    
+    # b_dframe = dframe.loc[[bkg.name for bkg in backgrounds]]
+    b_dframe = dframe.loc[backgrounds.name]
+    log.info(b_dframe.head())
+    s_dframe = dframe.loc[[sig.name]]
+    log.debug(30*"*" + " Testing Data Frame " + 30*"*")
+    log.debug(dframe)
+
+    if is_NN == True:
+        s_dframe["TruthMass"] = s_dframe.index.get_level_values(0)
+        s_dframe["TruthMass"] = pd.to_numeric(s_dframe.TruthMass.replace({"Hplus": ""}, regex=True))
+        b_dframe["TruthMass"] = np.random.choice( a=s_dframe["TruthMass"], size=b_dframe.shape[0] )
+        train_masses = np.unique(s_dframe["TruthMass"].values)
+        b_df_masses = b_dframe.copy()
+        for i in train_masses:
+            b_dframe["SampleWeight"] = float(s_dframe.loc[s_dframe["TruthMass"]==i].shape[0])/b_dframe.shape[0]
+            b_dframe["TruthMass"] = i
+            if (i!=80): b_df_masses = pd.concat([b_df_masses, b_dframe])
+
+    masses = model.mass_range
+    if not (masses[0] <= sig.mass <= masses[-1]):
+        return None
+
+    feats = model.features
+
+    b_test = b_dframe[[ft.name for ft in feats ]]
+    s_test = s_dframe[[ft.name for ft in feats ]]
+
+    ## evaluate score 
+    # if is_NN == True:
+    #     b_score = Keras_model.predict(b_test)
+    #     s_score = Keras_model.predict(s_test)
+
+    test = pd.concat([b_test, s_test], axis=0)
+    test = shuffle(test, random_state=123)
+
+    log.info(test.head())
+    log.info(test.describe())
+
+    # test = model.valid_df
+    explainer = lime.LimeTabularExplainer(test, feature_names=[feat.name for feat in feats], class_names=["0","1"], discretize_continuous=True)
+
+    i = np.random.randint(0, test.shape[0])
+
+    exp = explainer.explain_instance(test[i], rf.predict_proba, num_features=2, top_labels=1)
+
+    return

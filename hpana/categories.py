@@ -566,6 +566,11 @@ Category_ZEE = Category(
     ],
 )
 
+# WARNING:hpana:No histogram is found for sample=Wtaunu, systematic=NOMINAL, category=SR_TAUEL, and field=clf_score_GB200_mass_80to3000
+# WARNING:hpana:No histogram is found for sample=DiBoson, systematic=NOMINAL, category=SR_TAUEL, and field=clf_score_GB200_mass_80to3000
+# WARNING:hpana:No histogram is found for sample=Data, systematic=NOMINAL, category=SR_TAUEL, and field=clf_score_GB200_mass_80to3000
+# INFO:hpana:Missing histograms for DiBoson
+
 ##--------------------------------------------------------------
 # - - analysis selection regions (PLEASE KEEP THE ORDER)
 ##--------------------------------------------------------------

@@ -30,6 +30,14 @@ ROOT.gROOT.SetBatch(True)
 ROOT.gROOT.SetStyle("ATLAS")
 log.debug("ROOT is in batch mode")
 
+def split(a, n):
+    k, m = divmod(len(a), n)
+    return (a[i * k + min(i, m):(i + 1) * k + min(i + 1, m)] for i in range(n))
+
+def chunks(a, n):
+    for i in xrange(0, len(a), n):
+        yield a[i:i+n]
+
 # -------------------------------------------------------------
 # consts
 # -------------------------------------------------------------
@@ -207,9 +215,18 @@ def main():
             submit_file = os.open(submitfile_name, os.O_CREAT | os.O_WRONLY, 0755)
 
             # - -  create the job scripts and run them. Returns Analysis workers
-            ostr = "**"*20 + "... Submitting %i jobs ..."% len(ana_workers) + "**"*20 
-            log.info(ostr)
-            log.info("*"*len(ostr))
+            # ostr = "**"*20 + "... Submitting %i jobs ..."% len(ana_workers) + "**"*20 
+            # log.info(ostr)
+            # log.info("*"*len(ostr))
+
+            log.debug("len(ana_workers): ", len(ana_workers))
+            #split_workers = list(split(ana_workers, 100))
+            #print "len(split_workers): ", len(split_workers)
+            split_workers = list(chunks(ana_workers, 20))
+            log.debug("len(split_workers): ", len(split_workers))
+
+            log.info("************** creating %i jobs for HTCondor submission ************" % len(split_workers))
+            log.info("**************************************************************")
 
             submit_file_name = "%s/submitAllJobs.sh" % (ANA_ARGS.outdir)
             # with submit_file as open(submit_file_name, "w"):
@@ -231,19 +248,42 @@ def main():
                          )
                          )
 
-            for aw in ana_workers:
+            for aw in split_workers:
                 if ANA_ARGS.dry_run:
                     print "--"*100
                     print aw.name
 
-                submit_file.write("\nArguments = %s %s %s %s %s\nqueue\n" %(aw.name, source_code_tarball, os.path.join(__HERE, "process-dataset"), ANA_ARGS.conf_file, os.path.join(os.getcwd(), ANA_ARGS.outdir)))
+                istops = False
+                for i in aw:
+                    if "ttbar" in i.name.lower() or "singletop" in i.name.lower():
+                        istops = True
+
+                if istops == True:
+                    smaller_workers = list(chunks(aw,2))
+                    print len(smaller_workers)
+                    for wrks in smaller_workers:
+                        print len(wrks)
+                        submit_file.write("\nArguments = %s %s %s %s %s\nqueue\n" %(",".join([m.name for m in wrks]),
+                                                                            source_code_tarball, 
+                                                                            os.path.join(__HERE, "process-dataset"), 
+                                                                            ANA_ARGS.conf_file, 
+                                                                            os.path.join(os.getcwd(), 
+                                                                            ANA_ARGS.outdir)))
+
+                else:
+                    submit_file.write("\nArguments = %s %s %s %s %s\nqueue\n" %(",".join([m.name for m in aw]),
+                                                                            source_code_tarball, 
+                                                                            os.path.join(__HERE, "process-dataset"), 
+                                                                            ANA_ARGS.conf_file, 
+                                                                            os.path.join(os.getcwd(), 
+                                                                            ANA_ARGS.outdir)))
 
 
                 # os.close(jfile)
 
                 # - - - - write submission to file to be used outside container
-                log.info("Writing to %s for job %s ..." %
-                         (submit_file_name, aw.name))
+                # log.info("Writing to %s for job %s ..." %
+                #          (submit_file_name, aw.name))
                 # os.write(submit_file, "sbatch %s\n" % jfile_name)
 
             submit_file.close()

@@ -175,8 +175,8 @@ MU_BASE = {
 #     "mc15": ROOT.TCut("n_muons==1 && mu_0_pt > 30000 && mu_0_id_tight && mu_0_iso_Gradient && abs(mu_0_eta) < 2.5"),
 #     "mc16": ROOT.TCut("n_muons==1 && mu_0_p4->Pt() > 30 && mu_0_id_tight && mu_0_iso_Gradient && abs(mu_0_p4->Eta()) < 2.5"),
 # Switching to mu_0_iso_FCTight_FixedRad
-    "mc15": ROOT.TCut("n_muons==1 && mu_0_pt > 30000 && mu_0_id_tight && mu_0_iso_FCTight_FixedRad && abs(mu_0_eta) < 2.5"),
-    "mc16": ROOT.TCut("n_muons==1 && mu_0_p4->Pt() > 30 && mu_0_id_tight && mu_0_iso_FCTight_FixedRad && abs(mu_0_p4->Eta()) < 2.5"),
+    "mc15": ROOT.TCut("n_muons==1 && mu_0_pt > 30000 && mu_0_id_tight && mu_0_iso_PflowTight_FixedRad && abs(mu_0_eta) < 2.5"),
+    "mc16": ROOT.TCut("n_muons==1 && mu_0_p4->Pt() > 30 && mu_0_id_tight && mu_0_iso_PflowTight_FixedRad && abs(mu_0_p4->Eta()) < 2.5"),
 }
 
 LEP_BASE = {}
@@ -238,9 +238,9 @@ NUM_JETS2  = ROOT.TCut("n_jets > 1")
 NUM_JETS3  = ROOT.TCut("n_jets > 2")
 NUM_JETS4  = ROOT.TCut("n_jets > 3")
 
-NUM_BJETS1 = ROOT.TCut("n_bjets > 0")
-NUM_BJETS2 = ROOT.TCut("n_bjets > 1")
-BVETO = ROOT.TCut("n_bjets==0")
+NUM_BJETS1 = ROOT.TCut("n_bjets_DL1r_FixedCutBEff_70 > 0")
+NUM_BJETS2 = ROOT.TCut("n_bjets_DL1r_FixedCutBEff_70 > 1")
+BVETO = ROOT.TCut("n_bjets_DL1r_FixedCutBEff_70==0")
 
 JET_PT25 = {
     "mc15": ROOT.TCut("jet_0_pt > 25000"),
@@ -710,7 +710,7 @@ MET_TRIGG_EFF_CUTS_BASE = [
     ROOT.TCut("el_0_p4->Pt() > 26"),
     ROOT.TCut( "el_0_trig_trigger_matched==1"),
     
-    ROOT.TCut("n_jets>1 && n_bjets>1"),
+    ROOT.TCut("n_jets>1 && n_bjets_DL1r_FixedCutBEff_70>1"),
     ROOT.TCut("jet_0_p4->Pt() > 25 && jet_1_p4->Pt() > 25"),
     
     # - - only for the bkg modelling in this region (not applied for calcualting trigger efficency).

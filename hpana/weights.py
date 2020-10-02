@@ -19,11 +19,12 @@ class Weight(object):
 
     W_PILEUP = {
         # TRAILING COMMA IS NECESSARY FOR ONE ELEMENT TUPLES!
-        "weight_pileup": ("weight_total/weight_mc", )
+        # "weight_pileup": ("weight_total/weight_mc", )
     }
 
     W_BASE = {
-        "weight_total": ("weight_total", )
+        # "weight_total": ("weight_total", )
+        # "weight_total": ("weight_total", )
     }
     W_TAU = {
         # "tau_0_sf_NOMINAL_TauEffSF_JetBDTmedium": ( 

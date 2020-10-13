@@ -435,7 +435,7 @@ n_jets = Variable(
     binning= (10, -.5, 9.5))
 
 n_bjets = Variable(
-    "n_bjets_DL1r_FixedCutBEff_70", 
+    "n_bjets", 
     title='#font[52]{Number of Selected b-Jets}',
     binning= (10, -.5, 9.5))
 

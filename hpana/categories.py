@@ -166,17 +166,23 @@ MUID_TIGHT = {
 }
 
 EL_BASE = {
-    "mc15": ROOT.TCut("n_electrons==1 && el_0_et > 30000 && el_0_id_tight && el_0_iso_FCTight"\
+    # "mc15": ROOT.TCut("n_electrons==1 && el_0_et > 30000 && el_0_id_tight && el_0_iso_FCTight"\
+    #                   "&& (abs(el_0_eta) < 2.47 && !(abs(el_0_eta)< 1.52 && abs(el_0_eta)> 1.37 ))"),
+    # "mc16": ROOT.TCut("n_electrons==1 && el_0_p4->Pt() > 30 && el_0_id_tight && el_0_iso_FCTight"\
+    #                   "&& (abs(el_0_p4->Eta()) < 2.47 && !(abs(el_0_p4->Eta()) < 1.52 && abs(el_0_p4->Eta()) > 1.37))"),
+    "mc15": ROOT.TCut("n_electrons==1 && el_0_et > 30000"\
                       "&& (abs(el_0_eta) < 2.47 && !(abs(el_0_eta)< 1.52 && abs(el_0_eta)> 1.37 ))"),
-    "mc16": ROOT.TCut("n_electrons==1 && el_0_p4->Pt() > 30 && el_0_id_tight && el_0_iso_FCTight"\
+    "mc16": ROOT.TCut("n_electrons==1 && el_0_p4->Pt() > 30"\
                       "&& (abs(el_0_p4->Eta()) < 2.47 && !(abs(el_0_p4->Eta()) < 1.52 && abs(el_0_p4->Eta()) > 1.37))"),
 }
 MU_BASE = {
 #     "mc15": ROOT.TCut("n_muons==1 && mu_0_pt > 30000 && mu_0_id_tight && mu_0_iso_Gradient && abs(mu_0_eta) < 2.5"),
 #     "mc16": ROOT.TCut("n_muons==1 && mu_0_p4->Pt() > 30 && mu_0_id_tight && mu_0_iso_Gradient && abs(mu_0_p4->Eta()) < 2.5"),
-# Switching to mu_0_iso_FCTight_FixedRad
-    "mc15": ROOT.TCut("n_muons==1 && mu_0_pt > 30000 && mu_0_id_tight && mu_0_iso_PflowTight_FixedRad && abs(mu_0_eta) < 2.5"),
-    "mc16": ROOT.TCut("n_muons==1 && mu_0_p4->Pt() > 30 && mu_0_id_tight && mu_0_iso_PflowTight_FixedRad && abs(mu_0_p4->Eta()) < 2.5"),
+# # Switching to mu_0_iso_FCTight_FixedRad
+#     "mc15": ROOT.TCut("n_muons==1 && mu_0_pt > 30000 && mu_0_id_tight && mu_0_iso_PflowTight_FixedRad && abs(mu_0_eta) < 2.5"),
+#     "mc16": ROOT.TCut("n_muons==1 && mu_0_p4->Pt() > 30 && mu_0_id_tight && mu_0_iso_PflowTight_FixedRad && abs(mu_0_p4->Eta()) < 2.5"),
+    "mc15": ROOT.TCut("n_muons==1 && mu_0_pt > 30000 && abs(mu_0_eta) < 2.5"),
+    "mc16": ROOT.TCut("n_muons==1 && mu_0_p4->Pt() > 30 && abs(mu_0_p4->Eta()) < 2.5"),
 }
 
 LEP_BASE = {}

@@ -521,7 +521,7 @@ def explainNN(model,
     outdir="", 
     outname=None,
     inclusive_trks=False,
-    is_NN=False):
+    is_NN=True):
     """
     Using the lime package will help explain the internals of the PNN.
     """
@@ -543,30 +543,30 @@ def explainNN(model,
     if not dframe:
         dframe = model.valid_df
 
-    log.info(dframe.head())
-    log.info(backgrounds)
+    # log.info(dframe.head())
+    # log.info(backgrounds)
     
-    # b_dframe = dframe.loc[[bkg.name for bkg in backgrounds]]
-    b_dframe = dframe.loc[backgrounds.name]
-    log.info(b_dframe.head())
+    b_dframe = dframe.loc[[bkg.name for bkg in backgrounds]]
+    # b_dframe = dframe.loc[backgrounds.name]
+    # log.info(b_dframe.head())
     s_dframe = dframe.loc[[sig.name]]
     log.debug(30*"*" + " Testing Data Frame " + 30*"*")
     log.debug(dframe)
 
     if is_NN == True:
         s_dframe["TruthMass"] = s_dframe.index.get_level_values(0)
-        s_dframe["TruthMass"] = pd.to_numeric(s_dframe.TruthMass.replace({"Hplus": ""}, regex=True))
+        s_dframe["TruthMass"] = pd.to_numeric(s_dframe.TruthMass.replace({"Hplus": ""}, regex=True), downcast='float')
         b_dframe["TruthMass"] = np.random.choice( a=s_dframe["TruthMass"], size=b_dframe.shape[0] )
         train_masses = np.unique(s_dframe["TruthMass"].values)
         b_df_masses = b_dframe.copy()
         for i in train_masses:
             b_dframe["SampleWeight"] = float(s_dframe.loc[s_dframe["TruthMass"]==i].shape[0])/b_dframe.shape[0]
-            b_dframe["TruthMass"] = i
+            b_dframe["TruthMass"] = int(i)
             if (i!=80): b_df_masses = pd.concat([b_df_masses, b_dframe])
 
-    masses = model.mass_range
-    if not (masses[0] <= sig.mass <= masses[-1]):
-        return None
+    # masses = model.mass_range
+    # if not (masses[0] <= sig.mass <= masses[-1]):
+    #     return None
 
     feats = model.features
 
@@ -581,14 +581,36 @@ def explainNN(model,
     test = pd.concat([b_test, s_test], axis=0)
     test = shuffle(test, random_state=123)
 
-    log.info(test.head())
-    log.info(test.describe())
+    # test = test.drop(columns=["TruthMass"],axis=1)
+
+    # log.info(test.head())
+    # log.info(test.describe())
+    # log.info(test.columns)
+    # log.info(test.dtypes)
+    # log.info(test.values)
 
     # test = model.valid_df
-    explainer = lime.LimeTabularExplainer(test, feature_names=[feat.name for feat in feats], class_names=["0","1"], discretize_continuous=True)
+    explainer = lime.LimeTabularExplainer(test.values, feature_names=test.columns, class_names=["Background","Signal"], discretize_continuous=True)
 
-    i = np.random.randint(0, test.shape[0])
+    # i = np.random.randint(0, test.values.shape[0])
+    # print "AHHHHHHH"
+    # print test.sample(n=1)
+    # print "One row values: %s" %(test.sample(n=1).values[0])
+    # print "One row shape: %s" %(test.sample(n=1).values[0].shape)
+    # print "One row type: %s" %type(test.sample(n=1).values[0])
+    # print "Scores: \n\t%s" %(Keras_model.predict(test.sample(n=1).values)) 
 
-    exp = explainer.explain_instance(test[i], rf.predict_proba, num_features=2, top_labels=1)
+    exp = explainer.explain_instance(test.sample(n=1).values[0], Keras_model.predict, num_features=12, top_labels=2)
+
+    exp.save_to_file("%s/%s_%s.html" %(outdir,model.name,sig.name), show_all=True, show_table=True)
+
+
+    bkg_explainer = lime.LimeTabularExplainer(b_test.values, feature_names=b_test.columns, class_names=["Background","Signal"], discretize_continuous=True)
+    bkg_exp = explainer.explain_instance(b_test.sample(n=1).values[0], Keras_model.predict, num_features=12, top_labels=2)
+    bkg_exp.save_to_file("%s/%s_%s_BKG.html" %(outdir,model.name,sig.name), show_all=True, show_table=True)
+
+    sig_explainer = lime.LimeTabularExplainer(s_test.values, feature_names=s_test.columns, class_names=["Background","Signal"], discretize_continuous=True)
+    sig_exp = explainer.explain_instance(s_test.sample(n=1).values[0], Keras_model.predict, num_features=12, top_labels=2)
+    sig_exp.save_to_file("%s/%s_%s_SIG.html" %(outdir,model.name,sig.name), show_all=True, show_table=True)
 
     return

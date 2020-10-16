@@ -31,7 +31,6 @@ cd "$JOBSCRATCH" || fail;
 
 rsync -axvH --no-g --no-p ${2}  ./ || fail;
 tar -xvf ${2} || fail;
-# source /cvmfs/atlas.cern.ch/repo/ATLASLocalRootBase/user/atlasLocalSetup.sh;
 source setup.sh || fail;
 
 # echo "MY ENVIRONMENT"
@@ -60,10 +59,10 @@ else
 fi
 
 
-#Clean-up (please do not comment, except for debug)
-if [ "0\$JOBSCRATCH" != "0" ]; then 
- if [ -d \$JOBSCRATCH ];  then
-   echo "All done; cleaning up job scratch \$JOBSCRATCH" 
-   rm -rf \$JOBSCRATCH || fail;
- fi
-fi
+# Clean-up (please do not comment, except for debug)
+# if [ "0\$JOBSCRATCH" != "0" ]; then 
+#  if [ -d \$JOBSCRATCH ];  then
+#    echo "All done; cleaning up job scratch \$JOBSCRATCH" 
+#    rm -rf \$JOBSCRATCH || fail;
+#  fi
+# fi

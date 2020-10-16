@@ -23,6 +23,8 @@ if __name__=="__main__":
         with open(sys.argv[1], "rb") as yfile:
             conf = yaml.load(yfile)
 
+        print jobname
+
         print "Configuration args:", conf
 
         # - - - - build analysis main configuration object
@@ -49,8 +51,10 @@ if __name__=="__main__":
         if conf["categories"]:
             categories = filter(
                 lambda c: c.name in conf["categories"], config.categories+ config.ff_cr_regions+ config.clf_regions)
+            # print categories
         else:
             categories = config.categories 
+            # print categories
 
         ## systematics
         all_systematics = config.systematics[:]  # <! common systematics
@@ -64,28 +68,45 @@ if __name__=="__main__":
             systematics = config.systematics[:1] #<! NOMINAL
 
         samples = filter(lambda s: s.name in jobname.split(".")[:1], analysis.samples)  #<! DON"T MESS AROUND WITH JOB NAME
+        samps = []
+        # print jobname.split(",")
+        for jo in jobname.split(","):
+            # print jo.split(".")[:1]
+            samps.append(filter(lambda s: s.name in jo.split(".")[:1], analysis.samples)[0])
+        # print samps
+        # for samp in samps:
+        #     print "Samples: %s" %samp.name
 
         ## get the worker
-        analysis.setWorkers(samples=samples, fields=fields, categories=categories, systematics=systematics)
+        analysis.setWorkers(samples=samps, fields=fields, categories=categories, systematics=systematics)
+
         ana_workers = analysis.getWorkers()
+
+        # for w in ana_workers:
+        #     print w.name 
         
         start_time = time.time()
+
+        # print jobname.split(",")
 
         for wrk in jobname.split(","):
         # print jobname.split(",")
 
             workers = filter(lambda w: w.name==wrk, ana_workers)
+
+            # for work in workers:
+            #     print "WORKER:\t %s" %(work.name)
             
             if len(workers) < 1:
                 raise RuntimeError("no worker with name %s is assigned for the job"%wrk)
 
-            if len(workers) > 1:
-                raise RuntimeError("%i workers with the same name %s are assigned the job"%(len(workers), wrk))        
+            # if len(workers) > 1:
+            #     raise RuntimeError("%i workers with the same name %s are assigned the job"%(len(workers), wrk))        
 
-            worker = workers[0]
-            print "WORKER: ", worker
-
+            # worker = workers[0]
+            # print "WORKER: ", worker.name
+            # for worker in workers:
             # - - get the hists 
-            dataset_hists(worker, write_hists=True, outdir="./")
+            dataset_hists(workers[0], write_hists=True, outdir="./")
         end_time = time.time()
         print "Execution Time:\t %0.2f"%(end_time - start_time)

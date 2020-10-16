@@ -110,14 +110,22 @@ if __name__=="__main__":
         #     mtag = "%ito%i"%(masses[0], masses[-1])
         #     for model in models[mtag]:
         #         features_ranking(model, outdir=CLF_ARGS.outdir,)
-        models, Keras_models = get_models(CLF_ARGS.models, isNN=CLF_ARGS.train_nn)
+        models, Keras_models = get_models(CLF_ARGS.models, isNN=True)
         # log.info(models)
         # log.info(Keras_models)
-        model = models["80to3000"][0]
-        log.info(model)
-        # for sig in model.sigs:
-        sig = SIGS[0]
-        explainNN(model, Keras_models["80to3000"][0], backgrounds=BKGS[0], sig=sig, outdir="./", is_NN=CLF_ARGS.train_nn)
+        for m in range(len(models["80to3000"])):
+            for sig in SIGS:
+                explainNN(models["80to3000"][m], Keras_models["80to3000"][m], backgrounds=BKGS, sig=sig, outdir=CLF_ARGS.outdir, is_NN=True)
+
+        # # log.info(models)
+        # # log.info(Keras_models)
+        # model = models["80to3000"][0]
+        # log.info(model)
+        # # for sig in model.sigs:
+        # sig = SIGS[0]
+        # # print Keras_models
+        # # print BKGS
+        # explainNN(model, Keras_models["80to3000"][0], backgrounds=BKGS[0], sig=sig, outdir=CLF_ARGS.outdir, is_NN=True)
 
     
     # ## overfitting checks 

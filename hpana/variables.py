@@ -22,6 +22,8 @@ BJET_P4_STR = "((jet_0_b_tag_score>0.83)*jet_0_p4->{0}+"\
     "(jet_0_b_tag_score<0.83 && jet_1_b_tag_score<0.83 &&jet_2_b_tag_score>0.83)*jet_2_p4->{0})" 
 
 
+# ((jet_0_b_tag_score>0.83)*jet_0_p4->Pt() +(jet_0_b_tag_score<0.83 && jet_1_b_tag_score>0.83)*jet_1_p4->Pt()+(jet_0_b_tag_score<0.83 && jet_1_b_tag_score<0.83 &&jet_2_b_tag_score>0.83)*jet_2_p4->Pt())
+
 ##------------------------------------------------------------------------------------------
 ## 
 class Variable(object):
@@ -443,7 +445,11 @@ bjet_0_pt =  Variable(
     "bjet_0_pt",
     title='#font[52]{p}_{T}lead b-jet [GeV]',
     latex=r"$b-jet_{p_T}$",
-    tformula=BJET_P4_STR.format("Pt()"),
+    tformula="bjet_0_p4->Pt()",
+    # {
+        # "mc16":BJET_P4_STR.format("Pt()"),
+        # "mc15":"bjet_0_p4->Pt()"
+        # }
     binning=(200, 25, 1000),
     plot_bins=range(25, 1000, 25),
     scale=1.,
@@ -452,24 +458,27 @@ bjet_0_pt =  Variable(
 bjet_0_eta = Variable(
     "bjet_0_eta",
     title='#font[152]{#eta}(bj_{1})',
-    tformula={
-        "mc16":BJET_P4_STR.format("Eta()"),
-        "mc15":"bjet_0_eta",},
+    tformula="bjet_0_p4->Eta()",
+    # {
+    #     "mc16":BJET_P4_STR.format("Eta()"),
+    #     "mc15":"bjet_0_eta",},
     binning=(50, -3., 3.))
 
 bjet_0_phi = Variable(
     "bjet_0_phi",
     title='#font[152]{#phi}(bj_{1})',
-    tformula={
-        "mc16":BJET_P4_STR.format("Phi()"),
-        "mc15":"bjet_0_phi",},
+    tformula="bjet_0_p4->Phi()",
+    # {
+    #     "mc16":BJET_P4_STR.format("Phi()"),
+    #     "mc15":"bjet_0_phi",},
     binning=(20, -3.2, 3.2))
 
 bjet_0_E =  Variable(
     "bjet_0_E",
     title='#font[52]{E} lead b-jet [GeV]',
     latex=r"$b-jet_{E}$",
-    tformula=BJET_P4_STR.format("E()"),
+    tformula="bjet_0_p4->E()",
+    #BJET_P4_STR.format("E()"),
     binning=(200, 0, 1000),
     # plot_bins=range(25, 500, 25),
     scale=1.,
@@ -742,18 +751,14 @@ lep_0_pt = Variable(
 lep_0_eta = Variable(
     "lep_0_eta" , 
     title='#font[52]{#eta}(l_{1})',
-    tformula={
-        "mc16": "mu_0_p4->Eta()+el_0_p4->Eta()",
-        "mc15": "mu_0_p4->Eta()+el_0_p4->Eta()"},
+    tformula="mu_0_p4->Eta()+el_0_p4->Eta()",
     binning=(120, -3., 3.),
     plot_bins=np.arange(-3., 3., 0.1))
 
 lep_0_phi = Variable(
     "lep_0_phi" , 
     title='#font[52]#phi(l_{1})',
-    tformula={
-        "mc16": "mu_0_p4->Phi()+el_0_p4->Phi()",
-        "mc15": "mu_0_p4->Phi()+el_0_p4->Phi()"},
+    tformula="mu_0_p4->Phi()+el_0_p4->Phi()",
     binning=(20, -3.2, 3.2),
     plot_bins=np.arange(-2.5, 2.5, 0.1))
 

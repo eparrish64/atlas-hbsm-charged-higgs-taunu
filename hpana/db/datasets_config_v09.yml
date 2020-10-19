@@ -5,12 +5,12 @@
     grl: ""
     
   taujet:
-    mc_path: /eos/user/e/eparrish/HPlusNTuples/v09/taujets/mc16/
+    mc_path: /eos/user/m/mmlynari/HPlusNTuples/v09/taujet/mc16/
     mc_prefix: #"user."
     mc_pattern: '*.root*'
     mc_treename: 'NOMINAL'
     mc_sampletype:
-    data_path: /eos/user/e/eparrish/HPlusNTuples/v09/taujets/data/
+    data_path: /eos/user/m/mmlynari/HPlusNTuples/v09/taujet/data/
     data_prefix: # "user." 
     data_pattern: '*.root*'
     data_treename: 'NOMINAL'
@@ -33,12 +33,12 @@
     grl: ""
     
   taujet:
-    mc_path: /eos/user/e/eparrish/HPlusNTuples/v09/taujets/mc16/
+    mc_path: /eos/user/m/mmlynari/HPlusNTuples/v09/taujet/mc16/
     mc_prefix: #"user."
     mc_pattern: '*.root*'
     mc_treename: 'NOMINAL'
     mc_sampletype:
-    data_path: /eos/user/e/eparrish/HPlusNTuples/v09/taujets/data/
+    data_path: /eos/user/m/mmlynari/HPlusNTuples/v09/taujet/data/
     data_prefix: # "user." 
     data_pattern: '*.root*'
     data_treename: 'NOMINAL'
@@ -61,12 +61,12 @@
     grl: ""
     
   taujet:
-    mc_path: /eos/user/e/eparrish/HPlusNTuples/v09/taujets/mc16/
+    mc_path: /eos/user/m/mmlynari/HPlusNTuples/v09/taujet/mc16/
     mc_prefix: #"user."
     mc_pattern: '*.root*'
     mc_treename: 'NOMINAL'
     mc_sampletype:
-    data_path: /eos/user/e/eparrish/HPlusNTuples/v09/taujets/data/
+    data_path: /eos/user/m/mmlynari/HPlusNTuples/v09/taujet/data/
     data_prefix: # "user." 
     data_pattern: '*.root*'
     data_treename: 'NOMINAL'
@@ -89,12 +89,12 @@
     grl: ""
    
   taujet:
-    mc_path: /eos/user/e/eparrish/HPlusNTuples/v09/taujets/mc16/
+    mc_path: /eos/user/m/mmlynari/HPlusNTuples/v09/taujet/mc16/
     mc_prefix: #"user."
     mc_pattern: '*.root*'
     mc_treename: 'NOMINAL'
     mc_sampletype:
-    data_path: /eos/user/e/eparrish/HPlusNTuples/v09/taujets/data/
+    data_path: /eos/user/m/mmlynari/HPlusNTuples/v09/taujet/data/
     data_prefix: # "user."
     data_pattern: '*.root*'
     data_treename: 'NOMINAL'

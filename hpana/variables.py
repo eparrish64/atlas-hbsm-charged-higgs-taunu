@@ -17,9 +17,9 @@ __all__ = [
     ]
 
 ## FIXME: tmp workaround for missing bjet p4 in (2015-2017) systematics 
-BJET_P4_STR = "((jet_0_b_tag_score>0.83)*jet_0_p4->{0}+"\
-    "(jet_0_b_tag_score<0.83 && jet_1_b_tag_score>0.83)*jet_1_p4->{0}+"\
-    "(jet_0_b_tag_score<0.83 && jet_1_b_tag_score<0.83 &&jet_2_b_tag_score>0.83)*jet_2_p4->{0})" 
+# BJET_P4_STR = "((jet_0_b_tag_score>0.83)*jet_0_p4->{0}+"\
+#     "(jet_0_b_tag_score<0.83 && jet_1_b_tag_score>0.83)*jet_1_p4->{0}+"\
+#     "(jet_0_b_tag_score<0.83 && jet_1_b_tag_score<0.83 &&jet_2_b_tag_score>0.83)*jet_2_p4->{0})" 
 
 
 ##------------------------------------------------------------------------------------------
@@ -443,7 +443,7 @@ bjet_0_pt =  Variable(
     "bjet_0_pt",
     title='#font[52]{p}_{T}lead b-jet [GeV]',
     latex=r"$b-jet_{p_T}$",
-    tformula=BJET_P4_STR.format("Pt()"),
+    tformula="bjet_0_p4->Pt()",
     binning=(200, 25, 1000),
     plot_bins=range(25, 1000, 25),
     scale=1.,
@@ -453,7 +453,7 @@ bjet_0_eta = Variable(
     "bjet_0_eta",
     title='#font[152]{#eta}(bj_{1})',
     tformula={
-        "mc16":BJET_P4_STR.format("Eta()"),
+        "mc16":"bjet_0_p4->Eta()",
         "mc15":"bjet_0_eta",},
     binning=(50, -3., 3.))
 
@@ -461,7 +461,7 @@ bjet_0_phi = Variable(
     "bjet_0_phi",
     title='#font[152]{#phi}(bj_{1})',
     tformula={
-        "mc16":BJET_P4_STR.format("Phi()"),
+        "mc16":"bjet_0_p4->Phi()",
         "mc15":"bjet_0_phi",},
     binning=(20, -3.2, 3.2))
 
@@ -469,7 +469,7 @@ bjet_0_E =  Variable(
     "bjet_0_E",
     title='#font[52]{E} lead b-jet [GeV]',
     latex=r"$b-jet_{E}$",
-    tformula=BJET_P4_STR.format("E()"),
+    tformula="bjet_0_p4->E()",
     binning=(200, 0, 1000),
     # plot_bins=range(25, 500, 25),
     scale=1.,
@@ -710,7 +710,7 @@ bjet_0_met_dphi = Variable(
     title='#font[52]{#Delta#phi}(b-jet ,E^{miss}_{T})',
     latex=r"$\Delta\phi(b-jet ,E^{miss}_{T})$",
     tformula={
-        "mc16":"acos(cos(met_p4->Phi() - {}))".format(BJET_P4_STR.format("Phi()")),
+        "mc16":"acos(cos(met_p4->Phi() - {}))".format("bjet_0_p4->Phi()"),
         "mc15": "acos(cos(met_phi-bjet_0_eta))",},
     binning=(100, .0, 4),
     plot_bins=np.arange(0, 4, 0.5),
@@ -722,7 +722,7 @@ bjet_0_tau_0_dr = Variable(
     latex=r"$\Delta R(\tau, b-jet)$",
     tformula={
         "mc16": "sqrt(acos(cos(tau_0_p4->Phi() - {0}))**2 + (tau_0_p4->Phi() - {1})**2)".format(
-            BJET_P4_STR.format("Phi()"), BJET_P4_STR.format("Eta()")),
+            "bjet_0_p4->Phi()", "bjet_0_p4->Eta()"),
         "mc15": "sqrt(acos(cos(tau_0_phi-bjet_0_eta))**2 + (tau_0_eta-bjet_0_eta)**2)",},
     binning=(20, 0, 6.4))
 
@@ -833,7 +833,7 @@ bjet_0_lep_0_dr = Variable(
     title='#Delta#phi(l, b-jet)',
     latex=r"$\Delta\phi(\ell, b-jet)$",
     tformula="sqrt(acos(cos({0} - el_0_p4->Phi() - mu_0_p4->Phi()))**2 + ({1} - el_0_p4->Eta() - mu_0_p4->Eta())**2)".format(
-        BJET_P4_STR.format("Phi()"), BJET_P4_STR.format("Eta()")),
+        "bjet_0_p4->Phi()", "bjet_0_p4->Eta()"),
     binning=(60, 0, 6.)
     )
 

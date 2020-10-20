@@ -132,7 +132,7 @@ ANTI_TAU = ROOT.TCut("tau_0_jet_rnn_loose==0")
 VETO_TAU = ROOT.TCut("n_taus==0")
 TAU_EL_OLR_PASS = {
     "mc15": ROOT.TCut("tau_0_ele_olr_pass==1"),
-    "mc16": ROOT.TCut("tau_0_ele_bdt_medium_retuned==1"),
+    "mc16": ROOT.TCut("tau_0_ele_bdt_medium==1"),
     # "mc16": ROOT.TCut("tau_0_ele_olr_pass==1"),
 
 }

@@ -19,6 +19,7 @@ from argparse import ArgumentParser
 
 # PyIP
 from tabulate import tabulate
+import pandas as pd
 
 # - - - - - - - - - parse yields args (needed before ROOT)
 from hpana.cmd import get_yields_parser
@@ -163,6 +164,8 @@ if YIELDS_ARGS.yields_table:
                     Yield(sample="bkgSum", category=cat.name, systematic=systematic.name, events=rvalue))
 
     # - - - - - - - - tabulate the yields
+    # yieldDF = pd.DataFrame()
+    allYields = []
     for cat in categories:
         ostring = "\n------------------------------ CATEGORY: %s ------------------------------\n\n" % cat.name
         yields_cat = filter(lambda y: y.category == cat.name, yields)
@@ -177,7 +180,9 @@ if YIELDS_ARGS.yields_table:
                 lambda y: y.systematic == syst, yields_cat)
             row = [syst[:50]] + [y.events for y in yields_cat_syst]
             rows_cat.append(row)
+            allYields.append([cat.name]+row)
 
+        # allYields.append(rows_cat)
         if YIELDS_ARGS.latex:
             ostring += tabulate(rows_cat, headers=headers, floatfmt=".2f", tablefmt='latex')
         else:
@@ -186,6 +191,86 @@ if YIELDS_ARGS.yields_table:
             yfile.write(ostring)
 
         print ostring
+
+    yieldDF = pd.DataFrame(allYields, columns=["Category"]+headers)
+    yieldDF = yieldDF.round(2)
+    print "\n"
+    if YIELDS_ARGS.latex:
+        print yieldDF.to_latex(index=False)
+    else:
+        pd.set_option("display.max_rows", None, "display.max_columns", None)
+        print yieldDF
+
+    print yieldDF["bkgSum"].to_string(index=False)
+    yieldDF.to_csv('v09_yields_1p_3p.csv',index=False)
+
+if YIELDS_ARGS.compare:
+    yields1 = pd.read_csv("/afs/cern.ch/user/e/eparrish/workarea/public/HPlusTauNu/hpana_rnnTest/workAREA/rnnTest_yields_1p_3p.csv")
+    yields2 = pd.read_csv("/afs/cern.ch/user/e/eparrish/workarea/public/HPlusTauNu/hpana_master/workAREA/v09_yields_1p_3p.csv")
+    yields1["Ntuple Version"] = "rnnTest"
+    yields2["Ntuple Version"] = "v09"
+    # print yields1.head()
+    # print yields2.head()
+    concatDF = yields1.append(yields2)
+    concatDF.drop(columns=["Systematic"], inplace=True)
+    # print concatDF.sort_values(["Category", "Ntuple Version"])
+    finalDF = pd.DataFrame()
+
+    group = concatDF.groupby(["Category"])
+    # print group
+    # print "AHH\n "
+    diffDF = pd.DataFrame()
+    for x in group:
+        # print x[1]
+        diffs = x[1][["TTbar","QCD","SingleTop","Wtaunu","LepFakes","Ztautau","DiBoson","Data","Hplus80","Hplus160","Hplus400","Hplus3000","bkgSum"]].pct_change(periods=1)*100
+        diffs.dropna(axis=0,how="all",inplace=True)
+        # diffs = diffs.round(0)
+        # print type(diffs)
+        # print diffs
+        diffs["Category"] = x[0]
+        diffs["Ntuple Version"] = "% Difference"
+        finalDF = finalDF.append(x[1])
+        finalDF = finalDF.append(diffs)
+        diffDF = diffDF.append(diffs)
+        # print diffs
+        # for y in x:
+        #     print y
+        # y = x[1]
+        # print y.append( (y.iloc[0] - y.iloc[1]) / y.iloc[0] , ignore_index=True)
+
+    finalDF=finalDF[["Category","Ntuple Version","TTbar","QCD","SingleTop","Wtaunu","LepFakes","Ztautau","DiBoson","Data","Hplus80","Hplus160","Hplus400","Hplus3000","bkgSum"]]
+    finalDF=finalDF.fillna(0)
+    finalDF=finalDF.round(2)
+    finalDF["Category"]=finalDF["Category"].str.lower()
+    finalDF["Category"]=finalDF["Category"].str.replace("_"," ")
+    print finalDF
+    print finalDF.to_latex(index=False)
+
+
+    diffDF=diffDF[["Category","Ntuple Version","TTbar","QCD","SingleTop","Wtaunu","LepFakes","Ztautau","DiBoson","Data","Hplus80","Hplus160","Hplus400","Hplus3000","bkgSum"]]
+    diffDF=diffDF.fillna(0)
+    diffDF=diffDF.round(2)
+    diffDF["Category"]=diffDF["Category"].str.lower()
+    diffDF["Category"]=diffDF["Category"].str.replace("_"," ")
+    print diffDF
+    print diffDF.to_latex(index=False)
+    # finalDF.to_csv('v09_yields_3p.csv',index=False)
+
+#     group = data.groupby(['A', 'C'])
+# for x, y in group:
+
+
+#     product = (y[["D"]].product(axis=0).values[0])
+
+
+#     for row in y.index:
+#         y.at[row, 'D'] = product
+
+#     finalDataFrame = finalDataFrame.append(y, ignore_index=True)
+
+# output = finalDataFrame[['id', 'A', 'D']]
+# output = output.rename(columns = {'D': 'result'})
+# print(output)
 
 # ---------------------------------------------------------------------------
 # get cutflow table

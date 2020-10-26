@@ -181,6 +181,9 @@ def get_yields_parser(base_parser=None):
     yields_parser.add_argument("--yields-table", action="store_true",
                               help="print yields table")
     
+    yields_parser.add_argument("--compare", action="store_true",
+                              help="compare ntuple versions")
+
     yields_parser.add_argument("--latex", action="store_true",
                               help="LaTeX formatted table")
     

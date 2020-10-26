@@ -90,8 +90,8 @@ TAU_3_TRACK = {
 }
 
 TAU_TRACKS = {
-    "mc15": ROOT.TCut("tau_0_n_tracks==1|| tau_0_n_tracks==3"),
-    "mc16": ROOT.TCut("tau_0_n_charged_tracks==1||tau_0_n_charged_tracks==3"),
+    "mc15": ROOT.TCut("tau_0_n_tracks==1 || tau_0_n_tracks==3"),
+    "mc16": ROOT.TCut("tau_0_n_charged_tracks==1 ||tau_0_n_charged_tracks==3"),
 }
 
 TAU_PT30 = {
@@ -400,6 +400,16 @@ Category_BVETO = Category(
 ##------------------------------------------
 # - - taulep channel
 ##------------------------------------------
+
+Category_TAULEP_BASE = Category(
+    name="TAULEP_BASE",
+    label="#tau-lep base",
+    # ff_index=2000,
+    cuts_list = [
+        CLEAN_EVT,
+    ],
+)
+
 Category_TAULEP_PRESEL = Category(
     name="TAULEP_PRESEL",
     label="#tau-lep presel",
@@ -566,11 +576,6 @@ Category_ZEE = Category(
     ],
 )
 
-# WARNING:hpana:No histogram is found for sample=Wtaunu, systematic=NOMINAL, category=SR_TAUEL, and field=clf_score_GB200_mass_80to3000
-# WARNING:hpana:No histogram is found for sample=DiBoson, systematic=NOMINAL, category=SR_TAUEL, and field=clf_score_GB200_mass_80to3000
-# WARNING:hpana:No histogram is found for sample=Data, systematic=NOMINAL, category=SR_TAUEL, and field=clf_score_GB200_mass_80to3000
-# INFO:hpana:Missing histograms for DiBoson
-
 ##--------------------------------------------------------------
 # - - analysis selection regions (PLEASE KEEP THE ORDER)
 ##--------------------------------------------------------------
@@ -594,6 +599,7 @@ CATEGORIES["taulep"] = [
     Category_DILEP_BTAG,
     Category_ZEE,
     Category_TAULEP_PRESEL,
+    Category_TAULEP_BASE,
 ]
 
     

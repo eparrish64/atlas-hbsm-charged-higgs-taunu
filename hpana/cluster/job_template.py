@@ -99,13 +99,13 @@ log                         = {logsdir}/log/$(Process).log
 universe                    = vanilla
 getenv                      = true
 #
-# RequestMemory               = {memory}
+RequestMemory               = {memory}
 # request_GPUs            = 1
 request_cpus            = 1
 #+JobFlavour             = "espresso"
 #+JobFlavour             = "microcentury"
-+JobFlavour             = "longlunch" 
-#+JobFlavour             = "workday"
+#+JobFlavour             = "longlunch" 
++JobFlavour             = "workday"
 #+JobFlavour             = "tomorrow"
 #+JobFlavour             = "testmatch"
 #+JobFlavour             = "nextweek"

@@ -338,7 +338,7 @@ for signal_masses in train_masses:
                     clf_name = SClassifier.MODEL_NAME_STR_FORMAT.format("GB%i"%hyper_params["n_estimators"],CLF_ARGS.channel, mass_tag, ntracks, CLF_ARGS.kfolds, rem, len(feats))
                     sclf = SClassifier(CLF_ARGS.channel, 
                         train_df=sdf, valid_df=vdf, eval_df=edf, name=clf_name, features=feats, weight_sample=False, mass_range=signal_masses, ntracks=ntracks, kfolds=CLF_ARGS.kfolds, fold_num=rem, **hyper_params)
-                    models += [sclf]
+                    # models += [sclf]
 
                     if CLF_ARGS.train_nn == True:
                         input_features = [f.tformula for f in feats]
@@ -417,59 +417,7 @@ if CLF_ARGS.train_bdt == True or CLF_ARGS.train_nn == True:
             raise RuntimeError("Not implemented yet ...")
 
         elif CLF_ARGS.rs_manager == "SLURM":
-            # - - write jobs
-            from hpana.cluster.job_template import SLURM_JOB_TEMPLATE
-
-            # - - setup the submit dir
-            os.system(
-                "mkdir -p {0}/jobs  {0}/logs {0}/trained_models".format(CLF_ARGS.outdir))
-            log.info(
-                "************** submitting %i jobs to the cluster ************" % len(models))
-            log.info(
-                "**************************************************************")
-
-            os.system("mkdir -p %s %s/jobs/" %
-                    (os.path.join(CLF_ARGS.outdir, CLF_ARGS.logsdir), CLF_ARGS.outdir))
-            submitfile_name = "%s/%s.sh" % (CLF_ARGS.outdir, "submitAllJobs")
-            submit_file = os.open(
-                submitfile_name, os.O_CREAT | os.O_WRONLY, 0755)
-
-            # - -  create the job scripts and run them. Returns Analysis workers
-            for model in models:
-                # - - payload for container
-                payload = "source {job_script} {pickled_model} {script_path}".format(
-                    job_script=os.path.join(__HERE, "slurm_job_clf.sh"),
-                    pickled_model=os.path.abspath(os.path.join(CLF_ARGS.outdir, model.name)),
-                    script_path=os.path.join(__HERE, script),
-                )
-
-                # - - write the job submission script with right permissions
-                jfile_name = "%s/jobs/%s.slurm" % (CLF_ARGS.outdir, model.name)
-                jfile = os.open(jfile_name, os.O_CREAT | os.O_WRONLY, 0755)
-                os.write(jfile,
-                        SLURM_JOB_TEMPLATE.format(
-                            logsdir=os.path.join(CLF_ARGS.outdir, CLF_ARGS.logsdir),
-                            outdir=CLF_ARGS.outdir,
-                            local_scratch=CLF_ARGS.local_scratch,
-                            time="6:0:0",
-                            cores=1,
-                            memory="1GB",
-                            jobname=model.name, 
-                            payload=payload,
-                            project=CLF_ARGS.rs_project)
-                        )
-
-                os.close(jfile)
-
-                # - - - - write submission to file to be used outside container
-                log.info("Writing to %s for job %s ..." %
-                        (submitfile_name, model.name))
-                os.write(submit_file, "sbatch %s\n" % jfile_name)
-
-            os.close(submit_file)
-            log.warning("Submission not supported from within container.")
-            log.warning("Please launch outside container via:")
-            log.warning("\t sh {0}".format(submitfile_name))
+            raise RuntimeError("Not implemented yet ...")
 
         elif CLF_ARGS.rs_manager=="CONDOR":
             # - - write jobs
@@ -506,7 +454,7 @@ if CLF_ARGS.train_bdt == True or CLF_ARGS.train_nn == True:
 
             for model in model_names:
 
-                submit_file.write("\nArguments = %s %s %s %d %d %d \nqueue\n" %(   model.name, 
+                submit_file.write("\nArguments = %s %s %s %d %d %d \nqueue\n" %(   model, 
                                                                                 os.path.join(__HERE, "classifier-trainer"), 
                                                                                 os.path.join(os.getcwd(),CLF_ARGS.outdir),
                                                                                 CLF_ARGS.balanced,

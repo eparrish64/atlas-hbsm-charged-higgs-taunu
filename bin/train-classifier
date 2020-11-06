@@ -143,16 +143,16 @@ for signal_masses in train_masses:
 
     ## - - different set of features for low mass and high mass
     ## - - if training PNN, need to add truth mass as a training variable
-    if (len(signals)==1 and signals[0].mass > 400) or any([s.mass>500 for s in signals]):
-        if CLF_ARGS.train_nn == True:
-            feats = CLF_FEATURES[CLF_ARGS.channel]["HIGH"] + [TruthMass]
-        else:
-            feats = CLF_FEATURES[CLF_ARGS.channel]["HIGH"]
-    else:
-        if CLF_ARGS.train_nn == True:
-            feats = CLF_FEATURES[CLF_ARGS.channel]["LOW"] + [TruthMass]
-        else:
-            feats = CLF_FEATURES[CLF_ARGS.channel]["LOW"]
+    # if (len(signals)==1 and signals[0].mass > 400) or any([s.mass>500 for s in signals]):
+    #     if CLF_ARGS.train_nn == True:
+    #         feats = CLF_FEATURES[CLF_ARGS.channel]["HIGH"] + [TruthMass]
+    #     else:
+    #         feats = CLF_FEATURES[CLF_ARGS.channel]["HIGH"]
+    # else:
+    #     if CLF_ARGS.train_nn == True:
+    #         feats = CLF_FEATURES[CLF_ARGS.channel]["LOW"] + [TruthMass]
+    #     else:
+    #         feats = CLF_FEATURES[CLF_ARGS.channel]["LOW"]
 
 #    feats = CLF_FEATURES[CLF_ARGS.channel]["LOW"]  + [TruthMass]
 
@@ -168,13 +168,17 @@ for signal_masses in train_masses:
 
     makeModelFiles = False
     for ntracks in N_TRACKS:
+        if ntracks == 1:
+            feats = CLF_FEATURES[CLF_ARGS.channel]["LOW"]  + [TruthMass]
+        elif ntracks == 3:
+            feats = CLF_FEATURES[CLF_ARGS.channel]["HIGH"]  + [TruthMass]
         for rem in range(CLF_ARGS.kfolds): #<@NOTE 1 obviously is all
 
             ## Check if model file exists. This should reduce runtime when model files have already been created.
             clf_name = SClassifier.MODEL_NAME_STR_FORMAT.format("GB%i"%hyper_params["n_estimators"],CLF_ARGS.channel, mass_tag, ntracks, CLF_ARGS.kfolds, rem, len(feats))
             modelpath = os.path.join(CLF_ARGS.outdir, clf_name)
-            model_names.append(clf_name)
             if os.path.isfile(modelpath):
+                model_names.append(clf_name)
                 log.warning("Found %s model; skipping the preparation..."%modelpath)
                 
                 ## - - assign the job
@@ -252,7 +256,7 @@ for signal_masses in train_masses:
                 feats = CLF_FEATURES[CLF_ARGS.channel]["LOW"]  + [TruthMass]
             elif ntracks == 3:
                 feats = CLF_FEATURES[CLF_ARGS.channel]["HIGH"]  + [TruthMass]
-            prong3_on_inclusive = False
+            prong3_on_inclusive = True
 
             #feats = CLF_FEATURES[CLF_ARGS.channel]["HIGH"]  + [TruthMass]
 
@@ -269,48 +273,49 @@ for signal_masses in train_masses:
                             sclf = cPickle.load(pfile)
                             if CLF_ARGS.train_nn == True:    
                                 cPickle.dump(Keras_model, mcache, protocol=2)
-                        # except EOFError: 
-                        #     os.system("rm %s" %(modelpath))
                         except:
                             raise IOError("There was an issue with the file: %s" %(modelpath))
                     # continue
                 else:
                     if CLF_ARGS.kfolds==1:
                         where = (dframe["tau_0_n_charged_tracks"]==ntracks)
-                        vdf = None
+                        # vdf = None
                         edf = None
                         raise Exception("Need more than 1 kfold to optimize")
 
                     else:
                         if ntracks == 3 and prong3_on_inclusive == True:
                             if CLF_ARGS.kfolds-1==(rem):
-                                v_where = dframe["event_number"]%CLF_ARGS.kfolds==0
-                                where = (dframe["event_number"]%CLF_ARGS.kfolds!=rem) & (dframe["event_number"]%CLF_ARGS.kfolds!=0)
+                                # v_where = dframe["event_number"]%CLF_ARGS.kfolds==0
+                                where = dframe["event_number"]%CLF_ARGS.kfolds!=rem
                                 e_where = dframe["event_number"]%CLF_ARGS.kfolds==rem
 
                             else:
-                                v_where = dframe["event_number"]%CLF_ARGS.kfolds==(rem+1)
-                                where = (dframe["event_number"]%CLF_ARGS.kfolds!=rem) & (dframe["event_number"]%CLF_ARGS.kfolds!=(rem+1))
+                                # v_where = dframe["event_number"]%CLF_ARGS.kfolds==(rem+1)
+                                # where = (dframe["event_number"]%CLF_ARGS.kfolds!=rem) & (dframe["event_number"]%CLF_ARGS.kfolds!=(rem+1))
+                                where = dframe["event_number"]%CLF_ARGS.kfolds!=rem
                                 e_where = dframe["event_number"]%CLF_ARGS.kfolds==rem
 
                         else:
                             if CLF_ARGS.kfolds-1==(rem):
-                                v_where = (dframe["event_number"]%CLF_ARGS.kfolds==0) & (dframe["tau_0_n_charged_tracks"]==ntracks)
-                                where = (dframe["event_number"]%CLF_ARGS.kfolds!=rem) & (dframe["tau_0_n_charged_tracks"]==ntracks) & (dframe["event_number"]%CLF_ARGS.kfolds!=0)
+                                # v_where = (dframe["event_number"]%CLF_ARGS.kfolds==0) & (dframe["tau_0_n_charged_tracks"]==ntracks)
+                                # where = (dframe["event_number"]%CLF_ARGS.kfolds!=rem) & (dframe["tau_0_n_charged_tracks"]==ntracks) & (dframe["event_number"]%CLF_ARGS.kfolds!=0)
+                                where = (dframe["event_number"]%CLF_ARGS.kfolds!=rem) & (dframe["tau_0_n_charged_tracks"]==ntracks)
                                 e_where = ((dframe["event_number"]%CLF_ARGS.kfolds==rem) & (dframe["tau_0_n_charged_tracks"]==ntracks))
 
                             else:
-                                v_where = (dframe["event_number"]%CLF_ARGS.kfolds==(rem+1)) & (dframe["tau_0_n_charged_tracks"]==ntracks)
-                                where = (dframe["event_number"]%CLF_ARGS.kfolds!=rem) & (dframe["tau_0_n_charged_tracks"]==ntracks) & (dframe["event_number"]%CLF_ARGS.kfolds!=(rem+1))
+                                # v_where = (dframe["event_number"]%CLF_ARGS.kfolds==(rem+1)) & (dframe["tau_0_n_charged_tracks"]==ntracks)
+                                # where = (dframe["event_number"]%CLF_ARGS.kfolds!=rem) & (dframe["tau_0_n_charged_tracks"]==ntracks) & (dframe["event_number"]%CLF_ARGS.kfolds!=(rem+1))
+                                where = (dframe["event_number"]%CLF_ARGS.kfolds!=rem) & (dframe["tau_0_n_charged_tracks"]==ntracks)
                                 e_where = ((dframe["event_number"]%CLF_ARGS.kfolds==rem) & (dframe["tau_0_n_charged_tracks"]==ntracks))
 
                     sdf = dframe[where]
-                    vdf = dframe[v_where]
+                    # vdf = dframe[v_where]
                     edf = dframe[e_where]
 
-                    s_v_overlap = pd.merge(sdf, vdf, how="inner")
+                    # s_v_overlap = pd.merge(sdf, vdf, how="inner")
                     s_e_overlap = pd.merge(sdf, edf, how="inner")
-                    v_e_overlap = pd.merge(vdf, edf, how="inner")
+                    # v_e_overlap = pd.merge(vdf, edf, how="inner")
 
                     if s_e_overlap.empty:
                         # print s_e_overlap
@@ -320,54 +325,67 @@ for signal_masses in train_masses:
                         log.info(s_e_overlap)
                         raise Excpetion("Overlap in train and evaluate")
 
-                    if s_v_overlap.empty:
-                        pass
-                    else:
-                        log.info(s_v_overlap)
-                        raise Excpetion("Overlap in train and validation")
+                    # if s_v_overlap.empty:
+                        # pass
+                    # else:
+                        # log.info(s_v_overlap)
+                        # raise Excpetion("Overlap in train and validation")
 
-                    if v_e_overlap.empty:
-                        pass
-                    else:
-                        log.info(v_e_overlap)
-                        raise Excpetion("Overlap in evaluation and validation")
+                    # if v_e_overlap.empty:
+                    #     pass
+                    # else:
+                    #     log.info(v_e_overlap)
+                    #     raise Excpetion("Overlap in evaluation and validation")
 
                     log.info("Training in mass range:%s on ntracks=%i, nevents=%i, and nfeatures=%i\n\t\tHyperparams: %r\n"%(
                         mass_tag, ntracks, sdf.shape[0], sdf.shape[1]-4, hyper_params))
                     ## - - instantiate the model
-                    clf_name = SClassifier.MODEL_NAME_STR_FORMAT.format("GB%i"%hyper_params["n_estimators"],CLF_ARGS.channel, mass_tag, ntracks, CLF_ARGS.kfolds, rem, len(feats))
+                    # clf_name = SClassifier.MODEL_NAME_STR_FORMAT.format("GB%i"%hyper_params["n_estimators"],CLF_ARGS.channel, mass_tag, ntracks, CLF_ARGS.kfolds, rem, len(feats))
                     sclf = SClassifier(CLF_ARGS.channel, 
-                        train_df=sdf, valid_df=vdf, eval_df=edf, name=clf_name, features=feats, weight_sample=False, mass_range=signal_masses, ntracks=ntracks, kfolds=CLF_ARGS.kfolds, fold_num=rem, **hyper_params)
+                        train_df=sdf, valid_df=None, eval_df=edf, name=clf_name, features=feats, weight_sample=False, mass_range=signal_masses, ntracks=ntracks, kfolds=CLF_ARGS.kfolds, fold_num=rem, **hyper_params)
                     # models += [sclf]
 
                     if CLF_ARGS.train_nn == True:
                         input_features = [f.tformula for f in feats]
 
-                        early_stopping = tf.keras.callbacks.EarlyStopping(monitor="loss", min_delta=0.001, patience=10, mode="auto", restore_best_weights=True)
+                        early_stopping = tf.keras.callbacks.EarlyStopping(monitor="loss", min_delta=0.00001, patience=10, mode="auto", restore_best_weights=True)
 
                         Keras_model_name = sclf.name.replace(".pkl", "")
                         
 
+                        # Keras_model = Sequential()
+                        # Keras_model.add(BatchNormalization(input_shape=(len(input_features),)))                      
+                        # Keras_model.add(Dense(128,input_shape=(len(input_features),)))
+                        # Keras_model.add(LeakyReLU(alpha=0.050))
+                        # Keras_model.add(Dense(128))
+                        # Keras_model.add(LeakyReLU(alpha=0.050))
+                        # Keras_model.add(Dropout(0.1))   
+                        # Keras_model.add(Dense(128))
+                        # Keras_model.add(LeakyReLU(alpha=0.050))
+                        # Keras_model.add(Dropout(0.1)) 
+                        # Keras_model.add(Dense(128))
+                        # Keras_model.add(LeakyReLU(alpha=0.050))
+                        # Keras_model.add(Dropout(0.1)) 
+                        # Keras_model.add(Dense(128))
+                        # Keras_model.add(LeakyReLU(alpha=0.050))
+                        # Keras_model.add(Dropout(0.1)) 
+                        # Keras_model.add(Dense(128))
+                        # Keras_model.add(LeakyReLU(alpha=0.050))
+                        # Keras_model.add(Dropout(0.1)) 
+                        # Keras_model.add(Dense(1,activation='sigmoid'))
+
                         Keras_model = Sequential()
-                        Keras_model.add(BatchNormalization(input_shape=(len(input_features),)))                      
-                        Keras_model.add(Dense(128,input_shape=(len(input_features),)))
-                        Keras_model.add(LeakyReLU(alpha=0.050))
-                        Keras_model.add(Dense(128))
-                        Keras_model.add(LeakyReLU(alpha=0.050))
-                        Keras_model.add(Dropout(0.1))   
-                        Keras_model.add(Dense(128))
-                        Keras_model.add(LeakyReLU(alpha=0.050))
+                        Keras_model.add(BatchNormalization(input_shape=(len(input_features),)))
+                        Keras_model.add(Dense(64, activation="sigmoid"))
                         Keras_model.add(Dropout(0.1)) 
-                        Keras_model.add(Dense(128))
-                        Keras_model.add(LeakyReLU(alpha=0.050))
+                        Keras_model.add(Dense(64, activation="sigmoid"))
                         Keras_model.add(Dropout(0.1)) 
-                        Keras_model.add(Dense(128))
-                        Keras_model.add(LeakyReLU(alpha=0.050))
+                        Keras_model.add(Dense(64, activation="sigmoid"))
                         Keras_model.add(Dropout(0.1)) 
-                        Keras_model.add(Dense(128))
-                        Keras_model.add(LeakyReLU(alpha=0.050))
+                        Keras_model.add(Dense(64, activation="sigmoid"))
                         Keras_model.add(Dropout(0.1)) 
-                        Keras_model.add(Dense(1,activation='sigmoid'))
+                        Keras_model.add(Dense(1,activation="sigmoid"))
+
 
                         # Keras_model = Sequential([
                         #     BatchNormalization(input_shape=(len(input_features),)),
@@ -448,7 +466,7 @@ if CLF_ARGS.train_bdt == True or CLF_ARGS.train_nn == True:
                              logsdir=os.path.join(
                                  CLF_ARGS.outdir, CLF_ARGS.logsdir),
                              execScript=os.path.join(__HERE, "condor_jobs_clf.sh"),
-                             memory="1GB",
+                             memory="3GB",
                          )
                          )
 

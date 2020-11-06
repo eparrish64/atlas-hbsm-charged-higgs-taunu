@@ -618,15 +618,15 @@ def train_model(model,
                 early_stopping = tf.keras.callbacks.EarlyStopping(monitor="loss", min_delta=0.00001, patience=10, mode="auto", restore_best_weights=True)
                 # Keras_model.fit(X_train.values, Y_train.values, batch_size=NN_HYPERPARAMS["batch_size"], epochs=NN_HYPERPARAMS["epochs"], class_weight=train_weights, verbose=1)
                 #Keras_model.fit(X_train.values, Y_train.values, batch_size=NN_HYPERPARAMS["batch_size"], epochs=NN_HYPERPARAMS["epochs"], sample_weight=tr_df_ud["SampleWeight"].values * tr_df_ud["MassPointWeight"].values, verbose=1)
-                Keras_model.fit(X_train.values, Y_train.values, batch_size=NN_HYPERPARAMS["batch_size"], epochs=NN_HYPERPARAMS["epochs"], callbacks=[early_stopping], sample_weight=tr_df_ud["SampleWeight"].values if not oversample else None, verbose=1)
+                Keras_model.fit(X_train.values, Y_train.values, validation_split=0.2, batch_size=NN_HYPERPARAMS["batch_size"], epochs=NN_HYPERPARAMS["epochs"], callbacks=[early_stopping], sample_weight=tr_df_ud["SampleWeight"].values if not oversample else None, verbose=1)
             else:
-                model = model.fit(X_train.values, Y_train.values, sample_weight=X_weight if weight_sample else None)
+                model = model.fit(X_train.values, Y_train.values, validation_split=0.2, sample_weight=X_weight if weight_sample else None)
         except:
             if is_NN == True:
                 import tensorflow as tf
                 early_stopping = tf.keras.callbacks.EarlyStopping(monitor="loss", min_delta=0.00001, patience=10, mode="auto", restore_best_weights=True)
                 # Keras_model.fit(X_train, Y_train.values, batch_size=NN_HYPERPARAMS["batch_size"], epochs=NN_HYPERPARAMS["epochs"], class_weight=train_weights, verbose=1)
-                Keras_model.fit(X_train.values, Y_train.values, batch_size=1024, epochs=1000, sample_weight=tr_df_ud["SampleWeight"].values if not oversample else None, verbose=1, callbacks=[early_stopping])
+                Keras_model.fit(X_train.values, Y_train.values, batch_size=NN_HYPERPARAMS["batch_size"], epochs=NN_HYPERPARAMS["epochs"], callbacks=[early_stopping], sample_weight=tr_df_ud["SampleWeight"].values if not oversample else None, verbose=1)
             else:
                 model = model.fit(X_train, Y_train.values, sample_weight=X_weight if weight_sample else None)
 
@@ -659,9 +659,9 @@ def empty_tree(files, treename="NOMINAL"):
         tf = ROOT.TFile(fl, "READ")
         log.debug("line 584")
         if not tf.GetListOfKeys().Contains(treename):
-            raise Exception("%s does not contain %s tree"%(fl,treename))
+            log.info("%s does not contain %s tree"%(fl,treename))
         if tf.IsZombie():
-            raise Exception("%s is a Zombie." %(fl))
+            log.info("%s is a Zombie." %(fl))
         log.debug("line 587")
         tr = tf.Get(treename)
         log.debug("line 589")

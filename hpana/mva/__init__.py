@@ -13,7 +13,7 @@ from hpana.variables import CLF_FEATURES
 ##----------------------------------------------------------------------------------
 ## consts
 ##----------------------------------------------------------------------------------
-#N_TRACKS = [1]
+# N_TRACKS = [1]
 N_TRACKS = [1, 3]
 FOLD_CUT_STR = "event_number%{0}!={1}"
 
@@ -68,8 +68,8 @@ GB_HYPERPARAMS = {
 }
 
 NN_HYPERPARAMS = {
-    "batch_size": 256, 
-    "epochs": 40,
+    "batch_size": 128, 
+    "epochs": 1000,
     #"batch_size": 2048,
     #"epochs": 1,
 }

@@ -68,18 +68,18 @@ if YIELDS_ARGS.categories:
     categories = filter(lambda c: c.name in YIELDS_ARGS.categories, categories+config.ff_cr_regions+config.clf_regions)
 
 ## systematics
-if YIELDS_ARGS.cutflow:
-    systematics = config.systematics[:1] #<! NOMINAL
+# if YIELDS_ARGS.cutflow:
+    # systematics = config.systematics[:1] #<! NOMINAL
+# else:
+all_systematics = config.systematics[:]  # <! common systematics
+all_systematics += analysis.qcd.systematics[1:]  # <! QCD fakes only
+if YIELDS_ARGS.systematics:
+    systematics = filter(
+        lambda s: s.name in YIELDS_ARGS.systematics, all_systematics)
+elif YIELDS_ARGS.systs:
+    systematics = all_systematics
 else:
-    all_systematics = config.systematics[:]  # <! common systematics
-    all_systematics += analysis.qcd.systematics[1:]  # <! QCD fakes only
-    if YIELDS_ARGS.systematics:
-        systematics = filter(
-            lambda s: s.name in YIELDS_ARGS.systematics, all_systematics)
-    elif YIELDS_ARGS.systs:
-        systematics = all_systematics
-    else:
-        systematics = config.systematics[:1] #<! NOMINAL
+    systematics = config.systematics[:1] #<! NOMINAL
 
 systematics_vars = []
 for st in systematics:
@@ -202,11 +202,11 @@ if YIELDS_ARGS.yields_table:
         print yieldDF
 
     print yieldDF["bkgSum"].to_string(index=False)
-    yieldDF.to_csv('v09_yields_1p_3p.csv',index=False)
+    yieldDF.to_csv('%s_%s_yields_1p_3p.csv' %(YIELDS_ARGS.channel,YIELDS_ARGS.db_version),index=False)
 
 if YIELDS_ARGS.compare:
-    yields1 = pd.read_csv("/afs/cern.ch/user/e/eparrish/workarea/public/HPlusTauNu/hpana_rnnTest/workAREA/rnnTest_yields_1p_3p.csv")
-    yields2 = pd.read_csv("/afs/cern.ch/user/e/eparrish/workarea/public/HPlusTauNu/hpana_master/workAREA/v09_yields_1p_3p.csv")
+    yields1 = pd.read_csv("/afs/cern.ch/user/e/eparrish/workarea/public/HPlusTauNu/hpana_rnnTest/workAREA/taujet_rnnTest_yields_1p_3p.csv")
+    yields2 = pd.read_csv("/afs/cern.ch/user/e/eparrish/workarea/public/HPlusTauNu/hpana_master/workAREA/taujet_v09g_yields_1p_3p.csv")
     yields1["Ntuple Version"] = "rnnTest"
     yields2["Ntuple Version"] = "v09"
     # print yields1.head()
@@ -256,22 +256,6 @@ if YIELDS_ARGS.compare:
     print diffDF.to_latex(index=False)
     # finalDF.to_csv('v09_yields_3p.csv',index=False)
 
-#     group = data.groupby(['A', 'C'])
-# for x, y in group:
-
-
-#     product = (y[["D"]].product(axis=0).values[0])
-
-
-#     for row in y.index:
-#         y.at[row, 'D'] = product
-
-#     finalDataFrame = finalDataFrame.append(y, ignore_index=True)
-
-# output = finalDataFrame[['id', 'A', 'D']]
-# output = output.rename(columns = {'D': 'result'})
-# print(output)
-
 # ---------------------------------------------------------------------------
 # get cutflow table
 # ---------------------------------------------------------------------------
@@ -280,8 +264,7 @@ if YIELDS_ARGS.cutflow:
     table_rows = []
     cutflow_hist_sets = []
     bkg_sum_events = []
-    cutflow_hist_sets = analysis.cutflow(
-        cutflow_selections, samples=samples, tauid=ROOT.TCut("1>0"), trigger=ROOT.TCut("1>0"), systematics=systematics)
+    cutflow_hist_sets = analysis.cutflow(cutflow_selections, samples=samples, tauid=ROOT.TCut("1>0"), trigger=ROOT.TCut("1>0"), systematics=systematics, outdir=YIELDS_ARGS.outdir)
 
     for sample in samples:
         sample_hists = filter(lambda hs: hs.sample==sample.name, cutflow_hist_sets)

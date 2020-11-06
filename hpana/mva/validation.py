@@ -228,6 +228,9 @@ def features_correlation(model,
     if train_data is None:
         train_data = model.train_df
 
+    for ft in features:
+        if ft.name == "TruthMass":
+            features.remove(ft)
     X_train = train_data[[ft.name for ft in features]]    
     
     corr_matrix = X_train.corr()
@@ -585,7 +588,7 @@ def explainNN(model,
     log.info(test.describe())
 
     # test = model.valid_df
-    explainer = lime.LimeTabularExplainer(test, feature_names=[feat.name for feat in feats], class_names=["0","1"], discretize_continuous=True)
+    explainer = lime.LimeTabularExplainer(test, feature_names=[feat.name for feat in feats], class_names=["Background","Signal"], discretize_continuous=True)
 
     i = np.random.randint(0, test.shape[0])
 

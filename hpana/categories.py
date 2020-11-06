@@ -90,8 +90,12 @@ TAU_3_TRACK = {
 }
 
 TAU_TRACKS = {
+    # "mc15": ROOT.TCut("tau_0_n_tracks==1"),
+    # "mc16": ROOT.TCut("tau_0_n_charged_tracks==1"),
+    # "mc15": ROOT.TCut("tau_0_n_tracks==3"),
+    # "mc16": ROOT.TCut("tau_0_n_charged_tracks==3"),
     "mc15": ROOT.TCut("tau_0_n_tracks==1 || tau_0_n_tracks==3"),
-    "mc16": ROOT.TCut("tau_0_n_charged_tracks==1 ||tau_0_n_charged_tracks==3"),
+    "mc16": ROOT.TCut("tau_0_n_charged_tracks==1 || tau_0_n_charged_tracks==3"),
 }
 
 TAU_PT30 = {
@@ -316,6 +320,15 @@ class Category:
 ##-------------------------------------
 # - - taujet channel 
 ##-------------------------------------
+Category_TAUJET_BASE = Category(
+    name="TAUJET_BASE",
+    label="#tau-jet base",
+    ff_index=1009,
+    cuts_list = [
+        CLEAN_EVT,
+    ],
+)
+
 Category_TAUJET_PRESEL = Category(
     name="TAUJET_PRESEL",
     label="#tau-jet presel",
@@ -404,7 +417,7 @@ Category_BVETO = Category(
 Category_TAULEP_BASE = Category(
     name="TAULEP_BASE",
     label="#tau-lep base",
-    # ff_index=2000,
+    ff_index=2020,
     cuts_list = [
         CLEAN_EVT,
     ],
@@ -586,6 +599,7 @@ CATEGORIES["taujet"] = [
     Category_BVETO,
     Category_WJETS,
     Category_TAUJET_PRESEL,
+    Category_TAUJET_BASE,
 ]
 
 CATEGORIES["taulep"] = [
@@ -694,7 +708,8 @@ CLF_TL = Category("CLF_TAULEP",
         LEP_BASE,
         OS_TAU_LEP,
         NUM_JETS1,
-        NUM_BJETS1,
+        JET_PT25,
+        NUM_BJETS1,  
         MET50,
         ])
 

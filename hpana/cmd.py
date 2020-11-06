@@ -105,7 +105,7 @@ def get_ana_parser(base_parser=None):
     ana_parser.add_argument("--dry-run", action="store_true",
                             help="if you just want to see the scripts that will be submitted to the cluster")
     
-    ana_parser.add_argument("--rs-manager", type=str,default="TORQUE", choices=["TORQUE", "SLURM", "CONDOR"],
+    ana_parser.add_argument("--rs-manager", type=str,default="CONDOR", choices=["TORQUE", "SLURM", "CONDOR"],
                             help="the resource manager on your cluster")
 
     ana_parser.add_argument("--rs-project", type=str,default="ctb-stelzer", choices=["ctb-stelzer", "def-doneil"],
@@ -191,6 +191,9 @@ def get_yields_parser(base_parser=None):
                             help="list of samples to process")
     yields_parser.add_argument("--yfile", default="yields.txt",
                             help="write yields to this file")
+
+    yields_parser.add_argument('--outdir', '-pd', default="./plots",
+                                 help='where to put the plots', )
     
     return yields_parser
 
@@ -360,7 +363,7 @@ def get_clf_parser():
     clf_parser.add_argument("--logsdir", type=str, default="logs",
                             help="where to put the log files")
     
-    clf_parser.add_argument("--rs-manager", type=str, default="SLURM", choices=["TORQUE", "SLURM", "CONDOR"],
+    clf_parser.add_argument("--rs-manager", type=str, default="CONDOR", choices=["TORQUE", "SLURM", "CONDOR"],
                             help="the resource manager on your cluster")
 
     clf_parser.add_argument("--rs-project", type=str, default="ctb-stelzer", choices=["ctb-stelzer", "def-doneil"],

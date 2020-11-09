@@ -16,50 +16,6 @@ import cPickle
 import csv
 import pandas as pd
 
-# # Keras
-# #environ['KERAS_BACKEND'] = 'theano'
-# environ['KERAS_BACKEND'] = 'tensorflow'
-# # Set architecture of system (AVX instruction set is not supported on SWAN)
-# environ['THEANO_FLAGS'] = 'gcc.cxxflags=-march=corei7'
-# from keras.models import Sequential, load_model
-# from keras.layers import Dense, Activation
-# from keras.regularizers import l2
-# from keras import initializers
-# from keras.optimizers import SGD
-# from keras.wrappers.scikit_learn import KerasClassifier
-
-if ECLF_ARGS.eval_nn == True:
-    ## - - instantiate the Keras model
-    import tensorflow as tf
-    import keras
-    from keras.models import Sequential
-    from keras.layers import Dense, Activation, BatchNormalization, Dropout, LeakyReLU
-    from keras.regularizers import l2
-    from keras import initializers
-    from keras.optimizers import SGD
-    from keras.wrappers.scikit_learn import KerasClassifier
-    from keras.models import load_model
-    log.info("Keras version: %s" %keras.__version__)
-    log.info("TensorFlow version: %s" %tf.version.VERSION)
-    from keras import backend as K
-    from keras.layers import LeakyReLU  
-    #K.tensorflow_backend._get_available_gpus()
-    from tensorflow.python.client import device_lib
-    log.info(device_lib.list_local_devices())
-    log.info("GPU Available: %s" %tf.test.is_gpu_available())
-
-# # Keras
-# #environ['KERAS_BACKEND'] = 'theano'
-# environ['KERAS_BACKEND'] = 'tensorflow'
-# # Set architecture of system (AVX instruction set is not supported on SWAN)
-# environ['THEANO_FLAGS'] = 'gcc.cxxflags=-march=corei7'
-# from keras.models import Sequential, load_model
-# from keras.layers import Dense, Activation
-# from keras.regularizers import l2
-# from keras import initializers
-# from keras.optimizers import SGD
-# from keras.wrappers.scikit_learn import KerasClassifier
-
 ## local
 from hpana.samples.fakes import QCD
 from hpana import log 
@@ -656,6 +612,23 @@ def fill_scores_mult(tree, all_models, hist_templates,
 
     if isNN == True:
         scaler = StandardScaler()
+            import tensorflow as tf
+        import keras
+        from keras.models import Sequential
+        from keras.layers import Dense, Activation, BatchNormalization, Dropout, LeakyReLU
+        from keras.regularizers import l2
+        from keras import initializers
+        from keras.optimizers import SGD
+        from keras.wrappers.scikit_learn import KerasClassifier
+        from keras.models import load_model
+        log.info("Keras version: %s" %keras.__version__)
+        log.info("TensorFlow version: %s" %tf.version.VERSION)
+        from keras import backend as K
+        from keras.layers import LeakyReLU  
+        #K.tensorflow_backend._get_available_gpus()
+        from tensorflow.python.client import device_lib
+        log.info(device_lib.list_local_devices())
+        log.info("GPU Available: %s" %tf.test.is_gpu_available())
     event_number = ROOT.TTreeFormula("event_number", "event_number", tree)
 
     clf_feats_tf = dict()

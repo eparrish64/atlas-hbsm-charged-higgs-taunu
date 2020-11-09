@@ -109,6 +109,22 @@ def calculate_scores(model,
 
     ## evaluate score 
     if isNN == True:
+        import keras
+        from keras.models import Sequential
+        from keras.layers import Dense, Activation, BatchNormalization, Dropout, LeakyReLU
+        from keras.regularizers import l2
+        from keras import initializers
+        from keras.optimizers import SGD
+        from keras.wrappers.scikit_learn import KerasClassifier
+        from keras.models import load_model
+        log.info("Keras version: %s" %keras.__version__)
+        log.info("TensorFlow version: %s" %tf.version.VERSION)
+        from keras import backend as K
+        from keras.layers import LeakyReLU  
+        #K.tensorflow_backend._get_available_gpus()
+        from tensorflow.python.client import device_lib
+        log.info(device_lib.list_local_devices())
+        log.info("GPU Available: %s" %tf.test.is_gpu_available())
         b_score = model.predict(b_test)
         s_score = model.predict(s_test)
     else:
@@ -163,6 +179,22 @@ def plot_scores(models,
 
     if isNN == True:
         scaler = StandardScaler()
+        import keras
+        from keras.models import Sequential
+        from keras.layers import Dense, Activation, BatchNormalization, Dropout, LeakyReLU
+        from keras.regularizers import l2
+        from keras import initializers
+        from keras.optimizers import SGD
+        from keras.wrappers.scikit_learn import KerasClassifier
+        from keras.models import load_model
+        log.info("Keras version: %s" %keras.__version__)
+        log.info("TensorFlow version: %s" %tf.version.VERSION)
+        from keras import backend as K
+        from keras.layers import LeakyReLU  
+        #K.tensorflow_backend._get_available_gpus()
+        from tensorflow.python.client import device_lib
+        log.info(device_lib.list_local_devices())
+        log.info("GPU Available: %s" %tf.test.is_gpu_available())
     rocs = []
     for sig in signals:
         sm_df = dframe.loc[[sig.name]]
@@ -373,6 +405,22 @@ def get_models(model_files, backend="sklearn", isNN=False):
     ## - - loop over trained models and setup weight readers 
     models = dict()
     if isNN == True:
+        import keras
+        from keras.models import Sequential
+        from keras.layers import Dense, Activation, BatchNormalization, Dropout, LeakyReLU
+        from keras.regularizers import l2
+        from keras import initializers
+        from keras.optimizers import SGD
+        from keras.wrappers.scikit_learn import KerasClassifier
+        from keras.models import load_model
+        log.info("Keras version: %s" %keras.__version__)
+        log.info("TensorFlow version: %s" %tf.version.VERSION)
+        from keras import backend as K
+        from keras.layers import LeakyReLU  
+        #K.tensorflow_backend._get_available_gpus()
+        from tensorflow.python.client import device_lib
+        log.info(device_lib.list_local_devices())
+        log.info("GPU Available: %s" %tf.test.is_gpu_available())
         Keras_models = dict()
     for model_file in model_files:
         base, wname = os.path.split(model_file)
@@ -516,6 +564,22 @@ def fill_scores_histogram(tree, models, hist_template=None, event_selection=None
     """
     if isNN == True:
         scaler = StandardScaler()
+        import keras
+        from keras.models import Sequential
+        from keras.layers import Dense, Activation, BatchNormalization, Dropout, LeakyReLU
+        from keras.regularizers import l2
+        from keras import initializers
+        from keras.optimizers import SGD
+        from keras.wrappers.scikit_learn import KerasClassifier
+        from keras.models import load_model
+        log.info("Keras version: %s" %keras.__version__)
+        log.info("TensorFlow version: %s" %tf.version.VERSION)
+        from keras import backend as K
+        from keras.layers import LeakyReLU  
+        #K.tensorflow_backend._get_available_gpus()
+        from tensorflow.python.client import device_lib
+        log.info(device_lib.list_local_devices())
+        log.info("GPU Available: %s" %tf.test.is_gpu_available())
     if log.isEnabledFor(logging.DEBUG):
         # Converting these to strings is slow, even if the logger doesn't print anything
         log.debug("---------------- models:\n %r"%models)

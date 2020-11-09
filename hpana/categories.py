@@ -94,8 +94,8 @@ TAU_TRACKS = {
     # "mc16": ROOT.TCut("tau_0_n_charged_tracks==1"),
     # "mc15": ROOT.TCut("tau_0_n_tracks==3"),
     # "mc16": ROOT.TCut("tau_0_n_charged_tracks==3"),
-    "mc15": ROOT.TCut("tau_0_n_tracks==1 || tau_0_n_tracks==3"),
-    "mc16": ROOT.TCut("tau_0_n_charged_tracks==1 || tau_0_n_charged_tracks==3"),
+    "mc15": ROOT.TCut("tau_0_n_tracks== 1 || tau_0_n_tracks==3"),
+    "mc16": ROOT.TCut("tau_0_n_charged_tracks== 1 || tau_0_n_charged_tracks==3"),
 }
 
 TAU_PT30 = {
@@ -130,7 +130,7 @@ TAU_IS_OTHER = ROOT.TCut("!(%s || %s || %s ||%s ||%s || %s)"%(
 TAU_IS_FAKE = ROOT.TCut("!(%s || %s)"%(TAU_IS_TRUE, TAU_IS_LEP))
 #ANTI_TAU = ROOT.TCut("tau_0_jet_rnn_score_trans > 0.01 && tau_0_jet_rnn_loose==0")
 #ANTI_TAU = ROOT.TCut("tau_0_jet_rnn_score_trans > 0.01 && tau_0_jet_rnn_medium==0")
-ANTI_TAU = ROOT.TCut("tau_0_jet_rnn_loose==0")
+ANTI_TAU = ROOT.TCut("tau_0_jet_rnn_score_trans > 0.01 && tau_0_jet_rnn_loose==0")
 
 
 VETO_TAU = ROOT.TCut("n_taus==0")

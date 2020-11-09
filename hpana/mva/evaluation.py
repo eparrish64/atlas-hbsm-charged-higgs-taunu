@@ -676,7 +676,7 @@ def fill_scores_mult(tree, all_models, hist_templates,
 
     if isNN == True:
         scaler = StandardScaler()
-            import tensorflow as tf
+        import tensorflow as tf
         import keras
         from keras.models import Sequential
         from keras.layers import Dense, Activation, BatchNormalization, Dropout, LeakyReLU

@@ -202,7 +202,8 @@ def dataset_hists(hist_worker,
                     tree.Delete()
         tfile.Close()
 
-    write_hists = kwargs.pop("write_hists", False)
+    # write_hists = kwargs.pop("write_hists", False)
+    write_hists = True
 
     # <! FIX ME: should give the sample name a better solution
     prefix = kwargs.pop("prefix", outname.split(".")[0])

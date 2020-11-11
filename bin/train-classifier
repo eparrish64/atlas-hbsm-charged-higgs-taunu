@@ -169,9 +169,15 @@ for signal_masses in train_masses:
     makeModelFiles = False
     for ntracks in N_TRACKS:
         if ntracks == 1:
-            feats = CLF_FEATURES[CLF_ARGS.channel]["LOW"]  + [TruthMass]
+            if CLF_ARGS.train_nn == True:
+                feats = CLF_FEATURES[CLF_ARGS.channel]["LOW"] + [TruthMass]
+            else:
+                feats = CLF_FEATURES[CLF_ARGS.channel]["LOW"]
         elif ntracks == 3:
-            feats = CLF_FEATURES[CLF_ARGS.channel]["HIGH"]  + [TruthMass]
+            if CLF_ARGS.train_nn == True:
+                feats = CLF_FEATURES[CLF_ARGS.channel]["HIGH"] + [TruthMass]
+            else:
+                feats = CLF_FEATURES[CLF_ARGS.channel]["HIGH"]
         for rem in range(CLF_ARGS.kfolds): #<@NOTE 1 obviously is all
 
             ## Check if model file exists. This should reduce runtime when model files have already been created.
@@ -220,7 +226,16 @@ for signal_masses in train_masses:
     ## training separately for 1p and 3p taus or inclusively(do not include QCD fakes for 1p training)
     if CLF_ARGS.inc_trks:
         ntracks = 13 #<! a dummy value for consistency 
-        feats = CLF_FEATURES[CLF_ARGS.channel]["HIGH"]  + [TruthMass]
+        if ntracks == 1:
+            if CLF_ARGS.train_nn == True:
+                feats = CLF_FEATURES[CLF_ARGS.channel]["LOW"] + [TruthMass]
+            else:
+                feats = CLF_FEATURES[CLF_ARGS.channel]["LOW"]
+        elif ntracks == 3:
+            if CLF_ARGS.train_nn == True:
+                feats = CLF_FEATURES[CLF_ARGS.channel]["HIGH"] + [TruthMass]
+            else:
+                feats = CLF_FEATURES[CLF_ARGS.channel]["HIGH"]
         for rem in range(CLF_ARGS.kfolds): #<@NOTE 1 obviously is all
             where = ""
             if CLF_ARGS.kfolds>1:
@@ -253,9 +268,15 @@ for signal_masses in train_masses:
     else:
         for ntracks in N_TRACKS:
             if ntracks == 1:
-                feats = CLF_FEATURES[CLF_ARGS.channel]["LOW"]  + [TruthMass]
+                if CLF_ARGS.train_nn == True:
+                    feats = CLF_FEATURES[CLF_ARGS.channel]["LOW"] + [TruthMass]
+                else:
+                    feats = CLF_FEATURES[CLF_ARGS.channel]["LOW"]
             elif ntracks == 3:
-                feats = CLF_FEATURES[CLF_ARGS.channel]["HIGH"]  + [TruthMass]
+                if CLF_ARGS.train_nn == True:
+                    feats = CLF_FEATURES[CLF_ARGS.channel]["HIGH"] + [TruthMass]
+                else:
+                    feats = CLF_FEATURES[CLF_ARGS.channel]["HIGH"]
             prong3_on_inclusive = True
 
             #feats = CLF_FEATURES[CLF_ARGS.channel]["HIGH"]  + [TruthMass]

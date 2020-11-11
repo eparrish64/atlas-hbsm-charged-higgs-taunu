@@ -902,7 +902,7 @@ bjet_0_tau_0_dr = Variable(
 ##############################################
 lep_0_pt = Variable(
     "lep_0_pt", 
-    title='#font[52]{p}_{T}(l_{1}) [GeV]',
+    title='#font[52]{p}_{T}(l_{0}) [GeV]',
     latex=r"$\ell_{p_T}$",
     tformula="mu_0_p4->Pt()+el_0_p4->Pt()",
     binning=(20, 0, 1000),

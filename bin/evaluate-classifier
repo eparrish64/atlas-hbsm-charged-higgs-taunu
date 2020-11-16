@@ -463,19 +463,21 @@ def main():
                             else:
                                 continue
 
+
+
                     # if ECLF_ARGS.bin_scheme=="UP_DOWN":
-                    #     log.info("%s, %s, %s"%(signal_masses[0],signal_masses[-1],signal_masses))
-                    #     f_sig = signal_masses[0]
-                    #     l_sig = signal_masses[-1]
+                        #     log.info("%s, %s, %s"%(signal_masses[0],signal_masses[-1],signal_masses))
+                        #     f_sig = signal_masses[0]
+                        #     l_sig = signal_masses[-1]
 
-                    #     signals = filter(lambda s:f_sig <= s.mass <= l_sig, SIGS)
-                    # else:
-                    #     signals = filter(lambda s: s.mass in signal_masses, SIGS)
+                        #     signals = filter(lambda s:f_sig <= s.mass <= l_sig, SIGS)
+                        # else:
+                        #     signals = filter(lambda s: s.mass in signal_masses, SIGS)
 
-                    # log.info("************** creating %i jobs for HTCondor submission ************" % len(sum(len(v)for v in indivmodels.values())))
-                    # log.info("**************************************************************")
+                        # log.info("************** creating %i jobs for HTCondor submission ************" % len(sum(len(v)for v in indivmodels.values())))
+                        # log.info("**************************************************************")
 
-                    # log.info(indivmodels)
+                        # log.info(indivmodels)
 
                     submit_file_name = "%s/submitAllJobs.sh" % (ECLF_ARGS.outdir)
                     submit_file = open(submit_file_name, "w")
@@ -543,8 +545,9 @@ def main():
                                                                                                 os.path.join(__HERE, "classifier-evaluator"), 
                                                                                                 os.path.join(os.getcwd(), ECLF_ARGS.outdir, thismass), 
                                                                                                 os.path.abspath(ECLF_ARGS.pickled_analysis), 
-                                                                                                ",".join([os.path.abspath(m) for m in indivmodels[thismass]]),
-                                                                                                ECLF_ARGS.eval_nn
+                                                                                                ",".join([os.path.abspath(m) for m in ECLF_ARGS.models]),
+                                                                                                # ",".join([os.path.abspath(m) for m in indivmodels[thismass]]),
+                                                                                                int(ECLF_ARGS.eval_nn)
                                                                                             )
                         )
 
@@ -603,7 +606,7 @@ def main():
                                                                                             os.path.abspath(ECLF_ARGS.pickled_analysis), 
                                                                                             #",".join([wrkDirectory+os.path.basename(m) for m in ECLF_ARGS.models])
                                                                                             ",".join([os.path.abspath(m) for m in ECLF_ARGS.models]),
-                                                                                            ECLF_ARGS.eval_nn
+                                                                                            int(ECLF_ARGS.eval_nn)
                                                                                             )
                                 )
 
@@ -615,7 +618,7 @@ def main():
                                                                                             os.path.abspath(ECLF_ARGS.pickled_analysis), 
                                                                                             #",".join([wrkDirectory+os.path.basename(m) for m in ECLF_ARGS.models])
                                                                                             ",".join([os.path.abspath(m) for m in ECLF_ARGS.models]),
-                                                                                            ECLF_ARGS.eval_nn
+                                                                                            int(ECLF_ARGS.eval_nn)
                                                                                             )
                          )
 

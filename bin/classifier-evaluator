@@ -16,15 +16,15 @@ if __name__=="__main__":
 
         print "Script args: ", sys.argv
 
-        if 'cedar' in socket.gethostname():
-            jobname = os.getenv("SLURM_JOB_NAME")
-            models = sys.argv[2]
-        elif 'niu' in socket.gethostname() or 'cern' in socket.gethostname():
-            models = sys.argv[2]
-            jobname = sys.argv[3]
-        else:
-            jobname = os.getenv("PBS_JOBNAME")
-            models = sys.argv[2]
+        # if 'cedar' in socket.gethostname():
+        #     jobname = os.getenv("SLURM_JOB_NAME")
+        #     models = sys.argv[2]
+        # elif 'niu' in socket.gethostname() or 'cern' in socket.gethostname():
+        models = sys.argv[2]
+        jobname = sys.argv[3]
+        # else:
+            # jobname = os.getenv("PBS_JOBNAME")
+            # models = sys.argv[2]
 
         ## load analysis
         with open(sys.argv[1], "rb") as pfile:
@@ -47,7 +47,9 @@ if __name__=="__main__":
         ## load trained models
         # pmodels = get_models(models.split(",")) 
         # try:
-        pmodels, Keras_pmodels = get_models(models.split(","), isNN=sys.argv[4])
+
+
+        pmodels, Keras_pmodels = get_models(models.split(","), isNN=int(sys.argv[4]))
         # except:
         #     pmodels = get_models(models.split(","), isNN=True)
         #     Keras_pmodels = None

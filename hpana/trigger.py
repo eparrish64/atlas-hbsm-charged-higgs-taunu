@@ -102,6 +102,33 @@ MULTIJET_TRIGGER = {
         },
 }
 
+# - - - - dilep trigger for taujet DILEP_BTAG  CR
+DILEP_TRIGGER = {
+    "DATA": {
+            "2015": ("((run_number <= 288000)&&"\
+                     "((HLT_e24_lhmedium_L1EM20VH || HLT_e60_lhmedium || HLT_e120_lhloose) && HLT_mu20_iloose_L1MU15))"),
+        
+            "2016": ("((run_number >= 296939 && run_number <= 311481)"\
+                     "&&((HLT_e26_lhtight_nod0_ivarloose || HLT_e60_lhmedium_nod0 || HLT_e140_lhloose_nod0) && HLT_mu26_ivarmedium))"),
+        
+            "2017": (" run_number >= 325713 && run_number <= 340453 && ((HLT_e26_lhtight_nod0_ivarloose || HLT_e140_lhloose_nod0 || HLT_e60_lhmedium_nod0) && HLT_mu26_ivarmedium)"),
+        
+            "2018": (" run_number >= 348885 && run_number <=364485 && ((HLT_e26_lhtight_nod0_ivarloose || HLT_e140_lhloose_nod0 || HLT_e60_lhmedium_nod0) && HLT_mu26_ivarmedium)")
+        },
+
+        "MC": {
+            "2015": ("((NOMINAL_pileup_random_run_number <= 288000)"\
+                     "&&((HLT_e24_lhmedium_L1EM20VH || HLT_e60_lhmedium || HLT_e120_lhloose) && HLT_mu20_iloose_L1MU15))"),
+
+            "2016": ("((NOMINAL_pileup_random_run_number >= 296939 && NOMINAL_pileup_random_run_number <= 311481)"\
+                     "&&((HLT_e26_lhtight_nod0_ivarloose || HLT_e60_lhmedium_nod0 || HLT_e140_lhloose_nod0) && HLT_mu26_ivarmedium))"),
+
+            "2017": (" NOMINAL_pileup_random_run_number >= 325713 && NOMINAL_pileup_random_run_number <= 340453 && ((HLT_e26_lhtight_nod0_ivarloose|| HLT_e140_lhloose_nod0 || HLT_e60_lhmedium_nod0) && HLT_mu26_ivarmedium)"),
+        
+            "2018": (" NOMINAL_pileup_random_run_number >= 348885 && NOMINAL_pileup_random_run_number <=364485 && ((HLT_e26_lhtight_nod0_ivarloose || HLT_e140_lhloose_nod0 || HLT_e60_lhmedium_nod0) && HLT_mu26_ivarmedium)")
+        },
+}
+
 # ------------------------------------------------------------------
 # - -  MET triggers for trigger efficiency
 # ------------------------------------------------------------------
@@ -198,3 +225,22 @@ def get_mj_trigger(streams, dtype="DATA"):
 
     trig_string = "||".join(trig_string)
     return ROOT.TCut(trig_string)
+
+# -------------------------------------------------------
+# - -
+# -------------------------------------------------------
+def get_dilep_trigger(channel, dtype="MC", data_streams=("2015", "2016")):
+    """trigger should be unique per data taking year (stream),
+    it could lso different for DATA and MC.
+    """
+    assert dtype in ("MC", "DATA"), "choose from (DATA, MC)"
+
+    # do not apply trigger for taujet
+    if channel == "taujet":
+        assert ValueError("Dilep CR is for taulep channel only")
+        trigger_string = ""
+    else:
+        trigger_string = "||".join(
+            (DILEP_TRIGGER[dtype][st] for st in data_streams))
+
+    return ROOT.TCut(trigger_string)

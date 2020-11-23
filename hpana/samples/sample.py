@@ -235,7 +235,7 @@ class Sample(object):
             categories.append(Category(name, cuts_list=cuts_list, tauid=None, mc_camp=self.config.mc_camp))
         field = kwargs.pop("field", self.config.variables[0])
 
-        hists = self.hists(categories=categories, fields=[field], **kwargs)
+        hists = self.hists(categories=categories, fields=[field], write=True **kwargs)
         return hists
     
     def workers(self, categories=[],
@@ -389,13 +389,13 @@ class Sample(object):
         log.info(
             "************** processing %s sample hists in parallel, njobs=%i ************"%(self.name, len(workers) ) )
         pool = multiprocessing.Pool(multiprocessing.cpu_count())
-        results = [pool.apply_async(dataset_hists, (wk,)) for wk in workers]
+        results = [pool.apply_async(dataset_hists, (wk,), kwds={'write':True}) for wk in workers]
         hist_set = []
         for res in results:
             hist_set += res.get(3600) #<! without the timeout this blocking call ignores all signals.
 
         # - - merge all the hists for this sample
-        merged_hist_set = self.merge_hists(hist_set=hist_set, write=False)
+        merged_hist_set = self.merge_hists(hist_set=hist_set, write=True)
 
         return merged_hist_set
     

@@ -189,7 +189,7 @@ def main():
                              logsdir=os.path.join(
                                  ANA_ARGS.outdir, ANA_ARGS.logsdir),
                              execScript=os.path.join(__HERE, "condor_jobs.sh"),
-                             memory="2GB",
+                             memory="1GB",
                          )
                          )
 
@@ -296,7 +296,13 @@ if __name__ == "__main__":
     ## draw plots 
     if ANA_ARGS.plots:
         log.info(20*"*" + "...Processing plots..."+ 20*"*")
-        hists_file = glob.glob("%s/HIST*"%ANA_ARGS.outdir)[0]        
+        if not ANA_ARGS.hists_file:
+            if len (glob.glob("%s/HIST*"%ANA_ARGS.outdir)) != 0:
+                raise NameError("There are multiple histogram files in %s. Please specify a file with --hists-file option.")
+            else:
+                hists_file = glob.glob("%s/HIST*"%ANA_ARGS.outdir)[0]    
+        else:
+            hists_file = ANA_ARGS.hists_file    
         draw_plots(hists_file, fields, categories)
 
     end_time = time.time()

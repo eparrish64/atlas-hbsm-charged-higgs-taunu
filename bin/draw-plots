@@ -47,7 +47,7 @@ analysis = Analysis(config)
 
 backgrounds = analysis.backgrounds
 # signals = analysis.get_signals(masses=[80, 160, 400, 2000])
-signals = analysis.get_signals(masses=[80,160])
+signals = analysis.get_signals(masses=[80,160,400,2000])
 data = analysis.data
 
 # print 

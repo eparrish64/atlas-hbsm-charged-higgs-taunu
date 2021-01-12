@@ -1983,7 +1983,8 @@ BDT_SCORES = {
 ##-----------------------------------------------------------------
 # - - - - - - - - variables for rQCD calculation
 ##-----------------------------------------------------------------
-rQCD_VARS = {"1": tau_0_jet_width, "3": tau_0_jet_rnn_score_trans}
+#rQCD_VARS = {"1": tau_0_jet_width, "3": tau_0_jet_rnn_score_trans}
+rQCD_VARS = {"1": tau_0_jet_width, "3": tau_0_jet_width}
 
 # - - - - - - - - variables for extracting FFs shapes 
 FFS_TEMPLATE_VARS = (tau_0_pt, tau_0_n_charged_tracks, tau_0_jet_rnn_score_trans)

@@ -723,13 +723,20 @@ CLASSIFIER_CATEGORIES = {
 ##------------------------------------------------------------------------------------
 ## - - MET trigger efficency control regions 
 ##------------------------------------------------------------------------------------
+
 MET_TRIGG_EFF_CUTS_BASE = [
     ROOT.TCut("n_taus==1"),
     TAU_EL_OLR_PASS,
+    # default (electrons)
     ROOT.TCut("n_electrons==1&&n_muons==0"),
     ROOT.TCut("tau_0_q*el_0_q==-1"),
     ROOT.TCut("el_0_p4->Pt() > 26"),
     ROOT.TCut( "el_0_trig_trigger_matched==1"),
+    ROOT.TCut("el_0_id_loose==1"),
+    # optional (electrons OR muons)
+    #    ROOT.TCut("n_electrons+n_muons==1"),
+    #    ROOT.TCut("(n_electrons==1 && el_0_p4->Pt() > 26 && el_0_id_loose && el_0_trig_trigger_matched==1 && tau_0_q*el_0_q==-1)"\
+    #              "|| (n_muons==1 && mu_0_p4->Pt() > 30 && mu_0_id_loose && mu_0_trig_trigger_matched==1 && tau_0_q*mu_0_q==-1)"),
     
     ROOT.TCut("n_jets>1 && n_bjets_DL1r_FixedCutBEff_70>1"),
     ROOT.TCut("jet_0_p4->Pt() > 25 && jet_1_p4->Pt() > 25"),
@@ -746,7 +753,7 @@ MET_TRIG_EFF_CR_NOM = Category(
     ff_index=2011,
     tauid=TAUID_LOOSE,
     # truth_tau=None,
-    cuts_list=MET_TRIGG_EFF_CUTS_BASE + [ROOT.TCut("el_0_id_loose==1")],
+    cuts_list=MET_TRIGG_EFF_CUTS_BASE,
 )
 
 MET_TRIG_EFF_CR_TAUID_MED = Category(
@@ -755,7 +762,7 @@ MET_TRIG_EFF_CR_TAUID_MED = Category(
     ff_index=2011,
     tauid=TAUID_MEDIUM,
     # truth_tau=None,
-    cuts_list=MET_TRIGG_EFF_CUTS_BASE + [ROOT.TCut("el_0_id_loose==1")],
+    cuts_list=MET_TRIGG_EFF_CUTS_BASE,
 )
 
 MET_TRIG_EFF_CR_TAUID_TIGHT = Category(
@@ -764,7 +771,7 @@ MET_TRIG_EFF_CR_TAUID_TIGHT = Category(
     ff_index=2011,
     tauid=TAUID_TIGHT,
     # truth_tau=None,
-    cuts_list=MET_TRIGG_EFF_CUTS_BASE + [ROOT.TCut("el_0_id_loose==1")],
+    cuts_list=MET_TRIGG_EFF_CUTS_BASE,
 )
 
 MET_TRIG_EFF_CR_ELID_MED = Category(
@@ -773,7 +780,7 @@ MET_TRIG_EFF_CR_ELID_MED = Category(
     ff_index=2011,
     tauid=TAUID_LOOSE,
     # truth_tau=None,
-    cuts_list=MET_TRIGG_EFF_CUTS_BASE + [ROOT.TCut("el_0_id_medium==1")],
+    cuts_list=MET_TRIGG_EFF_CUTS_BASE + [ROOT.TCut("n_electrons==0 || el_0_id_medium==1")],
 )
 
 MET_TRIG_EFF_CR_ELID_TIGHT = Category(
@@ -782,7 +789,7 @@ MET_TRIG_EFF_CR_ELID_TIGHT = Category(
     ff_index=2011,
     tauid=TAUID_LOOSE,
     # truth_tau=None,
-    cuts_list=MET_TRIGG_EFF_CUTS_BASE + [ROOT.TCut("el_0_id_tight==1")],
+    cuts_list=MET_TRIGG_EFF_CUTS_BASE + [ROOT.TCut("n_electrons==0 || el_0_id_tight==1")],
 )
 
 MET_TRIG_EFF_CR_NJETS3 = Category(
@@ -791,7 +798,25 @@ MET_TRIG_EFF_CR_NJETS3 = Category(
     ff_index=2011,
     tauid=TAUID_LOOSE,
     # truth_tau=None,
-    cuts_list=MET_TRIGG_EFF_CUTS_BASE + [ROOT.TCut("el_0_id_loose==1"), ROOT.TCut("n_jets > 2")],
+    cuts_list=MET_TRIGG_EFF_CUTS_BASE + [ROOT.TCut("n_jets > 2")],
+)
+
+MET_TRIG_EFF_CR_MUID_MED = Category(
+    "MET_TRIG_EFF_CR_MUID_MED",
+    label="E^{T}_{miss} trig eff CR (MED mu)",
+    ff_index=2011,
+    tauid=TAUID_LOOSE,
+    # truth_tau=None,
+    cuts_list=MET_TRIGG_EFF_CUTS_BASE + [ROOT.TCut("n_muons==0 || mu_0_id_medium==1")],
+)
+
+MET_TRIG_EFF_CR_MUID_TIGHT = Category(
+    "MET_TRIG_EFF_CR_MUID_TIGHT",
+    label="E^{T}_{miss} trig eff CR (TIGHT mu)",
+    ff_index=2011,
+    tauid=TAUID_LOOSE,
+    # truth_tau=None,
+    cuts_list=MET_TRIGG_EFF_CUTS_BASE + [ROOT.TCut("n_muons==0 || mu_0_id_tight==1")],
 )
 
 ## - - - -  PLEASE KEEP THE ORDER (it will be used to assign an index for each region in cxx macros)
@@ -801,7 +826,9 @@ MET_TRIG_EFF_CRs = [
     MET_TRIG_EFF_CR_TAUID_TIGHT,
     MET_TRIG_EFF_CR_ELID_MED,
     MET_TRIG_EFF_CR_ELID_TIGHT,
-    MET_TRIG_EFF_CR_NJETS3
+    MET_TRIG_EFF_CR_NJETS3,
+    #    MET_TRIG_EFF_CR_MUID_MED,
+    #    MET_TRIG_EFF_CR_MUID_TIGHT
 ]
 
 

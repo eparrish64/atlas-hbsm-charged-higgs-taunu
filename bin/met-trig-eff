@@ -50,19 +50,19 @@ ROOT.Math.MinimizerOptions.SetDefaultMinimizer("Minuit2")
 ##------------------------------------------------------------------------------------
 ERR_FUNC_STR = "{0}*(1 + TMath::Erf((met_et - {1})/{2}))+{3}" #<! @NOTE KEEP x FOR DIRECT PLOTTING ROOT CAN"T HANDLE ANYTHING ELSE
 MET_ET.bins = range(0, 130, 20) + [150, 180, 250, 500]
-COLORS = [ROOT.kRed, ROOT.kBlue, ROOT.kGreen, ROOT.kMagenta, ROOT.kOrange, ROOT.kYellow]
+COLORS = [ROOT.kRed, ROOT.kBlue, ROOT.kGreen, ROOT.kMagenta, ROOT.kOrange, ROOT.kYellow, ROOT.kCyan, ROOT.kCyan+1]
 
 ## - - update lumi blocks
 config = Configuration("taulep", data_streams=TRIG_EFF_ARGS.data_streams, mc_campaign="mc16", db_version=TRIG_EFF_ARGS.db_version)
 analysis = Analysis(config)
-for y, trig in MET_TRIGGERS.iteritems():
+for y, trig in MET_TRIGGERS["DATA"].iteritems():
     for k in trig.keys():
-        runs = MET_TRIGGERS[y][k]["RUNS"]
-        dlumi = MET_TRIGGERS[y][k]["LUMI"]
+        runs = MET_TRIGGERS["DATA"][y][k]["RUNS"]
+        dlumi = MET_TRIGGERS["DATA"][y][k]["LUMI"]
         tlumi = analysis.data.get_lumi_block(*runs)/1000
         if tlumi != dlumi:
             log.warning("updating lumi block ({0}, {1}); default: {2} | calculated: {3}".format(runs[0], runs[1], dlumi, tlumi))
-            MET_TRIGGERS[y][k]["LUMI"] = tlumi
+            MET_TRIGGERS["DATA"][y][k]["LUMI"] = tlumi
 
 ##------------------------------------------------------------------------------------
 ## - - build the taulep analysis (run only on relevant streams) 
@@ -96,7 +96,7 @@ def get_trig_hists(triggers=MET_TRIGGERS,
                         
     if update_cache:
         workers = []
-        for year, trig_dict in triggers.iteritems():
+        for year, trig_dict in triggers["DATA"].iteritems():
             if not year in data_streams:
                 continue
             config = Configuration("taulep", data_streams=(year,), mc_campaign="mc16", db_version=db_version)
@@ -141,7 +141,7 @@ def get_trig_hists(triggers=MET_TRIGGERS,
             for w in workers:
                 hists += dataset_hists(w)
         ## - - now get the selection+trig/selection histogram
-        for year, trig_dict in triggers.iteritems():
+        for year, trig_dict in triggers["DATA"].iteritems():
             if not year in data_streams:
                 continue
             yhists = filter(lambda hs: year in hs.name, hists)
@@ -173,7 +173,7 @@ def get_trig_hists(triggers=MET_TRIGGERS,
         if os.path.isfile(hists_cache):
             os.system("rm %s"%hists_cache)
         if not hists_cache:
-            hist_cache = "met_trig_HISTS.pkl"
+            hists_cache = "met_trig_HISTS.pkl"
         with open(hists_cache, "w") as hfile:
             pickle.dump(ratio_hists, hfile)
             
@@ -193,7 +193,7 @@ def fit_eff(eff_hists,
     total_lumi = 0
     for y, trgs in eff_hists.iteritems():
         for trg in trgs:
-            total_lumi += MET_TRIGGERS[y][trg]["LUMI"]
+            total_lumi += MET_TRIGGERS["DATA"][y][trg]["LUMI"]
             
     ## - - do the fit per trigger per variation
     fit_params  = {}
@@ -203,7 +203,7 @@ def fit_eff(eff_hists,
         fit_funcs[year] = {}
         fit_params[year] = {}
         for trigger, variations in triggers.iteritems():
-            lumi = MET_TRIGGERS[year][trigger]["LUMI"]
+            lumi = MET_TRIGGERS["DATA"][year][trigger]["LUMI"]
             fit_funcs[year][trigger] = {}
             fit_params[year][trigger] = {}
             for variation, hist in variations.iteritems():
@@ -214,6 +214,9 @@ def fit_eff(eff_hists,
                 ## - - initialize the function with some reasonable parameters 
                 err_function = ROOT.TF1("erf", "[0]*(1 + TMath::Erf((x-[1])/[2]))+[3]", 0, 500)
                 err_function.SetParameters(0.5, 100, 50, 0)
+                ### err_function.SetParLimits(3,0.0,0.05)
+                # err_function.FixParameter(0,0.5)
+                # err_function.FixParameter(3,0.0)      
                 
                 ## - - fit and retrieve the function 
                 hist.Fit(err_function, "WW") #<! ignore error bars
@@ -233,15 +236,15 @@ def fit_eff(eff_hists,
                 cfile.write("\t if(variation_index==%i){\n"%(index+n))
                 ## efficiency per year    
                 for year in years:
-                    y_triggers = MET_TRIGGERS[year].keys()
-                    year_lumi = sum([MET_TRIGGERS[year][tr]["LUMI"] for tr in y_triggers])
-                    rl = min([MET_TRIGGERS[year][tr]["RUNS"][0] for tr in y_triggers])
-                    rh = max([MET_TRIGGERS[year][tr]["RUNS"][1] for tr in y_triggers])
+                    y_triggers = MET_TRIGGERS["DATA"][year].keys()
+                    year_lumi = sum([MET_TRIGGERS["DATA"][year][tr]["LUMI"] for tr in y_triggers])
+                    rl = min([MET_TRIGGERS["DATA"][year][tr]["RUNS"][0] for tr in y_triggers])
+                    rh = max([MET_TRIGGERS["DATA"][year][tr]["RUNS"][1] for tr in y_triggers])
 
                     ## weight periods
                     y_eff = [] 
                     for y_trig in y_triggers:
-                        p_lumi = MET_TRIGGERS[year][y_trig]["LUMI"]
+                        p_lumi = MET_TRIGGERS["DATA"][year][y_trig]["LUMI"]
                         y_eff += ["%0.4f * (%s)"%(p_lumi/year_lumi, fit_params[year][y_trig][variation.name])]
 
                     cfile.write("\t\t // year: %s \n"%year)
@@ -262,8 +265,8 @@ def fit_eff(eff_hists,
                 ## efficiency per year    
                 tot_eff = []
                 for year in years:
-                    for trigger in MET_TRIGGERS[year].keys():
-                        lumi = MET_TRIGGERS[year][trigger]["LUMI"]
+                    for trigger in MET_TRIGGERS["DATA"][year].keys():
+                        lumi = MET_TRIGGERS["DATA"][year][trigger]["LUMI"]
                         tot_eff += ["%0.4f * (%s)"%(lumi/total_lumi, fit_params[year][trigger][variation.name])]
                 cfile.write("\t\t return %s;"%("+".join(tot_eff)))
                 cfile.write("\n\t }\n\n")
@@ -284,7 +287,7 @@ def draw_fits(fit_funcs, fit_params,
         triggers = fits.keys()
         variations = filter(lambda var: var.name in fit_funcs[year][triggers[0]].keys(), MET_TRIG_EFF_CRs)
         for trigger in triggers:
-            lumi = MET_TRIGGERS[year][trigger]["LUMI"]
+            lumi = MET_TRIGGERS["DATA"][year][trigger]["LUMI"]
             legend = ROOT.TLegend(0.5, 0.2, 0.9, 0.45)
             legend.SetNColumns(2)
             lables = label_plot(canvas, category=trigger, data_info="#int L dt = %0.2f fb^{-1} (%s)"%(lumi, year), textsize=18)    
@@ -335,9 +338,9 @@ def draw_fits(fit_funcs, fit_params,
         # canvas = ROOT.TCanvas("cnew", "cnew", 800, 700)
 
         total_lumi = 0
-        for y, trgs in MET_TRIGGERS.iteritems():
+        for y, trgs in MET_TRIGGERS["DATA"].iteritems():
             for trg in trgs:
-                total_lumi += MET_TRIGGERS[y][trg]["LUMI"]
+                total_lumi += MET_TRIGGERS["DATA"][y][trg]["LUMI"]
             
         for variation in MET_TRIG_EFF_CRs:
             legend = ROOT.TLegend(0.6, 0.2, 0.9, 0.4)
@@ -345,13 +348,13 @@ def draw_fits(fit_funcs, fit_params,
 
             ## efficiency per year
             y_fits = []   
-            years =  MET_TRIGGERS.keys()
+            years =  MET_TRIGGERS["DATA"].keys()
             for year in years:
                 y_params = []
-                triggers = MET_TRIGGERS[year].keys()
-                year_lumi = sum([MET_TRIGGERS[year][tr]["LUMI"] for tr in triggers])
+                triggers = MET_TRIGGERS["DATA"][year].keys()
+                year_lumi = sum([MET_TRIGGERS["DATA"][year][tr]["LUMI"] for tr in triggers])
                 for trigger in triggers:
-                    lumi = MET_TRIGGERS[year][trigger]["LUMI"]
+                    lumi = MET_TRIGGERS["DATA"][year][trigger]["LUMI"]
                     y_params += ["%0.4f * (%s)"%(lumi/year_lumi, fit_params[year][trigger][variation.name].replace("met_et", "x"))]
 
                 ## @NOTE have to keep them in the scope for plotting 

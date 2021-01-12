@@ -1,0 +1,750 @@
+#! /usr/bin/env python
+
+"""
+* This script provides functionalities for evaluating MET trigger efficiency. 
+* The Emiss trigger is not well described in simulation. The strategy for the treatment of the Emiss trigger in
+* simulation is to derive the trigger efficiency from data in bins of offline Emiss. The binned Emiss-dependent
+* efficiency is transformed into a continuous efficiency by fitting it to the error function. This is done to
+* remove bias caused by the binning. Simulated events are weighted using the efficiency curve, based on
+* the offline Emiss in the event.
+* EFF =  (event selections + given trigger)/(event selections)
+"""
+
+## stdlib
+import os, sys, time, array, pickle, yaml 
+import multiprocessing
+
+## parse args (needed before ROOT)
+from hpana.cmd import get_trig_eff_parser
+eff_parser = get_trig_eff_parser()
+TRIG_EFF_ARGS = eff_parser.parse_args()
+
+
+## local
+from hpana.config import Configuration
+from hpana.analysis import Analysis
+from hpana.categories import MET_TRIG_EFF_CRs
+from hpana.variables import met_et as MET_ET
+from hpana.trigger import MET_TRIGGERS
+from hpana.dataset_hists import dataset_hists
+from hpana.cluster.parallel import close_pool
+from hpana.plotting.plot import label_plot
+from hpana import log
+
+
+## set log level
+log.setLevel(TRIG_EFF_ARGS.log)
+
+## Speed things up a bit
+import ROOT
+ROOT.SetSignalPolicy(ROOT.kSignalFast)
+ROOT.gROOT.SetBatch(True)
+ROOT.gROOT.SetStyle("ATLAS")
+log.debug("ROOT is in batch mode")
+ROOT.gErrorIgnoreLevel = ROOT.kWarning #<! turn off useless ROOT Info messages
+ROOT.Math.MinimizerOptions.SetDefaultMinimizer("Minuit2")
+
+
+##------------------------------------------------------------------------------------
+## - - consts
+##------------------------------------------------------------------------------------
+ERR_FUNC_STR = "{0}*(1 + TMath::Erf((met_et - {1})/{2}))+{3}" #<! @NOTE KEEP x FOR DIRECT PLOTTING ROOT CAN"T HANDLE ANYTHING ELSE
+MET_ET.bins = range(0, 130, 20) + [150, 180, 250, 500]
+COLORS = [ROOT.kRed, ROOT.kBlue, ROOT.kGreen, ROOT.kMagenta, ROOT.kOrange, ROOT.kYellow, ROOT.kCyan, ROOT.kCyan+1]
+
+## - - update lumi blocks
+config = Configuration("taulep", data_streams=TRIG_EFF_ARGS.data_streams, mc_campaign="mc16", db_version=TRIG_EFF_ARGS.db_version)
+analysis = Analysis(config)
+for y, trig in MET_TRIGGERS["DATA"].iteritems():
+    for k in trig.keys():
+        runs = MET_TRIGGERS["DATA"][y][k]["RUNS"]
+        dlumi = MET_TRIGGERS["DATA"][y][k]["LUMI"]
+	tlumi = analysis.data.get_lumi_block(*runs)/1000
+	if tlumi != dlumi:
+             log.warning("updating lumi block ({0}, {1}); default: {2} | calculated: {3}".format(runs[0], runs[1], dlumi, tlumi))
+	     MET_TRIGGERS["DATA"][y][k]["LUMI"] = tlumi
+
+#ak
+systematics = config.systematics[:1] #<! NOMINAL
+
+##------------------------------------------------------------------------------------
+## - - build the taulep analysis (run only on relevant streams) 
+##------------------------------------------------------------------------------------
+def get_trig_hists(triggers=MET_TRIGGERS,
+                   categories=MET_TRIG_EFF_CRs,
+                   db_version=TRIG_EFF_ARGS.db_version,
+                   data_streams=TRIG_EFF_ARGS.data_streams,
+                   hists_cache=TRIG_EFF_ARGS.hists_cache,
+                   parallel=TRIG_EFF_ARGS.parallel,
+                   dry_run=TRIG_EFF_ARGS.dry_run,
+                   ncpu=TRIG_EFF_ARGS.ncpu):
+    """
+    Given a dictionary of triggers, produce histograms with and without trigger and save their ratio.
+    """
+
+    useMC = False
+    useFF = False
+    update_cache = True
+    ratio_hists = {}
+    hists = []
+    if hists_cache and os.path.isfile(hists_cache):
+        log.info("loading hists from %s"%hists_cache)
+        update_cache = False
+        with open(hists_cache, "r") as cfile:
+            ratio_hists = pickle.load(cfile)
+            if (not isinstance(ratio_hists, dict) or not ratio_hists):
+                update_cache = True
+                log.info("can't load hists from %s!; calculating them on the fly"%hists_cache)
+            else:    
+                for i, ds in enumerate(data_streams):
+                    if not ds in ratio_hists:
+                        update_cache = True
+                        
+    if update_cache:
+        workers = []
+        samples = []
+        for dstream, years in triggers.iteritems():
+            log.info("===> dstream %s "%dstream)
+            # samples = []
+            for year, trig_dict in years.iteritems():
+                log.info("===>     year %s "%year)
+                if not year in data_streams:
+                   continue
+                if dstream == "MC" and (year=="2015" or year=="2016"):
+                    config = Configuration("taulep", data_streams=("2015", "2016"), mc_campaign="mc16", db_version=db_version)
+                else:
+                    config = Configuration("taulep", data_streams=(year,), mc_campaign="mc16", db_version=db_version)
+                analysis = Analysis(config, compile_cxx=True)
+                if dstream == "DATA":
+                       log.info("===> attaching sample DATA: %s for year %s"%(analysis.data.name,year))
+                       samples.append(analysis.data)
+                       # try processing fake taus:  (the following two lines are commented out by default)
+                       #samples.append(analysis.qcd)
+                       #useFF = True
+	        if dstream == "MC":
+                   for smpl in analysis.mc:
+                        log.info("===> attaching sample MC: %s for year %s"%(smpl.name,year))
+                        # if smpl.name == "TTbar":
+                        samples.append(smpl)
+                        useMC = True
+                   ###    samples = [analysis.ttbar]
+                   ###    samples = [analysis.wtaunu]
+                   ###    samples = [analysis.wlnu]
+
+                # log.info("===> analysing %i samples: %s "%(len(samples),[sm.name for sm in samples]))
+
+                """
+                ## since we want to vary the tauid (already included in MET_TRIG_EFF_CRs),
+                ## we pass global tauid=ROOT.TCut("1>0").
+                """
+
+                for trigger, info in trig_dict.iteritems():
+                        log.info("======> Analysing trigger %s "%trigger)
+                        for smpl in samples:
+                            log.info("...for sample  %s "%smpl.name)
+                            in_smpl = [smpl]
+                            workers_with_trigger = analysis.workers(
+                                channel="taulep", fields=[MET_ET], categories=categories, samples=in_smpl,systematics=systematics,
+                                trigger=info["TRIGGER"], tauid=ROOT.TCut(""),) #ak
+                            log.info("Adding %i workers with trigger..."%len(workers_with_trigger))
+
+                            for wt in workers_with_trigger:
+                                wt.name = "%s.%s.%s.%s"%(wt.name, smpl.name, year, trigger)
+                                workers.append(wt)
+                    
+                            workers_without_trigger = analysis.workers(
+                                channel="taulep", fields=[MET_ET], categories=categories, samples=in_smpl,systematics=systematics,
+                                trigger=info["NO_TRIGGER"], tauid=ROOT.TCut("")) #ak
+                            log.info("Adding %i workers without trigger..."%len(workers_without_trigger))
+
+                            for wto in workers_without_trigger:
+                               wto.name = "%s.%s.%s.%s.NO_TRIGGER"%(wto.name, smpl.name, year, trigger)
+                               workers.append(wto)
+        
+
+        log.info("===> analysing %i samples: %s "%(len(samples),[sm.name for sm in samples]))
+
+        if dry_run:
+            log.info(workers)
+            return 
+        if parallel:
+            log.info(
+                "************** submitting %i jobs  ************"%len(workers))
+            log.info(
+                "***********************************************")
+
+            pool = multiprocessing.Pool(ncpu)
+            results = [pool.apply_async(dataset_hists, (wk,)) for wk in workers]
+            # - - close the pool
+            close_pool(pool)
+            for res in results:
+                hists += res.get(36000) #<! without the timeout this blocking call ignores all signals.
+        else:
+            for w in workers:
+                hists += dataset_hists(w)
+        ## - - now get the selection+trig/selection histogram
+        mccount = 0
+        if useFF:
+               ratio_hists["DataTruth"] = {}
+        if useMC:
+               ratio_hists["MonteCarlo"] = {}
+               mccount = 2
+        for smpl in samples:
+        ##     log.info("Get histograms for  %s "%smpl.name)
+          shists = filter(lambda hs: smpl.name in hs.name, hists)
+          if len(shists) < 1:
+             continue
+          log.info("Sample %s size: %i"%(smpl.name, len(shists)))
+          ratio_hists[smpl.name] = {}
+          log.info("Get histograms for  %s "%smpl.name)
+          #   if smpl.name == "Data":
+          if smpl.name == "Data" or smpl.name == "QCD":
+              smpl_type = 'DATA'
+          else:
+              smpl_type = 'MC'
+              mccount -= 1
+          #  if smpl.name == "QCD":
+          #     ratio_hists["DataTruth"] = {}
+          for year, trig_dict in triggers[smpl_type].iteritems():
+            if not year in data_streams:
+                continue
+            yhists = filter(lambda hs: year in hs.name, shists)
+            ratio_hists[smpl.name][year] = {}
+            if mccount>0:   
+                ratio_hists["MonteCarlo"][year] = {}
+            if smpl.name == "QCD":
+               ratio_hists["DataTruth"][year] = {}
+            for trigger in trig_dict.keys():
+                ratio_hists[smpl.name][year][trigger] = {}
+                if mccount>0:
+                    ratio_hists["MonteCarlo"][year][trigger] = {}
+                if smpl.name == "QCD":
+                    ratio_hists["DataTruth"][year][trigger] = {}
+                for category in categories:
+                    ratio_hists[smpl.name][year][trigger][category.name] = {}
+                    if mccount>0:
+                        ratio_hists["MonteCarlo"][year][trigger][category.name] = {}
+                    if smpl.name == "QCD":
+                        ratio_hists["DataTruth"][year][trigger][category.name] = {}
+                    hs_cat = filter(lambda hs: hs.category==category.name, yhists)
+                    log.info("Year %s size: %i"%(year, len(yhists)))
+                    log.info("Category %s size: %i"%(category.name, len(hs_cat)))
+                    hset_trig = filter(lambda hs: hs.name.endswith(trigger), hs_cat)
+                    hset_no_trig = filter(lambda hs: hs.name.endswith("%s.NO_TRIGGER"%trigger), hs_cat)
+                    log.info("Requested trigger: %s"%trigger)
+                    #  for hs in hs_cat:
+                    #      log.info("hs.name: %s"%hs.name)
+
+                    hist_trig = reduce(lambda h1, h2: h1+h2, [hs.hist for hs in hset_trig])
+                    hist_no_trig = reduce(lambda h1, h2: h1+h2, [hs.hist for hs in hset_no_trig])
+                    
+                    log.info("***** year: %s; category: %s; trigger: %s *****"%(year, category.name, trigger))
+                    log.info("***** category+trigger: %i; category: %i *****"%(
+                        hist_trig.Integral(0, -1), hist_no_trig.Integral(0, -1)))
+                    
+                    assert (hist_trig and hist_no_trig), "couldn't retrieve hists for %s"%category.name
+
+                    ## The error per bin will be computed as sqrt(sum of squares of weight) for each bin.
+                    hist_trig.Sumw2()
+                    hist_no_trig.Sumw2()
+                    hist_trig_copy = hist_trig.Clone()
+                    hist_trig_copy.Sumw2()
+                    ratio_hists[smpl.name][year][trigger][category.name]["NO_TRIG"] = hist_no_trig
+                    ratio_hists[smpl.name][year][trigger][category.name]["TRIG"] = hist_trig_copy
+                    hist_trig.Divide(hist_no_trig)
+                    ratio_hists[smpl.name][year][trigger][category.name]["RATIO"] = hist_trig
+                    
+        if useFF:
+            for smpl in samples:
+                #    if smpl.name == "Data":
+                if smpl.name == "QCD":
+                   smpl_type = 'DATA'
+                   for year, trig_dict in triggers[smpl_type].iteritems():
+                       if not year in data_streams:
+                           continue
+                       for trigger in trig_dict.keys():
+                           for category in categories:
+                               ratio_hists["DataTruth"][year][trigger][category.name]["TRIG"] = ratio_hists["Data"][year][trigger][category.name]["TRIG"].Clone()
+                               ratio_hists["DataTruth"][year][trigger][category.name]["NO_TRIG"] = ratio_hists["Data"][year][trigger][category.name]["NO_TRIG"].Clone()
+                               ratio_hists["DataTruth"][year][trigger][category.name]["TRIG"].Add(ratio_hists["QCD"][year][trigger][category.name]["TRIG"],-1.0)
+                               ratio_hists["DataTruth"][year][trigger][category.name]["NO_TRIG"].Add(ratio_hists["QCD"][year][trigger][category.name]["NO_TRIG"],-1.0)
+                               hist_trig_copy = ratio_hists["DataTruth"][year][trigger][category.name]["TRIG"].Clone()
+                               hist_trig_copy.Divide(ratio_hists["DataTruth"][year][trigger][category.name]["NO_TRIG"])
+                               ratio_hists["DataTruth"][year][trigger][category.name]["RATIO"] = hist_trig_copy
+
+        if useMC:
+            mccount2 = 0
+            for smpl in samples:
+                #    if smpl.name == "Data":
+                if smpl.name == "Data" or smpl.name == "QCD":
+                   smpl_type = 'DATA'
+                else:
+                   smpl_type = 'MC'
+                   mccount += 1
+                   mccount2 += 1
+                   for year, trig_dict in triggers[smpl_type].iteritems():
+                       if not year in data_streams:
+                           continue
+                       for trigger in trig_dict.keys():
+                           for category in categories:
+                               if mccount2 == 1:
+                                   ratio_hists["MonteCarlo"][year][trigger][category.name]["TRIG"] = ratio_hists[smpl.name][year][trigger][category.name]["TRIG"].Clone()
+                                   ratio_hists["MonteCarlo"][year][trigger][category.name]["NO_TRIG"] = ratio_hists[smpl.name][year][trigger][category.name]["NO_TRIG"].Clone()
+                               else:
+                                   ratio_hists["MonteCarlo"][year][trigger][category.name]["TRIG"].Add(ratio_hists[smpl.name][year][trigger][category.name]["TRIG"])
+                                   ratio_hists["MonteCarlo"][year][trigger][category.name]["NO_TRIG"].Add(ratio_hists[smpl.name][year][trigger][category.name]["NO_TRIG"])
+                               if mccount==2:
+                                   hist_trig_copy = ratio_hists["MonteCarlo"][year][trigger][category.name]["TRIG"].Clone()
+                                   hist_trig_copy.Divide(ratio_hists["MonteCarlo"][year][trigger][category.name]["NO_TRIG"])
+                                   ratio_hists["MonteCarlo"][year][trigger][category.name]["RATIO"] = hist_trig_copy
+
+        ## cache them
+        log.info("updating met trig eff hists cache")
+        if os.path.isfile(hists_cache):
+            os.system("rm %s"%hists_cache)
+        if not hists_cache:
+            hists_cache = "met_trig_HISTS.pkl"
+        with open(hists_cache, "w") as hfile:
+            pickle.dump(ratio_hists, hfile)
+            
+    return ratio_hists
+
+##------------------------------------------------------------------------------------
+## - - fit error function to the histograms
+##------------------------------------------------------------------------------------
+def fit_eff(eff_hists,
+            fit_cache=TRIG_EFF_ARGS.fit_cache,
+            num_params=4):
+    """
+
+    """
+    
+    ## - - first let's get the total lumi 
+    total_lumi = 0
+    #for y, trgs in eff_hists.iteritems():
+    #    for trg in trgs:
+    #        total_lumi += MET_TRIGGERS["DATA"][y][trg]["LUMI"]
+            
+    ## - - do the fit per trigger per variation
+    fit_params  = {}
+    fit_funcs = {}
+
+    samples = sorted(eff_hists.keys())
+    for smpl_name, years in eff_hists.iteritems():
+      if smpl_name == "Data" or smpl_name == "DataTruth" or smpl_name == "QCD":
+          smpl_type = 'DATA'
+      else:
+          smpl_type = 'MC'
+      ## for the moment fit only data, data truth and combined MC
+      if not (smpl_name == "MonteCarlo" or smpl_name == "Data" or smpl_name == "DataTruth"):
+          continue
+      fit_funcs[smpl_name] = {}
+      fit_params[smpl_name] = {}
+      for y, trgs in years.iteritems():
+          for trg in trgs:
+              total_lumi += MET_TRIGGERS[smpl_type][y][trg]["LUMI"]
+
+      for year, triggers in years.iteritems():
+        fit_funcs[smpl_name][year] = {}
+        fit_params[smpl_name][year] = {}
+        for trigger, variations in triggers.iteritems():
+            lumi = MET_TRIGGERS[smpl_type][year][trigger]["LUMI"]
+            fit_funcs[smpl_name][year][trigger] = {}
+            fit_params[smpl_name][year][trigger] = {}
+            for variation, hist_cat in variations.iteritems():
+                if not variation in fit_params:
+                    fit_params[smpl_name][year][trigger][variation] = ""
+                log.info("performing error function fit for %s sample %s year %s trigger & %s region"%(smpl_name, year, trigger, variation))
+
+                ## - - initialize the function with some reasonable parameters 
+                err_function = ROOT.TF1("erf", "[0]*(1 + TMath::Erf((x-[1])/[2]))+[3]", 0, 500)
+                err_function.SetParameters(0.5, 100, 50, 0.0)
+                ### err_function.SetParLimits(3,0.0,0.05)
+                err_function.FixParameter(0,0.5)
+                err_function.FixParameter(3,0.0)      
+
+
+                ## - - fit and retrieve the function 
+                hist = hist_cat["RATIO"]
+                hist.Fit(err_function, "WW") #<! ignore error bars
+                fit_func = hist.GetFunction("erf")
+                params = [fit_func.GetParameter(n) for n in range(num_params)]
+                fit_params[smpl_name][year][trigger][variation] = "(%s)"%ERR_FUNC_STR.format(*params)
+                fit_funcs[smpl_name][year][trigger][variation] = (hist, fit_func)
+
+            if fit_cache:
+               #efficiency per trigger/year:
+               with open(smpl_name+"_"+year+"_"+trigger+"_"+fit_cache, "w") as cfile:
+                    index = 1000
+                    istring = "double "+smpl_name+"_metTrigEff(double *x, double *par){\n"
+                    cfile.write(istring)
+                    cfile.write("\t double met_et = x[0];\n")
+                    cfile.write("\t int variation_index = 1000;\n")
+                    for n, variation in enumerate(MET_TRIG_EFF_CRs):
+                        cfile.write("\t //! variation: %s\n"%variation.name)
+                        cfile.write("\t if(variation_index==%i){\n"%(index+n))
+                        ## efficiency per year/trigger
+                        y_string = "%0.4f * (%s)"%(1.0, fit_params[smpl_name][year][trigger][variation.name])
+                        cfile.write("\t\t // sample: %s \n"%smpl_name)
+                        cfile.write("\t\t // year: %s \n"%year)
+                        cfile.write("\t\t // trigger: %s \n"%trigger)
+                        cfile.write("\t\t return %s;"%y_string )
+                        cfile.write("\n\t\t }\n")
+                    #  cfile.write("\n\t else return 0;\n}\n\n")
+                    cfile.write("\n\t else return 0; \n\n")
+                    cfile.write("\n}\n")
+
+
+      if fit_cache:
+
+        ## efficiency per year
+        with open(smpl_name+"_"+fit_cache, "w") as cfile:
+            index = 1000
+            # istring = "float metTrigEff(float met_et, int variation_index, int run_number){\n"
+            istring = "double "+smpl_name+"_metTrigEff(double *x, double *par){\n"
+            cfile.write(istring)
+            cfile.write("\t double met_et = x[0];\n")
+            cfile.write("\t int variation_index = par[0];\n")
+            cfile.write("\t int run_number = par[1];\n")
+            for n, variation in enumerate(MET_TRIG_EFF_CRs):
+                cfile.write("\t //! variation: %s\n"%variation.name)
+                cfile.write("\t if(variation_index==%i){\n"%(index+n))
+                ## efficiency per year    
+                for year in years:
+                    y_triggers = MET_TRIGGERS[smpl_type][year].keys()
+                    year_lumi = sum([MET_TRIGGERS[smpl_type][year][tr]["LUMI"] for tr in y_triggers])
+                    rl = min([MET_TRIGGERS[smpl_type][year][tr]["RUNS"][0] for tr in y_triggers])
+                    rh = max([MET_TRIGGERS[smpl_type][year][tr]["RUNS"][1] for tr in y_triggers])
+
+                    ## weight periods
+                    y_eff = [] 
+                    for y_trig in y_triggers:
+                        p_lumi = MET_TRIGGERS[smpl_type][year][y_trig]["LUMI"]
+                        y_eff += ["%0.4f * (%s)"%(p_lumi/year_lumi, fit_params[smpl_name][year][y_trig][variation.name])]
+
+                    cfile.write("\t\t // sample: %s \n"%smpl_name)
+                    cfile.write("\t\t // year: %s \n"%year)
+                    cfile.write("\t\t if(run_number >= %i && run_number <= %i){\n"%(rl, rh))
+                    cfile.write("\t\t\t return %s;"%(" + ".join(y_eff) ) )
+                    cfile.write("\n\t\t }\n")
+                cfile.write("\n\t\t else return 0;\n\t\t}\n\n")
+            cfile.write("\t else return 1.; \n}\n\n\n")
+
+            ## overall efficiency
+            ###        with open(smpl_name+"_All_"+fit_cache, "w") as cfile:
+            ###        index = 1000
+            #  istring = "\n\n// total efficiency (lumi weighted) \nfloat metTrigEff(float met_et, int variation_index){\n"
+            istring = "\n\n// total efficiency (lumi weighted) \ndouble "+smpl_name+"_All_metTrigEff(double *x, double *par){\n"
+            cfile.write(istring)
+            cfile.write("\t double met_et = x[0];\n")
+            cfile.write("\t int variation_index = par[0];\n")
+            cfile.write("\t\t // sample: %s \n"%smpl_name)
+            for n, variation in enumerate(MET_TRIG_EFF_CRs):
+                cfile.write("\t //! variation: %s\n"%variation.name)
+                cfile.write("\t if(variation_index==%i){\n"%(index+n))
+                ## efficiency per year    
+                tot_eff = []
+                lumi_total = 0
+                for year in years:
+                    y_triggers = MET_TRIGGERS[smpl_type][year].keys()
+                    lumi_total += sum([MET_TRIGGERS[smpl_type][year][tr]["LUMI"] for tr in y_triggers])
+                for year in years:
+                    for trigger in MET_TRIGGERS[smpl_type][year].keys():
+                        lumi = MET_TRIGGERS[smpl_type][year][trigger]["LUMI"]
+                        tot_eff += ["%0.4f * (%s)"%(lumi/lumi_total, fit_params[smpl_name][year][trigger][variation.name])]
+                cfile.write("\t\t return %s;"%("+".join(tot_eff)))
+                cfile.write("\n\t }\n\n")
+            cfile.write("\n\t else return 0;\n}\n")
+
+
+    if fit_cache and len(MET_TRIGGERS["DATA"]) == len(MET_TRIGGERS["MC"]):
+            
+      ## SF per year
+      with open(fit_cache, "w") as cfile:
+            index = 1000
+            years = MET_TRIGGERS["DATA"].keys()
+            cfile.write("//   CAREFUL!  This is a MonteCarlo Scale Factor data file!\n")
+            cfile.write("//             Use together with MC trigger decision!\n")
+            #cfile.write("#include <string.h>\n\n")
+            ## function of run number:
+            istring = "float metTrigEff(float met_et, int variation_index, int run_number){\n"
+            cfile.write(istring)
+            for n, variation in enumerate(MET_TRIG_EFF_CRs):
+                cfile.write("\t //! variation: %s\n"%variation.name)
+                cfile.write("\t if(variation_index==%i){\n"%(index+n))
+  
+                for year in years:
+                    y_triggers = MET_TRIGGERS["DATA"][year].keys()
+                    year_lumi = sum([MET_TRIGGERS["DATA"][year][tr]["LUMI"] for tr in y_triggers])
+                    rl = min([MET_TRIGGERS["DATA"][year][tr]["RUNS"][0] for tr in y_triggers])
+                    rh = max([MET_TRIGGERS["DATA"][year][tr]["RUNS"][1] for tr in y_triggers])
+                    y_triggers_MC = MET_TRIGGERS["MC"][year].keys()
+                    year_lumi_MC = sum([MET_TRIGGERS["MC"][year][tr]["LUMI"] for tr in y_triggers])
+                    rl_MC = min([MET_TRIGGERS["MC"][year][tr]["RUNS"][0] for tr in y_triggers])
+                    rh_MC = max([MET_TRIGGERS["MC"][year][tr]["RUNS"][1] for tr in y_triggers])
+
+                    ## weight periods
+                    y_eff = [] 
+                    y_eff_MC = [] 
+                    for y_trig in y_triggers:
+                        p_lumi = MET_TRIGGERS["DATA"][year][y_trig]["LUMI"]
+                        y_eff += ["%0.4f * (%s)"%(p_lumi/year_lumi, fit_params["Data"][year][y_trig][variation.name])]
+                    y_eff_MC = [] 
+                    for y_trig in y_triggers_MC:
+                        p_lumi = MET_TRIGGERS["MC"][year][y_trig]["LUMI"]
+                        y_eff_MC += ["%0.4f * (%s)"%(p_lumi/year_lumi_MC, fit_params["MonteCarlo"][year][y_trig][variation.name])]
+
+                    cfile.write("\t\t // year: %s \n"%year)
+                    for trigger in y_triggers_MC:    
+                        cfile.write("\t\t // trigger: %s \n"%trigger)
+                        cfile.write("\t\t if(run_number >= %i && run_number <= %i){\n"%(MET_TRIGGERS["MC"][year][trigger]["RUNS"][0], MET_TRIGGERS["MC"][year][trigger]["RUNS"][1]))
+                        cfile.write("\t\t\t return \n" )
+                        cfile.write("\t\t\t %s \n"%( fit_params["Data"][year][trigger][variation.name] ) )
+                        cfile.write("\t\t\t / \n" )
+                        cfile.write("\t\t\t %s; \n"%( fit_params["MonteCarlo"][year][trigger][variation.name] ) )
+                        cfile.write("\n\t\t }\n")
+                cfile.write("\n\t\t else return 0.;\n\t}\n\n")
+            cfile.write("\t else return 1.; \n}\n\n\n")
+
+            
+            ### function of run trigger name:
+            #istring = "float metTrigEff(float met_et, int variation_index, char* year, char* trigger){\n"
+            #cfile.write(istring)
+            #for n, variation in enumerate(MET_TRIG_EFF_CRs):
+            #    cfile.write("\t //! variation: %s\n"%variation.name)
+            #    cfile.write("\t if(variation_index==%i){\n"%(index+n))
+            #    for year in years:
+            #        y_triggers = MET_TRIGGERS["DATA"][year].keys()
+            #        y_triggers_MC = MET_TRIGGERS["MC"][year].keys()
+            #        cfile.write("\t\t // year: %s \n"%year)
+            #        for trigger in y_triggers_MC:    
+            #            cfile.write("\t\t // trigger: %s \n"%trigger)
+            #            # cfile.write("\t\t if(year == %s && trigger_name == \"%s\"){\n"%(year, trigger))
+            #            cfile.write("\t\t if(strcmp(year, \"%s\")==0 && strcmp(trigger, \"%s\")==0){\n"%(year, trigger))
+            #            cfile.write("\t\t\t return \n" )
+            #            cfile.write("\t\t\t %s \n"%( fit_params["Data"][year][trigger][variation.name] ) )
+            #            cfile.write("\t\t\t / \n" )
+            #            cfile.write("\t\t\t %s; \n"%( fit_params["MonteCarlo"][year][trigger][variation.name] ) )
+            #            cfile.write("\n\t\t }\n")
+            #    cfile.write("\n\t\t else return 0.;\n\t}\n\n")
+            #cfile.write("\t else return 1.; \n}\n\n\n")
+
+
+
+            ## overall efficiency
+            ###        with open(smpl_name+"_All_"+fit_cache, "w") as cfile:
+            ###        index = 1000
+            istring = "\n\n// total efficiency (lumi weighted) \nfloat metTrigEff(float met_et, int variation_index){\n"
+            cfile.write(istring)
+            for n, variation in enumerate(MET_TRIG_EFF_CRs):
+                cfile.write("\t //! variation: %s\n"%variation.name)
+                cfile.write("\t if(variation_index==%i){\n"%(index+n))
+                ## efficiency per year    
+                tot_eff = []
+                tot_eff_MC = []
+                lumi_total = 0
+                lumi_total_MC = 0
+                for year in years:
+                    y_triggers = MET_TRIGGERS["DATA"][year].keys()
+                    lumi_total += sum([MET_TRIGGERS["DATA"][year][tr]["LUMI"] for tr in y_triggers])
+                    y_triggers_MC = MET_TRIGGERS["MC"][year].keys()
+                    lumi_total_MC += sum([MET_TRIGGERS["MC"][year][tr]["LUMI"] for tr in y_triggers_MC])
+                for year in years:
+                    for trigger in MET_TRIGGERS["DATA"][year].keys():
+                        lumi = MET_TRIGGERS["DATA"][year][trigger]["LUMI"]
+                        tot_eff += ["%0.4f * (%s)"%(lumi/lumi_total, fit_params["Data"][year][trigger][variation.name])]
+                    for trigger in MET_TRIGGERS["MC"][year].keys():
+                        lumi_MC = MET_TRIGGERS["MC"][year][trigger]["LUMI"]
+                        tot_eff_MC += ["%0.4f * (%s)"%(lumi_MC/lumi_total_MC, fit_params["MonteCarlo"][year][trigger][variation.name])]
+                cfile.write("\t\t return \n")
+                cfile.write("\t\t ( %s )\n"%("+".join(tot_eff)))
+                cfile.write("\t\t\t / \n" )
+                cfile.write("\t\t ( %s );"%("+".join(tot_eff_MC)))
+                cfile.write("\n\t }\n\n")
+            cfile.write("\n\t else return 0;\n}\n")
+
+            
+
+    return fit_funcs, fit_params
+
+##------------------------------------------------------------------------------------
+## - - plot fit functions 
+##------------------------------------------------------------------------------------
+def draw_fits(trigger_hists, fit_funcs, fit_params, 
+    pdir=TRIG_EFF_ARGS.pdir, overlay_syst=True, combined_fit=True, plot_raw=True, formats=[".png",".pdf", ".eps"]):
+    """ Given a dict of hists, fit funcs draw them 
+    """
+    os.system("mkdir -p %s"%pdir)
+    canvas = ROOT.TCanvas("c", "c", 1000, 800)
+    for smpl_name, years in fit_funcs.iteritems():
+      if smpl_name == "Data" or smpl_name == "DataTruth" or smpl_name == "QCD":
+          smpl_type = 'DATA'
+      else:
+          smpl_type = 'MC'
+      log.info("draw_fits:  sample name %s,  years %i "%(smpl_name, len(years)))
+      for year, fits in years.iteritems():
+        triggers = fits.keys()
+        variations = filter(lambda var: var.name in fit_funcs[smpl_name][year][triggers[0]].keys(), MET_TRIG_EFF_CRs)
+        for trigger in triggers:
+            lumi = MET_TRIGGERS[smpl_type][year][trigger]["LUMI"]
+            legend = ROOT.TLegend(0.5, 0.2, 0.9, 0.45)
+            legend.SetNColumns(2)
+            lables = label_plot(canvas, category=trigger, data_info="#int L dt = %0.2f fb^{-1} (%s)"%(lumi, year), textsize=18)    
+
+            for n, variation in enumerate(variations):
+                hist, fit_func = fits[trigger][variation.name]
+                hist.SetMarkerSize(2)
+                hist.SetMarkerColor(ROOT.kMagenta)
+                fit_func.SetMarkerColor(COLORS[n])
+                fit_func.SetMarkerSize(1)
+                fit_func.SetMarkerStyle(21+n)
+                    
+                if n==0:
+                    hist.GetXaxis().SetTitle(MET_ET.title)
+                    hist.GetYaxis().SetTitle("E^{mis}_{T} Trigger Efficiency")
+                    hist.Draw("LPE1")
+                    fit_func.Draw("PSAME")
+                    for label in lables:
+                        label.Draw("SAME")
+                if overlay_syst:    
+                    fit_func.Draw("PSAME")
+                    legend.AddEntry(fit_func, variation.label, "LP")
+                else:
+                    hist.GetXaxis().SetTitle(MET_ET.title)
+                    hist.GetYaxis().SetTitle("E^{mis}_{T} Trigger Efficiency")
+                    hist.Draw("LPE1")
+                    fit_func.Draw("P SAME")
+                    legend.AddEntry(fit_func, variation.label, "LP")
+
+                    legend.Draw("SAME")
+                    outname = "%s/MET_trig_eff%s_%s_%s_%s"%(pdir, smpl_name, year, variation.name, trigger)
+                    log.info("Saving %s"%outname)
+                    for fmt in formats:
+                        canvas.Print(outname+fmt)
+                    legend.Clear()
+                    canvas.Clear()
+            if overlay_syst:
+                legend.Draw("SAME")
+                os.system("mkdir -p %s"%pdir)
+                outname = "%s/MET_trig_eff%s_%s_%s"%(pdir, smpl_name, year, trigger)
+                log.info("Saving %s"%outname)
+                for fmt in formats:
+                    canvas.Print(outname+fmt)
+                legend.Clear()
+                canvas.Clear()
+
+    if combined_fit:
+        # canvas = ROOT.TCanvas("cnew", "cnew", 800, 700)
+
+      for smpl_name, years in fit_params.iteritems():
+        if smpl_name == "Data" or smpl_name == "DataTruth" or smpl_name == "QCD":
+          smpl_type = 'DATA'
+        else:
+          smpl_type = 'MC'
+        total_lumi = 0
+
+        for year, fits in years.iteritems():
+            triggers = fits.keys()
+            for trg in triggers:
+                log.info("draw_fits:  adding lumi for smpl_type %s, year %s, trigger %s, lumi = %f "%(smpl_type, year, trg, MET_TRIGGERS[smpl_type][year][trg]["LUMI"]))
+                total_lumi += MET_TRIGGERS[smpl_type][year][trg]["LUMI"]
+
+        log.info("draw_fits:  total_lumi = %f "%total_lumi)
+            
+        for variation in MET_TRIG_EFF_CRs:
+            legend = ROOT.TLegend(0.6, 0.2, 0.9, 0.4)
+            legend.SetNColumns(2)
+
+            ## efficiency per year
+            y_fits = []   
+            #      years =  MET_TRIGGERS[smpl_type].keys()
+            for year in years.keys():
+                y_params = []
+                triggers = MET_TRIGGERS[smpl_type][year].keys()
+                year_lumi = sum([MET_TRIGGERS[smpl_type][year][tr]["LUMI"] for tr in triggers])
+                log.info("draw_fits:  year %s, year_lumi = %f "%(year, year_lumi))
+
+                for trigger in triggers:
+                    lumi = MET_TRIGGERS[smpl_type][year][trigger]["LUMI"]
+                    log.info("draw_fits:  trigger %s, lumi = %f "%(trigger, lumi))
+                    y_params += ["%0.4f * (%s)"%(lumi/year_lumi, fit_params[smpl_name][year][trigger][variation.name].replace("met_et", "x"))]
+
+                ## @NOTE have to keep them in the scope for plotting 
+                y_fit = ROOT.TF1("fit_com_%s_%s"%(smpl_name, year), " + ".join(y_params), 0, 500)
+                y_fits+= [y_fit]
+
+            cnt = 0
+            for yf, yr in zip(y_fits, years):
+                yf.SetMarkerColor(COLORS[cnt])
+                yf.SetLineColor(COLORS[cnt])
+                yf.SetMarkerStyle(20+cnt)
+                yf.SetMarkerSize(1)
+                if cnt==0:
+                    yf.SetMaximum(1.2)
+                    yf.SetMinimum(0)
+                    yf.GetXaxis().SetTitle(MET_ET.title)
+                    yf.GetYaxis().SetTitle("E^{mis}_{T} Trigger Efficiency")
+                    yf.Draw("LP")
+                else:
+                    yf.Draw("LP SAME")
+                legend.AddEntry(yf, yr, "LP")
+                cnt += 1
+
+            labels = label_plot(canvas, 
+                category="", data_info="#int L dt =%0.2f fb^{-1}; #sqrt{13} TeV"%(total_lumi), textsize=18)    
+            for lb in labels:
+                lb.Draw("SAME")
+            legend.Draw("SAME")
+                    
+            com_outname = "%s/MET_trig_eff%s_%s_COMBINED"%(pdir, smpl_name, variation.name)
+            log.info("Saving %s"%com_outname)
+            for fmt in formats:
+                canvas.Print(com_outname+fmt)
+
+            canvas.Clear()
+            legend.Clear()
+
+    if plot_raw:
+        # canvas = ROOT.TCanvas("cnew", "cnew", 800, 700)                   
+        for smpl_name, years in trigger_hists.iteritems():
+          for year, triggers in years.iteritems(): 
+            for trigger, variations in triggers.iteritems():
+                for variation, hist_cat in variations.iteritems():
+                    hist_den = hist_cat["NO_TRIG"]
+                    hist_den.Draw("L")
+                    hist_den.GetXaxis().SetTitle("E^{mis}_{T}  [GeV]")
+                    hist_den.GetYaxis().SetTitle("Events")
+                    outname_den = "%s/MET_trig_eff_den_%s_%s_%s_%s"%(pdir, smpl_name, year, variation, trigger)
+                    log.info("Saving %s"%outname_den)
+                    for fmt in formats:
+                        canvas.Print(outname_den+fmt)
+                    legend.Clear()
+                    canvas.Clear()
+
+                    hist_num = hist_cat["TRIG"]
+                    hist_num.Draw("L")
+                    hist_num.GetXaxis().SetTitle("E^{mis}_{T}  [GeV]")
+                    hist_num.GetYaxis().SetTitle("Events")
+                    outname_num = "%s/MET_trig_eff_num_%s_%s_%s_%s"%(pdir, smpl_name, year, variation, trigger)
+                    log.info("Saving %s"%outname_num)
+                    for fmt in formats:
+                        canvas.Print(outname_num+fmt)
+                    legend.Clear()
+                    canvas.Clear()
+
+
+    canvas.Close()
+                    
+##------------------------------------------------------------------------------------
+## - - main driver
+##------------------------------------------------------------------------------------
+if __name__=="__main__":
+    start_time = time.time()
+    
+    trigger_hists = get_trig_hists()
+    fit_funcs, fit_params = fit_eff(trigger_hists)
+    draw_fits(trigger_hists, fit_funcs, fit_params, overlay_syst=True)
+    
+    end_time = time.time()
+    elapsed_time = (end_time - start_time)/60.
+    log.info("\n****************** elapsed time: %0.1f mins ******************"%elapsed_time)

@@ -417,7 +417,7 @@ Category_BVETO = Category(
 Category_BVETO_MT100 = Category(
     name="BVETO_MT100",
     label="b-veto CR MT100",
-    ff_index=1004,
+    ff_index=1006,
     cuts_list= [
         CLEAN_EVT,
         TAU_BASE,

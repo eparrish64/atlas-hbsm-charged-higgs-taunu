@@ -37,7 +37,7 @@ from hpana.categories import (
     Category_TAUMU_BVETO,
     Category_SS_TAUEL,
     Category_SS_TAUMU,
-    Category_BVETO100,
+    Category_BVETO_MT100,
     Category_TAUJET_BASE,
     Category_TAULEP_BASE,)
     
@@ -303,7 +303,7 @@ if __name__=="__main__":
                                pdir=FFs_ARGS.pdir,
                                validation_plots=FFs_ARGS.validation_plots)
         if FFs_ARGS.validation_plots:
-            tj_regions = [Category_BVETO, Category_SR_TAUJET, Category_TAUJET_BASE]
+            tj_regions = [Category_BVETO, Category_BVETO_MT100, Category_SR_TAUJET, Category_TAUJET_BASE]
             plot_alpha(
                 alphas, cr_ffs, regions=tj_regions, pdir=FFs_ARGS.pdir, formats=[".png"], suffix="taujet", data_info=taujet_analysis.data.info, colors=COLORS)
 

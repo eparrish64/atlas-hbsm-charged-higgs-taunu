@@ -65,6 +65,11 @@ MT_MAX100 = {
     "mc16": ROOT.TCut("tau_0_met_mt < 100")
 }
 
+MT100 = {
+    "mc15": ROOT.TCut("tau_0_met_mt > 100000"),
+    "mc16": ROOT.TCut("tau_0_met_mt > 100")
+}
+
  
 ##------------------------------------------------------------------------------------
 ##  - - tau
@@ -407,6 +412,22 @@ Category_BVETO = Category(
         BVETO,
         MET150,
         MT50,],
+)
+
+Category_BVETO_MT100 = Category(
+    name="BVETO_MT100",
+    label="b-veto CR MT100",
+    ff_index=1006,
+    cuts_list= [
+        CLEAN_EVT,
+        TAU_BASE,
+        LEP_VETO,
+        TAU_PT40,
+        NUM_JETS3,
+        JET_PT25,
+        BVETO,
+	MET150,
+        MT100,],
 )
 
 

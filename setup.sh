@@ -29,6 +29,9 @@ case $USER in
     klimek)
 		VENVPATH=/afs/cern.ch/work/k/klimek/private/Charged_H/Analysis_EoR2/hpana-dev-taulep-RNN-Pawel/PythonPackags/Venvs/hpanaVenv/
 		;;
+    mmlynari)
+	VENVPATH=/afs/cern.ch/user/m/mmlynari/workspace/PythonPackags/Venvs/hpanaVenv/
+		;;
 	eparrish)
 		VENVPATH=/afs/cern.ch/user/e/eparrish/workarea/public/HPlusTauNu/PythonPackages/Venvs/hpanaVenv/
 		;;
@@ -51,7 +54,7 @@ case "$(hostname)" in
 		# source $ATLAS_LOCAL_ROOT_BASE/packageSetups/atlasLocalROOTSetup.sh 		
 		setupATLAS
 		lsetup root
-		lsetup git
+                lsetup git
 		;;
 esac
 

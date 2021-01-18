@@ -36,7 +36,10 @@ from hpana.categories import (
     Category_TAUEL_BVETO,
     Category_TAUMU_BVETO,
     Category_SS_TAUEL,
-    Category_SS_TAUMU)
+    Category_SS_TAUMU,
+    Category_BVETO_MT100,
+    Category_TAUJET_BASE,
+    Category_TAULEP_BASE,)
     
 from hpana.dataset_hists import dataset_hists
 from hpana.config import Configuration
@@ -191,7 +194,7 @@ if __name__=="__main__":
         kparams = {
             "template_fields": FFS_TEMPLATE_VARS,
             "template_hist_bins":TAU_PT_BINS,
-            "tau_jet_rnn_score_trans_wps": {"NOMINAL":0.00, "RNN_1up": 0.00, "RNN_1down": 0.0},
+            "tau_jet_rnn_score_trans_wps": {"NOMINAL":0.01, "RNN_1up": 0.01, "RNN_1down": 0.01},
             "n_charged_tracks": N_CHARGED_TRACKS,
             "cache_file": FFs_ARGS.ffs_cr_cache,
             "subtract_mc": True,
@@ -231,7 +234,7 @@ if __name__=="__main__":
                     pdir=FFs_ARGS.pdir,
                     data_info=taujet_analysis.data.info, 
                     pname="FFs_inclusive_tracks_pT_%s"%FFs_ARGS.ffs_cr_cache.replace(".yml", ""), 
-                    formats=[".png", ".pdf", ".eps"])
+                    formats=[".png"])
         
     
     ## fit alpha (aka rQCD)
@@ -300,13 +303,13 @@ if __name__=="__main__":
                                pdir=FFs_ARGS.pdir,
                                validation_plots=FFs_ARGS.validation_plots)
         if FFs_ARGS.validation_plots:
-            tj_regions = [Category_BVETO, Category_SR_TAUJET]
+            tj_regions = [Category_BVETO, Category_BVETO_MT100, Category_SR_TAUJET, Category_TAUJET_BASE]
             plot_alpha(
-                alphas, cr_ffs, regions=tj_regions, pdir=FFs_ARGS.pdir, formats=[".png", ".pdf", ".eps"], suffix="taujet", data_info=taujet_analysis.data.info, colors=COLORS)
+                alphas, cr_ffs, regions=tj_regions, pdir=FFs_ARGS.pdir, formats=[".png"], suffix="taujet", data_info=taujet_analysis.data.info, colors=COLORS)
 
             tl_regions = [Category_SS_TAUEL, Category_SS_TAUMU, Category_SR_TAULEP]
             plot_alpha(
-                alphas, cr_ffs, regions=tl_regions, pdir=FFs_ARGS.pdir, formats=[".png", ".pdf", ".eps"], suffix="taulep", data_info=taulep_analysis.data.info, colors=COLORS)
+                alphas, cr_ffs, regions=tl_regions, pdir=FFs_ARGS.pdir, formats=[".png"], suffix="taulep", data_info=taulep_analysis.data.info, colors=COLORS)
     
 end_time = time.time()
 elapsed_time = (end_time - start_time)/60.

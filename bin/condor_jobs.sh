@@ -7,16 +7,6 @@ PROJECT_SCRATCH_DIR="$( cd "$(dirname "$0")" ; pwd -P )"
 JOBSCRATCH="$PROJECT_SCRATCH_DIR/${1}_${DATE}"
 JOBSCRATCH=(${JOBSCRATCH//,/ })
 JOBSCRATCH=${JOBSCRATCH[0]}"_${DATE}"
-# CONDOR_JOB_NAME=${1}
-#
-
-# echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!DEBUGGING!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!";
-# echo "Testing things if they work";
-# echo "$JOBSCRATCH";
-# echo "$PROJECT_SCRATCH_DIR";
-# echo "$MYUSERNAME";
-# echo "$HOSTNAME_SHORT";
-
 
 fail(){
     echo "failed";
@@ -31,11 +21,7 @@ cd "$JOBSCRATCH" || fail;
 
 rsync -axvH --no-g --no-p ${2}  ./ || fail;
 tar -xvf ${2} || fail;
-# source /cvmfs/atlas.cern.ch/repo/ATLASLocalRootBase/user/atlasLocalSetup.sh;
 source setup.sh || fail;
-
-# echo "MY ENVIRONMENT"
-# env | sort
 
 python ${3} ${4} ${1} || fail;
 
@@ -49,14 +35,12 @@ else
         rsync -axvH --no-g --no-p "$file" ${5}/hists/ || fail;
     done
     
-    # echo "$SLURM_JOB_ID succeeded";
     echo "Succeeded";
-    # echo "" >>  ${5}/jobs/done-${1};
     
     cd ..;
     rm -rf {JOBSCRATCH} || fail;
     echo "Job finished and cleaned up after itself";
-    # exit 0;
+    exit 0;
 fi
 
 

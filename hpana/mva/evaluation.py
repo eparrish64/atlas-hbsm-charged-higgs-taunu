@@ -16,31 +16,6 @@ import cPickle
 import csv
 import pandas as pd
 
-# # Keras
-# #environ['KERAS_BACKEND'] = 'theano'
-# environ['KERAS_BACKEND'] = 'tensorflow'
-# # Set architecture of system (AVX instruction set is not supported on SWAN)
-# environ['THEANO_FLAGS'] = 'gcc.cxxflags=-march=corei7'
-# from keras.models import Sequential, load_model
-# from keras.layers import Dense, Activation
-# from keras.regularizers import l2
-# from keras import initializers
-# from keras.optimizers import SGD
-# from keras.wrappers.scikit_learn import KerasClassifier
-
-
-# Keras
-#environ['KERAS_BACKEND'] = 'theano'
-environ['KERAS_BACKEND'] = 'tensorflow'
-# Set architecture of system (AVX instruction set is not supported on SWAN)
-environ['THEANO_FLAGS'] = 'gcc.cxxflags=-march=corei7'
-from keras.models import Sequential, load_model
-from keras.layers import Dense, Activation
-from keras.regularizers import l2
-from keras import initializers
-from keras.optimizers import SGD
-from keras.wrappers.scikit_learn import KerasClassifier
-
 ## local
 from hpana.samples.fakes import QCD
 from hpana import log 
@@ -112,12 +87,11 @@ def calculate_scores(model,
         isNN=False):
     """
     For single model. Will return roc_auc_score for given model.
-    given dframe must be validation kfold.
     Currently only takes one signal point                           Sept 6, 2019
     """
 
     if not dframe:
-        dframe = model.valid_df
+        dframe = model.eval_df
     
     b_dframe = dframe.loc[[bkg.name for bkg in backgrounds]]
     s_dframe = dframe.loc[[sig.name]]
@@ -135,6 +109,19 @@ def calculate_scores(model,
 
     ## evaluate score 
     if isNN == True:
+        # import tensorflow as tf
+        # import keras
+        # from keras.models import Sequential
+        # from keras.layers import Dense, Activation, BatchNormalization, Dropout, LeakyReLU
+        # from keras.regularizers import l2
+        # from keras import initializers
+        # from keras.optimizers import SGD
+        # from keras.wrappers.scikit_learn import KerasClassifier
+        # from keras.models import load_model
+        # from keras import backend as K
+        # from keras.layers import LeakyReLU  
+        # from tensorflow.python.client import device_lib
+        
         b_score = model.predict(b_test)
         s_score = model.predict(s_test)
     else:
@@ -189,6 +176,18 @@ def plot_scores(models,
 
     if isNN == True:
         scaler = StandardScaler()
+        # import tensorflow as tf
+        # import keras
+        # from keras.models import Sequential
+        # from keras.layers import Dense, Activation, BatchNormalization, Dropout, LeakyReLU
+        # from keras.regularizers import l2
+        # from keras import initializers
+        # from keras.optimizers import SGD
+        # from keras.wrappers.scikit_learn import KerasClassifier
+        # from keras.models import load_model
+        # from keras import backend as K
+        # from keras.layers import LeakyReLU  
+        # from tensorflow.python.client import device_lib
     rocs = []
     for sig in signals:
         sm_df = dframe.loc[[sig.name]]
@@ -399,6 +398,18 @@ def get_models(model_files, backend="sklearn", isNN=False):
     ## - - loop over trained models and setup weight readers 
     models = dict()
     if isNN == True:
+        # import tensorflow as tf
+        # import keras
+        # from keras.models import Sequential
+        # from keras.layers import Dense, Activation, BatchNormalization, Dropout, LeakyReLU
+        # from keras.regularizers import l2
+        # from keras import initializers
+        # from keras.optimizers import SGD
+        # from keras.wrappers.scikit_learn import KerasClassifier
+        from keras.models import load_model
+        # from keras import backend as K
+        # from keras.layers import LeakyReLU  
+        # from tensorflow.python.client import device_lib
         Keras_models = dict()
     for model_file in model_files:
         base, wname = os.path.split(model_file)
@@ -542,6 +553,18 @@ def fill_scores_histogram(tree, models, hist_template=None, event_selection=None
     """
     if isNN == True:
         scaler = StandardScaler()
+        # import tensorflow as tf
+        # import keras
+        # from keras.models import Sequential
+        # from keras.layers import Dense, Activation, BatchNormalization, Dropout, LeakyReLU
+        # from keras.regularizers import l2
+        # from keras import initializers
+        # from keras.optimizers import SGD
+        # from keras.wrappers.scikit_learn import KerasClassifier
+        # from keras.models import load_model
+        # from keras import backend as K
+        # from keras.layers import LeakyReLU  
+        # from tensorflow.python.client import device_lib
     if log.isEnabledFor(logging.DEBUG):
         # Converting these to strings is slow, even if the logger doesn't print anything
         log.debug("---------------- models:\n %r"%models)
@@ -638,6 +661,18 @@ def fill_scores_mult(tree, all_models, hist_templates,
 
     if isNN == True:
         scaler = StandardScaler()
+        # import tensorflow as tf
+        # import keras
+        # from keras.models import Sequential
+        # from keras.layers import Dense, Activation, BatchNormalization, Dropout, LeakyReLU
+        # from keras.regularizers import l2
+        # from keras import initializers
+        # from keras.optimizers import SGD
+        # from keras.wrappers.scikit_learn import KerasClassifier
+        # from keras.models import load_model
+        # from keras import backend as K
+        # from keras.layers import LeakyReLU  
+        # from tensorflow.python.client import device_lib
     event_number = ROOT.TTreeFormula("event_number", "event_number", tree)
 
     clf_feats_tf = dict()

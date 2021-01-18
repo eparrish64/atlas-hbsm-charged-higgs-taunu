@@ -94,10 +94,11 @@ if __name__=="__main__":
 
     ## correlation matrix ?
     if CLF_ARGS.plot_correlations :
-        models = get_models(CLF_ARGS.models)
-        for masses in TRAINING_MASS_BINS["NOM"]:
+        models, Keras_models = get_models(CLF_ARGS.models, isNN=CLF_ARGS.train_nn)
+        for masses in TRAINING_MASS_BINS["ALL"]:
             mtag = "%ito%i"%(masses[0], masses[-1])
             for model in models[mtag]:
+                print model
                 p_title = r"Correlation Matrix: $ %i \leq m_{H^+} \leq %i [GeV]$"%(model.mass_range[0], model.mass_range[-1])
                 # oname = "features_correlation_%s_channel_mass_region_%sto%s"%(CLF_ARGS.channel, signal_masses[0], signal_masses[-1])
 

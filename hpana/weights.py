@@ -19,11 +19,12 @@ class Weight(object):
 
     W_PILEUP = {
         # TRAILING COMMA IS NECESSARY FOR ONE ELEMENT TUPLES!
-        "weight_pileup": ("weight_total/weight_mc", )
+        "weight_pileup": ("NOMINAL_pileup_combined_weight", ) #("weight_total/weight_mc", )
     }
 
     W_BASE = {
-        "weight_total": ("weight_total", )
+        "weight_total": ("NOMINAL_pileup_combined_weight * weight_mc", )
+        # "weight_total": ("weight_total", )
     }
     W_TAU = {
         # "tau_0_sf_NOMINAL_TauEffSF_JetBDTmedium": ( 
@@ -41,11 +42,11 @@ class Weight(object):
             W_STR_FMT.format("n_taus", "tau_0_sf_NOMINAL_TauEffSF_JetRNNmedium"),  #<! NOMINAL
 
             ## (name, title); title will be used to access the corresponding TTree branch.
-            ("TAU_EFF_JETID_HIGHPT_1up" , W_STR_FMT.format("n_taus", "tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_HIGHPT_1up_TauEffSF_JetRNNmedium")),
-            ("TAU_EFF_JETID_HIGHPT_1down", W_STR_FMT.format("n_taus", "tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_HIGHPT_1down_TauEffSF_JetRNNmedium")),
+            ("TAU_EFF_RNNID_HIGHPT_1up" , W_STR_FMT.format("n_taus", "tau_0_sf_TAUS_TRUEHADTAU_EFF_RNNID_HIGHPT_1up_TauEffSF_JetRNNmedium")),
+            ("TAU_EFF_RNNID_HIGHPT_1down", W_STR_FMT.format("n_taus", "tau_0_sf_TAUS_TRUEHADTAU_EFF_RNNID_HIGHPT_1down_TauEffSF_JetRNNmedium")),
 
-            ("TAU_EFF_JETID_SYST_1up", W_STR_FMT.format("n_taus", "tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_SYST_1up_TauEffSF_JetRNNmedium")),
-            ("TAU_EFF_JETID_SYST_1down", W_STR_FMT.format("n_taus", "tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_SYST_1down_TauEffSF_JetRNNmedium")),
+            ("TAU_EFF_RNNID_SYST_1up", W_STR_FMT.format("n_taus", "tau_0_sf_TAUS_TRUEHADTAU_EFF_RNNID_SYST_1up_TauEffSF_JetRNNmedium")),
+            ("TAU_EFF_RNNID_SYST_1down", W_STR_FMT.format("n_taus", "tau_0_sf_TAUS_TRUEHADTAU_EFF_RNNID_SYST_1down_TauEffSF_JetRNNmedium")),
         ),
 
         # "tau_0_sf_NOMINAL_TauEffSF_VeryLooseLlhEleOLR_electron": (
@@ -78,8 +79,8 @@ class Weight(object):
             ("TAU_EFF_RECO_TOTAL_1up", W_STR_FMT.format("n_taus", "tau_0_sf_TAUS_TRUEHADTAU_EFF_RECO_TOTAL_1up_TauEffSF_reco")),
             ("TAU_EFF_RECO_TOTAL_1down", W_STR_FMT.format("n_taus", "tau_0_sf_TAUS_TRUEHADTAU_EFF_RECO_TOTAL_1down_TauEffSF_reco")),
 
-            ("TAU_EFF_RECO_HIGHPT_1up", W_STR_FMT.format("n_taus", "tau_0_sf_TAUS_TRUEHADTAU_EFF_RECO_HIGHPT_1up_TauEffSF_reco")),
-            ("TAU_EFF_RECO_HIGHPT_1down", W_STR_FMT.format("n_taus", "tau_0_sf_TAUS_TRUEHADTAU_EFF_RECO_HIGHPT_1down_TauEffSF_reco")),
+            #("TAU_EFF_RECO_HIGHPT_1up", W_STR_FMT.format("n_taus", "tau_0_sf_TAUS_TRUEHADTAU_EFF_RECO_HIGHPT_1up_TauEffSF_reco")),
+            #("TAU_EFF_RECO_HIGHPT_1down", W_STR_FMT.format("n_taus", "tau_0_sf_TAUS_TRUEHADTAU_EFF_RECO_HIGHPT_1down_TauEffSF_reco")),
         ),
 
     }  # W_TAU

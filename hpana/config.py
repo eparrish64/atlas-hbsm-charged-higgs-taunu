@@ -77,6 +77,9 @@ class Configuration(object):
             if ("MULTIJET" in category.name or "QCD" in category.name):
                 log.debug("Applying multijet trigger for %s category" %category.name)
                 return get_mj_trigger(data_streams, dtype=dtype)
+            if ("DILEP" in category.name):
+                log.debug("Applying dilep trigger for %s category" %(category.name))
+                return get_dilep_trigger(self.channel, data_streams=data_streams, dtype=dtype)
                 
         return get_trigger(self.channel, data_streams=data_streams, dtype=dtype)
 

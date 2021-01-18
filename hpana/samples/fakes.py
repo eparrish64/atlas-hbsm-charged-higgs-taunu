@@ -357,9 +357,10 @@ class QCD(Sample):
         log.info(
             "************ processing %s sample hists in parallel, njobs=%i ************"%(self.name, len(workers) ) )
         pool = multiprocessing.Pool(processes=multiprocessing.cpu_count())
-        results = [pool.apply_async(dataset_hists, (wk,)) for wk in workers]
+        results = [pool.apply_async(dataset_hists, (wk,), kwds={'write':True}) for wk in workers]
         hist_sets = []
         for res in results:
+            print "In Fakes.py L363 res = %s" %res
             hist_sets += res.get(3600) #<! without the timeout this blocking call ignores all signals.
 
         ## extract DATA/MC hists

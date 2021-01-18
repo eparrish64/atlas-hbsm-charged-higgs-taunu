@@ -13,12 +13,7 @@ if __name__=="__main__":
         from hpana.config import Configuration
         from hpana.analysis import Analysis
 
-        if 'cedar' in socket.gethostname():
-            jobname = os.getenv("SLURM_JOB_NAME")
-        elif 'niu' in socket.gethostname() or 'cern' in socket.gethostname():
-            jobname = sys.argv[2]
-        else:
-            jobname = os.getenv("PBS_JOBNAME")
+        jobname = sys.argv[2]
 
         with open(sys.argv[1], "rb") as yfile:
             conf = yaml.load(yfile)
@@ -72,7 +67,6 @@ if __name__=="__main__":
         start_time = time.time()
 
         for wrk in jobname.split(","):
-        # print jobname.split(",")
 
             workers = filter(lambda w: w.name==wrk, ana_workers)
             
@@ -83,7 +77,6 @@ if __name__=="__main__":
                 raise RuntimeError("%i workers with the same name %s are assigned the job"%(len(workers), wrk))        
 
             worker = workers[0]
-            print "WORKER: ", worker
 
             # - - get the hists 
             dataset_hists(worker, write_hists=True, outdir="./")

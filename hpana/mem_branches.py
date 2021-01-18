@@ -37,6 +37,7 @@ MEM_BRANCHES["taulep"] = [
     "HLT_xe110_pufit_L1XE55",
     
     "NOMINAL_pileup_random_run_number",
+    "NOMINAL_pileup_combined_weight",
     "PRWHash",
 
     "bjet_0_b_tag_score",
@@ -66,7 +67,7 @@ MEM_BRANCHES["taulep"] = [
     "el_0_sf_NOMINAL_EleEffSF_Isolation_TightLLH_d0z0_v13_isolFixedCutTight",
     "el_0_sf_NOMINAL_EleEffSF_Isolation_TightLLH_d0z0_v13_isolGradient",
 
-        "el_0_sf_NOMINAL_EleEffSF_SINGLE_E_2015_e24_lhmedium_L1EM20VH_OR_e60_lhmedium_OR_e120_lhloose_2016_2017_e26_lhtight_nod0_ivarloose_OR_e60_lhmedium_nod0_OR_e140_lhloose_nod0_TightLLH_d0z0_v13_isolFixedCutTight",
+    "el_0_sf_NOMINAL_EleEffSF_SINGLE_E_2015_e24_lhmedium_L1EM20VH_OR_e60_lhmedium_OR_e120_lhloose_2016_2017_e26_lhtight_nod0_ivarloose_OR_e60_lhmedium_nod0_OR_e140_lhloose_nod0_TightLLH_d0z0_v13_isolFixedCutTight",
     "el_0_sf_NOMINAL_EleEffSF_SINGLE_E_2015_e24_lhmedium_L1EM20VH_OR_e60_lhmedium_OR_e120_lhloose_2016_2017_e26_lhtight_nod0_ivarloose_OR_e60_lhmedium_nod0_OR_e140_lhloose_nod0_TightLLH_d0z0_v13_isolGradient",
     "el_0_sf_NOMINAL_EleEffSF_SINGLE_E_2015_e24_lhmedium_L1EM20VH_OR_e60_lhmedium_OR_e120_lhloose_2016_2017_e26_lhtight_nod0_ivarloose_OR_e60_lhmedium_nod0_OR_e140_lhloose_nod0_TightLLH_d0z0_v13_isolLoose",
     "el_0_sf_NOMINAL_EleEffSF_offline_RecoTrk",
@@ -256,7 +257,7 @@ MEM_BRANCHES["taulep"] = [
     "true_tau_0_type",
   
     "weight_mc",
-    "weight_total",
+    # "weight_total",
 ]
 
 
@@ -298,6 +299,7 @@ MEM_BRANCHES["taujet"] = [
     "HLT_xe110_pufit_xe65_L1XE50",
 
     "NOMINAL_pileup_random_run_number",
+    "NOMINAL_pileup_combined_weight",
     "PRWHash",
     
    
@@ -377,7 +379,7 @@ MEM_BRANCHES["taujet"] = [
     "true_tau_0_jet_pdgId",
    
     "weight_mc",
-    "weight_total",
+    # "weight_total",
 
     "tau_0_sf_NOMINAL_TauEffSF_JetBDTmedium",
     "tau_0_sf_TAUS_TRUEHADTAU_EFF_JETID_HIGHPT_1up_TauEffSF_JetBDTmedium",

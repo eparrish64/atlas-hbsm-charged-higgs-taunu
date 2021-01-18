@@ -32,7 +32,7 @@ case $USER in
     mmlynari)
 	VENVPATH=/afs/cern.ch/user/m/mmlynari/workspace/PythonPackags/Venvs/hpanaVenv/
 		;;
-	eparrish)
+    eparrish)
 		VENVPATH=/afs/cern.ch/user/e/eparrish/workarea/public/HPlusTauNu/PythonPackages/Venvs/hpanaVenv/
 		;;
 	*)

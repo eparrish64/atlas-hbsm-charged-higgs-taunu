@@ -37,7 +37,7 @@ from hpana.categories import (
     Category_TAUMU_BVETO,
     Category_SS_TAUEL,
     Category_SS_TAUMU,
-    Category_BVETO100,
+    Category_BVETO_MT100,
     Category_TAUJET_BASE,
     Category_TAULEP_BASE,)
     

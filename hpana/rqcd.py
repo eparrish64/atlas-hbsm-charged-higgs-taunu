@@ -1046,7 +1046,7 @@ def plot_alpha(alphas, cr_ffs,
         canvas.SetLogx() #<! CALL IT BEFORE DOING ANYTHING WITH AXIS RANGE!
         ah.GetYaxis().SetTitle("#alpha_{MJ}")
         ah.GetXaxis().SetTitle("p^{#tau}_{T} [GeV]")
-	    ah.GetXaxis().SetRangeUser(30, 4000)
+	ah.GetXaxis().SetRangeUser(30, 4000)
         ah.GetYaxis().SetRangeUser(-4, 4) 
             
     for label in labels:

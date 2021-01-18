@@ -54,6 +54,7 @@ case "$(hostname)" in
 		# source $ATLAS_LOCAL_ROOT_BASE/packageSetups/atlasLocalROOTSetup.sh 		
 		setupATLAS
 		lsetup root
+                lsetup git
 		;;
 esac
 

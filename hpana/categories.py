@@ -141,7 +141,7 @@ ANTI_TAU = ROOT.TCut("tau_0_jet_rnn_score_trans > 0.01 && tau_0_jet_rnn_loose==0
 VETO_TAU = ROOT.TCut("n_taus==0")
 TAU_EL_OLR_PASS = {
     "mc15": ROOT.TCut("tau_0_ele_olr_pass==1"),
-    "mc16": ROOT.TCut("tau_0_ele_bdt_medium_retuned==1"),
+    "mc16": ROOT.TCut("tau_0_ele_bdt_medium==1"),
     # "mc16": ROOT.TCut("tau_0_ele_olr_pass==1"),
 
 }
@@ -184,8 +184,8 @@ MU_BASE = {
 #     "mc15": ROOT.TCut("n_muons==1 && mu_0_pt > 30000 && mu_0_id_tight && mu_0_iso_Gradient && abs(mu_0_eta) < 2.5"),
 #     "mc16": ROOT.TCut("n_muons==1 && mu_0_p4->Pt() > 30 && mu_0_id_tight && mu_0_iso_Gradient && abs(mu_0_p4->Eta()) < 2.5"),
 # Switching to mu_0_iso_FCTight_FixedRad
-    "mc15": ROOT.TCut("n_muons==1 && mu_0_pt > 30000 && mu_0_id_tight && mu_0_iso_PflowTight_FixedRad && abs(mu_0_eta) < 2.5"),
-    "mc16": ROOT.TCut("n_muons==1 && mu_0_p4->Pt() > 30 && mu_0_id_tight && mu_0_iso_PflowTight_FixedRad && abs(mu_0_p4->Eta()) < 2.5"),
+    "mc15": ROOT.TCut("n_muons==1 && mu_0_pt > 30000 && mu_0_id_tight && mu_0_iso_FCTight_FixedRad && abs(mu_0_eta) < 2.5"),
+    "mc16": ROOT.TCut("n_muons==1 && mu_0_p4->Pt() > 30 && mu_0_id_tight && mu_0_iso_FCTight_FixedRad && abs(mu_0_p4->Eta()) < 2.5"),
 }
 
 LEP_BASE = {}
@@ -247,9 +247,9 @@ NUM_JETS2  = ROOT.TCut("n_jets > 1")
 NUM_JETS3  = ROOT.TCut("n_jets > 2")
 NUM_JETS4  = ROOT.TCut("n_jets > 3")
 
-NUM_BJETS1 = ROOT.TCut("n_bjets_DL1r_FixedCutBEff_70 > 0")
-NUM_BJETS2 = ROOT.TCut("n_bjets_DL1r_FixedCutBEff_70 > 1")
-BVETO = ROOT.TCut("n_bjets_DL1r_FixedCutBEff_70==0")
+NUM_BJETS1 = ROOT.TCut("n_bjets > 0")
+NUM_BJETS2 = ROOT.TCut("n_bjets > 1")
+BVETO = ROOT.TCut("n_bjets==0")
 
 JET_PT25 = {
     "mc15": ROOT.TCut("jet_0_pt > 25000"),
@@ -759,7 +759,7 @@ MET_TRIGG_EFF_CUTS_BASE = [
     #    ROOT.TCut("(n_electrons==1 && el_0_p4->Pt() > 26 && el_0_id_loose && el_0_trig_trigger_matched==1 && tau_0_q*el_0_q==-1)"\
     #              "|| (n_muons==1 && mu_0_p4->Pt() > 30 && mu_0_id_loose && mu_0_trig_trigger_matched==1 && tau_0_q*mu_0_q==-1)"),
     
-    ROOT.TCut("n_jets>1 && n_bjets_DL1r_FixedCutBEff_70>1"),
+    ROOT.TCut("n_jets>1 && n_bjets>1"),
     ROOT.TCut("jet_0_p4->Pt() > 25 && jet_1_p4->Pt() > 25"),
     
     # - - only for the bkg modelling in this region (not applied for calcualting trigger efficency).

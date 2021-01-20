@@ -368,9 +368,15 @@ tau_0_ele_BDTEleScoreTrans_run2 = Variable(
     binning=(20, -1, 1),
     )
 
-tau_0_ele_bdt_score = Variable(
-    "tau_0_ele_bdt_score", 
-    title="tau_0_ele_bdt_score",
+tau_0_ele_bdt_score_retuned = Variable(
+    "tau_0_ele_bdt_score_retuned", 
+    title="tau_0_ele_bdt_score_retuned",
+    binning=(20, -1, 1),
+    )
+
+tau_0_ele_bdt_score_trans_retuned = Variable(
+    "tau_0_ele_bdt_score_trans_retuned", 
+    title="tau_0_ele_bdt_score_trans_retuned",
     binning=(20, -1, 1),
     )
 
@@ -537,6 +543,11 @@ n_jets = Variable(
 n_bjets = Variable(
     "n_bjets", 
     title='#font[52]{Number of Selected b-Jets}',
+    binning= (10, -.5, 9.5))
+
+n_bjets_DL1r_FixedCutBEff_70 = Variable(
+    "n_bjets_DL1r_FixedCutBEff_70", 
+    title='#font[52]{Number of Selected b-Jets (FixedCutBEff 70)}',
     binning= (10, -.5, 9.5))
 
 bjet_0_pt =  Variable(
@@ -1064,7 +1075,7 @@ VARIABLES_TAUJET = [
     tau_0_met_dphi,
     
     n_jets,
-    n_bjets,
+    n_bjets_DL1r_FixedCutBEff_70,
     
     jet_0_pt,
     jet_0_eta,
@@ -1139,7 +1150,7 @@ VARIABLES_TAULEP = [
     tau_0_lep_0_mass,
 
     n_jets,
-    n_bjets,    
+    n_bjets_DL1r_FixedCutBEff_70,
     jet_0_pt,
     jet_0_px,
     jet_0_py,

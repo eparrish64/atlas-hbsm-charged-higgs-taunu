@@ -11,16 +11,16 @@ TAU_PT_BINS = {
 }
 
 
-ANTITAU_CUT = "((((((((n_vx > 0)&&(tau_0_p4->Pt() > {0} && tau_0_p4->Pt() < {1}))&&(tau_0_ele_olr_pass==1))&&(n_jets > 2))&&((n_electrons + n_muons)==0))&&(n_bjets==0))&&(met_p4->Et() < 80))&&(tau_0_met_mt > 50))&&(((run_number<288000 && HLT_4j85) || ((run_number>288000 && HLT_4j100)))&&(tau_0_jet_bdt_loose==0&&tau_0_jet_bdt_score_trans>0.03&&tau_0_n_charged_tracks=={2}))"
+ANTITAU_CUT = "((((((((n_vx > 0)&&(tau_0_p4->Pt() > {0} && tau_0_p4->Pt() < {1}))&&(tau_0_ele_olr_pass==1))&&(n_jets > 2))&&((n_electrons + n_muons)==0))&&(n_bjets_DL1r_FixedCutBEff_70==0))&&(met_p4->Et() < 80))&&(tau_0_met_mt > 50))&&(((run_number<288000 && HLT_4j85) || ((run_number>288000 && HLT_4j100)))&&(tau_0_jet_bdt_loose==0&&tau_0_jet_bdt_score_trans>0.03&&tau_0_n_charged_tracks=={2}))"
 
-TAU_CUT = "((((((((n_vx > 0)&&(tau_0_p4->Pt() > {0} && tau_0_p4->Pt() < {1}))&&(tau_0_ele_olr_pass==1))&&(n_jets > 2))&&((n_electrons + n_muons)==0))&&(n_bjets==0))&&(met_p4->Et() < 80))&&(tau_0_met_mt > 50))&&(((run_number<288000 && HLT_4j85) || ((run_number>288000 && HLT_4j100)))&&(tau_0_jet_bdt_medium==1&&tau_0_n_charged_tracks=={2}))"
+TAU_CUT = "((((((((n_vx > 0)&&(tau_0_p4->Pt() > {0} && tau_0_p4->Pt() < {1}))&&(tau_0_ele_olr_pass==1))&&(n_jets > 2))&&((n_electrons + n_muons)==0))&&(n_bjets_DL1r_FixedCutBEff_70==0))&&(met_p4->Et() < 80))&&(tau_0_met_mt > 50))&&(((run_number<288000 && HLT_4j85) || ((run_number>288000 && HLT_4j100)))&&(tau_0_jet_bdt_medium==1&&tau_0_n_charged_tracks=={2}))"
 
 tfile = ROOT.TFile(IFILE, "READ")
 tree = tfile.NOMINAL
 
-all_taus = tree.GetEntries("((((((((n_vx > 0)&&(tau_0_p4->Pt() > 30 ))&&(tau_0_ele_olr_pass==1))&&(n_jets > 2))&&((n_electrons + n_muons)==0))&&(n_bjets==0))&&(met_p4->Et() < 80))&&(tau_0_met_mt > 50))&&(((run_number<288000 &&HLT_4j85)|| ((run_number>288000 && HLT_4j100)))&&(tau_0_jet_bdt_medium==1&&tau_0_n_charged_tracks==1))")
+all_taus = tree.GetEntries("((((((((n_vx > 0)&&(tau_0_p4->Pt() > 30 ))&&(tau_0_ele_olr_pass==1))&&(n_jets > 2))&&((n_electrons + n_muons)==0))&&(n_bjets_DL1r_FixedCutBEff_70==0))&&(met_p4->Et() < 80))&&(tau_0_met_mt > 50))&&(((run_number<288000 &&HLT_4j85)|| ((run_number>288000 && HLT_4j100)))&&(tau_0_jet_bdt_medium==1&&tau_0_n_charged_tracks==1))")
 
-all_antitaus = tree.GetEntries("((((((((n_vx > 0)&&(tau_0_p4->Pt() > 30 ))&&(tau_0_ele_olr_pass==1))&&(n_jets > 2))&&((n_electrons + n_muons)==0))&&(n_bjets==0))&&(met_p4->Et() < 80))&&(tau_0_met_mt > 50))&&(((run_nu\
+all_antitaus = tree.GetEntries("((((((((n_vx > 0)&&(tau_0_p4->Pt() > 30 ))&&(tau_0_ele_olr_pass==1))&&(n_jets > 2))&&((n_electrons + n_muons)==0))&&(n_bjets_DL1r_FixedCutBEff_70==0))&&(met_p4->Et() < 80))&&(tau_0_met_mt > 50))&&(((run_nu\
 mber<288000 && HLT_4j85) || ((run_number>288000 && HLT_4j100)))&&(tau_0_jet_bdt_loose==0&&tau_0_jet_bdt_score_trans>0.02&&tau_0_n_charged_tracks==1))")
 
 print tree.GetEntries()

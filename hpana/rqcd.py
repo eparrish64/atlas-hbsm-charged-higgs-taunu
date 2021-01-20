@@ -159,7 +159,7 @@ def fake_sources(samples, category, ftypes={}, tauid=None, antitau=None):
 def get_cr_ffs(hist_sets, 
                 control_regions=[], 
             #LD tau_jet_bdt_score_trans_wps={"NOMINAL":0.02, "1up": 0.01, "1down": 0.03}, 
-              	tau_jet_rnn_score={"NOMINAL":0.01, "1up": 0.01, "1down": 0.01}, 
+              	tau_jet_rnn_score_trans={"NOMINAL":0.01, "1up": 0.01, "1down": 0.01}, 
 	 	n_charged_tracks=[], 
                 subtract_mc=True,
                 cache_file=None,
@@ -283,7 +283,7 @@ def get_cr_ffs(hist_sets,
         
         # - - gather hists per tau pT and ntracks bin and also tau_jet_bdt_score WPs
         #LD for jkey, jbs_wp in tau_jet_bdt_score_trans_wps.iteritems(): switch to RNN
-	for jkey, jbs_wp in tau_jet_rnn_score.iteritems():
+	for jkey, jbs_wp in tau_jet_rnn_score_trans.iteritems():
             # jkey = "tauJetBDT_0%i"%(100*jbs_wp)
             ffs_dict[cr_name][jkey] = {}
             if jkey=="NOMINAL" and subtract_mc:
@@ -322,6 +322,7 @@ def get_cr_ffs(hist_sets,
                     if antitau_bin_cont==0:
                         log.warning("{} bin for antitau is empty, setting tau/antitau to 1!".format(pkey))
                         tau_antitau_ratio = 1.
+                        tau_antitau_ratio_err = 1.
                         #tau_antitau_err  = 0.
                     else:
                         tau_antitau_ratio = "%.6f"%(tau_bin_cont/float(antitau_bin_cont))
@@ -946,7 +947,7 @@ def validate_template_fit(cr_hists_dict, target_hists_dict, chi2s,
 ##--------------------------------------------------------------------------
 def plot_alpha(alphas, cr_ffs,
                regions=[], pdir="ffplots", suffix=None, data_info=None, formats=[".png"],logy=True, 
-               colors=[ROOT.kRed, ROOT.kGreen, ROOT.kBlue, ROOT.kOrange, ROOT.kMagenta]):
+               colors=[ROOT.kRed, ROOT.kBlue, ROOT.kBlack, ROOT.kMagenta, ROOT.kOrange, ROOT.kGreen, ROOT.kYellow, ROOT.kGray]):
     """plot alpha as a function of pT for 1p/3p taus
     """
     
@@ -1046,8 +1047,9 @@ def plot_alpha(alphas, cr_ffs,
         canvas.SetLogx() #<! CALL IT BEFORE DOING ANYTHING WITH AXIS RANGE!
         ah.GetYaxis().SetTitle("#alpha_{MJ}")
         ah.GetXaxis().SetTitle("p^{#tau}_{T} [GeV]")
-	ah.GetXaxis().SetRangeUser(30, 4000)
-        ah.GetYaxis().SetRangeUser(-4, 4) 
+	ah.GetXaxis().SetRangeUser(0, 4000)
+        ah.GetYaxis().SetRangeUser(-4, 4)
+# MM pT binning needs to be fixed 
             
     for label in labels:
         label.Draw("SAME")
@@ -1077,7 +1079,7 @@ def plot_alpha(alphas, cr_ffs,
         canvas.SetLogx()
         fh.GetYaxis().SetTitle("Combined Fake-Factor")
         fh.GetXaxis().SetTitle("p^{#tau}_{T} [GeV]")
-        fh.GetXaxis().SetRangeUser(30, 4000)
+        fh.GetXaxis().SetRangeUser(0, 4000)
         fh.GetYaxis().SetRangeUser(0.0, 0.25)
         #fh.GetYaxis().SetRangeUser(0.0, 0.04) 
         

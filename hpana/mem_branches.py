@@ -105,6 +105,8 @@ MEM_BRANCHES["taulep"] = [
     "jet_sf_NOMINAL_central_jets_global_ineffSF_JVT",
     "jet_sf_NOMINAL_global_effSF_MV2c10",
     "jet_sf_NOMINAL_global_ineffSF_MV2c10",
+    "jet_sf_NOMINAL_global_effSF_DL1r_FixedCutBEff_70",
+    "jet_sf_NOMINAL_global_ineffSF_DL1r_FixedCutBEff_70",
     
     "met_HLT_et",
     "met_L1_et",
@@ -143,6 +145,7 @@ MEM_BRANCHES["taulep"] = [
     "mu_0_sf_NOMINAL_MuEffSF_HLT_mu26_imedium_QualTight_IsoNone",
     "mu_0_sf_NOMINAL_MuEffSF_HLT_mu26_ivarmedium_OR_HLT_mu50_QualTight_IsoNone",
     "mu_0_sf_NOMINAL_MuEffSF_HLT_mu26_ivarmedium_QualTight_IsoNone",
+    "mu_0_sf_NOMINAL_MuEffSF_HLT_mu26_ivarmedium_QualTight",
     "mu_0_sf_NOMINAL_MuEffSF_HLT_mu50_QualTight_IsoNone",
     "mu_0_sf_NOMINAL_MuEffSF_IsoFixedCutTight",
 
@@ -161,6 +164,7 @@ MEM_BRANCHES["taulep"] = [
     "mu_0_type",
     
     "n_bjets",
+    "n_bjets_DL1r_FixedCutBEff_70",
     "n_electrons",
     "n_jets",
     "n_muons",
@@ -183,10 +187,11 @@ MEM_BRANCHES["taulep"] = [
     "tau_0_decay_mode",
     "tau_0_ele_BDTEleScoreTrans_run2",
     "tau_0_ele_bdt_eff_sf",
-    "tau_0_ele_bdt_loose",
-    "tau_0_ele_bdt_medium",
-    "tau_0_ele_bdt_score",
-    "tau_0_ele_bdt_tight",
+    "tau_0_ele_bdt_loose_retuned",
+    "tau_0_ele_bdt_medium_retuned",
+    "tau_0_ele_bdt_score_retuned",
+    "tau_0_ele_bdt_score_trans_retuned",
+    "tau_0_ele_bdt_tight_retuned",
     "tau_0_ele_col_m",
     "tau_0_ele_col_x1",
     "tau_0_ele_col_x2",
@@ -316,10 +321,13 @@ MEM_BRANCHES["taujet"] = [
     "jet_sf_NOMINAL_central_jets_global_ineffSF_JVT",
     "jet_sf_NOMINAL_global_effSF_MV2c10",
     "jet_sf_NOMINAL_global_ineffSF_MV2c10",
+    "jet_sf_NOMINAL_global_effSF_DL1r_FixedCutBEff_70",
+    "jet_sf_NOMINAL_global_ineffSF_DL1r_FixedCutBEff_70",
 
     "met_p4",
 
     "n_bjets",
+    "n_bjets_DL1r_FixedCutBEff_70",
     "n_electrons",
     "n_jets",
 
@@ -892,6 +900,7 @@ VETO_BRANCHES["taulep"] = [
 	"mu_0_sf_NOMINAL_MuEffSF_IsoFixedCutPflowTight",
 	# "mu_0_sf_NOMINAL_MuEffSF_IsoGradient",
 	"mu_0_sf_NOMINAL_MuEffSF_IsoLoose",
+        "mu_0_sf_NOMINAL_MuEffSF_IsoPflowTight_FixedRad",
 	"mu_0_sf_NOMINAL_MuEffSF_Reco_QualHighPt",
 	"mu_0_sf_NOMINAL_MuEffSF_Reco_QualMedium",
 	# "mu_0_sf_NOMINAL_MuEffSF_Reco_QualTight",

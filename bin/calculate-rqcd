@@ -39,7 +39,10 @@ from hpana.categories import (
     Category_SS_TAUMU,
     Category_BVETO_MT100,
     Category_TAUJET_BASE,
-    Category_TAULEP_BASE,)
+    Category_TAULEP_BASE,
+    Category_TAUJET_PRESEL,
+    Category_TAULEP_PRESEL,
+)
     
 from hpana.dataset_hists import dataset_hists
 from hpana.config import Configuration
@@ -80,12 +83,12 @@ taulep_analysis.data.blind = False
 ##------------------------------------------------------------------------------------
 ## - - consts 
 ##------------------------------------------------------------------------------------
-COLORS = [ROOT.kRed, ROOT.kBlue, ROOT.kBlack, ROOT.kMagenta, ROOT.kOrange, ROOT.kGreen]
+COLORS = [ROOT.kRed, ROOT.kBlue, ROOT.kBlack, ROOT.kMagenta, ROOT.kOrange, ROOT.kGreen, ROOT.kYellow, ROOT.kGray]
 LOOSE_ANTITAU = ROOT.TCut("tau_0_jet_rnn_loose==0")
 N_CHARGED_TRACKS = [1, 3] 
 TAU_PT_BINS = {
-    "1":[30, 35, 40, 45, 50, 60, 80, 100, 200, 3500],
-    "3":[30, 35, 40, 60, 80, 100, 3500],
+    "1":[0, 30, 35, 40, 45, 50, 60, 80, 100, 200, 3500],
+    "3":[0, 30, 35, 40, 60, 80, 100, 3500],
 }
 
 ## - - - - CR and target selection regions
@@ -303,11 +306,11 @@ if __name__=="__main__":
                                pdir=FFs_ARGS.pdir,
                                validation_plots=FFs_ARGS.validation_plots)
         if FFs_ARGS.validation_plots:
-            tj_regions = [Category_BVETO, Category_BVETO_MT100, Category_SR_TAUJET, Category_TAUJET_BASE]
+            tj_regions = [Category_BVETO, Category_BVETO_MT100, Category_SR_TAUJET, Category_TAUJET_PRESEL]
             plot_alpha(
                 alphas, cr_ffs, regions=tj_regions, pdir=FFs_ARGS.pdir, formats=[".png"], suffix="taujet", data_info=taujet_analysis.data.info, colors=COLORS)
 
-            tl_regions = [Category_SS_TAUEL, Category_SS_TAUMU, Category_SR_TAULEP]
+            tl_regions = [Category_SS_TAUEL, Category_SS_TAUMU, Category_SR_TAULEP, Category_TAULEP_PRESEL]
             plot_alpha(
                 alphas, cr_ffs, regions=tl_regions, pdir=FFs_ARGS.pdir, formats=[".png"], suffix="taulep", data_info=taulep_analysis.data.info, colors=COLORS)
     

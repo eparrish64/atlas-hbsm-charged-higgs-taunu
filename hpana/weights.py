@@ -97,35 +97,35 @@ class Weight(object):
     }  # W_JET
 
     W_BJET = {
-        "jet_sf_NOMINAL_global_effSF_MV2c10":(
-            "jet_sf_NOMINAL_global_effSF_MV2c10", #<! NOMINAL 
-            ("jet_effSF_Eigen_B_0_1down",  "jet_sf_FT_EFF_Eigen_B_0_1down_global_effSF_MV2c10", ),
-            ("jet_effSF_Eigen_B_0_1up",  "jet_sf_FT_EFF_Eigen_B_0_1up_global_effSF_MV2c10", ),
+        "jet_sf_NOMINAL_global_effSF_DL1r_FixedCutBEff_70":(
+            "jet_sf_NOMINAL_global_effSF_DL1r_FixedCutBEff_70", #<! NOMINAL 
+            ("jet_effSF_Eigen_B_0_1down",  "jet_sf_FT_EFF_Eigen_B_0_1down_global_effSF_DL1r_FixedCutBEff_70", ),
+            ("jet_effSF_Eigen_B_0_1up",  "jet_sf_FT_EFF_Eigen_B_0_1up_global_effSF_DL1r_FixedCutBEff_70", ),
 
-            ("jet_effSF_Eigen_C_0_1down",  "jet_sf_FT_EFF_Eigen_C_0_1down_global_effSF_MV2c10", ),
-            ("jet_effSF_Eigen_C_0_1up",  "jet_sf_FT_EFF_Eigen_C_0_1up_global_effSF_MV2c10", ),
+            ("jet_effSF_Eigen_C_0_1down",  "jet_sf_FT_EFF_Eigen_C_0_1down_global_effSF_DL1r_FixedCutBEff_70", ),
+            ("jet_effSF_Eigen_C_0_1up",  "jet_sf_FT_EFF_Eigen_C_0_1up_global_effSF_DL1r_FixedCutBEff_70", ),
 
-            ("jet_effSF_Eigen_Light_0_1down",  "jet_sf_FT_EFF_Eigen_Light_0_1down_global_effSF_MV2c10", ),
-            ("jet_effSF_Eigen_Light_0_1up",  "jet_sf_FT_EFF_Eigen_Light_0_1up_global_effSF_MV2c10", ),
+            ("jet_effSF_Eigen_Light_0_1down",  "jet_sf_FT_EFF_Eigen_Light_0_1down_global_effSF_DL1r_FixedCutBEff_70", ),
+            ("jet_effSF_Eigen_Light_0_1up",  "jet_sf_FT_EFF_Eigen_Light_0_1up_global_effSF_DL1r_FixedCutBEff_70", ),
 
-            ("jet_effSF_extrapolation_1down",  "jet_sf_FT_EFF_extrapolation_1down_global_effSF_MV2c10", ),
-            ("jet_effSF_extrapolation_1up",  "jet_sf_FT_EFF_extrapolation_1up_global_effSF_MV2c10", ),            
+            ("jet_effSF_extrapolation_1down",  "jet_sf_FT_EFF_extrapolation_1down_global_effSF_DL1r_FixedCutBEff_70", ),
+            ("jet_effSF_extrapolation_1up",  "jet_sf_FT_EFF_extrapolation_1up_global_effSF_DL1r_FixedCutBEff_70", ),            
             ),
 
-        "jet_sf_NOMINAL_global_ineffSF_MV2c10":(
-            "jet_sf_NOMINAL_global_ineffSF_MV2c10",
+        "jet_sf_NOMINAL_global_ineffSF_DL1r_FixedCutBEff_70":(
+            "jet_sf_NOMINAL_global_ineffSF_DL1r_FixedCutBEff_70",
 
-            ("jet_ineffSF_Eigen_B_0_1down",  "jet_sf_FT_EFF_Eigen_B_0_1down_global_ineffSF_MV2c10", ),
-            ("jet_ineffSF_Eigen_B_0_1up",  "jet_sf_FT_EFF_Eigen_B_0_1up_global_ineffSF_MV2c10", ),
+            ("jet_ineffSF_Eigen_B_0_1down",  "jet_sf_FT_EFF_Eigen_B_0_1down_global_ineffSF_DL1r_FixedCutBEff_70", ),
+            ("jet_ineffSF_Eigen_B_0_1up",  "jet_sf_FT_EFF_Eigen_B_0_1up_global_ineffSF_DL1r_FixedCutBEff_70", ),
 
-            ("jet_ineffSF_Eigen_C_0_1down",  "jet_sf_FT_EFF_Eigen_C_0_1down_global_ineffSF_MV2c10", ),
-            ("jet_ineffSF_Eigen_C_0_1up",  "jet_sf_FT_EFF_Eigen_C_0_1up_global_ineffSF_MV2c10", ),
+            ("jet_ineffSF_Eigen_C_0_1down",  "jet_sf_FT_EFF_Eigen_C_0_1down_global_ineffSF_DL1r_FixedCutBEff_70", ),
+            ("jet_ineffSF_Eigen_C_0_1up",  "jet_sf_FT_EFF_Eigen_C_0_1up_global_ineffSF_DL1r_FixedCutBEff_70", ),
 
-            ("jet_ineffSF_Eigen_Light_0_1down",  "jet_sf_FT_EFF_Eigen_Light_0_1down_global_ineffSF_MV2c10", ),
-            ("jet_ineffSF_Eigen_Light_0_1up",  "jet_sf_FT_EFF_Eigen_Light_0_1up_global_ineffSF_MV2c10", ),
+            ("jet_ineffSF_Eigen_Light_0_1down",  "jet_sf_FT_EFF_Eigen_Light_0_1down_global_ineffSF_DL1r_FixedCutBEff_70", ),
+            ("jet_ineffSF_Eigen_Light_0_1up",  "jet_sf_FT_EFF_Eigen_Light_0_1up_global_ineffSF_DL1r_FixedCutBEff_70", ),
 
-            ("jet_ineffSF_extrapolation_1down",  "jet_sf_FT_EFF_extrapolation_1down_global_ineffSF_MV2c10", ),
-            ("jet_ineffSF_extrapolation_1up",  "jet_sf_FT_EFF_extrapolation_1up_global_ineffSF_MV2c10", ),            
+            ("jet_ineffSF_extrapolation_1down",  "jet_sf_FT_EFF_extrapolation_1down_global_ineffSF_DL1r_FixedCutBEff_70", ),
+            ("jet_ineffSF_extrapolation_1up",  "jet_sf_FT_EFF_extrapolation_1up_global_ineffSF_DL1r_FixedCutBEff_70", ),            
             ),
 
     }  # W_BJET

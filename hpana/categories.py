@@ -141,7 +141,7 @@ ANTI_TAU = ROOT.TCut("tau_0_jet_rnn_score_trans > 0.01 && tau_0_jet_rnn_loose==0
 VETO_TAU = ROOT.TCut("n_taus==0")
 TAU_EL_OLR_PASS = {
     "mc15": ROOT.TCut("tau_0_ele_olr_pass==1"),
-    "mc16": ROOT.TCut("tau_0_ele_bdt_medium==1"),
+    "mc16": ROOT.TCut("tau_0_ele_bdt_medium_retuned==1"),
     # "mc16": ROOT.TCut("tau_0_ele_olr_pass==1"),
 
 }
@@ -247,9 +247,9 @@ NUM_JETS2  = ROOT.TCut("n_jets > 1")
 NUM_JETS3  = ROOT.TCut("n_jets > 2")
 NUM_JETS4  = ROOT.TCut("n_jets > 3")
 
-NUM_BJETS1 = ROOT.TCut("n_bjets > 0")
-NUM_BJETS2 = ROOT.TCut("n_bjets > 1")
-BVETO = ROOT.TCut("n_bjets==0")
+NUM_BJETS1 = ROOT.TCut("n_bjets_DL1r_FixedCutBEff_70 > 0")
+NUM_BJETS2 = ROOT.TCut("n_bjets_DL1r_FixedCutBEff_70 > 1")
+BVETO = ROOT.TCut("n_bjets_DL1r_FixedCutBEff_70==0")
 
 JET_PT25 = {
     "mc15": ROOT.TCut("jet_0_pt > 25000"),
@@ -759,7 +759,7 @@ MET_TRIGG_EFF_CUTS_BASE = [
     #    ROOT.TCut("(n_electrons==1 && el_0_p4->Pt() > 26 && el_0_id_loose && el_0_trig_trigger_matched==1 && tau_0_q*el_0_q==-1)"\
     #              "|| (n_muons==1 && mu_0_p4->Pt() > 30 && mu_0_id_loose && mu_0_trig_trigger_matched==1 && tau_0_q*mu_0_q==-1)"),
     
-    ROOT.TCut("n_jets>1 && n_bjets>1"),
+    ROOT.TCut("n_jets>1 && n_bjets_DL1r_FixedCutBEff_70>1"),
     ROOT.TCut("jet_0_p4->Pt() > 25 && jet_1_p4->Pt() > 25"),
     
     # - - only for the bkg modelling in this region (not applied for calcualting trigger efficency).
@@ -865,7 +865,7 @@ CUTFLOW = {
             #ak ("tauID", TCut("tau_0_jet_bdt_medium==1")),
             ("tauID", ROOT.TCut("tau_0_jet_rnn_medium==1")),
             ("taupT40", TAU_PT40["mc16"]+TAU_BASE["mc16"]),  
-            ("lepVeto", ROOT.TCut("(n_muons+n_electrons)==0 &&tau_0_ele_bdt_medium==1")),
+            ("lepVeto", ROOT.TCut("(n_muons+n_electrons)==0 &&tau_0_ele_bdt_medium_retuned==1")),
             # ("3jets", NUM_JETS3),
             # ("jetPt25", JET_PT25),
             ("1bjets", NUM_BJETS1),

@@ -385,7 +385,7 @@ def plot_scores(models,
 ##-----------------------------------------------
 ##
 ##-----------------------------------------------
-def get_models(model_files, backend="sklearn", isNN=False):
+def get_models(model_files, backend="sklearn", isNN=False, doCleanup=False):
     """
     retrive all trained models from the given path.
     Parameters
@@ -449,6 +449,9 @@ def get_models(model_files, backend="sklearn", isNN=False):
             with open(model_file, "r") as mfile:
                 #mfileh5 = mfile.replace("pkl", "h5")
                 model = cPickle.load(mfile)
+                if doCleanup: # remove training/validation data, to save memory
+                    for key in model.__dict__.keys():
+                        if key.endswith("_df"): del model.__dict__[key]
                 if isNN == True:
                     mfileh5 = model_file.replace("pkl", "h5")
                     try:
@@ -795,13 +798,28 @@ def fill_scores_mult(tree, all_models, hist_templates,
           for model in all_models[mtag]:
               # Loop over models, evaluating events and filling trees
               # In theory we could do this periodically while looping over events, if memory becomes a problem
-              events = infos[mtag][model.kfolds][model.fold_num]
+              events = infos[mtag][model.ntracks][model.kfolds][model.fold_num]
+              #events = infos[mtag][model.kfolds][model.fold_num]
               if len(events[0]) == 0: continue # No events passed the selection
-              scores = model.predict_proba(events[0])
-              for idx in xrange(len(scores)):
-                  hist_templates[mtag].Fill(scores[idx][1], events[1][idx]) # <! probability of belonging to class 1 (SIGNAL)
-                  if idx%100000==0:
-                      log.debug("%r : %r "%(events[0][idx], scores[idx]))
+
+              #Method 1: More elegant, but slower, modify also hpana/dataset_hists.py
+              #scores = model.predict_proba(events[0])
+              #for idx in xrange(len(scores)):
+              #    hist_templates[mtag].Fill(scores[idx][1], events[1][idx]) # <! probability of belonging to class 1 (SIGNAL)
+              #    if idx%100000==0:
+              #        log.debug("%r : %r "%(events[0][idx], scores[idx]))
+              #Method1: End
+
+              #Method 2: Hacked, less elegant, but faster, modify also hpana/dataset_hists.py
+              for key in list(hist_templates.keys()):
+                events[0][:,-1] = hist_templates[key].GetTitle().split("to")[1]
+                #print "DEBUG:", model, model.__dict__
+                scores = model.predict_proba(events[0])
+                for idx in xrange(len(scores)):
+                    hist_templates[key].Fill(scores[idx][1], events[1][idx]) # <! probability of belonging to class 1 (SIGNAL)
+                    if idx%100000==0:
+                        log.debug("%r : %r "%(events[0][idx], scores[idx]))
+              #Method2: End
 
     # End loop over models
 

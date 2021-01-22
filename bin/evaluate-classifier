@@ -331,7 +331,7 @@ def main():
             samples = analysis.samples #get_signals()
 
         if ECLF_ARGS.cluster == False:
-            models, Keras_models = get_models(ECLF_ARGS.models, isNN=ECLF_ARGS.eval_nn)
+            models, Keras_models = get_models(ECLF_ARGS.models, isNN=ECLF_ARGS.eval_nn, doCleanup=True)
             ## prepare hist workers 
             analysis.setWorkers(samples=samples, fields=fields, categories=categories, systematics=systematics)
             ana_workers = analysis.getWorkers()

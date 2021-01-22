@@ -371,6 +371,10 @@ def dataset_hists_direct(hist_worker,
                     event_weight.SetQuickLoad(True)
 
                     if clf_Keras_models:
+                        used_models = clf_Keras_models
+                    else:
+                        used_models = clf_models
+                    if used_models:
                         # - - create a TEventList of the events passing the selection
                         tree.Draw(">>event_list", selection)
                         event_list = ROOT.gDirectory.Get("event_list") # Used to skip over unselected events
@@ -379,7 +383,7 @@ def dataset_hists_direct(hist_worker,
                         if cat_hists[0].sample.startswith("QCD"):
                             correct_upsilon = True
 
-                        for mtag in clf_Keras_models:
+                        for mtag in used_models:
                             m_hists =  filter(lambda hs: mtag in hs.variable, cat_hists )
                             m_hists =  cat_hists
                             if len(m_hists)==0:

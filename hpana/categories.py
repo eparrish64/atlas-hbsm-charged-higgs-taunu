@@ -146,9 +146,11 @@ TAU_EL_OLR_PASS = {
 
 }
 
+TAU_UPSILON = ROOT.TCut("tau_0_upsilon_pt_based<=1.2")
+
 TAU_BASE = {}
 for mcc in ["mc15", "mc16"]:
-    TAU_BASE[mcc] = TAU_PT30[mcc] + TAU_ETA[mcc] + TAU_TRACKS[mcc] + TAU_EL_OLR_PASS[mcc]
+    TAU_BASE[mcc] = TAU_PT30[mcc] + TAU_ETA[mcc] + TAU_TRACKS[mcc] + TAU_EL_OLR_PASS[mcc] + TAU_UPSILON
     
 ##------------------------------------------------------------------------------------
 ##  - - lepton

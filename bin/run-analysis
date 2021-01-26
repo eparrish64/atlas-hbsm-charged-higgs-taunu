@@ -297,8 +297,10 @@ if __name__ == "__main__":
     if ANA_ARGS.plots:
         log.info(20*"*" + "...Processing plots..."+ 20*"*")
         if not ANA_ARGS.hists_file:
-            if len (glob.glob("%s/HIST*"%ANA_ARGS.outdir)) != 0:
-                raise NameError("There are multiple histogram files in %s. Please specify a file with --hists-file option.")
+            if len(glob.glob("%s/HIST*"%ANA_ARGS.outdir)) > 1:
+                raise NameError("There are multiple histogram files in %s. Please specify a file with --hists-file option." %(ANA_ARGS.outdir))
+            elif len(glob.glob("%s/HIST*"%ANA_ARGS.outdir)) == 0:
+                raise NameError("There are no histogram files in %s. Please run with --merge-hists option." %(ANA_ARGS.outdir))
             else:
                 hists_file = glob.glob("%s/HIST*"%ANA_ARGS.outdir)[0]    
         else:

@@ -1,6 +1,6 @@
 """
-List of braches to read when caching TTrees,
-MAKE it as smalle as possible if you're looking for an actuall boost.  
+List of branches to read when caching TTrees,
+MAKE it as small as possible if you're looking for an actual boost.  
 """
 
 
@@ -148,6 +148,7 @@ MEM_BRANCHES["taulep"] = [
     "mu_0_sf_NOMINAL_MuEffSF_HLT_mu26_ivarmedium_QualTight",
     "mu_0_sf_NOMINAL_MuEffSF_HLT_mu50_QualTight_IsoNone",
     "mu_0_sf_NOMINAL_MuEffSF_IsoFixedCutTight",
+    "mu_0_sf_NOMINAL_MuEffSF_IsoPflowTight_FixedRad",
 
     "mu_0_sf_NOMINAL_MuEffSF_Reco_QualHighPt",
     "mu_0_sf_NOMINAL_MuEffSF_Reco_QualTight",
@@ -900,7 +901,7 @@ VETO_BRANCHES["taulep"] = [
 	"mu_0_sf_NOMINAL_MuEffSF_IsoFixedCutPflowTight",
 	# "mu_0_sf_NOMINAL_MuEffSF_IsoGradient",
 	"mu_0_sf_NOMINAL_MuEffSF_IsoLoose",
-        "mu_0_sf_NOMINAL_MuEffSF_IsoPflowTight_FixedRad",
+    # "mu_0_sf_NOMINAL_MuEffSF_IsoPflowTight_FixedRad",
 	"mu_0_sf_NOMINAL_MuEffSF_Reco_QualHighPt",
 	"mu_0_sf_NOMINAL_MuEffSF_Reco_QualMedium",
 	# "mu_0_sf_NOMINAL_MuEffSF_Reco_QualTight",

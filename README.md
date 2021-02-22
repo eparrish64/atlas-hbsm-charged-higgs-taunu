@@ -26,6 +26,9 @@ Workflow
 It's highly recommended to create a `workAREA` dir and run the scripts from there in order to keep the package clean.
 
 #### creating the database
+If you need to use the HDBS grid location for the ntuples you must first run. i.e. ``create-symlinks --vers v09 taulep`` 
+This will create symbolic links in the location `hpana/db/symlinks/`
+
 After the ntuples are finished and downloaded, update the paths in
 ``hpana/db/datasets_config.yml`` and update the datasets database
 

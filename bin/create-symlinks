@@ -1,0 +1,56 @@
+#!/usr/bin/env python
+
+import os, sys
+from argparse import ArgumentParser
+from hpana import log
+from hpana.db.grid_datasets import datasets
+
+# ## setup cmd args
+parser = ArgumentParser()
+parser.add_argument('channel', choices=("taujet", "taulep"))
+parser.add_argument('--vers', type=str, default="v09")
+parser.add_argument('--log', default="INFO", choices=("DEBUG", "INFO", "WARNING", "ERROR"))
+args = parser.parse_args()
+
+__HERE = os.path.dirname(os.path.abspath(__file__))
+
+
+def CreateFileLinks(chan, ver, dataType=["MC","Data"]):
+	for ds in datasets[ver][chan][dataType]:
+		log.info("Creating symlink for %s"%ds)
+		try:
+			ds_name = ds.split(":")[1].strip()
+		except:
+			ds_name = ds.strip()
+		os.system("mkdir -p {0} && \
+					cd {0} && \
+					rucio list-file-replicas --rse CERN-PROD_PHYS-HDBS --link /eos/:/eos/ {1} && \
+					cd ../ ;".format("%s/../hpana/db/symlinks/%s/%s/%s"%(__HERE,ver,dataType,ds_name), ds_name)
+		           )
+	return 0
+
+if __name__ == "__main__":
+
+	rucio_exit_code = os.system("rucio --version")
+	if rucio_exit_code != 0:
+		log.warning("Rucio is not setup")
+		log.warning("Please make sure you have done 'lsetup rucio'")
+		sys.exit(1)
+
+	if not datasets[args.vers]:
+		log.error("%s datasets are not defined. Please add them to hpana/db/grid_datasets.py" %(args.vers))
+		sys.exit(1)
+	if not datasets[args.vers][args.channel]:
+		log.error("%s %s datasets are not defined. Please add them to hpana/db/grid_datasets.py" %(args.vers, args.channel) )
+		sys.exit(1)
+	if not datasets[args.vers][args.channel]["MC"]:
+		log.error("%s %s MC datasets are not defined. Please add them to hpana/db/grid_datasets.py" %(args.vers, args.channel) )
+		sys.exit(1)
+	if not datasets[args.vers][args.channel]["Data"] and args.vers != "v10":
+		log.error("%s %s Data datasets are not defined. Please add them to hpana/db/grid_datasets.py" %(args.vers, args.channel) )
+		sys.exit(1)
+
+	log.info("This will take a long time. Go grab some coffee :)")
+	CreateFileLinks(args.channel, args.vers, "MC")
+	if args.vers !="v10":
+		CreateFileLinks(args.channel, args.vers, "Data")

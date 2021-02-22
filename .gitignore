@@ -50,3 +50,4 @@ reference_testresults*/
 testresults*/
 hpana/db/DataBase/
 hpana/db/xsec/xsec.pkl
+hpana/db/symlinks

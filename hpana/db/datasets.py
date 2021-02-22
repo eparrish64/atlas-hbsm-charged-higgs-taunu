@@ -404,7 +404,9 @@ class Database(dict):
 
                         ## if a dataset has more than N_DS_FILES files then break it to some sub-datasets in order to boost the analysis
                         num_files = len(m_ds.files)
-                        if  num_files > N_DS_FILES:
+                        if num_files == 0:
+                            raise NameError("No files were found for %s"%(m_ds.name))
+                        elif  num_files > N_DS_FILES:
                             sub_dss = []
                             log.info("Breaking %s dataset to %i sub-datasets ..."%(uname, 1+num_files/N_DS_FILES))
                             cnt = 0 
@@ -451,6 +453,8 @@ class Database(dict):
                             self[uname] = m_ds
 
                         log.info(m_ds)
+                else:
+                    log.info("No match for %s, %s" %(NTUP_PATTERN, basename))
 
         # - - - - - - - - DATA
         log.info('--------------------------------> DATA')
@@ -705,8 +709,14 @@ class Dataset(Serializable):
             if not os.path.exists(dir):
                 raise IOError("%s is not readable" % dir)
             for path, dirs, files in os.walk(dir):
-                _files += [os.path.join(path, f) for f in
+
+                try:
+                    _files += [os.path.realpath(os.path.join(path, f)) for f in
                            fnmatch.filter(files, self.file_pattern)]
+                    log.debug("Found symlink for %s! Using absolute real path for files." %(path))
+                except:
+                    _files += [os.path.join(path, f) for f in
+                               fnmatch.filter(files, self.file_pattern)]
         return _files
     
     def __repr__(self):

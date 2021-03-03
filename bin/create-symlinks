@@ -25,7 +25,7 @@ def CreateFileLinks(chan, ver, dataType=["MC","Data"]):
 		os.system("mkdir -p {0} && \
 					cd {0} && \
 					rucio list-file-replicas --rse CERN-PROD_PHYS-HDBS --link /eos/:/eos/ {1} && \
-					cd ../ ;".format("%s/../hpana/db/symlinks/%s/%s/%s"%(__HERE,ver,dataType,ds_name), ds_name)
+					cd ../ ;".format("%s/../hpana/db/symlinks/%s/%s/%s/%s"%(__HERE,chan,ver,dataType,ds_name), ds_name)
 		           )
 	return 0
 

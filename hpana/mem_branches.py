@@ -91,15 +91,20 @@ MEM_BRANCHES["taulep"] = [
     "event_number",
 
     "jet_0_b_tag_score",
-    "jet_0_btag_discriminant_MV2c10",
+    "jet_0_b_tagged_DL1r_FixedCutBEff_70",
     "jet_0_flavorlabel",
     "jet_0_p4",
     "jet_0_width",
 
     "jet_1_b_tag_score",
-    "jet_1_btag_discriminant_MV2c10",
+    "jet_1_b_tagged_DL1r_FixedCutBEff_70",
     "jet_1_p4",
     "jet_1_width",
+
+    "jet_2_b_tag_score",
+    "jet_2_b_tagged_DL1r_FixedCutBEff_70",
+    "jet_2_p4",
+    "jet_2_width",
     
     "jet_sf_NOMINAL_central_jets_global_effSF_JVT",
     "jet_sf_NOMINAL_central_jets_global_ineffSF_JVT",
@@ -219,6 +224,11 @@ MEM_BRANCHES["taulep"] = [
     "tau_0_mu_m",
     "tau_0_n_all_tracks",
     "tau_0_n_charged_tracks",
+    "tau_0_charged_tracks_nInnermostPixelHits",
+    "tau_0_charged_tracks_nPixelHits",
+    "tau_0_charged_tracks_nSCTHits",
+    "tau_0_charged_tracks_pt_err",
+    "tau_0_decay_mode",
 
     "tau_0_n_wide_tracks",
     "tau_0_origin",

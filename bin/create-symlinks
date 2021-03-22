@@ -55,4 +55,4 @@ if __name__ == "__main__":
 	if args.vers != "v10":
 		CreateFileLinks(args.channel, args.vers, "Data")
 	else:
-		sys.exti(0)
+		sys.exit(0)

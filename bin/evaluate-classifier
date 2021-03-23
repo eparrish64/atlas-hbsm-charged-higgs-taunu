@@ -210,7 +210,7 @@ def main():
 
                 src_ds = ["bin", "hpana", "aux", "setup.sh", ECLF_ARGS.pickled_analysis]
                 src_ds = " ".join(src_ds)
-                os.system("cd {src_dir} && tar -cf {target_tar} {source_files} && cd - && tar --append --file={target_tar}".format(
+                os.system("cd {src_dir} && tar --exclude 'symlinks/*' -cf {target_tar} {source_files} && cd - && tar --append --file={target_tar}".format(
                     src_dir=__HERE+"/../", target_tar=source_code_tarball, source_files=src_ds))
 
 
@@ -446,7 +446,7 @@ def main():
 
                 src_ds = ["bin", "hpana", "aux", "setup.sh", ECLF_ARGS.pickled_analysis]
                 src_ds = " ".join(src_ds)
-                os.system("cd {src_dir} && tar -cf {target_tar} {source_files} && cd - && tar --append --file={target_tar}".format(
+                os.system("cd {src_dir} && tar --exclude 'symlinks/*' -cf {target_tar} {source_files} && cd - && tar --append --file={target_tar}".format(
                     src_dir=__HERE+"/../", target_tar=source_code_tarball, source_files=src_ds))
 
 

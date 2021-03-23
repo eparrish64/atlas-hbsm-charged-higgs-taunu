@@ -25,8 +25,8 @@ log.setLevel(ANA_ARGS.log)
 
 # - - - - - - - - Speed things up a bit
 import ROOT
-ROOT.SetSignalPolicy(ROOT.kSignalFast)
 ROOT.gROOT.SetBatch(True)
+ROOT.SetSignalPolicy(ROOT.kSignalFast)
 ROOT.gROOT.SetStyle("ATLAS")
 log.debug("ROOT is in batch mode")
 
@@ -168,7 +168,7 @@ def main():
 
         src_ds = ["bin", "hpana", "aux", "setup.sh"]
         src_ds = " ".join(src_ds)
-        os.system("cd {src_dir} && tar -cf {target_tar} {source_files} && cd - && tar --append --file={target_tar} {conf_file}".format(
+        os.system("cd {src_dir} && tar --exclude 'symlinks/*' -cf {target_tar} {source_files} && cd - && tar --append --file={target_tar} {conf_file}".format(
             src_dir=__HERE+"/../", conf_file=ANA_ARGS.conf_file, target_tar=source_code_tarball, source_files=src_ds))
 
 
@@ -192,6 +192,15 @@ def main():
                              memory="1GB",
                          )
                          )
+            # split_workers = list(chunks(ana_workers, 50))
+
+            # for workers in split_workers:
+            #     submit_file.write("\nArguments = %s %s %s %s %s \nqueue\n" %(  ",".join([m.name for m in workers]),
+            #                                                                 source_code_tarball, 
+            #                                                                 os.path.join(__HERE, "process-dataset"), 
+            #                                                                 ANA_ARGS.conf_file,
+            #                                                                 os.path.join(os.getcwd(), ANA_ARGS.outdir))
+            #                                                         )
 
             for worker in ana_workers: 
                 submit_file.write("\nArguments = %s %s %s %s %s \nqueue\n" %(  worker.name,

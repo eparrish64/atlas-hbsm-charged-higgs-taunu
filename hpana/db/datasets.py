@@ -24,8 +24,8 @@ from .. import EVENTS_CUTFLOW_HIST, EVENTS_CUTFLOW_BIN, MC_CAMPAIGN
 
 # ROOT
 import ROOT
-ROOT.SetSignalPolicy(ROOT.kSignalFast)
 ROOT.gROOT.SetBatch(True)
+ROOT.SetSignalPolicy(ROOT.kSignalFast)
 
 try:
     import pyAMI
@@ -405,7 +405,8 @@ class Database(dict):
                         ## if a dataset has more than N_DS_FILES files then break it to some sub-datasets in order to boost the analysis
                         num_files = len(m_ds.files)
                         if num_files == 0:
-                            raise NameError("No files were found for %s"%(m_ds.name))
+                            # raise NameError("No files were found for %s"%(m_ds.name))
+                            log.warning("No files were found for %s"%(m_ds.name))
                         elif  num_files > N_DS_FILES:
                             sub_dss = []
                             log.info("Breaking %s dataset to %i sub-datasets ..."%(uname, 1+num_files/N_DS_FILES))

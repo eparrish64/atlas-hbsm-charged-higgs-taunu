@@ -11,6 +11,8 @@ import yaml
 from hpana.cmd import get_ana_parser
 ana_parser = get_ana_parser()
 ANA_ARGS = ana_parser.parse_args()
+if not ANA_ARGS.submitdir:
+    ANA_ARGS.submitdir = ANA_ARGS.outdir\
 
 # local
 from hpana import log
@@ -128,17 +130,19 @@ def main():
                             failed_jobs += [j]
 
             log.warning("Following %i jobs are failed; you have to resubmit them"%len(failed_jobs))
-            submit_file = open("%s/submit_%i_failed.sh"%(ANA_ARGS.outdir, len(failed_jobs)), "w")
+            submit_file = open("%s/submit_%i_failed.sh"%(ANA_ARGS.submitdir, len(failed_jobs)), "w")
 
             for j in failed_jobs:
                 log.info("updating job script for %s"%j) 
-                submit_file.write("sbatch %s/jobs/%s.slurm \n"%(ANA_ARGS.outdir, j))
+                submit_file.write("sbatch %s/jobs/%s.slurm \n"%(ANA_ARGS.submitdir, j))
             submit_file.close()
 
             return 
 
-        ## setup output dir
-        os.system("mkdir -p {0}/jobs  {0}/logs {0}/hists {0}/logs/log {0}/logs/err {0}/logs/out".format(ANA_ARGS.outdir))
+        ## setup submission dir
+        os.system("mkdir -p {0}/jobs  {0}/logs {0}/hists {0}/logs/log {0}/logs/err {0}/logs/out".format(ANA_ARGS.submitdir))
+        if not os.path.isdir(ANA_ARGS.outdir):
+            os.system("mkdir -p {0}".format(ANA_ARGS.outdir))
 
         ## Analysis Configuration parameters to be copied to the worker nodes
         conf_params = {
@@ -162,7 +166,7 @@ def main():
 
         ## zip source code
         log.info("Creating source code tarball...")
-        source_code_tarball = os.path.abspath(ANA_ARGS.outdir+"/source_code.tar.gz")
+        source_code_tarball = os.path.abspath(ANA_ARGS.submitdir+"/source_code.tar.gz")
         if os.path.isfile(source_code_tarball):
             os.system("rm -rf %s"%source_code_tarball)
 
@@ -176,18 +180,18 @@ def main():
             # -- write jobs
             from hpana.cluster.job_template import CONDOR_JOB_TEMPLATE
 
-            submitfile_name = "%s/%s.sh" %(ANA_ARGS.outdir, "submitAllJobs")
+            submitfile_name = "%s/%s.sh" %(ANA_ARGS.submitdir, "submitAllJobs")
             submit_file = os.open(submitfile_name, os.O_CREAT | os.O_WRONLY, 0755)
 
             log.info("************** creating %i jobs for HTCondor submission ************" % len(ana_workers))
             log.info("**************************************************************")
 
-            submit_file_name = "%s/submitAllJobs.sh" % (ANA_ARGS.outdir)
+            submit_file_name = "%s/submitAllJobs.sh" % (ANA_ARGS.submitdir)
             submit_file = open(submit_file_name, "w")
             submit_file.write(
                          CONDOR_JOB_TEMPLATE.format(
                              logsdir=os.path.join(
-                                 ANA_ARGS.outdir, ANA_ARGS.logsdir),
+                                 ANA_ARGS.submitdir, ANA_ARGS.logsdir),
                              execScript=os.path.join(__HERE, "condor_jobs.sh"),
                              memory="1GB",
                          )

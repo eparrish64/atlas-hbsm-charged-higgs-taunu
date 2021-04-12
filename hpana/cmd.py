@@ -85,10 +85,10 @@ def get_ana_parser(base_parser=None):
                             help="merge histograms")
 
     ana_parser.add_argument("--outdir", type=str, default="outdir",
-                            help="where to put the job scripts. You will launch condor jobs from here.")
+                            help="Where to put the processed histograms")
 
     ana_parser.add_argument("--submitdir", type=str,
-                            help="Where to put the processed histograms")
+                            help="where to put the job scripts. You will launch condor jobs from here.")
 
     ana_parser.add_argument("--cluster", action="store_true",
                             help="if you wnat to submit jobs to the cluster")

@@ -40,13 +40,20 @@ class Systematic(object):
             ),
 
             "TAUS_TRUEHADTAU_SME_TES_INSITU":(
-                "TAUS_TRUEHADTAU_SME_TES_INSITU_1up",
-                "TAUS_TRUEHADTAU_SME_TES_INSITU_1down",
+                "TAUS_TRUEHADTAU_SME_TES_INSITUEXP_1up",
+                "TAUS_TRUEHADTAU_SME_TES_INSITUEXP_1down",
+                "TAUS_TRUEHADTAU_SME_TES_INSITUFIT_1up",
+                "TAUS_TRUEHADTAU_SME_TES_INSITUFIT_1down",
             ),
 
             "TAUS_TRUEHADTAU_SME_TES_MODEL":(
-                "TAUS_TRUEHADTAU_SME_TES_MODEL_1up",
-                "TAUS_TRUEHADTAU_SME_TES_MODEL_1down",
+                "TAUS_TRUEHADTAU_SME_TES_MODEL_CLOSURE_1up",
+                "TAUS_TRUEHADTAU_SME_TES_MODEL_CLOSURE_1down",
+            ),
+            
+            "TAUS_TRUEHADTAU_SME_TES_PHYSICSLIST":(
+                "TAUS_TRUEHADTAU_SME_TES_PHYSICSLIST_1up",
+                "TAUS_TRUEHADTAU_SME_TES_PHYSICSLIST_1down",
             ),
         }, #<! END tau
 
@@ -61,18 +68,18 @@ class Systematic(object):
                 "JET_EffectiveNP_1_1up",
                 "JET_EffectiveNP_2_1down",
                 "JET_EffectiveNP_2_1up",
-                # "JET_EffectiveNP_3_1down",
-                # "JET_EffectiveNP_3_1up",
-                # "JET_EffectiveNP_4_1down",
-                # "JET_EffectiveNP_4_1up",
-                # "JET_EffectiveNP_5_1down",
-                # "JET_EffectiveNP_5_1up",
-                # "JET_EffectiveNP_6_1down",
-                # "JET_EffectiveNP_6_1up",
-                # "JET_EffectiveNP_7_1down",
-                # "JET_EffectiveNP_7_1up",
-                # "JET_EffectiveNP_8restTerm_1down",
-                # "JET_EffectiveNP_8restTerm_1up",
+                "JET_EffectiveNP_3_1down",
+                "JET_EffectiveNP_3_1up",
+                "JET_EffectiveNP_4_1down",
+                "JET_EffectiveNP_4_1up",
+                "JET_EffectiveNP_5_1down",
+                "JET_EffectiveNP_5_1up",
+                "JET_EffectiveNP_6_1down",
+                "JET_EffectiveNP_6_1up",
+                "JET_EffectiveNP_7_1down",
+                "JET_EffectiveNP_7_1up",
+                "JET_EffectiveNP_8restTerm_1down",
+                "JET_EffectiveNP_8restTerm_1up",
             ),
 
             "JET_EtaIntercalibration_Modelling":(
@@ -80,81 +87,93 @@ class Systematic(object):
                 "JET_EtaIntercalibration_Modelling_1up",
             ),
 
-            # "JET_EtaIntercalibration_NonClosure":(
-            #     "JET_EtaIntercalibration_NonClosure_highE_1down",
-            #     "JET_EtaIntercalibration_NonClosure_highE_1up",
-            #     "JET_EtaIntercalibration_NonClosure_negEta_1down",
-            #     "JET_EtaIntercalibration_NonClosure_negEta_1up",
-            #     "JET_EtaIntercalibration_NonClosure_posEta_1down",
-            #     "JET_EtaIntercalibration_NonClosure_posEta_1up",
-            # ),
+            "JET_EtaIntercalibration_NonClosure":(
+                "JET_EtaIntercalibration_NonClosure_highE_1down",
+                "JET_EtaIntercalibration_NonClosure_highE_1up",
+                "JET_EtaIntercalibration_NonClosure_negEta_1down",
+                "JET_EtaIntercalibration_NonClosure_negEta_1up",
+                "JET_EtaIntercalibration_NonClosure_posEta_1down",
+                "JET_EtaIntercalibration_NonClosure_posEta_1up",
+                "JET_EtaIntercalibration_NonClosure_2018data_1down",
+                "JET_EtaIntercalibration_NonClosure_2018data_1up",
+            ),
 
-            # "JET_EtaIntercalibration_TotalStat":(                
-            #     "JET_EtaIntercalibration_TotalStat_1down",
-            #     "JET_EtaIntercalibration_TotalStat_1up",
-            # ),
+            "JET_EtaIntercalibration_TotalStat":(                
+                "JET_EtaIntercalibration_TotalStat_1down",
+                "JET_EtaIntercalibration_TotalStat_1up",
+            ),
 
-            # "JET_Flavor_Composition":(
-            #     "JET_Flavor_Composition_1down",
-            #     "JET_Flavor_Composition_1up",
-            # ),
+            "JET_Flavor_Composition":(
+                "JET_Flavor_Composition_1down",
+                "JET_Flavor_Composition_1up",
+            ),
 
-            # "JET_Flavor_Response":(
-            #     "JET_Flavor_Response_1down",
-            #     "JET_Flavor_Response_1up",
-            # ),
+            "JET_Flavor_Response":(
+                "JET_Flavor_Response_1down",
+                "JET_Flavor_Response_1up",
+            ),
 
-            # "JET_JER_DataVsMC":(
-            #     "JET_JER_DataVsMC_1down",
-            #     "JET_JER_DataVsMC_1up",
-            # ),
+            "JET_JER_DataVsMC":(
+                "JET_JER_DataVsMC_AFII_1down",
+                "JET_JER_DataVsMC_AFII_1up",
+                "JET_JER_DataVsMC_MC16_1down",
+                "JET_JER_DataVsMC_MC16_1up",
+            ),
 
             "JET_JER_EffectiveNP":(
                 "JET_JER_EffectiveNP_1_1down",
                 "JET_JER_EffectiveNP_1_1up",
                 "JET_JER_EffectiveNP_2_1down",
                 "JET_JER_EffectiveNP_2_1up",
-            #     "JET_JER_EffectiveNP_3_1down",
-            #     "JET_JER_EffectiveNP_3_1up",
-            #     "JET_JER_EffectiveNP_4_1down",
-            #     "JET_JER_EffectiveNP_4_1up",
-            #     "JET_JER_EffectiveNP_5_1down",
-            #     "JET_JER_EffectiveNP_5_1up",
-            #     "JET_JER_EffectiveNP_6_1down",
-            #     "JET_JER_EffectiveNP_6_1up",
-            #     "JET_JER_EffectiveNP_7restTerm_1down",
-            #     "JET_JER_EffectiveNP_7restTerm_1up",
+                "JET_JER_EffectiveNP_3_1down",
+                "JET_JER_EffectiveNP_3_1up",
+                "JET_JER_EffectiveNP_4_1down",
+                "JET_JER_EffectiveNP_4_1up",
+                "JET_JER_EffectiveNP_5_1down",
+                "JET_JER_EffectiveNP_5_1up",
+                "JET_JER_EffectiveNP_6_1down",
+                "JET_JER_EffectiveNP_6_1up",
+                "JET_JER_EffectiveNP_7restTerm_1down",
+                "JET_JER_EffectiveNP_7restTerm_1up",
             ),
 
-            # "JET_Pileup_OffsetMu":(
-            #     "JET_Pileup_OffsetMu_1down",
-            #     "JET_Pileup_OffsetMu_1up",
-            # ),
+            "JET_Pileup_OffsetMu":(
+                "JET_Pileup_OffsetMu_1down",
+                "JET_Pileup_OffsetMu_1up",
+            ),
 
-            # "JET_Pileup_OffsetNPV":(
-            #     "JET_Pileup_OffsetNPV_1down",
-            #     "JET_Pileup_OffsetNPV_1up",
-            # ),
+            "JET_Pileup_OffsetNPV":(
+                "JET_Pileup_OffsetNPV_1down",
+                "JET_Pileup_OffsetNPV_1up",
+            ),
 
-            # "JET_Pileup_PtTerm":(
-            #     "JET_Pileup_PtTerm_1down",
-            #     "JET_Pileup_PtTerm_1up",
-            # ),
+            "JET_Pileup_PtTerm":(
+                "JET_Pileup_PtTerm_1down",
+                "JET_Pileup_PtTerm_1up",
+            ),
 
-            # "JET_Pileup_RhoTopology":(
-            #     "JET_Pileup_RhoTopology_1down",
-            #     "JET_Pileup_RhoTopology_1up",
-            # ),
+            "JET_Pileup_RhoTopology":(
+                "JET_Pileup_RhoTopology_1down",
+                "JET_Pileup_RhoTopology_1up",
+            ),
 
-            # "JET_PunchThrough_MC16":(
-            #     "JET_PunchThrough_MC16_1down",
-            #     "JET_PunchThrough_MC16_1up",
-            # ),
+            "JET_PunchThrough":(
+                "JET_PunchThrough_MC16_1down",
+                "JET_PunchThrough_MC16_1up",
+                "JET_PunchThrough_AFII_1down",
+        	"JET_PunchThrough_AFII_1up",
+                
+            ),
 
-            # "JET_SingleParticle_HighPt":(
-            #     "JET_SingleParticle_HighPt_1down",
-            #     "JET_SingleParticle_HighPt_1up",
-            # ),
+            "JET_RelativeNonClosure":(
+                "JET_RelativeNonClosure_AFII_1down",
+        	"JET_RelativeNonClosure_AFII_1up",
+            ),
+
+            "JET_SingleParticle_HighPt":(
+                "JET_SingleParticle_HighPt_1down",
+                "JET_SingleParticle_HighPt_1up",
+            ),
 
             "JET_TILECORR_Uncertainty":(
                 "JET_TILECORR_Uncertainty_1down",
@@ -166,16 +185,16 @@ class Systematic(object):
             "MET_SoftTrk":( 
                 "MET_SoftTrk_ResoPara",
                 "MET_SoftTrk_ResoPerp",
-                "MET_SoftTrk_ScaleDown",
-                "MET_SoftTrk_ScaleUp",
+                "MET_SoftTrk_Scale_1down",
+                "MET_SoftTrk_Scale_1up",
             )
         },
     }
 
     # taulep specific
-    SOURCES["taulep"]["TAU"] = SOURCES["taujet"]["TAU"]
-    SOURCES["taulep"]["JET"] = SOURCES["taujet"]["JET"]
-    SOURCES["taulep"]["MET"] = SOURCES["taujet"]["MET"]
+#    SOURCES["taulep"]["TAU"] = SOURCES["taujet"]["TAU"]
+#    SOURCES["taulep"]["JET"] = SOURCES["taujet"]["JET"]
+#    SOURCES["taulep"]["MET"] = SOURCES["taujet"]["MET"]
     SOURCES["taulep"]["MUON"] = {
         "MUON_ID":(
             "MUON_ID_1down",
@@ -215,7 +234,7 @@ class Systematic(object):
             "EG_SCALE_ALL_1up",
         ),
     }
-
+#jet_sf_NOMINAL_global_effSF_DL1r_FixedCutBEff_70
     def __init__(self, name, title=None, _type="TREE", channel="taujet", variations=[]):
         assert _type in Systematic.TYPES, "systematics of type %s is not supported" % _type
         self._type = _type

@@ -192,9 +192,9 @@ class Systematic(object):
     }
 
     # taulep specific
-   SOURCES["taulep"]["TAU"] = SOURCES["taujet"]["TAU"]
-   SOURCES["taulep"]["JET"] = SOURCES["taujet"]["JET"]
-   SOURCES["taulep"]["MET"] = SOURCES["taujet"]["MET"]
+    SOURCES["taulep"]["TAU"] = SOURCES["taujet"]["TAU"]
+    SOURCES["taulep"]["JET"] = SOURCES["taujet"]["JET"]
+    SOURCES["taulep"]["MET"] = SOURCES["taujet"]["MET"]
     SOURCES["taulep"]["MUON"] = {
         "MUON_ID":(
             "MUON_ID_1down",

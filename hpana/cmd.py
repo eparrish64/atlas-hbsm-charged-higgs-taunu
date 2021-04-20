@@ -307,7 +307,7 @@ def get_clf_parser():
                              help="ML backend", default="sklearn")
 
     clf_parser.add_argument("--train-bdt", action="store_true",
-                            help="tarin a Boosted Decision Tree")
+                            help="train a Boosted Decision Tree")
 
     clf_parser.add_argument("--optimize-bdt", action="store_true",
                             help="optimize Boosted Decision Tree")
@@ -341,6 +341,9 @@ def get_clf_parser():
     
     clf_parser.add_argument("--outdir", type=str, default="clfout",
                             help="directory to put the training outputs in")
+
+    clf_parser.add_argument("--submitdir", type=str,
+                            help="where to put the job scripts. You will launch condor jobs from here.")
 
     clf_parser.add_argument("--sig", nargs="+", default=None,
                             help="list of signals")

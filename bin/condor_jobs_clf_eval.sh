@@ -41,7 +41,7 @@ else
     for file in $files
     do
         echo copying the output="$file" to workdir="${3}/hists";
-        rsync -axvH --no-g --no-p "$file" ${3}/hists/ || fail;
+        rsync -axvH --no-g --no-p "$file" ${7}/hists/ || fail;
         # file_h5=`ls $file | sed "s,pkl$,h5,g"`
         # rsync -axvH --no-g --no-p "$file_h5" ${4}/models/ || fail;
 

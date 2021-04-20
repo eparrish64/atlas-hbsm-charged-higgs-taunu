@@ -13,6 +13,8 @@ from os import environ
 from hpana.cmd import get_clf_parser 
 clf_parser = get_clf_parser()
 CLF_ARGS = clf_parser.parse_args()
+if not CLF_ARGS.submitdir:
+    CLF_ARGS.submitdir = CLF_ARGS.outdir
 
 ## PyPI
 from root_numpy import root2array, tree2array
@@ -20,6 +22,7 @@ import h5py
 import numpy as np
 import pickle, cPickle
 import pandas as pd
+pd.set_option('display.max_columns', None)
 
 ## local
 from hpana.config import Configuration
@@ -85,6 +88,7 @@ TRAINING_BKGS = {
 
 ## - - setup outdir
 os.system("mkdir -p %s"%CLF_ARGS.outdir)
+os.system("mkdir -p %s"%CLF_ARGS.submitdir)
 
 ## - - prepare training Dataframe
 DFRAME = SClassifier.prepare_data(BKGS, SIGS, ALL_FEATS[CLF_ARGS.channel], data_lumi=CONFIG.data_lumi,
@@ -94,8 +98,8 @@ jobs = []
 model_names = []
 train_masses = TRAINING_MASS_BINS[CLF_ARGS.bin_scheme]
 if CLF_ARGS.plot_sample_size:
-    plot_sig_dist(DFRAME, signals=SIGS, outdir=CLF_ARGS.outdir)
-    plot_bkg_dist(DFRAME, backgrounds=BKGS, outdir=CLF_ARGS.outdir)
+    plot_sig_dist(DFRAME, signals=SIGS, outdir=CLF_ARGS.submitdir)
+    plot_bkg_dist(DFRAME, backgrounds=BKGS, outdir=CLF_ARGS.submitdir)
     
 try:
     import sklearn
@@ -182,7 +186,7 @@ for signal_masses in train_masses:
 
             ## Check if model file exists. This should reduce runtime when model files have already been created.
             clf_name = SClassifier.MODEL_NAME_STR_FORMAT.format("GB%i"%hyper_params["n_estimators"],CLF_ARGS.channel, mass_tag, ntracks, CLF_ARGS.kfolds, rem, len(feats))
-            modelpath = os.path.join(CLF_ARGS.outdir, clf_name)
+            modelpath = os.path.join(CLF_ARGS.submitdir, clf_name)
             if os.path.isfile(modelpath):
                 model_names.append(clf_name)
                 log.warning("Found %s model; skipping the preparation..."%modelpath)
@@ -257,7 +261,7 @@ for signal_masses in train_masses:
                 jobs.append(Job(train_model, sclf, weight_sample=False, balanced=CLF_ARGS.balanced, scale_features=False, outdir=CLF_ARGS.outdir, is_NN=CLF_ARGS.train_nn))
 
             ## pickle the model                        
-            mpath = os.path.join(CLF_ARGS.outdir, sclf.name)
+            mpath = os.path.join(CLF_ARGS.submitdir, sclf.name)
             if os.path.isfile(mpath):
                 log.warning("Found %s model; skipping the preparation..."%mpath)
                 continue
@@ -285,7 +289,7 @@ for signal_masses in train_masses:
 
                 ## Check if model file exists. This should reduce runtime when model files have already been created.
                 clf_name = SClassifier.MODEL_NAME_STR_FORMAT.format("GB%i"%hyper_params["n_estimators"],CLF_ARGS.channel, mass_tag, ntracks, CLF_ARGS.kfolds, rem, len(feats))
-                modelpath = os.path.join(CLF_ARGS.outdir, clf_name)
+                modelpath = os.path.join(CLF_ARGS.submitdir, clf_name)
                 model_names.append(clf_name)
                 if os.path.isfile(modelpath):
                     log.warning("Found %s model; skipping the preparation..."%modelpath)
@@ -426,11 +430,11 @@ for signal_masses in train_masses:
                         Keras_model.name=Keras_model_name
 
                         from keras.utils import plot_model
-                        plot_model(Keras_model, to_file='%s.eps'%(CLF_ARGS.outdir+"/"+Keras_model_name), show_shapes=True, show_layer_names=True)
+                        plot_model(Keras_model, to_file='%s.png'%(CLF_ARGS.outdir+"/"+Keras_model_name), show_shapes=True, show_layer_names=True)
 
 
                     ## pickle the model                        
-                    mpath = os.path.join(CLF_ARGS.outdir, sclf.name)
+                    mpath = os.path.join(CLF_ARGS.submitdir, sclf.name)
                     log.info("Saving %s model to disk ..."%mpath)
                     with open(mpath, "w") as mcache:
                         cPickle.dump(sclf, mcache, protocol=2)
@@ -464,7 +468,7 @@ if CLF_ARGS.train_bdt == True or CLF_ARGS.train_nn == True:
 
             ## zip source code
             log.info("Creating source code tarball...")
-            source_code_tarball = os.path.abspath(CLF_ARGS.outdir+"/source_code.tar.gz")
+            source_code_tarball = os.path.abspath(CLF_ARGS.submitdir+"/source_code.tar.gz")
             if os.path.isfile(source_code_tarball):
                 os.system("rm -rf %s"%source_code_tarball)
 
@@ -474,18 +478,18 @@ if CLF_ARGS.train_bdt == True or CLF_ARGS.train_nn == True:
                 src_dir=__HERE+"/../", target_tar=source_code_tarball, source_files=src_ds))
 
             # - - setup the submit dir
-            os.system("mkdir -p {0}/jobs  {0}/logs {0}/hists {0}/logs/log {0}/logs/err {0}/logs/out {0}/trained_models".format(CLF_ARGS.outdir))
+            os.system("mkdir -p {0}/jobs  {0}/logs {0}/hists {0}/logs/log {0}/logs/err {0}/logs/out {0}/trained_models".format(CLF_ARGS.submitdir))
 
             log.info("************** creating %i jobs for HTCondor submission ************" % len(model_names))
             log.info("**************************************************************")
 
             
-            submit_file_name = "%s/submitAllJobs.sh" % (CLF_ARGS.outdir)
+            submit_file_name = "%s/submitAllJobs.sh" % (CLF_ARGS.submitdir)
             submit_file = open(submit_file_name, "w")
             submit_file.write(
                          CONDOR_JOB_TEMPLATE.format(
                              logsdir=os.path.join(
-                                 CLF_ARGS.outdir, CLF_ARGS.logsdir),
+                                 CLF_ARGS.submitdir, CLF_ARGS.logsdir),
                              execScript=os.path.join(__HERE, "condor_jobs_clf.sh"),
                              memory="3GB",
                          )
@@ -493,12 +497,13 @@ if CLF_ARGS.train_bdt == True or CLF_ARGS.train_nn == True:
 
             for model in model_names:
 
-                submit_file.write("\nArguments = %s %s %s %d %d %d \nqueue\n" %(   model, 
+                submit_file.write("\nArguments = %s %s %s %d %d %d %s \nqueue\n" %(   model, 
                                                                                 os.path.join(__HERE, "classifier-trainer"), 
-                                                                                os.path.join(os.getcwd(),CLF_ARGS.outdir),
+                                                                                os.path.join(os.getcwd(),CLF_ARGS.submitdir),
                                                                                 CLF_ARGS.balanced,
                                                                                 CLF_ARGS.train_nn,
                                                                                 CLF_ARGS.weight_sample,
+                                                                                CLF_ARGS.outdir,
                                                                             )
                 )
 

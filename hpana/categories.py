@@ -21,8 +21,8 @@ PLEASE NOTE THAT THE UNIT IS CHANGED FROM MeV to GeV as of version 18v04 of the 
 
 # - - - - - - - - event 
 CLEAN_EVT = {
-    "mc15": ROOT.TCut("(event_clean==1) && (n_vx>=1) && (bsm_tj_dirty_jet==0)"),
-    "mc16": ROOT.TCut("n_pvx > 0"),
+    "mc15": ROOT.TCut("(event_clean==1) && (n_vx>=1) && (bsm_tj_dirty_jet==0) && (useEvent==1)"),
+    "mc16": ROOT.TCut("n_pvx > 0 && (useEvent==1)"),
 }
 
 ##------------------------------------------------------------------------------------

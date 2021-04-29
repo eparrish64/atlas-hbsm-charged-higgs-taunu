@@ -229,12 +229,13 @@ def draw(var, category,
 
                 eyh = high_band_backgrounds.GetBinContent(i)
                 eyl = low_band_backgrounds.GetBinContent(i)
-                ey = max(eyh, eyl)
+                ### make bands symmetric
+                #ey = max(eyh, eyl)
 
                 ## dummy x error for plotting
                 exh = total_backgrounds.GetXaxis().GetBinWidth(i)/2.
                 exl = exh
-                backgrounds_error.SetPointError(i, exl, exh, ey, ey)
+                backgrounds_error.SetPointError(i, exl, exh, eyl, eyh)
 
             backgrounds_error.SetFillStyle(3004)
             backgrounds_error.SetFillColor(ROOT.kRed)

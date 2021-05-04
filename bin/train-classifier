@@ -15,6 +15,8 @@ clf_parser = get_clf_parser()
 CLF_ARGS = clf_parser.parse_args()
 if not CLF_ARGS.submitdir:
     CLF_ARGS.submitdir = CLF_ARGS.outdir
+if not CLF_ARGS.outdir:
+    CLF_ARGS.outdir = CLF_ARGS.submitdir
 
 ## PyPI
 from root_numpy import root2array, tree2array

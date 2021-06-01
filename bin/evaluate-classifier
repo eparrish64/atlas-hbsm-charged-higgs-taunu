@@ -13,6 +13,8 @@ eclf_parser = get_evalclf_parser()
 ECLF_ARGS = eclf_parser.parse_args()
 if not ECLF_ARGS.submitdir:
     ECLF_ARGS.submitdir = ECLF_ARGS.outdir
+if not ECLF_ARGS.outdir:
+    ECLF_ARGS.outdir = ECLF_ARGS.submitdir
 
 
 ## local

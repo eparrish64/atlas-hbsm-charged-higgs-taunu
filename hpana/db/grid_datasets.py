@@ -2391,7 +2391,7 @@ datasets = {
 				"user.akaczmar:user.akaczmar.TJ.data16_13TeV.00307539.physics_Main.D1.r9264_p3083_p4205.v09r0_BS",
 				"user.akaczmar:user.akaczmar.TJ.data15_13TeV.00284420.physics_Main.D1.r9264_p3083_p4205.v09r0_BS",
 			],
-		}
+		},
 	},
 	"v10": {
 		"taulep": {
@@ -5766,6 +5766,7 @@ datasets = {
 				"user.bburghgr:user.bburghgr.TJ.data17_13TeV.00327057.physics_Main.D1.r11380_p3825_p4205.v11r0_BS",
 			],
 		},
+	},
 	"v12": {
 		"taulep": {
 			"MC": [

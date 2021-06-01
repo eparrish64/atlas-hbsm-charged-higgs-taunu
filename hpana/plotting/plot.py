@@ -488,7 +488,7 @@ def uncertainty_band(hists_dict, overflow=True):
                         "Content of bin %i is %r while a float is expected; check %s histogram; skipping this bin!"%(i, bvar, hists_dict["TOTAL"][syst].GetName()))
                     continue
 
-                ## spot suspiciously larg variations  
+                ## spot suspiciously large variations  
                 var_pcnt = (abs(bvar)/bnom) * 100
                 if  var_pcnt> 200 and bnom > 10:
                     log.warning("Suspiciously large variation for %s: %i%%; check %s histogram; skipping!"%(syst, var_pcnt, hists_dict["TOTAL"][syst].GetName()))

@@ -361,7 +361,6 @@ class QCD(Sample):
         results = [pool.apply_async(dataset_hists, (wk,), kwds={'write':True}) for wk in workers]
         hist_sets = []
         for res in results:
-            print "In Fakes.py L363 res = %s" %res
             hist_sets += res.get(3600) #<! without the timeout this blocking call ignores all signals.
 
         ## extract DATA/MC hists
@@ -385,7 +384,7 @@ class QCD(Sample):
             ## retrieve the samples hists
             data_hfiles = glob.glob("%s/%s.DATA*"%(histsdir, self.name) )             
             mc_hfiles = list(set(glob.glob("%s/%s.*"%(histsdir, self.name) ) ) - set(data_hfiles) )
-            
+
             if (not (data_hfiles and mc_hfiles)):
                 log.warning(" incomplete hists for %s in %s dir"%(self.name, histsdir))
                 return []
@@ -409,6 +408,9 @@ class QCD(Sample):
                         match = re.match(self.config.hist_name_regex, hname)
                         if match:
                             sample = match.group("sample")
+                            # raise Exception("AHHHH, I am debugging parsing file names")
+                            if sample != self.name:
+                                continue
                             category = match.group("category")
                             variable = match.group("variable")
                             fields.add(variable)
@@ -436,6 +438,8 @@ class QCD(Sample):
                         match = re.match(self.config.hist_name_regex, hname)
                         if match:
                             sample = match.group("sample")
+                            if sample != self.name:
+                                continue
                             category = match.group("category")
                             variable = match.group("variable")
 
@@ -478,17 +482,19 @@ class QCD(Sample):
                     data_hsum = data_hists[0].hist
                     for hs in data_hists[1:]:
                         data_hsum.Add(hs.hist)
+                    qcd_hsum = data_hsum.Clone()
+                    del data_hists
         
                     mc_hists = filter(
                         lambda hs: (hs.systematic==systematic and hs.variable==var and hs.category==cat), mc_hist_set)
                     mc_hsum = mc_hists[0].hist
                     for hs in mc_hists[1:]:
                         mc_hsum.Add(hs.hist)
-                        
+                    del mc_hists
+
                     log.debug("Category {} >> DATA: {}; MC: {}".format(cat, data_hsum.Integral(0, -1), mc_hsum.Integral(0, -1)))
                     
                     # - - subtract MC from DATA
-                    qcd_hsum = data_hsum.Clone()
                     qcd_hsum.Add(mc_hsum, -1)
                     
                     outname = self.config.hist_name_template.format(self.name, cat, var)
@@ -505,6 +511,9 @@ class QCD(Sample):
                         merged_hists_file.cd(rdir)
                         qcd_hsum.Write(outname, ROOT.TObject.kOverwrite)
                         merged_hist_set.append(qcd_hsum)
+        
+        del data_hist_set
+        del mc_hist_set
         if write:
             merged_hists_file.Close()
         

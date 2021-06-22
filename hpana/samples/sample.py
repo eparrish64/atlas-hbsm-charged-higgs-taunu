@@ -19,6 +19,8 @@ from hpana.db import datasets
 from hpana.db.decorators import cached_property
 from hpana.categories import TAU_IS_TRUE, Category
 from hpana.containers import Histset, HistWorker    
+from ROOT import gDirectory, gObjectTable
+from guppy import hpy
 
 ##---------------------------------------------------------------------------------------
 ## - - base analysis sample class
@@ -419,12 +421,21 @@ class Sample(object):
         tf.Close()
             
         return 
-    
+
     def merge_hists(self, hist_set=[], histsdir=None, hists_file=None, write=False, **kwargs):
         """ collect histograms for this sample and add them up properly.
         read the hist from the disk or get them on the fly.
         """
         log.info("merging %s hists"%self.name)
+        # h = hpy()
+
+
+        if write:
+            # - - output file
+            if not hists_file:
+                hists_file = self.config.hists_file
+            merged_hists_file = ROOT.TFile(os.path.join(histsdir, hists_file), "UPDATE")
+
 
         if not hist_set:
             log.info("reading dataset hists from %s/%s"%(histsdir, self.name))
@@ -434,7 +445,6 @@ class Sample(object):
             if not hfiles:
                 log.warning("no hists found for the %s in %s dir"%(self.name, histsdir))
                 return []
-
             # - - extract the hists 
             fields = set()
             categories = set()
@@ -454,6 +464,8 @@ class Sample(object):
                         match = re.match(self.config.hist_name_regex, hname)
                         if match:
                             sample = match.group("sample")
+                            if sample != self.name:
+                                continue
                             category = match.group("category")
                             variable = match.group("variable")
                             fields.add(variable)
@@ -463,6 +475,15 @@ class Sample(object):
                             hset = Histset(sample=sample, category=category, variable=variable,
                                             systematic=syst, hist=hist)
                             hist_set.append(hset)
+
+                    # print(h.heap())
+                    # log.info(gDirectory.GetList())
+                    # for asdfg in gDirectory.GetList():
+                    #     print asdfg
+                    # systdir.SetOwner(True)
+                    # for fo in systdir.GetListOfFolders():
+                    #     fo.SetOwner(True)
+                    #     systdir.Clear()
                 htf.Close()
         else:
             # - - get list of categories and fields available in hist_set
@@ -470,11 +491,6 @@ class Sample(object):
             categories = list(set([hs.category for hs in hist_set] ) )
             systematics = list(set([hs.systematic for hs in hist_set]))
             
-        if write:
-            # - - output file
-            if not hists_file:
-                hists_file = self.config.hists_file
-            merged_hists_file = ROOT.TFile(os.path.join(histsdir, hists_file), "UPDATE")
         
         # - - make sure hists are for this sample
         hist_set = filter(lambda hs: hs.sample.startswith(self.name), hist_set)
@@ -497,6 +513,7 @@ class Sample(object):
                     hsum = hists[0].hist.Clone() #<! get the ownership right! 
                     for hs in hists[1:]:
                         hsum.Add(hs.hist)
+                        hs.Delete()
                     outname = self.config.hist_name_template.format(self.name, cat, var)
                     hsum.SetTitle(outname)
                     hsum.SetName(outname)
@@ -510,11 +527,14 @@ class Sample(object):
                             merged_hists_file.mkdir(rdir)
                         merged_hists_file.cd(rdir)
                         hsum.Write(outname, ROOT.TObject.kOverwrite)
+                    del hists
+            del syst_hists
                         
         # - - close open streams
         if write:
             merged_hists_file.Close()
-        
+        del hist_set
+        print gObjectTable.Print()
         return merged_hist_set
     
     

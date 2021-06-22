@@ -263,6 +263,8 @@ class Higgs(MC, Signal):
                         match = re.match(self.config.hist_name_regex, hname)
                         if match:
                             sample = match.group("sample")
+                            if sample != self.name:
+                                continue
                             category = match.group("category")
                             variable = match.group("variable")
                             fields.add(variable)

@@ -513,7 +513,7 @@ class Sample(object):
                     hsum = hists[0].hist.Clone() #<! get the ownership right! 
                     for hs in hists[1:]:
                         hsum.Add(hs.hist)
-                        hs.Delete()
+                        hs.hist.Delete()
                     outname = self.config.hist_name_template.format(self.name, cat, var)
                     hsum.SetTitle(outname)
                     hsum.SetName(outname)

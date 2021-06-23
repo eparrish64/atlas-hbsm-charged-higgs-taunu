@@ -482,6 +482,7 @@ class QCD(Sample):
                     data_hsum = data_hists[0].hist
                     for hs in data_hists[1:]:
                         data_hsum.Add(hs.hist)
+                        hs.hist.Delete()
                     qcd_hsum = data_hsum.Clone()
                     del data_hists
         
@@ -490,6 +491,7 @@ class QCD(Sample):
                     mc_hsum = mc_hists[0].hist
                     for hs in mc_hists[1:]:
                         mc_hsum.Add(hs.hist)
+                        hs.hist.Delete()
                     del mc_hists
 
                     log.debug("Category {} >> DATA: {}; MC: {}".format(cat, data_hsum.Integral(0, -1), mc_hsum.Integral(0, -1)))
@@ -511,7 +513,7 @@ class QCD(Sample):
                         merged_hists_file.cd(rdir)
                         qcd_hsum.Write(outname, ROOT.TObject.kOverwrite)
                         merged_hist_set.append(qcd_hsum)
-        
+
         del data_hist_set
         del mc_hist_set
         if write:

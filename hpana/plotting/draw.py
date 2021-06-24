@@ -365,14 +365,14 @@ def draw(var, category,
 
             eyh = max(h_cnt-m_cnt, l_cnt-m_cnt, 0)
             eyl = abs(min(h_cnt-m_cnt, l_cnt-m_cnt, 0))
-            ey = max(eyh, eyl)
+            #ey = max(eyh, eyl)
 
             # - - dummy x error for plotting
             exh = rhist.GetXaxis().GetBinWidth(i)/2.
             exl = exh
 
             ratio_error.SetPoint(i, rhist.GetXaxis().GetBinCenter(i), 1)
-            ratio_error.SetPointError(i, exl, exh, ey, ey)
+            ratio_error.SetPointError(i, exl, exh, eyl, eyh)
 
         ratio_error.SetMarkerColor(ROOT.kMagenta+2)
         ratio_error.SetMarkerSize(2)

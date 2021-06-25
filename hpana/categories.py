@@ -64,6 +64,10 @@ MT_MAX100 = {
     "mc15": ROOT.TCut("tau_0_met_mt < 100000"),
     "mc16": ROOT.TCut("tau_0_met_mt < 100")
 }
+MT_MAX70 = {
+    "mc15": ROOT.TCut("tau_0_met_mt < 70000"),
+    "mc16": ROOT.TCut("tau_0_met_mt < 70")
+}
 
 MT100 = {
     "mc15": ROOT.TCut("tau_0_met_mt > 100000"),
@@ -97,8 +101,8 @@ TAU_3_TRACK = {
 TAU_TRACKS = {
     # "mc15": ROOT.TCut("tau_0_n_tracks==1"),
     # "mc16": ROOT.TCut("tau_0_n_charged_tracks==1"),
-    # "mc15": ROOT.TCut("tau_0_n_tracks==3"),
-    # "mc16": ROOT.TCut("tau_0_n_charged_tracks==3"),
+     #"mc15": ROOT.TCut("tau_0_n_tracks==3"),
+     #"mc16": ROOT.TCut("tau_0_n_charged_tracks==3"),
     "mc15": ROOT.TCut("tau_0_n_tracks== 1 || tau_0_n_tracks==3"),
     "mc16": ROOT.TCut("tau_0_n_charged_tracks== 1 || tau_0_n_charged_tracks==3"),
 }
@@ -612,6 +616,24 @@ Category_ZEE = Category(
     ],
 )
 
+Category_TTBAR_TAULEP = Category(
+    name="TTBAR_TAULEP",
+    label="#tau-lep ttbar CR",
+    ff_index=2021,
+    cuts_list = [
+        CLEAN_EVT,
+        TAU_BASE,
+        LEP_BASE,
+        OS_TAU_LEP,
+        NUM_JETS2,
+        JET_PT25,
+        NUM_BJETS2,
+        MT_MAX70,
+    ],
+)
+
+
+
 ##--------------------------------------------------------------
 # - - analysis selection regions (PLEASE KEEP THE ORDER)
 ##--------------------------------------------------------------
@@ -638,6 +660,7 @@ CATEGORIES["taulep"] = [
     Category_ZEE,
     Category_TAULEP_PRESEL,
     Category_TAULEP_BASE,
+    Category_TTBAR_TAULEP,
 ]
 
     

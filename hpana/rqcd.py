@@ -708,8 +708,8 @@ def plot_cr_ffs(cr_ffs, cr_labels={},
                 ff = float(cr_ffs[cr][jet_rnn_key][itk]["%i"%pt])
 
                 ## syst error (variation of LOOSE TAU)
-                #mj ff_up = float(cr_ffs[cr][jet_rnn_key.replace("NOMINAL", "1up")][itk]["%i"%pt]) #not used anymore
-                #mj ff_dn = float(cr_ffs[cr][jet_rnn_key.replace("NOMINAL", "1down")][itk]["%i"%pt]) #not used anymore
+                ff_up = float(cr_ffs[cr][jet_rnn_key.replace("NOMINAL", "1up")][itk]["%i"%pt]) #not used anymore
+                ff_dn = float(cr_ffs[cr][jet_rnn_key.replace("NOMINAL", "1down")][itk]["%i"%pt]) #not used anymore
 
                 ## syst error (varaition of MC subtraction) 
                 ff_mcsubt_up = float(cr_ffs[cr][jet_rnn_key.replace("NOMINAL", "MCSubt_1up")][itk]["%i"%pt])
@@ -1007,8 +1007,8 @@ def plot_alpha(alphas, cr_ffs,
 
                ## - - ff_com = alpha * ff_mj + (1-alpha)ff_wj
 
-               #mj ff_mj_nom = float(cr_ffs["FF_CR_MULTIJET"]["NOMINAL"][itk][pkey]) #not used anymore
-               #mj ff_wj_nom = float(cr_ffs["FF_CR_WJETS"]["NOMINAL"][itk][pkey]) #not used anymore
+               ff_mj_nom = float(cr_ffs["FF_CR_MULTIJET"]["NOMINAL"][itk][pkey]) #not used anymore
+               ff_wj_nom = float(cr_ffs["FF_CR_WJETS"]["NOMINAL"][itk][pkey]) #not used anymore
                
                ff_mj_up = abs(ff_mj_nom - float(cr_ffs["FF_CR_MULTIJET"]["MCSubt_1up"][itk][pkey]))
                ff_wj_up = abs(ff_wj_nom - float(cr_ffs["FF_CR_WJETS"]["MCSubt_1up"][itk][pkey]))

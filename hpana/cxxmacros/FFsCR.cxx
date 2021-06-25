@@ -2,24 +2,24 @@
 //! 1down 
 float GetFF_FF_CR_WJETS_1down(float pt, int nTracks){
 	 if(nTracks==1){
-		 if(pt < 35) return 0.156335;
-		 if(pt < 40) return 0.145459;
-		 if(pt < 45) return 0.127577;
-		 if(pt < 50) return 0.115180;
-		 if(pt < 60) return 0.113858;
-		 if(pt < 80) return 0.095223;
-		 if(pt < 100) return 0.084059;
-		 if(pt < 200) return 0.071384;
-		 if(pt < 3500) return 0.071389;
+		 if(pt < 35) return 0.155542;
+		 if(pt < 40) return 0.144445;
+		 if(pt < 45) return 0.127696;
+		 if(pt < 50) return 0.114561;
+		 if(pt < 60) return 0.113721;
+		 if(pt < 80) return 0.094556;
+		 if(pt < 100) return 0.084566;
+		 if(pt < 200) return 0.071063;
+		 if(pt < 3500) return 0.067712;
 		 else return 0;
 		 }
 	 if(nTracks==3){
-		 if(pt < 35) return 0.032096;
-		 if(pt < 40) return 0.029365;
-		 if(pt < 60) return 0.021821;
-		 if(pt < 80) return 0.015175;
-		 if(pt < 100) return 0.011918;
-		 if(pt < 3500) return 0.010979;
+		 if(pt < 35) return 0.032526;
+		 if(pt < 40) return 0.029805;
+		 if(pt < 60) return 0.022077;
+		 if(pt < 80) return 0.015418;
+		 if(pt < 100) return 0.012108;
+		 if(pt < 3500) return 0.011369;
 		 else return 0;
 		 }
 	 else return 0;
@@ -29,24 +29,24 @@ float GetFF_FF_CR_WJETS_1down(float pt, int nTracks){
 //! 1up 
 float GetFF_FF_CR_WJETS_1up(float pt, int nTracks){
 	 if(nTracks==1){
-		 if(pt < 35) return 0.156335;
-		 if(pt < 40) return 0.145459;
-		 if(pt < 45) return 0.127577;
-		 if(pt < 50) return 0.115180;
-		 if(pt < 60) return 0.113858;
-		 if(pt < 80) return 0.095223;
-		 if(pt < 100) return 0.084059;
-		 if(pt < 200) return 0.071384;
-		 if(pt < 3500) return 0.071389;
+		 if(pt < 35) return 0.155542;
+		 if(pt < 40) return 0.144445;
+		 if(pt < 45) return 0.127696;
+		 if(pt < 50) return 0.114561;
+		 if(pt < 60) return 0.113721;
+		 if(pt < 80) return 0.094556;
+		 if(pt < 100) return 0.084566;
+		 if(pt < 200) return 0.071063;
+		 if(pt < 3500) return 0.067712;
 		 else return 0;
 		 }
 	 if(nTracks==3){
-		 if(pt < 35) return 0.032096;
-		 if(pt < 40) return 0.029365;
-		 if(pt < 60) return 0.021821;
-		 if(pt < 80) return 0.015175;
-		 if(pt < 100) return 0.011918;
-		 if(pt < 3500) return 0.010979;
+		 if(pt < 35) return 0.032526;
+		 if(pt < 40) return 0.029805;
+		 if(pt < 60) return 0.022077;
+		 if(pt < 80) return 0.015418;
+		 if(pt < 100) return 0.012108;
+		 if(pt < 3500) return 0.011369;
 		 else return 0;
 		 }
 	 else return 0;
@@ -56,24 +56,24 @@ float GetFF_FF_CR_WJETS_1up(float pt, int nTracks){
 //! NOMINAL 
 float GetFF_FF_CR_WJETS_NOMINAL(float pt, int nTracks){
 	 if(nTracks==1){
-		 if(pt < 35) return 0.156335;
-		 if(pt < 40) return 0.145459;
-		 if(pt < 45) return 0.127577;
-		 if(pt < 50) return 0.115180;
-		 if(pt < 60) return 0.113858;
-		 if(pt < 80) return 0.095223;
-		 if(pt < 100) return 0.084059;
-		 if(pt < 200) return 0.071384;
-		 if(pt < 3500) return 0.071389;
+		 if(pt < 35) return 0.155542;
+		 if(pt < 40) return 0.144445;
+		 if(pt < 45) return 0.127696;
+		 if(pt < 50) return 0.114561;
+		 if(pt < 60) return 0.113721;
+		 if(pt < 80) return 0.094556;
+		 if(pt < 100) return 0.084566;
+		 if(pt < 200) return 0.071063;
+		 if(pt < 3500) return 0.067712;
 		 else return 0;
 		 }
 	 if(nTracks==3){
-		 if(pt < 35) return 0.032096;
-		 if(pt < 40) return 0.029365;
-		 if(pt < 60) return 0.021821;
-		 if(pt < 80) return 0.015175;
-		 if(pt < 100) return 0.011918;
-		 if(pt < 3500) return 0.010979;
+		 if(pt < 35) return 0.032526;
+		 if(pt < 40) return 0.029805;
+		 if(pt < 60) return 0.022077;
+		 if(pt < 80) return 0.015418;
+		 if(pt < 100) return 0.012108;
+		 if(pt < 3500) return 0.011369;
 		 else return 0;
 		 }
 	 else return 0;
@@ -83,24 +83,24 @@ float GetFF_FF_CR_WJETS_NOMINAL(float pt, int nTracks){
 //! MCSubt_1up 
 float GetFF_FF_CR_WJETS_MCSubt_1up(float pt, int nTracks){
 	 if(nTracks==1){
-		 if(pt < 35) return 0.1742;
-		 if(pt < 40) return 0.1655;
-		 if(pt < 45) return 0.1533;
-		 if(pt < 50) return 0.1425;
-		 if(pt < 60) return 0.1389;
-		 if(pt < 80) return 0.1225;
-		 if(pt < 100) return 0.1139;
-		 if(pt < 200) return 0.1058;
-		 if(pt < 3500) return 0.0954;
+		 if(pt < 35) return 0.1491;
+		 if(pt < 40) return 0.1380;
+		 if(pt < 45) return 0.1203;
+		 if(pt < 50) return 0.1096;
+		 if(pt < 60) return 0.1084;
+		 if(pt < 80) return 0.0896;
+		 if(pt < 100) return 0.0800;
+		 if(pt < 200) return 0.0666;
+		 if(pt < 3500) return 0.0634;
 		 else return 0;
 		 }
 	 if(nTracks==3){
-		 if(pt < 35) return 0.0349;
-		 if(pt < 40) return 0.0320;
-		 if(pt < 60) return 0.0260;
-		 if(pt < 80) return 0.0215;
-		 if(pt < 100) return 0.0197;
-		 if(pt < 3500) return 0.0190;
+		 if(pt < 35) return 0.0317;
+		 if(pt < 40) return 0.0290;
+		 if(pt < 60) return 0.0214;
+		 if(pt < 80) return 0.0148;
+		 if(pt < 100) return 0.0116;
+		 if(pt < 3500) return 0.0109;
 		 else return 0;
 		 }
 	 else return 0;
@@ -110,24 +110,24 @@ float GetFF_FF_CR_WJETS_MCSubt_1up(float pt, int nTracks){
 //! MCSubt_1down 
 float GetFF_FF_CR_WJETS_MCSubt_1down(float pt, int nTracks){
 	 if(nTracks==1){
-		 if(pt < 35) return 0.1369;
-		 if(pt < 40) return 0.1235;
-		 if(pt < 45) return 0.0985;
-		 if(pt < 50) return 0.0853;
-		 if(pt < 60) return 0.0862;
-		 if(pt < 80) return 0.0647;
-		 if(pt < 100) return 0.0505;
-		 if(pt < 200) return 0.0321;
-		 if(pt < 3500) return 0.0439;
+		 if(pt < 35) return 0.1625;
+		 if(pt < 40) return 0.1515;
+		 if(pt < 45) return 0.1361;
+		 if(pt < 50) return 0.1199;
+		 if(pt < 60) return 0.1196;
+		 if(pt < 80) return 0.1001;
+		 if(pt < 100) return 0.0897;
+		 if(pt < 200) return 0.0761;
+		 if(pt < 3500) return 0.0726;
 		 else return 0;
 		 }
 	 if(nTracks==3){
-		 if(pt < 35) return 0.0291;
-		 if(pt < 40) return 0.0266;
-		 if(pt < 60) return 0.0173;
-		 if(pt < 80) return 0.0083;
-		 if(pt < 100) return 0.0035;
-		 if(pt < 3500) return 0.0022;
+		 if(pt < 35) return 0.0334;
+		 if(pt < 40) return 0.0306;
+		 if(pt < 60) return 0.0228;
+		 if(pt < 80) return 0.0160;
+		 if(pt < 100) return 0.0127;
+		 if(pt < 3500) return 0.0119;
 		 else return 0;
 		 }
 	 else return 0;
@@ -137,24 +137,24 @@ float GetFF_FF_CR_WJETS_MCSubt_1down(float pt, int nTracks){
 //! 1down 
 float GetFF_FF_CR_MULTIJET_1down(float pt, int nTracks){
 	 if(nTracks==1){
-		 if(pt < 35) return 0.129904;
-		 if(pt < 40) return 0.116940;
-		 if(pt < 45) return 0.093174;
-		 if(pt < 50) return 0.082957;
-		 if(pt < 60) return 0.084082;
-		 if(pt < 80) return 0.077370;
-		 if(pt < 100) return 0.069528;
-		 if(pt < 200) return 0.061065;
-		 if(pt < 3500) return 0.043322;
+		 if(pt < 35) return 0.129898;
+		 if(pt < 40) return 0.116931;
+		 if(pt < 45) return 0.093164;
+		 if(pt < 50) return 0.082943;
+		 if(pt < 60) return 0.084070;
+		 if(pt < 80) return 0.077350;
+		 if(pt < 100) return 0.069496;
+		 if(pt < 200) return 0.061027;
+		 if(pt < 3500) return 0.043291;
 		 else return 0;
 		 }
 	 if(nTracks==3){
-		 if(pt < 35) return 0.023619;
-		 if(pt < 40) return 0.019911;
-		 if(pt < 60) return 0.011820;
-		 if(pt < 80) return 0.010993;
-		 if(pt < 100) return 0.008789;
-		 if(pt < 3500) return 0.007574;
+		 if(pt < 35) return 0.023618;
+		 if(pt < 40) return 0.019910;
+		 if(pt < 60) return 0.011817;
+		 if(pt < 80) return 0.010987;
+		 if(pt < 100) return 0.008778;
+		 if(pt < 3500) return 0.007562;
 		 else return 0;
 		 }
 	 else return 0;
@@ -164,24 +164,24 @@ float GetFF_FF_CR_MULTIJET_1down(float pt, int nTracks){
 //! 1up 
 float GetFF_FF_CR_MULTIJET_1up(float pt, int nTracks){
 	 if(nTracks==1){
-		 if(pt < 35) return 0.129904;
-		 if(pt < 40) return 0.116940;
-		 if(pt < 45) return 0.093174;
-		 if(pt < 50) return 0.082957;
-		 if(pt < 60) return 0.084082;
-		 if(pt < 80) return 0.077370;
-		 if(pt < 100) return 0.069528;
-		 if(pt < 200) return 0.061065;
-		 if(pt < 3500) return 0.043322;
+		 if(pt < 35) return 0.129898;
+		 if(pt < 40) return 0.116931;
+		 if(pt < 45) return 0.093164;
+		 if(pt < 50) return 0.082943;
+		 if(pt < 60) return 0.084070;
+		 if(pt < 80) return 0.077350;
+		 if(pt < 100) return 0.069496;
+		 if(pt < 200) return 0.061027;
+		 if(pt < 3500) return 0.043291;
 		 else return 0;
 		 }
 	 if(nTracks==3){
-		 if(pt < 35) return 0.023619;
-		 if(pt < 40) return 0.019911;
-		 if(pt < 60) return 0.011820;
-		 if(pt < 80) return 0.010993;
-		 if(pt < 100) return 0.008789;
-		 if(pt < 3500) return 0.007574;
+		 if(pt < 35) return 0.023618;
+		 if(pt < 40) return 0.019910;
+		 if(pt < 60) return 0.011817;
+		 if(pt < 80) return 0.010987;
+		 if(pt < 100) return 0.008778;
+		 if(pt < 3500) return 0.007562;
 		 else return 0;
 		 }
 	 else return 0;
@@ -191,24 +191,24 @@ float GetFF_FF_CR_MULTIJET_1up(float pt, int nTracks){
 //! NOMINAL 
 float GetFF_FF_CR_MULTIJET_NOMINAL(float pt, int nTracks){
 	 if(nTracks==1){
-		 if(pt < 35) return 0.129904;
-		 if(pt < 40) return 0.116940;
-		 if(pt < 45) return 0.093174;
-		 if(pt < 50) return 0.082957;
-		 if(pt < 60) return 0.084082;
-		 if(pt < 80) return 0.077370;
-		 if(pt < 100) return 0.069528;
-		 if(pt < 200) return 0.061065;
-		 if(pt < 3500) return 0.043322;
+		 if(pt < 35) return 0.129898;
+		 if(pt < 40) return 0.116931;
+		 if(pt < 45) return 0.093164;
+		 if(pt < 50) return 0.082943;
+		 if(pt < 60) return 0.084070;
+		 if(pt < 80) return 0.077350;
+		 if(pt < 100) return 0.069496;
+		 if(pt < 200) return 0.061027;
+		 if(pt < 3500) return 0.043291;
 		 else return 0;
 		 }
 	 if(nTracks==3){
-		 if(pt < 35) return 0.023619;
-		 if(pt < 40) return 0.019911;
-		 if(pt < 60) return 0.011820;
-		 if(pt < 80) return 0.010993;
-		 if(pt < 100) return 0.008789;
-		 if(pt < 3500) return 0.007574;
+		 if(pt < 35) return 0.023618;
+		 if(pt < 40) return 0.019910;
+		 if(pt < 60) return 0.011817;
+		 if(pt < 80) return 0.010987;
+		 if(pt < 100) return 0.008778;
+		 if(pt < 3500) return 0.007562;
 		 else return 0;
 		 }
 	 else return 0;
@@ -218,24 +218,24 @@ float GetFF_FF_CR_MULTIJET_NOMINAL(float pt, int nTracks){
 //! MCSubt_1up 
 float GetFF_FF_CR_MULTIJET_MCSubt_1up(float pt, int nTracks){
 	 if(nTracks==1){
-		 if(pt < 35) return 0.1313;
-		 if(pt < 40) return 0.1184;
-		 if(pt < 45) return 0.0952;
-		 if(pt < 50) return 0.0850;
-		 if(pt < 60) return 0.0864;
-		 if(pt < 80) return 0.0806;
-		 if(pt < 100) return 0.0740;
-		 if(pt < 200) return 0.0654;
-		 if(pt < 3500) return 0.0462;
+		 if(pt < 35) return 0.1298;
+		 if(pt < 40) return 0.1168;
+		 if(pt < 45) return 0.0931;
+		 if(pt < 50) return 0.0829;
+		 if(pt < 60) return 0.0840;
+		 if(pt < 80) return 0.0772;
+		 if(pt < 100) return 0.0694;
+		 if(pt < 200) return 0.0609;
+		 if(pt < 3500) return 0.0432;
 		 else return 0;
 		 }
 	 if(nTracks==3){
-		 if(pt < 35) return 0.0239;
-		 if(pt < 40) return 0.0205;
-		 if(pt < 60) return 0.0124;
-		 if(pt < 80) return 0.0118;
-		 if(pt < 100) return 0.0101;
-		 if(pt < 3500) return 0.0088;
+		 if(pt < 35) return 0.0236;
+		 if(pt < 40) return 0.0199;
+		 if(pt < 60) return 0.0118;
+		 if(pt < 80) return 0.0110;
+		 if(pt < 100) return 0.0088;
+		 if(pt < 3500) return 0.0076;
 		 else return 0;
 		 }
 	 else return 0;
@@ -245,27 +245,25 @@ float GetFF_FF_CR_MULTIJET_MCSubt_1up(float pt, int nTracks){
 //! MCSubt_1down 
 float GetFF_FF_CR_MULTIJET_MCSubt_1down(float pt, int nTracks){
 	 if(nTracks==1){
-		 if(pt < 35) return 0.1285;
-		 if(pt < 40) return 0.1155;
-		 if(pt < 45) return 0.0911;
-		 if(pt < 50) return 0.0809;
-		 if(pt < 60) return 0.0818;
-		 if(pt < 80) return 0.0742;
-		 if(pt < 100) return 0.0650;
-		 if(pt < 200) return 0.0567;
-		 if(pt < 3500) return 0.0404;
+		 if(pt < 35) return 0.1300;
+		 if(pt < 40) return 0.1170;
+		 if(pt < 45) return 0.0932;
+		 if(pt < 50) return 0.0830;
+		 if(pt < 60) return 0.0842;
+		 if(pt < 80) return 0.0775;
+		 if(pt < 100) return 0.0696;
+		 if(pt < 200) return 0.0612;
+		 if(pt < 3500) return 0.0434;
 		 else return 0;
 		 }
 	 if(nTracks==3){
-		 if(pt < 35) return 0.0233;
-		 if(pt < 40) return 0.0193;
-		 if(pt < 60) return 0.0112;
-		 if(pt < 80) return 0.0101;
-		 if(pt < 100) return 0.0074;
-		 if(pt < 3500) return 0.0063;
+		 if(pt < 35) return 0.0236;
+		 if(pt < 40) return 0.0199;
+		 if(pt < 60) return 0.0118;
+		 if(pt < 80) return 0.0110;
+		 if(pt < 100) return 0.0088;
+		 if(pt < 3500) return 0.0076;
 		 else return 0;
 		 }
 	 else return 0;
 }
-
-

@@ -19,6 +19,7 @@ from hpana.db import datasets
 from hpana.db.decorators import cached_property
 from hpana.categories import TAU_IS_TRUE, Category
 from hpana.containers import Histset, HistWorker    
+from ROOT import gDirectory, gObjectTable
 
 ##---------------------------------------------------------------------------------------
 ## - - base analysis sample class
@@ -419,12 +420,21 @@ class Sample(object):
         tf.Close()
             
         return 
-    
+
     def merge_hists(self, hist_set=[], histsdir=None, hists_file=None, write=False, **kwargs):
         """ collect histograms for this sample and add them up properly.
         read the hist from the disk or get them on the fly.
         """
         log.info("merging %s hists"%self.name)
+        # h = hpy()
+
+
+        if write:
+            # - - output file
+            if not hists_file:
+                hists_file = self.config.hists_file
+            merged_hists_file = ROOT.TFile(os.path.join(histsdir, hists_file), "UPDATE")
+
 
         if not hist_set:
             log.info("reading dataset hists from %s/%s"%(histsdir, self.name))
@@ -434,12 +444,24 @@ class Sample(object):
             if not hfiles:
                 log.warning("no hists found for the %s in %s dir"%(self.name, histsdir))
                 return []
-
             # - - extract the hists 
             fields = set()
             categories = set()
             systematics = []
             hist_set = []
+            hist_dict = dict()
+            def pushToDict(hset):
+              if hset.sample not in hist_dict:
+                hist_dict[hset.sample] = dict()
+              if hset.systematic not in hist_dict[hset.sample]:
+                hist_dict[hset.sample][hset.systematic] = dict()
+              if hset.variable not in hist_dict[hset.sample][hset.systematic]:
+                hist_dict[hset.sample][hset.systematic][hset.variable] = dict()
+              if hset.category not in hist_dict[hset.sample][hset.systematic][hset.variable]:
+                hist_dict[hset.sample][hset.systematic][hset.variable][hset.category] = hset
+              else:
+                hist_dict[hset.sample][hset.systematic][hset.variable][hset.category].hist.Add(hset.hist)
+                
             for hf in hfiles:
                 htf = ROOT.TFile(hf, "READ")
                 systs = [k.GetName() for k in htf.GetListOfKeys()]
@@ -460,21 +482,33 @@ class Sample(object):
                             categories.add(category)
                             hist = htf.Get("%s/%s"%(syst, hname))
                             hist.SetDirectory(0) #<! detach from htf
+                            ROOT.SetOwnership(hist, True)
                             hset = Histset(sample=sample, category=category, variable=variable,
                                             systematic=syst, hist=hist)
-                            hist_set.append(hset)
+                            pushToDict(hset)
+                            #hist_set.append(hset)
+
+                    # print(h.heap())
+                    # log.info(gDirectory.GetList())
+                    # for asdfg in gDirectory.GetList():
+                    #     print asdfg
+                    # systdir.SetOwner(True)
+                    # for fo in systdir.GetListOfFolders():
+                    #     fo.SetOwner(True)
+                    #     systdir.Clear()
                 htf.Close()
+            for i in hist_dict:
+                for j in hist_dict[i]:
+                    for k in hist_dict[i][j]:
+                        for l in hist_dict[i][j][k]:
+                            hist_set.append(hist_dict[i][j][k][l])
+            hist_dict = dict() # reset
         else:
             # - - get list of categories and fields available in hist_set
             fields = list(set([hs.variable for hs in hist_set] ) )
             categories = list(set([hs.category for hs in hist_set] ) )
             systematics = list(set([hs.systematic for hs in hist_set]))
             
-        if write:
-            # - - output file
-            if not hists_file:
-                hists_file = self.config.hists_file
-            merged_hists_file = ROOT.TFile(os.path.join(histsdir, hists_file), "UPDATE")
         
         # - - make sure hists are for this sample
         hist_set = filter(lambda hs: hs.sample.startswith(self.name), hist_set)
@@ -495,6 +529,7 @@ class Sample(object):
                             "No hist for sample %s with systematic:%s , var:%s , and cat: %s is found!"%(self.name, systematic, var, cat))
                         continue        
                     hsum = hists[0].hist.Clone() #<! get the ownership right! 
+                    ROOT.SetOwnership(hsum, True)
                     for hs in hists[1:]:
                         hsum.Add(hs.hist)
                     outname = self.config.hist_name_template.format(self.name, cat, var)
@@ -510,11 +545,14 @@ class Sample(object):
                             merged_hists_file.mkdir(rdir)
                         merged_hists_file.cd(rdir)
                         hsum.Write(outname, ROOT.TObject.kOverwrite)
+                    del hists
+            del syst_hists
                         
         # - - close open streams
         if write:
             merged_hists_file.Close()
-        
+        del hist_set
+        # print gObjectTable.Print()
         return merged_hist_set
     
     

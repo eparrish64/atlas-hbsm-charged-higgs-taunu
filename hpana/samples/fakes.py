@@ -361,7 +361,6 @@ class QCD(Sample):
         results = [pool.apply_async(dataset_hists, (wk,), kwds={'write':True}) for wk in workers]
         hist_sets = []
         for res in results:
-            print "In Fakes.py L363 res = %s" %res
             hist_sets += res.get(3600) #<! without the timeout this blocking call ignores all signals.
 
         ## extract DATA/MC hists
@@ -385,7 +384,7 @@ class QCD(Sample):
             ## retrieve the samples hists
             data_hfiles = glob.glob("%s/%s.DATA*"%(histsdir, self.name) )             
             mc_hfiles = list(set(glob.glob("%s/%s.*"%(histsdir, self.name) ) ) - set(data_hfiles) )
-            
+
             if (not (data_hfiles and mc_hfiles)):
                 log.warning(" incomplete hists for %s in %s dir"%(self.name, histsdir))
                 return []
@@ -395,6 +394,19 @@ class QCD(Sample):
             categories = set()
             systematics = []
             mc_hist_set = []
+            mc_hist_dict = dict()
+            def pushToDictMC(hset):
+              if hset.sample not in mc_hist_dict:
+                mc_hist_dict[hset.sample] = dict()
+              if hset.systematic not in mc_hist_dict[hset.sample]:
+                mc_hist_dict[hset.sample][hset.systematic] = dict()
+              if hset.variable not in mc_hist_dict[hset.sample][hset.systematic]:
+                mc_hist_dict[hset.sample][hset.systematic][hset.variable] = dict()
+              if hset.category not in mc_hist_dict[hset.sample][hset.systematic][hset.variable]:
+                mc_hist_dict[hset.sample][hset.systematic][hset.variable][hset.category] = hset
+              else:
+                mc_hist_dict[hset.sample][hset.systematic][hset.variable][hset.category].hist.Add(hset.hist)
+
             ## get QCD MC component hists (to be subtracted)
             for hf in mc_hfiles:
                 htf = ROOT.TFile(hf, "READ")
@@ -409,6 +421,9 @@ class QCD(Sample):
                         match = re.match(self.config.hist_name_regex, hname)
                         if match:
                             sample = match.group("sample")
+                            # raise Exception("AHHHH, I am debugging parsing file names")
+                            if sample != self.name:
+                                continue
                             category = match.group("category")
                             variable = match.group("variable")
                             fields.add(variable)
@@ -416,13 +431,34 @@ class QCD(Sample):
 
                             hist = htf.Get("%s/%s"%(syst, hname))
                             hist.SetDirectory(0) #<! detach
+                            ROOT.SetOwnership(hist, True)
                             hset = Histset(sample=sample, category=category, variable=variable,
                                             systematic=syst, hist=hist)
-                            mc_hist_set.append(hset)
+                            # mc_hist_set.append(hset)
+                            pushToDictMC(hset)
                 htf.Close()
+                for i in mc_hist_dict:
+                    for j in mc_hist_dict[i]:
+                        for k in mc_hist_dict[i][j]:
+                            for l in mc_hist_dict[i][j][k]:
+                                mc_hist_set.append(mc_hist_dict[i][j][k][l])
+                mc_hist_dict = dict()
 
             ## get QCD data component hists
             data_hist_set = []
+            data_hist_dict = dict()
+            def pushToDictData(hset):
+              if hset.sample not in data_hist_dict:
+                data_hist_dict[hset.sample] = dict()
+              if hset.systematic not in data_hist_dict[hset.sample]:
+                data_hist_dict[hset.sample][hset.systematic] = dict()
+              if hset.variable not in data_hist_dict[hset.sample][hset.systematic]:
+                data_hist_dict[hset.sample][hset.systematic][hset.variable] = dict()
+              if hset.category not in data_hist_dict[hset.sample][hset.systematic][hset.variable]:
+                data_hist_dict[hset.sample][hset.systematic][hset.variable][hset.category] = hset
+              else:
+                data_hist_dict[hset.sample][hset.systematic][hset.variable][hset.category].hist.Add(hset.hist)
+
             for hf in data_hfiles:
                 htf = ROOT.TFile(hf, "READ")
                 systs = [k.GetName() for k in htf.GetListOfKeys()]
@@ -443,10 +479,19 @@ class QCD(Sample):
 
                             hist = htf.Get("%s/%s"%(syst, hname))
                             hist.SetDirectory(0) #<! detach from the htf
+                            ROOT.SetOwnership(hist, True)
                             hset = Histset(sample=sample, category=category, variable=variable,
                                             systematic=syst, hist=hist)
-                            data_hist_set.append(hset)
+                            # data_hist_set.append(hset)
+                            pushToDictData(hset)
                 htf.Close()
+
+            for i in data_hist_dict:
+                for j in data_hist_dict[i]:
+                    for k in data_hist_dict[i][j]:
+                        for l in data_hist_dict[i][j][k]:
+                            data_hist_set.append(data_hist_dict[i][j][k][l])
+            data_hist_dict = dict()
         else:
             ## get list of categories and fields available in hist_set
             fields = list(set([hs.variable for hs in hist_set] ) )
@@ -478,17 +523,19 @@ class QCD(Sample):
                     data_hsum = data_hists[0].hist
                     for hs in data_hists[1:]:
                         data_hsum.Add(hs.hist)
+                    qcd_hsum = data_hsum.Clone()
+                    del data_hists
         
                     mc_hists = filter(
                         lambda hs: (hs.systematic==systematic and hs.variable==var and hs.category==cat), mc_hist_set)
                     mc_hsum = mc_hists[0].hist
                     for hs in mc_hists[1:]:
                         mc_hsum.Add(hs.hist)
-                        
+                    del mc_hists
+
                     log.debug("Category {} >> DATA: {}; MC: {}".format(cat, data_hsum.Integral(0, -1), mc_hsum.Integral(0, -1)))
                     
                     # - - subtract MC from DATA
-                    qcd_hsum = data_hsum.Clone()
                     qcd_hsum.Add(mc_hsum, -1)
                     
                     outname = self.config.hist_name_template.format(self.name, cat, var)
@@ -505,6 +552,9 @@ class QCD(Sample):
                         merged_hists_file.cd(rdir)
                         qcd_hsum.Write(outname, ROOT.TObject.kOverwrite)
                         merged_hist_set.append(qcd_hsum)
+        
+        del data_hist_set
+        del mc_hist_set
         if write:
             merged_hists_file.Close()
         

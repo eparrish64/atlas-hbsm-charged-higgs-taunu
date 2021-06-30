@@ -134,6 +134,60 @@ float GetFF_FF_CR_WJETS_MCSubt_1down(float pt, int nTracks){
 }
 
 
+//! tauID_SF_1up 
+float GetFF_FF_CR_WJETS_tauID_SF_1up(float pt, int nTracks){
+	 if(nTracks==1){
+		 if(pt < 35) return 0.1581;
+		 if(pt < 40) return 0.1472;
+		 if(pt < 45) return 0.1312;
+		 if(pt < 50) return 0.1179;
+		 if(pt < 60) return 0.1169;
+		 if(pt < 80) return 0.0979;
+		 if(pt < 100) return 0.0881;
+		 if(pt < 200) return 0.0751;
+		 if(pt < 3500) return 0.0706;
+		 else return 0;
+		 }
+	 if(nTracks==3){
+		 if(pt < 35) return 0.0329;
+		 if(pt < 40) return 0.0301;
+		 if(pt < 60) return 0.0226;
+		 if(pt < 80) return 0.0161;
+		 if(pt < 100) return 0.0130;
+		 if(pt < 3500) return 0.0122;
+		 else return 0;
+		 }
+	 else return 0;
+}
+
+
+//! tauID_SF_1down 
+float GetFF_FF_CR_WJETS_tauID_SF_1down(float pt, int nTracks){
+	 if(nTracks==1){
+		 if(pt < 35) return 0.1530;
+		 if(pt < 40) return 0.1417;
+		 if(pt < 45) return 0.1242;
+		 if(pt < 50) return 0.1112;
+		 if(pt < 60) return 0.1106;
+		 if(pt < 80) return 0.0912;
+		 if(pt < 100) return 0.0810;
+		 if(pt < 200) return 0.0670;
+		 if(pt < 3500) return 0.0648;
+		 else return 0;
+		 }
+	 if(nTracks==3){
+		 if(pt < 35) return 0.0322;
+		 if(pt < 40) return 0.0295;
+		 if(pt < 60) return 0.0216;
+		 if(pt < 80) return 0.0147;
+		 if(pt < 100) return 0.0113;
+		 if(pt < 3500) return 0.0105;
+		 else return 0;
+		 }
+	 else return 0;
+}
+
+
 //! 1down 
 float GetFF_FF_CR_MULTIJET_1down(float pt, int nTracks){
 	 if(nTracks==1){
@@ -267,3 +321,59 @@ float GetFF_FF_CR_MULTIJET_MCSubt_1down(float pt, int nTracks){
 		 }
 	 else return 0;
 }
+
+
+//! tauID_SF_1up 
+float GetFF_FF_CR_MULTIJET_tauID_SF_1up(float pt, int nTracks){
+	 if(nTracks==1){
+		 if(pt < 35) return 0.1300;
+		 if(pt < 40) return 0.1171;
+		 if(pt < 45) return 0.0934;
+		 if(pt < 50) return 0.0832;
+		 if(pt < 60) return 0.0843;
+		 if(pt < 80) return 0.0777;
+		 if(pt < 100) return 0.0700;
+		 if(pt < 200) return 0.0615;
+		 if(pt < 3500) return 0.0436;
+		 else return 0;
+		 }
+	 if(nTracks==3){
+		 if(pt < 35) return 0.0236;
+		 if(pt < 40) return 0.0200;
+		 if(pt < 60) return 0.0119;
+		 if(pt < 80) return 0.0111;
+		 if(pt < 100) return 0.0089;
+		 if(pt < 3500) return 0.0077;
+		 else return 0;
+		 }
+	 else return 0;
+}
+
+
+//! tauID_SF_1down 
+float GetFF_FF_CR_MULTIJET_tauID_SF_1down(float pt, int nTracks){
+	 if(nTracks==1){
+		 if(pt < 35) return 0.1298;
+		 if(pt < 40) return 0.1168;
+		 if(pt < 45) return 0.0929;
+		 if(pt < 50) return 0.0827;
+		 if(pt < 60) return 0.0838;
+		 if(pt < 80) return 0.0770;
+		 if(pt < 100) return 0.0690;
+		 if(pt < 200) return 0.0606;
+		 if(pt < 3500) return 0.0430;
+		 else return 0;
+		 }
+	 if(nTracks==3){
+		 if(pt < 35) return 0.0236;
+		 if(pt < 40) return 0.0198;
+		 if(pt < 60) return 0.0118;
+		 if(pt < 80) return 0.0109;
+		 if(pt < 100) return 0.0086;
+		 if(pt < 3500) return 0.0074;
+		 else return 0;
+		 }
+	 else return 0;
+}
+
+

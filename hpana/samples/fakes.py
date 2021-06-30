@@ -31,7 +31,7 @@ class QCD(Sample):
     TEMPLATE_VARS = ("tau_0_p4->Pt()", "tau_0_n_charged_tracks")
 
     ## variations based on tau RNN score for the anti-tau definition (tau_0_jet_rnn_score_trans>) or MC contamination
-    FFs_VARIATIONS = ["NOMINAL", "1up", "1down", "MCSubt_1up", "MCSubt_1down"]
+    FFs_VARIATIONS = ["NOMINAL", "1up", "1down", "MCSubt_1up", "MCSubt_1down", "tauID_SF_1down", "tauID_SF_1up"]
     FFs = {}
     for var in FFs_VARIATIONS:
         if not var in FFs:
@@ -147,6 +147,8 @@ class QCD(Sample):
             Variation("FFs_1down", title=ff_ws["FFs_1down"], _type="WEIGHT"),
             Variation("FFs_MCSubt_1up", title=ff_ws["FFs_MCSubt_1up"], _type="WEIGHT"),
             Variation("FFs_MCSubt_1down", title=ff_ws["FFs_MCSubt_1down"], _type="WEIGHT"),
+            Variation("FFs_tauID_SF_1down", title=ff_ws["FFs_tauID_SF_1down"], _type="WEIGHT"),
+            Variation("FFs_tauID_SF_1up", title=ff_ws["FFs_tauID_SF_1up"], _type="WEIGHT"),
         ]
         
         # variations from template-fit 

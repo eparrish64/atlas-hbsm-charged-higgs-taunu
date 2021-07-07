@@ -38,6 +38,7 @@ class Configuration(object):
                 FFs_macros=["FFsCOM.cxx", "FFsCR.cxx"], 
                 metTrigEff_macros=["metTrigEff.cxx"], 
                 upsilon_macros=["CorrectUpsilon.cxx"],                
+                effm_macros=["eff_mass.cxx"],
                 root_conf_files = [],
                 ):
         self.channel = channel
@@ -50,6 +51,7 @@ class Configuration(object):
         self.FFs_macros = FFs_macros
         self.metTrigEff_macros = metTrigEff_macros
         self.upsilon_macros = upsilon_macros
+        self.effm_macros = effm_macros
         self.root_conf_files = root_conf_files
 
         # - - - - DATA luminosity dictionary (keys are data streams)

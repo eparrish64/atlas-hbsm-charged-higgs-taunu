@@ -18,6 +18,8 @@ from .sample import MC, Background, cached_property
 from . import log
 from ..categories import TAU_IS_TRUE
 
+from hpana.systematics import Systematic, Variation
+
 ##----------------------------------------------------------------------------------------
 ##
 class EWK(MC, Background):
@@ -79,6 +81,49 @@ class TTbar(Single_Top):
 
         return workers
 
+    def systematics_reweight(self,**kwargs):
+
+        print  " IN systematics_reweight"
+        #systematics = kwargs.pop("systematics", [])
+        #if systematics:
+        #syst = self.config.systematics[:]
+        wttbar_nom = Systematic(
+            #taujet
+            "NOMINAL", _type="WEIGHT", variations=[Variation("NOMINAL", title="eff_mass(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt(),1)", _type="WEIGHT")], )
+            #taulep
+            #ak "NOMINAL", _type="WEIGHT", variations=[Variation("NOMINAL", title="eff_mass(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt()+ mu_0_p4->Pt() + el_0_p4->Pt(),1)", _type="WEIGHT")], )
+        # variations fit
+        wttbar_fit_syst = Systematic("wttbar_fit", _type="WEIGHT")
+        wttbar_fit_syst.variations = [
+            #taujet
+            Variation("wttbar_1up", title="eff_mass(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt(),2)", _type="WEIGHT"),
+            Variation("wttbar_1down", title="eff_mass(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt(),3)", _type="WEIGHT"),
+            Variation("wttbar1_1up", title="eff_mass(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt(),4)", _type="WEIGHT"),
+            Variation("wttbar1_1down", title="eff_mass(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt(),5)", _type="WEIGHT"),
+            #taulep
+            #ak Variation("wttbar_1up", title="eff_mass(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt()+ mu_0_p4->Pt() + el_0_p4->Pt(),2)", _type="WEIGHT"),
+            #ak Variation("wttbar_1down", title="eff_mass(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt()+ mu_0_p4->Pt() + el_0_p4->Pt(),3)", _type="WEIGHT"),
+            #ak Variation("wttbar1_1up", title="eff_mass(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt()+ mu_0_p4->Pt() + el_0_p4->Pt(),4)", _type="WEIGHT"),
+            #ak Variation("wttbar1_1down", title="eff_mass(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt()+ mu_0_p4->Pt() + el_0_p4->Pt(),5)", _type="WEIGHT"),
+            #ak Variation("wttbar2_1up", title="eff_mass(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt()+ mu_0_p4->Pt() + el_0_p4->Pt(),6)", _type="WEIGHT"),
+            #ak Variation("wttbar2_1down", title="eff_mass(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt()+ mu_0_p4->Pt() + el_0_p4->Pt(),7)", _type="WEIGHT"),
+        ]
+     
+
+        syst = [wttbar_nom, wttbar_fit_syst]
+
+        return syst
+
+
+
+    @property
+    def systematics(self, **kwargs):
+
+#ak             print "in ttbar systematics "
+
+        systematics=self.systematics_reweight()      
+
+        return systematics 
 
 ##----------------------------------------------------------------------------------------
 ## sample dedicated classes 

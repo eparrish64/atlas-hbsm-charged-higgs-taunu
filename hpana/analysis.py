@@ -34,7 +34,7 @@ class Analysis(object):
         # - - main configuration object 
         self.config = config 
         self.suffix = suffix
-        self.cxx_macros = self.config.metTrigEff_macros + self.config.FFs_macros + self.config.upsilon_macros 
+        self.cxx_macros = self.config.metTrigEff_macros + self.config.FFs_macros + self.config.upsilon_macros + self.config.effm_macros
 
         # - - loading and compiling cxx macros
         if compile_cxx:

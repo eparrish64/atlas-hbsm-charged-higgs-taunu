@@ -259,8 +259,8 @@ class Sample(object):
 
         if systematics is None or len(systematics)<1:
             systematics = self.config.systematics[:] #self.systematics[:1] #<! NOMINAL
-        else: #<! sanity check 
-            systematics = filter(lambda s: s.name in [st.name for st in systematics], self.systematics)
+        #ak else: #<! sanity check 
+        #ak    systematics = filter(lambda s: s.name in [st.name for st in systematics], self.systematics)
 
         if not fields:
             fields = self.config.variables

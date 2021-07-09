@@ -158,8 +158,8 @@ class QCD(Sample):
             Variation("rQCD_1down", title=ff_ws["rQCD_1down"], _type="WEIGHT"),
         ]
 
-##        return [ffs_nom, ffs_tauID_syst, ffs_rQCD_syst]
-        return [ffs_nom]
+        return [ffs_nom, ffs_tauID_syst, ffs_rQCD_syst]
+##        return [ffs_nom]
 
     
     def cutflow(self, cuts, **kwargs):

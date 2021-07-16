@@ -34,7 +34,7 @@ class Analysis(object):
         # - - main configuration object 
         self.config = config 
         self.suffix = suffix
-        self.cxx_macros = self.config.metTrigEff_macros + self.config.FFs_macros + self.config.upsilon_macros 
+        self.cxx_macros = self.config.metTrigEff_macros + self.config.FFs_macros + self.config.upsilon_macros + self.config.effm_taujet_macros + self.config.effm_taulep_macros + self.config.njets_macros
 
         # - - loading and compiling cxx macros
         if compile_cxx:
@@ -48,6 +48,7 @@ class Analysis(object):
             self.config,
             name='Wtaunu',
             label='W#rightarrow#tau#nu',
+            njets=True,
             color=16)
 
         self.wlnu = samples.Sh_Wlnu(
@@ -84,6 +85,7 @@ class Analysis(object):
             self.config,
             name='TTbar',
             label='t#bar{t}',
+            effm_weighted=True,
             pt_weighted=False,
             color=ROOT.kYellow-7)
 
@@ -91,6 +93,7 @@ class Analysis(object):
             self.config,
             name='SingleTop',
             label='single top',
+            effm_weighted=False,
             pt_weighted=False,
             color=ROOT.kOrange)
         

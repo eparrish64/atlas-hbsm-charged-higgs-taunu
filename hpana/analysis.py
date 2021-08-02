@@ -309,7 +309,6 @@ class Analysis(object):
                 "************** submitting %i jobs  ************"%len(workers))
             log.info(
                 "***********************************************")
-
             pool = multiprocessing.Pool(multiprocessing.cpu_count())
             results = [pool.apply_async(dataset_hists, (wk,)) for wk in workers]
             for res in results:
@@ -362,7 +361,7 @@ class Analysis(object):
             cutflow_hist_sets += self.hists(
                 samples=sim_samples, categories=categories, fields=[field], **kwargs)
         
-        # - - - - treat QCD seperatly (due to different TAU ID)
+        # - - - - treat QCD separately (due to different TAU ID)
         if self.qcd.name in [s.name for s in samples]:
             cutflow_hist_sets += self.qcd.cutflow(cutflow_selections, **kwargs)
             

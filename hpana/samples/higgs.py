@@ -171,8 +171,8 @@ class Higgs(MC, Signal):
             hist_templates=None,
             **kwargs):
 
-        ## signals only in signla regions (or classifier training region)
-        categories = filter(lambda c: "SR_" in c.name or "CLF" in c.name, categories)
+        ## signals only in signal regions (or classifier training region)
+        # categories = filter(lambda c: "SR_" in c.name or "CLF" in c.name, categories)
 
         ## reweighting only in high mass
         if self.mass < 200:
@@ -216,7 +216,7 @@ class Higgs(MC, Signal):
 
         return weighted_workers + unweighted_workers
 
-    def merge_hists(self, hist_set=[], histsdir=None, hists_file=None, write=False, **kwargs):
+    def merge_hists(self, hist_set=[], histsdir="histsdir/", hists_file=None, write=False, **kwargs):
         """
         first we make a histogram with the mc event weights applied normally, lets call it weighted
         then a histogram with no mc event weights, unweighted
@@ -338,9 +338,9 @@ class Higgs(MC, Signal):
                             uw_hset.append(uw_hist_dict[i][j][k][l])
             uw_hist_dict = dict() # reset
         else:
-            w_hset = filter(lambda hs: hs.sample==self.name+"WEIGHTED", hist_set)
-            uw_hset = filter(lambda hs: hs.sample==self.name+"UNWEIGHTED" in hs.sample, hist_set)
-        
+            w_hset = filter(lambda hs: hs.sample.startswith(self.name+"WEIGHTED"), hist_set)
+            uw_hset = filter(lambda hs: hs.sample.startswith(self.name+"UNWEIGHTED"), hist_set)
+
         ## merge weighted/unweighted hists separately and write them to disk
         mr_w_hset = super(Higgs, self).merge_hists(hist_set=w_hset, histsdir=histsdir, hists_file=hists_file, write=False, **kwargs)
         mr_uw_hset = super(Higgs, self).merge_hists(hist_set=uw_hset, histsdir=histsdir, hists_file=hists_file, write=False, **kwargs)

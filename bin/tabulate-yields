@@ -89,8 +89,9 @@ for st in systematics:
 fields = config.variables[:1]
 
 ## samples
-samples = analysis.backgrounds + [analysis.data] + analysis.get_signals(masses=[80, 160, 400, 3000]) 
+samples = analysis.backgrounds + [analysis.data] + analysis.get_signals() 
 backgrounds = analysis.backgrounds
+
 if YIELDS_ARGS.samples:
     samples = filter(lambda s: s.name in YIELDS_ARGS.samples, samples)
     backgrounds = filter(lambda b: b.name in YIELDS_ARGS.samples, backgrounds)
@@ -273,6 +274,8 @@ if YIELDS_ARGS.cutflow:
         events = []
         for cname, cf in cutflow_selections.iteritems():
             for hs in sample_hists:
+                if hs.hist==None:
+                    continue
                 if hs.category == cname:
                     events.append(hs.hist.Integral(0, hs.hist.GetNbinsX()+1))
 

@@ -335,7 +335,7 @@ class QCD(Sample):
         Parameters
         ----------
         category: 
-            Category object; specific category oof analysis.
+            Category object; specific category of analysis.
         fields:
             Variable;  list of variables to get histograms for them
         systematics: 
@@ -359,6 +359,7 @@ class QCD(Sample):
         workers = self.workers(categories=categories,fields=fields, systematics=systematics, **kwargs)
         log.info(
             "************ processing %s sample hists in parallel, njobs=%i ************"%(self.name, len(workers) ) )
+
         pool = multiprocessing.Pool(processes=multiprocessing.cpu_count())
         results = [pool.apply_async(dataset_hists, (wk,), kwds={'write':True}) for wk in workers]
         hist_sets = []
@@ -374,7 +375,7 @@ class QCD(Sample):
 
         return merged_hist_set
                 
-    def merge_hists(self, hist_set=[], histsdir=None, hists_file=None, overwrite=False, write=False, **kwargs):
+    def merge_hists(self, hist_set=[], histsdir="histdir/", hists_file=None, overwrite=False, write=False, **kwargs):
         """ needs a dedicated method since we have to subtract sum of MC from DATA.
         """
         log.info("merging %s hists"%self.name)

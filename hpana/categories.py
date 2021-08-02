@@ -905,7 +905,7 @@ CUTFLOW = {
             ("trigger", {"mc16": ROOT.TCut("1.>0"), "mc15": ROOT.TCut("1.>0")}), #<! trigger is applied globally (just a place holder here)
             ("tauID", TAUID_MEDIUM),
             ("tauPt40", TAU_PT30["mc16"]+TAU_BASE["mc16"]),
-            ("elBase", LEP_BASE),
+            ("lepBase", LEP_BASE),
             #  ("1jets", NUM_JETS1),
             #  ("jetPt25", JET_PT25),
             ("1bjets", NUM_BJETS1),

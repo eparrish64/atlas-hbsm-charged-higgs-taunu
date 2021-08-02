@@ -251,7 +251,7 @@ class Sample(object):
         """ list of workers to submit jobs.
         each worker is basically assigned a histogram to fill, one hist per systematic pre dataset.
         please note that additional selections like trigger are applied here and 
-        selection string is passed to the worker. Furtheremore for each selection category a weight is also 
+        selection string is passed to the worker. Furthermore for each selection category a weight is also 
         assigned.
         """
         if not categories:
@@ -421,7 +421,7 @@ class Sample(object):
             
         return 
 
-    def merge_hists(self, hist_set=[], histsdir=None, hists_file=None, write=False, **kwargs):
+    def merge_hists(self, hist_set=[], histsdir="histsdir/", hists_file=None, write=False, **kwargs):
         """ collect histograms for this sample and add them up properly.
         read the hist from the disk or get them on the fly.
         """

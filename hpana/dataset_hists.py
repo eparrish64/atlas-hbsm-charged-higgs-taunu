@@ -126,7 +126,10 @@ def dataset_hists(hist_worker,
                         eventweight = "*".join(weights[category.name])
                     if syst_type == "WEIGHT":
                         if isinstance(syst_var.title, dict):
+                            ######
                             # sw = syst_var.title[category.name][0]
+                            # I do not like this fix. This works for cutflows, but I doubt it will work for run-analysis
+                            ######
                             sw = syst_var.title["SR_TAULEP"][0]
                         else:
                             sw = syst_var.title

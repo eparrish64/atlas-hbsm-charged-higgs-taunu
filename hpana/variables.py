@@ -352,6 +352,24 @@ tau_0_jet_width = Variable(
     binning=(40, 0., .4))
 
 
+effm_tau = Variable(
+    "effm_tau",
+    title='#font[52]{Eff mass tau} [GeV]',
+    tformula="jet_pt_sum + met_p4->Et() + tau_0_p4->Pt()",
+    binning=(30, 0, 3000),
+    unit='[GeV]',
+    scale=1.
+    )  
+
+effm_taulep = Variable(
+    "effm_taulep",
+    title='#font[52]{Eff mass tau lep} [GeV]',
+    tformula="jet_pt_sum + met_p4->Et() + tau_0_p4->Pt() + mu_0_p4->Pt()+el_0_p4->Pt()",
+    binning=(30, 0, 3000),
+    unit='[GeV]',
+    scale=1.
+    )  
+
 ##############################################
 ##############################################
 tau_0_allTrk_eta = Variable(
@@ -1110,6 +1128,7 @@ VARIABLES_TAUJET = [
     r_min,
     r_min_cut,
     tau_pol_cms,
+    effm_tau,
 ]
 
 ##-----------------------------------------------------------------
@@ -1188,7 +1207,7 @@ VARIABLES_TAULEP = [
     bjet_0_lep_0_dr,
     tau_0_lep_0_dr,
     met_jet_dphi_ratio,
-
+    effm_taulep,
 ]
 
 

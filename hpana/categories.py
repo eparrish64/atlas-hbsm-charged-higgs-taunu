@@ -74,6 +74,11 @@ MT100 = {
     "mc16": ROOT.TCut("tau_0_met_mt > 100")
 }
 
+MET80 = {
+     "mc15": ROOT.TCut("met_et>80000"),
+     "mc16": ROOT.TCut("met_p4->Et() > 80"),
+}
+
  
 ##------------------------------------------------------------------------------------
 ##  - - tau
@@ -629,6 +634,7 @@ Category_TTBAR_TAULEP = Category(
         JET_PT25,
         NUM_BJETS2,
         MT_MAX70,
+        MET80,
     ],
 )
 

@@ -55,6 +55,9 @@ config = Configuration(
     FFs_macros=["FFsCOM.cxx", "FFsCR.cxx"], 
     metTrigEff_macros=["metTrigEff.cxx"], 
     upsilon_macros=["CorrectUpsilon.cxx"],
+    effm_taujet_macros=["eff_mass_taujet.cxx"],
+    effm_taulep_macros=["eff_mass_taulep.cxx"],
+    njets_macros=["njets.cxx"],
     )
 
 # - - - - instantiate the analysis

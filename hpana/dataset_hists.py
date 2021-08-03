@@ -130,7 +130,8 @@ def dataset_hists(hist_worker,
                             # sw = syst_var.title[category.name][0]
                             # I do not like this fix. This works for cutflows, but I doubt it will work for run-analysis
                             ######
-                            sw = syst_var.title["SR_TAULEP"][0]
+                            sw = syst_var.title["SR_%s"%(channel.upper())][0]
+                            # sw = syst_var.title["SR_TAUJET"][0]
                         else:
                             sw = syst_var.title
                         eventweight = "(%s)*(%s)" % (eventweight, sw)

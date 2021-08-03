@@ -354,7 +354,7 @@ class Sample(object):
                 log.debug("--"*70)
                 log.debug(worker)     
                 workers.add(worker)
-
+        
         return list(workers)
 
     def hists(self, categories=[], fields=[], systematics=[], **kwargs):

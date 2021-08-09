@@ -58,12 +58,8 @@ class Single_Top(MC, Background):
             if self.kwargs["effm_weighted"]:
                 for wcat in weights:
                     if self.args[0].channel == 'taujet':
-                    	#taujet
-                        print "IN TAUJET"
                     	weights[wcat] += ["eff_mass_taujet(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt(),1)"]
                     elif self.args[0].channel == 'taulep':
-                    	#taulep
-                        print "IN TAULEP"
                         weights[wcat] += ["eff_mass_taulep(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt() + mu_0_p4->Pt() + el_0_p4->Pt(),1)"]
                     else:
                     	weights[wcat] += 1

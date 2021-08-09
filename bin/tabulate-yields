@@ -42,7 +42,7 @@ ROOT.gROOT.SetBatch(True)
 # ---------------------------------------------------------------------------
 # simple container class for yields
 # ---------------------------------------------------------------------------
-class Yield(namedtuple("Yields", "sample category systematic events")):
+class Yield(namedtuple("Yields", "sample category systematic events error")):
     pass
 
 
@@ -127,11 +127,14 @@ if YIELDS_ARGS.yields_table:
                     else:                       
                         hist = hfile.Get(hname)
                         if hist:
-                            events = hist.Integral(0, hist.GetNbinsX()+1)
+                            # events = hist.Integral(0, hist.GetNbinsX()+1)
+                            thiserr = ROOT.Double(-999)
+                            events =  hist.IntegralAndError(0, ( hist.GetNbinsX() + 1), thiserr, "")
                         else:
                             events = 0
+                            thiserr=0
                     yields.append(
-                        Yield(sample=sample.name, category=cat.name, systematic=syst_var.name, events=events))
+                        Yield(sample=sample.name, category=cat.name, systematic=syst_var.name, events=events, error=thiserr))
 
     # - - - - - - - - count on the fly
     else:
@@ -142,9 +145,12 @@ if YIELDS_ARGS.yields_table:
         yields = []
         for hs in y_hists:
             # <! include underflow/overflow bins
-            nevents = hs.hist.Integral(0, hs.hist.GetNbinsX()+1)
+            # nevents = hs.hist.Integral(0, hs.hist.GetNbinsX()+1)
+
+            thiserr = ROOT.Double(-999)
+            nevents =  hs.hist.IntegralAndError(0, ( hs.hist.GetNbinsX() + 1), thiserr, "")
             yields.append(
-                Yield(sample=hs.sample, category=hs.category, systematic=hs.systematic, events=nevents))
+                Yield(sample=hs.sample, category=hs.category, systematic=hs.systematic, events=nevents, error=thiserr))
                 
     # - - - - - - - - sum of bkg
     if backgrounds:
@@ -153,7 +159,11 @@ if YIELDS_ARGS.yields_table:
                     lambda y: y.category == cat.name and y.systematic == "NOMINAL", yields)
             bkg_yields_nom = filter(
                     lambda y: y.sample in [b.name for b in backgrounds], yields_nom)
+
             events_sum_nom = sum([y.events for y in bkg_yields_nom])
+            if events_sum_nom == 0:
+                continue
+            event_sum_err = sqrt(sum([y.error**2 for y in bkg_yields_nom]))
 
             for systematic in systematics_vars:
                 yields_cat = filter(
@@ -161,9 +171,12 @@ if YIELDS_ARGS.yields_table:
                 bkg_yields = filter(
                     lambda y: y.sample in [b.name for b in backgrounds], yields_cat)
                 events_sum = sum([y.events for y in bkg_yields])
-                rvalue = "%0.2f"%events_sum if systematic.name=="NOMINAL" else "%0.2f(%0.2f%%)"%(events_sum, ((events_sum-events_sum_nom)/events_sum_nom)*100)
+                events_err = sqrt(sum([y.error**2 for y in bkg_yields]))
+
+                rvalue = "%0.2f +/- %1.2f "%(events_sum, events_err) if systematic.name=="NOMINAL" else "%0.2f +/ - %2.2f (%1.2f%%)"%(events_sum, (events_sum_nom/events_sum_nom)*100, events_err)
+                # errvalue = "%0.2f"%events_sum if systematic.name=="NOMINAL" else "%0.2f(%0.2f%%)"%(events_sum, (events_sum_nom/events_sum_nom)*100)
                 yields.append(
-                    Yield(sample="bkgSum", category=cat.name, systematic=systematic.name, events=rvalue))
+                    Yield(sample="bkgSum", category=cat.name, systematic=systematic.name, events=rvalue, error=events_err))
 
     # - - - - - - - - tabulate the yields
     # yieldDF = pd.DataFrame()

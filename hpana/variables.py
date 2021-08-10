@@ -253,8 +253,7 @@ tau_0_eta = Variable(
     tformula={
         "mc16": "tau_0_p4->Eta()",
         "mc15": "tau_0_eta"},
-    binning=(50, -3., 3.),
-    plot_bins=np.arange(-3.,3.,0.1))
+    binning=(50, -3., 3.))
 
 tau_0_phi = Variable(
     "tau_0_phi" , 

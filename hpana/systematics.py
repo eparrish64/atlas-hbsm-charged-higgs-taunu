@@ -1,7 +1,7 @@
 """
 * Base class for systematics types. 
 * Systematic class mainly encapsulated systematics info for different types.
-* Systematic Objects, can then be passed to the anlaysis workers in order to 
+* Systematic Objects, can then be passed to the analysis workers in order to 
 * do histograms depending on the type and source of systematics
 * NOTE: that minor systematics are comment out by default (making the code very slow), uncomment them if you with to include
 * all systematics in the analysis.
@@ -113,12 +113,12 @@ class Systematic(object):
                 "JET_Flavor_Response_1up",
             ),
 
-            "JET_JER_DataVsMC":(
-                "JET_JER_DataVsMC_AFII_1down",
-                "JET_JER_DataVsMC_AFII_1up",
-                "JET_JER_DataVsMC_MC16_1down",
-                "JET_JER_DataVsMC_MC16_1up",
-            ),
+            # "JET_JER_DataVsMC":(
+            #     "JET_JER_DataVsMC_AFII_1down",
+            #     # "JET_JER_DataVsMC_AFII_1up",
+            #     "JET_JER_DataVsMC_MC16_1down",
+            #     "JET_JER_DataVsMC_MC16_1up",
+            # ),
 
             "JET_JER_EffectiveNP":(
                 "JET_JER_EffectiveNP_1_1down",
@@ -157,18 +157,18 @@ class Systematic(object):
                 "JET_Pileup_RhoTopology_1up",
             ),
 
-            "JET_PunchThrough":(
-                "JET_PunchThrough_MC16_1down",
-                "JET_PunchThrough_MC16_1up",
-                "JET_PunchThrough_AFII_1down",
-        	"JET_PunchThrough_AFII_1up",
+         #    "JET_PunchThrough":(
+         #        "JET_PunchThrough_MC16_1down",
+         #        "JET_PunchThrough_MC16_1up",
+         #        "JET_PunchThrough_AFII_1down",
+        	# "JET_PunchThrough_AFII_1up",
                 
-            ),
+         #    ),
 
-            "JET_RelativeNonClosure":(
-                "JET_RelativeNonClosure_AFII_1down",
-        	"JET_RelativeNonClosure_AFII_1up",
-            ),
+         #    "JET_RelativeNonClosure":(
+         #        "JET_RelativeNonClosure_AFII_1down",
+        	# "JET_RelativeNonClosure_AFII_1up",
+         #    ),
 
             "JET_SingleParticle_HighPt":(
                 "JET_SingleParticle_HighPt_1down",
@@ -250,7 +250,7 @@ class Systematic(object):
 
     @classmethod
     def factory(cls, channels=["taujet", "taulep"]):
-        """ factroy method for providing analysis wide systematics. 
+        """ factory method for providing analysis wide systematics. 
         """
         systs_dict = {}
         for channel in channels:
@@ -290,5 +290,5 @@ class Systematic(object):
         return systs_dict
 
 
-# prepapre systematic objects
+# prepare systematic objects
 SYSTEMATICS = Systematic.factory()

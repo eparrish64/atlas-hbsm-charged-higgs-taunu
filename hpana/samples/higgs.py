@@ -172,7 +172,8 @@ class Higgs(MC, Signal):
             **kwargs):
 
         ## signals only in signla regions (or classifier training region)
-        categories = filter(lambda c: "SR_" in c.name or "CLF" in c.name, categories)
+        # categories = filter(lambda c: "SR_" in c.name or "CLF" in c.name, categories)
+        ## Now we can see signal in the control regions to look at signal contamination
 
         ## reweighting only in high mass
         if self.mass < 200:
@@ -249,6 +250,19 @@ class Higgs(MC, Signal):
             categories = set()
             systematics = []
             w_hset = []
+            w_hist_dict = dict()
+            def pushToDictW(hset):
+              if hset.sample not in w_hist_dict:
+                w_hist_dict[hset.sample] = dict()
+              if hset.systematic not in w_hist_dict[hset.sample]:
+                w_hist_dict[hset.sample][hset.systematic] = dict()
+              if hset.variable not in w_hist_dict[hset.sample][hset.systematic]:
+                w_hist_dict[hset.sample][hset.systematic][hset.variable] = dict()
+              if hset.category not in w_hist_dict[hset.sample][hset.systematic][hset.variable]:
+                w_hist_dict[hset.sample][hset.systematic][hset.variable][hset.category] = hset
+              else:
+                w_hist_dict[hset.sample][hset.systematic][hset.variable][hset.category].hist.Add(hset.hist)
+
             for hf in w_hfiles:
                 htf = ROOT.TFile(hf, "READ")
                 systs = [k.GetName() for k in htf.GetListOfKeys()]
@@ -269,12 +283,35 @@ class Higgs(MC, Signal):
                             categories.add(category)
                             hist = htf.Get("%s/%s"%(syst, hname))
                             hist.SetDirectory(0) #<! detach from htf
+                            ROOT.SetOwnership(hist, True)
                             hset = Histset(sample=sample, category=category, variable=variable,
                                             systematic=syst, hist=hist)
-                            w_hset.append(hset)
+                            # w_hset.append(hset)
+                            pushToDictW(hset)
                 htf.Close()
+            for i in w_hist_dict:
+                for j in w_hist_dict[i]:
+                    for k in w_hist_dict[i][j]:
+                        for l in w_hist_dict[i][j][k]:
+                            w_hset.append(w_hist_dict[i][j][k][l])
+            
+            w_hist_dict = dict() # reset
+            
 
             uw_hset = []
+            uw_hist_dict = dict()
+            def pushToDictUW(hset):
+              if hset.sample not in uw_hist_dict:
+                uw_hist_dict[hset.sample] = dict()
+              if hset.systematic not in uw_hist_dict[hset.sample]:
+                uw_hist_dict[hset.sample][hset.systematic] = dict()
+              if hset.variable not in uw_hist_dict[hset.sample][hset.systematic]:
+                uw_hist_dict[hset.sample][hset.systematic][hset.variable] = dict()
+              if hset.category not in uw_hist_dict[hset.sample][hset.systematic][hset.variable]:
+                uw_hist_dict[hset.sample][hset.systematic][hset.variable][hset.category] = hset
+              else:
+                uw_hist_dict[hset.sample][hset.systematic][hset.variable][hset.category].hist.Add(hset.hist)
+
             for hf in uw_hfiles:
                 htf = ROOT.TFile(hf, "READ")
                 systs = [k.GetName() for k in htf.GetListOfKeys()]
@@ -289,17 +326,32 @@ class Higgs(MC, Signal):
                             variable = match.group("variable")
                             hist = htf.Get("%s/%s"%(syst, hname))
                             hist.SetDirectory(0) #<! detach from htf
+                            ROOT.SetOwnership(hist, True)
                             hset = Histset(sample=sample, category=category, variable=variable,
                                             systematic=syst, hist=hist)
-                            uw_hset.append(hset)
+                            # uw_hset.append(hset)
+                            pushToDictUW(hset)
                 htf.Close()
+            for i in uw_hist_dict:
+                for j in uw_hist_dict[i]:
+                    for k in uw_hist_dict[i][j]:
+                        for l in uw_hist_dict[i][j][k]:
+                            uw_hset.append(uw_hist_dict[i][j][k][l])
+            uw_hist_dict = dict() # reset
         else:
             w_hset = filter(lambda hs: hs.sample==self.name+"WEIGHTED", hist_set)
             uw_hset = filter(lambda hs: hs.sample==self.name+"UNWEIGHTED" in hs.sample, hist_set)
-
+        
         ## merge weighted/unweighted hists separately and write them to disk
         mr_w_hset = super(Higgs, self).merge_hists(hist_set=w_hset, histsdir=histsdir, hists_file=hists_file, write=False, **kwargs)
         mr_uw_hset = super(Higgs, self).merge_hists(hist_set=uw_hset, histsdir=histsdir, hists_file=hists_file, write=False, **kwargs)
+
+        if len(mr_w_hset) == 0:
+            log.warning("No hists were found for %sWEIGHTED. Or got deleted by accident"%(self.name))
+
+        if len(mr_uw_hset) == 0:
+            log.warning("No hists were found for %sUNWEIGHTED. Or got deleted by accident"%(self.name))
+        
         
         ## output file
         if write:

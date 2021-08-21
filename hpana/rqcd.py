@@ -160,7 +160,7 @@ def get_cr_ffs(hist_sets,
                 control_regions=[], 
             #LD tau_jet_bdt_score_trans_wps={"NOMINAL":0.02, "1up": 0.01, "1down": 0.03}, 
               	tau_jet_rnn_score_trans={"NOMINAL":0.01, "1up": 0.01, "1down": 0.01}, 
-	 	n_charged_tracks=[], 
+	 	        n_charged_tracks=[],
                 subtract_mc=True,
                 cache_file=None,
                 write_cxx_macro=True,
@@ -231,10 +231,11 @@ def get_cr_ffs(hist_sets,
             data_mc_tau_h.Add(mc_tau_hsum, -1)
             data_mc_antitau_h.Add(mc_antitau_hsum, -1)
 
-            data_mc_mcsub05_tau_h.Add(mc_tau_hsum, -0.5)
-            data_mc_mcsub05_antitau_h.Add(mc_antitau_hsum, -0.5)
-            data_mc_mcsub15_tau_h.Add(mc_tau_hsum, -1.5)
-            data_mc_mcsub15_antitau_h.Add(mc_antitau_hsum, -1.5)
+            data_mc_mcsub05_tau_h.Add(mc_tau_hsum, -1)
+            data_mc_mcsub05_antitau_h.Add(mc_antitau_hsum, -0.5) # 50 percent MC variation only on antitau
+
+            data_mc_mcsub15_tau_h.Add(mc_tau_hsum, -1)
+            data_mc_mcsub15_antitau_h.Add(mc_antitau_hsum, -1.5) # 50 percent MC variation only on antitau
         
         log.info("Region:{}; TAU events; DATA: {}, MC: {}".format(cr_name,
             data_tau_hsum.Integral(), mc_tau_hsum.Integral() if subtract_mc else "NAN") )
@@ -707,15 +708,15 @@ def plot_cr_ffs(cr_ffs, cr_labels={},
                 ff = float(cr_ffs[cr][jet_rnn_key][itk]["%i"%pt])
 
                 ## syst error (variation of LOOSE TAU)
-                ff_up = 0#float(cr_ffs[cr][jet_rnn_key.replace("NOMINAL", "1up")][itk]["%i"%pt])
-                ff_dn = 0#float(cr_ffs[cr][jet_rnn_key.replace("NOMINAL", "1down")][itk]["%i"%pt])
+                ff_up = float(cr_ffs[cr][jet_rnn_key.replace("NOMINAL", "1up")][itk]["%i"%pt]) #not used anymore
+                ff_dn = float(cr_ffs[cr][jet_rnn_key.replace("NOMINAL", "1down")][itk]["%i"%pt]) #not used anymore
 
                 ## syst error (varaition of MC subtraction) 
-                ff_mcsubt_up = 0#float(cr_ffs[cr][jet_rnn_key.replace("NOMINAL", "MCSubt_1up")][itk]["%i"%pt])
-                ff_mcsubt_dn = 0#float(cr_ffs[cr][jet_rnn_key.replace("NOMINAL", "MCSubt_1down")][itk]["%i"%pt])
+                ff_mcsubt_up = float(cr_ffs[cr][jet_rnn_key.replace("NOMINAL", "MCSubt_1up")][itk]["%i"%pt])
+                ff_mcsubt_dn = float(cr_ffs[cr][jet_rnn_key.replace("NOMINAL", "MCSubt_1down")][itk]["%i"%pt])
 
-                up = 0#math.sqrt((ff-ff_up)**2 + (ff-ff_mcsubt_up)**2)
-                dn = 0#math.sqrt((ff-ff_dn)**2 + (ff-ff_mcsubt_dn)**2)
+                up = math.sqrt((ff-ff_up)**2 + (ff-ff_mcsubt_up)**2)
+                dn = math.sqrt((ff-ff_dn)**2 + (ff-ff_mcsubt_dn)**2)
 
                 x_dumm = (bin_keys[n]+bin_keys[n+1])/2. #<! just to make plots look nicer 
                 e_graph.SetPoint(n, x_dumm, ff)
@@ -962,72 +963,88 @@ def plot_alpha(alphas, cr_ffs,
     comb_ff_graphs = []
     a_legend = ROOT.TLegend(0.7, 0.7, 0.9, 0.9)
     tkeys = alphas.keys()
-    for itk in tkeys: 
-        pt_bins = sorted([int(k) for k in alphas[itk].keys()])
+    for itk in tkeys:
 
-	print("\n")
+       #different pt bins for FF_CR and alpha_MJ estimation
+       pt_bins = sorted([int(k) for k in alphas[itk].keys()])  
+       ff_pt_bins = sorted([int(k) for k in cr_ffs["FF_CR_MULTIJET"]["MCSubt_1up"][itk].keys()])
+                   
+       for ic, cat in enumerate(regions):
+           log.info("\n****************** rQCD estimation (category:{0}, nTracks={1}) ******************".format(cat.name, itk))
+           alpha_g = ROOT.TGraphAsymmErrors(len(pt_bins) - 1)
+           #mj comb_ff_g = ROOT.TGraphAsymmErrors(len(pt_bins) - 1) -> differebt
+           comb_ff_g = ROOT.TGraphAsymmErrors(len(ff_pt_bins) - 1)
 
-	print("\n")                
-        for ic, cat in enumerate(regions):
-            log.info("\n****************** rQCD estimation (category:{0}, nTracks={1}) ******************".format(cat.name, itk))
-            print(cat.name)
+           for nbin in range(len(ff_pt_bins)-1):
+               pt = ff_pt_bins[nbin]
+               pt_alpha = ff_pt_bins[nbin+1]
+               pkey = "%i"%pt
+               pkey_alpha = "%i"%pt_alpha
 
-            alpha_g = ROOT.TGraphAsymmErrors(len(pt_bins) - 1)
-            comb_ff_g = ROOT.TGraphAsymmErrors(len(pt_bins) - 1)
+               ## Correction due to different pt binning -> above 80 GeV take last pt bin
+               if pkey in ('80', '100', '200'):
+                   pkey_alpha = '3500'
 
-            for nbin in range(len(pt_bins)-1):
-                pt = pt_bins[nbin]
-                pkey = "%i"%pt
-
-                if not pkey in alphas[itk]:
-                    log.warning("No alpha is fitted for %s bin; combined FF is set to Mj FF!"%pkey)
-                    alpha = 1
-                    alpha_up = alpha_down = 0.001
-                else:
-                    if not cat.name in alphas[itk][pkey]:
-                        log.warning("Missing %s in %s; setting alpha to 1"%(cat.name, pkey)) 
-                        alpha = 1
-                        alpha_up = alpha_down = 0.001                    
-                    else:
-                        alpha = alphas[itk][pkey][cat.name]["NOMINAL"]
-                        alpha_up = abs(alpha-alphas[itk][pkey][cat.name]["1up"])
-                        alpha_down = abs(alpha-alphas[itk][pkey][cat.name]["1down"])
-
-                ## symmetric error (too large errors --> not beautiful plots --> drop them from plots)
-                symt_alpha_err = max(alpha_up, alpha_down) #0.001
-                # if logy:
+               if not pkey_alpha in alphas[itk]:
+                   log.warning("No alpha is fitted for %s bin; combined FF is set to Mj FF!"%pkey_alpha)
+                   alpha = 1
+                   alpha_up = alpha_down = 0.001
+               else:
+                   if not cat.name in alphas[itk][pkey_alpha]:
+                       log.warning("Missing %s in %s; setting alpha to 1"%(cat.name, pkey_alpha)) 
+                       alpha = 1
+                       alpha_up = alpha_down = 0.001                    
+                   else:
+                       alpha = alphas[itk][pkey_alpha][cat.name]["NOMINAL"]
+                       alpha_up = abs(alpha-alphas[itk][pkey_alpha][cat.name]["1up"])
+                       alpha_down = abs(alpha-alphas[itk][pkey_alpha][cat.name]["1down"])
+                       
+                       
+               ## symmetric error (too large errors --> not beautiful plots --> drop them from plots)
+               symt_alpha_err = max(alpha_up, alpha_down)
+               # if logy:
                 #     symt_alpha_err = 0.434*symt_alpha_err/alpha 
 
-                ## - - ff_com = alpha * ff_mj + (1-alpha)ff_wj
-                ff_mj_nom = float(cr_ffs["FF_CR_MULTIJET"]["NOMINAL"][itk][pkey])
-                ff_wj_nom = float(cr_ffs["FF_CR_WJETS"]["NOMINAL"][itk][pkey])
+               ## - - ff_com = alpha * ff_mj + (1-alpha)ff_wj
 
-                ff_mj_up = 0#abs(ff_mj_nom - float(cr_ffs["FF_CR_MULTIJET"]["MCSubt_1up"][itk][pkey]))
-                ff_wj_up = 0#abs(ff_wj_nom - float(cr_ffs["FF_CR_WJETS"]["MCSubt_1up"][itk][pkey]))
+               ff_mj_nom = float(cr_ffs["FF_CR_MULTIJET"]["NOMINAL"][itk][pkey]) #not used anymore
+               ff_wj_nom = float(cr_ffs["FF_CR_WJETS"]["NOMINAL"][itk][pkey]) #not used anymore
+               
+               ff_mj_up = abs(ff_mj_nom - float(cr_ffs["FF_CR_MULTIJET"]["MCSubt_1up"][itk][pkey]))
+               ff_wj_up = abs(ff_wj_nom - float(cr_ffs["FF_CR_WJETS"]["MCSubt_1up"][itk][pkey]))
 
-                ff_mj_down = 0#abs(ff_mj_nom - float(cr_ffs["FF_CR_MULTIJET"]["MCSubt_1down"][itk][pkey]))
-                ff_wj_down = 0#abs(ff_wj_nom - float(cr_ffs["FF_CR_WJETS"]["MCSubt_1down"][itk][pkey]))
+               ff_mj_down = abs(ff_mj_nom - float(cr_ffs["FF_CR_MULTIJET"]["MCSubt_1down"][itk][pkey]))
+               ff_wj_down = abs(ff_wj_nom - float(cr_ffs["FF_CR_WJETS"]["MCSubt_1down"][itk][pkey]))
 
-                ## error propagation 
-                ff = alpha*ff_mj_nom + (1-alpha)*ff_wj_nom 
-                ff_up = math.sqrt((ff_mj_nom - ff_wj_nom)**2 * alpha_up**2 + (alpha*ff_mj_up)**2 + ((1-alpha)*ff_wj_up)**2)
-                ff_down = math.sqrt((ff_mj_nom - ff_wj_nom)**2 * alpha_down**2 + (alpha*ff_mj_down)**2 + ((1-alpha)*ff_wj_down)**2)
+               ## error propagation 
+               ff = alpha*ff_mj_nom + (1-alpha)*ff_wj_nom 
+               ff_up = math.sqrt((ff_mj_nom - ff_wj_nom)**2 * alpha_up**2 + (alpha*ff_mj_up)**2 + ((1-alpha)*ff_wj_up)**2)
+               ff_down = math.sqrt((ff_mj_nom - ff_wj_nom)**2 * alpha_down**2 + (alpha*ff_mj_down)**2 + ((1-alpha)*ff_wj_down)**2)
 
-                ## symmetric error 
-                symt_ff_err = max(ff_up, ff_down)
+               ## symmetric error 
+               symt_ff_err = max(ff_up, ff_down)
 
-                x_dumm = (pt_bins[nbin]+pt_bins[nbin+1])/2. #<! just to make plots look nicer
+               x_dumm = (ff_pt_bins[nbin]+ff_pt_bins[nbin+1])/2. #<! just to make plots look nicer 
 
-                alpha_g.SetPoint(nbin, x_dumm, alpha)
-                alpha_g.SetPointError(nbin, x_dumm-pt, x_dumm-pt, symt_alpha_err, symt_alpha_err)
+               ## Correction due to different pt binning
+               if pkey not in ('80', '100', '200'):
+                   alpha_g.SetPoint(nbin, x_dumm, alpha)
+                   alpha_g.SetPointError(nbin, x_dumm-pt, x_dumm-pt, symt_alpha_err, symt_alpha_err)
+               if pkey == '80':
+                   x_dumm = (pt_bins[nbin]+pt_bins[nbin+1])/2.
+                   alpha_g.SetPoint(nbin, x_dumm, alpha)
+                   alpha_g.SetPointError(nbin, x_dumm-pt, x_dumm-pt, symt_alpha_err, symt_alpha_err)
+                   
+               x_dumm = (ff_pt_bins[nbin]+ff_pt_bins[nbin+1])/2. #<! just to make plots look nicer
 
-                comb_ff_g.SetPoint(nbin, x_dumm, ff)
-                comb_ff_g.SetPointError(nbin, x_dumm-pt, x_dumm-pt, symt_ff_err, symt_ff_err)
-                log.info("(pT, alpha, FF): {}, {}, {}".format(x_dumm, alpha, ff))
+               comb_ff_g.SetPoint(nbin, x_dumm, ff)
+               comb_ff_g.SetPointError(nbin, x_dumm-pt, x_dumm-pt, symt_ff_err, symt_ff_err)
+               log.info("(pT, alpha, FF): {}, {}, {}".format(x_dumm, alpha, ff))
 
-            alpha_graphs.append(alpha_g)            
-            comb_ff_graphs.append(comb_ff_g)
-            a_legend.AddEntry(alpha_g, "%s(%sp)"%(cat.label, itk), "LP")
+
+           alpha_graphs.append(alpha_g)            
+           comb_ff_graphs.append(comb_ff_g)
+           a_legend.AddEntry(alpha_g, "%s(%sp)"%(cat.label, itk), "LP")
 
 
     canvas = ROOT.TCanvas("c", "c", 800, 600)
@@ -1047,9 +1064,9 @@ def plot_alpha(alphas, cr_ffs,
         canvas.SetLogx() #<! CALL IT BEFORE DOING ANYTHING WITH AXIS RANGE!
         ah.GetYaxis().SetTitle("#alpha_{MJ}")
         ah.GetXaxis().SetTitle("p^{#tau}_{T} [GeV]")
-	ah.GetXaxis().SetRangeUser(0, 4000)
+        ah.GetXaxis().SetRangeUser(30, 4000)
         ah.GetYaxis().SetRangeUser(-4, 4)
-# MM pT binning needs to be fixed 
+        # MM pT binning needs to be fixed 
             
     for label in labels:
         label.Draw("SAME")
@@ -1079,7 +1096,7 @@ def plot_alpha(alphas, cr_ffs,
         canvas.SetLogx()
         fh.GetYaxis().SetTitle("Combined Fake-Factor")
         fh.GetXaxis().SetTitle("p^{#tau}_{T} [GeV]")
-        fh.GetXaxis().SetRangeUser(0, 4000)
+        fh.GetXaxis().SetRangeUser(30, 4000)
         fh.GetYaxis().SetRangeUser(0.0, 0.25)
         #fh.GetYaxis().SetRangeUser(0.0, 0.04) 
         

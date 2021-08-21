@@ -42,6 +42,7 @@ from hpana.categories import (
     Category_TAULEP_BASE,
     Category_TAUJET_PRESEL,
     Category_TAULEP_PRESEL,
+    Category_TTBAR_TAULEP,
 )
     
 from hpana.dataset_hists import dataset_hists
@@ -87,8 +88,13 @@ COLORS = [ROOT.kRed, ROOT.kBlue, ROOT.kBlack, ROOT.kMagenta, ROOT.kOrange, ROOT.
 LOOSE_ANTITAU = ROOT.TCut("tau_0_jet_rnn_loose==0")
 N_CHARGED_TRACKS = [1, 3] 
 TAU_PT_BINS = {
-    "1":[0, 30, 35, 40, 45, 50, 60, 80, 100, 200, 3500],
-    "3":[0, 30, 35, 40, 60, 80, 100, 3500],
+    "1":[30, 35, 40, 45, 50, 60, 80, 100, 200, 3500],
+    "3":[30, 35, 40, 60, 80, 100, 3500],
+}
+ALPHA_TAU_PT_BINS = {
+    #mj "1":[30, 35, 40, 45, 50, 60, 80, 100, 200, 3500],
+    "1":[30, 35, 40, 45, 50, 60, 80, 3500],
+    "3":[30, 35, 40, 60, 80, 3500],
 }
 
 ## - - - - CR and target selection regions
@@ -102,7 +108,7 @@ FFS_CONTROL_REGIONS = taulep_config.ff_cr_regions + taujet_config.ff_cr_regions
 FIT_HIST_TEMPLATES = {
     #<! PLS NOTE the tformula order is Z:Y:X and for the binning it's X, Y, Z !
     "tau_0_jet_width":
-    ROOT.TH3F("tau_0_p4->Pt():tau_0_n_charged_tracks:tau_0_jet_width_trks_dr04", "tau_0_jet_width", 20, 0, .4, 4, 0, 4, 800, 0, 4000),
+    ROOT.TH3F("tau_0_p4->Pt():tau_0_n_charged_tracks:tau_0_jet_width_trks_dr04", "tau_0_jet_width", 40, 0, .4, 4, 0, 4, 800, 0, 4000),
     "tau_0_jet_rnn_score_trans":
     ROOT.TH3F("tau_0_p4->Pt():tau_0_n_charged_tracks:tau_0_jet_rnn_score_trans", "tau_0_jet_rnn_score_trans", 50, 0, .5, 4, 0, 4, 800, 0, 4000),
 }
@@ -295,22 +301,22 @@ if __name__=="__main__":
                     target_regions = TAUJET_TARGET_REGIONS
 
                 hsets = prep_ff_hists(combined_ffs_hists[channel],
-                                      control_regions=cr_regions, target_regions=target_regions, shape_vars=rQCD_VARS, fitting_bins=TAU_PT_BINS)
+                                      control_regions=cr_regions, target_regions=target_regions, shape_vars=rQCD_VARS, fitting_bins=ALPHA_TAU_PT_BINS)
                 cr_hists += filter(lambda hs: hs.category in [c.name for c in cr_regions], hsets)
                 target_hists += filter(lambda hs: hs.category in [t.name for t in target_regions], hsets)
 
             alphas = fit_alpha(cr_hists, target_hists,TARGET_REGIONS,
-                               fitting_bins=TAU_PT_BINS,
+                               fitting_bins=ALPHA_TAU_PT_BINS,
                                shape_vars=rQCD_VARS,
                                cache=FFs_ARGS.rqcd_cache,
                                pdir=FFs_ARGS.pdir,
                                validation_plots=FFs_ARGS.validation_plots)
         if FFs_ARGS.validation_plots:
-            tj_regions = [Category_BVETO, Category_BVETO_MT100, Category_SR_TAUJET, Category_TAUJET_PRESEL]
+            tj_regions = [Category_BVETO, Category_BVETO_MT100, Category_SR_TAUJET]
             plot_alpha(
                 alphas, cr_ffs, regions=tj_regions, pdir=FFs_ARGS.pdir, formats=[".png"], suffix="taujet", data_info=taujet_analysis.data.info, colors=COLORS)
 
-            tl_regions = [Category_SS_TAUEL, Category_SS_TAUMU, Category_SR_TAULEP, Category_TAULEP_PRESEL]
+            tl_regions = [Category_SS_TAUEL, Category_SS_TAUMU, Category_SR_TAULEP]
             plot_alpha(
                 alphas, cr_ffs, regions=tl_regions, pdir=FFs_ARGS.pdir, formats=[".png"], suffix="taulep", data_info=taulep_analysis.data.info, colors=COLORS)
     

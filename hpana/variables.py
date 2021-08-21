@@ -253,8 +253,7 @@ tau_0_eta = Variable(
     tformula={
         "mc16": "tau_0_p4->Eta()",
         "mc15": "tau_0_eta"},
-    binning=(50, -3., 3.),
-    plot_bins=np.arange(-3.,3.,0.1))
+    binning=(50, -3., 3.))
 
 tau_0_phi = Variable(
     "tau_0_phi" , 
@@ -1084,7 +1083,6 @@ VARIABLES_TAUJET = [
     tau_0_n_charged_tracks,
     tau_0_q, 
     tau_0_upsilon,
-    
     met_et,
     
     tau_0_met_mt,
@@ -1119,7 +1117,6 @@ VARIABLES_TAUJET = [
 VARIABLES_TAULEP = [
     n_avg_int_cor,
     n_actual_int_cor,
-
     tau_0_pt,
     tau_0_px,
     tau_0_py,
@@ -1190,6 +1187,7 @@ VARIABLES_TAULEP = [
     bjet_0_lep_0_dr,
     tau_0_lep_0_dr,
     met_jet_dphi_ratio,
+
 ]
 
 

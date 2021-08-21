@@ -34,10 +34,10 @@ if [ ${#files[@]} -eq 0 ]; then
 else    
     for file in $files
     do
-        echo copying the output="$file" to workdir="${3}/trained_models";
-        rsync -axvH --no-g --no-p "$file" ${3}/trained_models/ || fail;
+        echo copying the output="$file" to workdir="${7}/trained_models";
+        rsync -axvH --no-g --no-p "$file" ${7}/trained_models/ || fail;
         file_h5=`ls $file | sed "s,pkl$,h5,g"`
-        rsync -axvH --no-g --no-p "$file_h5" ${3}/trained_models/ || fail;
+        rsync -axvH --no-g --no-p "$file_h5" ${7}/trained_models/ || fail;
     done
     
     echo "Succeeded";

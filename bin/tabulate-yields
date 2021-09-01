@@ -280,7 +280,7 @@ if YIELDS_ARGS.cutflow:
     cutflow_hist_sets = []
     bkg_sum_events = []
     bkg_sum_errs = []
-    cutflow_hist_sets = analysis.cutflow(cutflow_selections, samples=samples, tauid=ROOT.TCut("1>0"), trigger=ROOT.TCut("1>0"), systematics=systematics, outdir=YIELDS_ARGS.outdir)
+    cutflow_hist_sets = analysis.cutflow(cutflow_selections, samples=samples, tauid=ROOT.TCut("1>0"), trigger=ROOT.TCut("1>0"), systematics=systematics, outdir=YIELDS_ARGS.outdir, weighted=YIELDS_ARGS.unweighted)
 
     for sample in samples:
         sample_hists = filter(lambda hs: hs.sample==sample.name, cutflow_hist_sets)
@@ -314,9 +314,9 @@ if YIELDS_ARGS.cutflow:
         evt_fract = []
         for evt, frac, err in zip(events, s_fractions, errs):
             if frac != 0:
-                evt_fract.append("{0:0.2f} +/- {1:0.2f} ({2:0.0f}%)".format(evt, err, 100*frac))
+                evt_fract.append("{0:0.1f} +/- {1:0.1f} ({2:0.0f}%)".format(evt, err, 100*frac))
             else:
-                evt_fract.append("{0:0.2f} +/- {1:0.2f}".format(evt, err))
+                evt_fract.append("{0:0.1f} +/- {1:0.1f}".format(evt, err))
         row = [sample.name] + evt_fract
         table_rows.append(row)
 
@@ -347,9 +347,9 @@ if YIELDS_ARGS.cutflow:
         evt_fract = []
         for evt, frac, err in zip(bkg_tot, s_fractions, bkg_tot_errs):
             if frac != 0:
-                evt_fract.append("{0:0.2f} +/- {1:0.2f} ({2:0.0f}%)".format(evt, sqrt(err), 100*frac))
+                evt_fract.append("{0:0.1f} +/- {1:0.1f} ({2:0.0f}%)".format(evt, sqrt(err), 100*frac))
             else:
-                evt_fract.append("{0:0.2f} +/- {1:0.2f}".format(evt, sqrt(err)))
+                evt_fract.append("{0:0.1f} +/- {1:0.1f}".format(evt, sqrt(err)))
         row = ["Total bkg"] + evt_fract
         table_rows.append(row)
 
@@ -357,16 +357,18 @@ if YIELDS_ARGS.cutflow:
     headers = ["sample"] + cutflow_selections.keys()
     ostring = "--"*100 + "\n"
     if YIELDS_ARGS.latex:
-        ostring += tabulate(table_rows, headers=headers, tablefmt='latex')
-    else:
-        ostring += tabulate(table_rows, headers=headers)
+        ostring_latex = tabulate(table_rows, headers=headers, tablefmt='latex')
+    ostring += tabulate(table_rows, headers=headers)
     ostring += "\n" + "--"*100 + "\n"
 
     # - - - - save the table
     with open(YIELDS_ARGS.yfile, "a") as yfile:
         yfile.write(ostring)
+        if YIELDS_ARGS.latex:
+            yfile.write(ostring_latex)
     print ostring
-
+    if YIELDS_ARGS.latex:
+        print ostring_latex
 
 end_time = time.time()
 elapsed_time = (end_time - start_time)/60.

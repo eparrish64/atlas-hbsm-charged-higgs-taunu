@@ -251,7 +251,7 @@ class Sample(object):
         """ list of workers to submit jobs.
         each worker is basically assigned a histogram to fill, one hist per systematic pre dataset.
         please note that additional selections like trigger are applied here and 
-        selection string is passed to the worker. Furtheremore for each selection category a weight is also 
+        selection string is passed to the worker. Furthermore for each selection category a weight is also 
         assigned.
         """
         if not categories:
@@ -259,8 +259,8 @@ class Sample(object):
 
         if systematics is None or len(systematics)<1:
             systematics = self.config.systematics[:] #self.systematics[:1] #<! NOMINAL
-        #ak else: #<! sanity check 
-        #ak    systematics = filter(lambda s: s.name in [st.name for st in systematics], self.systematics)
+        else: #<! sanity check 
+            systematics = filter(lambda s: s.name in [st.name for st in systematics], self.systematics)
 
         if not fields:
             fields = self.config.variables

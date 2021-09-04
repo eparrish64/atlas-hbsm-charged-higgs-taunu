@@ -76,11 +76,12 @@ else:
 ## systematics
 all_systematics = config.systematics[:]  # <! common systematics
 all_systematics += analysis.qcd.systematics  # <! QCD fakes only
+all_systematics += analysis.ttbar.systematics  # <! TTBar reweighting only
 if ANA_ARGS.systematics:
     systematics = filter(
         lambda s: s.name in ANA_ARGS.systematics, all_systematics)
 elif ANA_ARGS.systs:
-    systematics = [] #all_systematics
+    systematics = all_systematics
 else:
     systematics = config.systematics[:1] #<! NOMINAL
 

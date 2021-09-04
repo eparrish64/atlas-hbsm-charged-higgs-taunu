@@ -119,9 +119,7 @@ class TTbar(Single_Top):
     @property
     def systematics(self, **kwargs):
 
-#ak             print "in ttbar systematics "
-
-        systematics=self.systematics_reweight()      
+        systematics = super(TTbar, self).systematics + self.systematics_reweight()      
 
         return systematics 
 

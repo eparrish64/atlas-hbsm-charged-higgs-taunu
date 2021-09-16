@@ -650,7 +650,6 @@ CATEGORIES["taujet"] = [
     Category_BVETO,
     Category_WJETS,
     Category_TAUJET_PRESEL,
-    Category_TAUJET_BASE,
     Category_BVETO_MT100,
 ]
 
@@ -665,7 +664,6 @@ CATEGORIES["taulep"] = [
     Category_DILEP_BTAG,
     Category_ZEE,
     Category_TAULEP_PRESEL,
-    Category_TAULEP_BASE,
     Category_TTBAR_TAULEP,
 ]
 
@@ -920,16 +918,16 @@ CUTFLOW = {
             ("tauID", TAUID_MEDIUM),
             # ("tauPt30", TAU_PT30["mc16"]+TAU_BASE["mc16"]),
 
-            # ("lepBase", LEP_BASE["mc16"]),
-            # ("OS", OS_TAU_LEP),
+            ("lepBase", LEP_BASE["mc16"]),
+            ("OS", OS_TAU_LEP),
 
 
             # ("elBase", EL_BASE["mc16"]),
             # ("OS", OS_TAU_EL),
 
 
-            ("muBase", MU_BASE["mc16"]),
-            ("OS", OS_TAU_MU),
+            # ("muBase", MU_BASE["mc16"]),
+            # ("OS", OS_TAU_MU),
 
 
             # ("1jets", NUM_JETS1),

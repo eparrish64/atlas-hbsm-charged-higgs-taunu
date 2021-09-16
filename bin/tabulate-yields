@@ -140,7 +140,7 @@ if YIELDS_ARGS.yields_table:
     else:
         log.info("calculating yields on the fly ...")
         y_hists = analysis.hists(
-            samples=samples, fields=fields, categories=categories, systematics=systematics)
+            samples=samples, fields=fields, categories=categories, systematics=systematics, weighted=YIELDS_ARGS.weighted)
 
         yields = []
         for hs in y_hists:
@@ -200,6 +200,7 @@ if YIELDS_ARGS.yields_table:
         # allYields.append(rows_cat)
         if YIELDS_ARGS.latex:
             ostring += tabulate(rows_cat, headers=headers, floatfmt=".2f", tablefmt='latex')
+            # ostring += pd.DataFrame(rows_cat, columns=headers).to_latex(index=False)
         else:
             ostring += tabulate(rows_cat, headers=headers, floatfmt=".2f")
         with open(YIELDS_ARGS.yfile, "a") as yfile:
@@ -211,12 +212,12 @@ if YIELDS_ARGS.yields_table:
     yieldDF = yieldDF.round(2)
     print "\n"
     if YIELDS_ARGS.latex:
-        print yieldDF.to_latex(index=False)
+        print yieldDF.transpose().to_latex(index=False)
     else:
         pd.set_option("display.max_rows", None, "display.max_columns", None)
         print yieldDF
 
-    print yieldDF["bkgSum"].to_string(index=False)
+    # print yieldDF["bkgSum"].to_string(index=False)
     yieldDF.to_csv('%s_%s_yields_1p_3p.csv' %(YIELDS_ARGS.channel,YIELDS_ARGS.db_version),index=False)
 
 if YIELDS_ARGS.compare:
@@ -280,7 +281,7 @@ if YIELDS_ARGS.cutflow:
     cutflow_hist_sets = []
     bkg_sum_events = []
     bkg_sum_errs = []
-    cutflow_hist_sets = analysis.cutflow(cutflow_selections, samples=samples, tauid=ROOT.TCut("1>0"), trigger=ROOT.TCut("1>0"), systematics=systematics, outdir=YIELDS_ARGS.outdir, weighted=YIELDS_ARGS.unweighted)
+    cutflow_hist_sets = analysis.cutflow(cutflow_selections, samples=samples, tauid=ROOT.TCut("1>0"), trigger=ROOT.TCut("1>0"), systematics=systematics, outdir=YIELDS_ARGS.outdir, weighted=YIELDS_ARGS.weighted)
 
     for sample in samples:
         sample_hists = filter(lambda hs: hs.sample==sample.name, cutflow_hist_sets)

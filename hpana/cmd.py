@@ -199,7 +199,7 @@ def get_yields_parser(base_parser=None):
     yields_parser.add_argument('--outdir', '-pd', default="./plots",
                                  help='where to put the plots', )
 
-    yields_parser.add_argument('--unweighted', action="store_true",
+    yields_parser.add_argument('--weighted', action="store_true",
                                  help='Do not weight yields', )
     
     return yields_parser

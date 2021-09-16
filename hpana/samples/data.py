@@ -241,7 +241,7 @@ class Data(Sample):
             **kwargs)
         return _workers
 
-    def merge_hists(self, hist_set=[], histsdir=None, hists_file=None, write=False, **kwargs):
+    def merge_hists(self, hist_set=[], histsdir="histsdir/", hists_file=None, write=False, **kwargs):
         if write:
             # - - output file
             if not hists_file:

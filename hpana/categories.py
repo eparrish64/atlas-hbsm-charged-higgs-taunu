@@ -74,6 +74,11 @@ MT100 = {
     "mc16": ROOT.TCut("tau_0_met_mt > 100")
 }
 
+MET80 = {
+     "mc15": ROOT.TCut("met_et>80000"),
+     "mc16": ROOT.TCut("met_p4->Et() > 80"),
+}
+
  
 ##------------------------------------------------------------------------------------
 ##  - - tau
@@ -629,6 +634,7 @@ Category_TTBAR_TAULEP = Category(
         JET_PT25,
         NUM_BJETS2,
         MT_MAX70,
+        MET80,
     ],
 )
 
@@ -644,7 +650,6 @@ CATEGORIES["taujet"] = [
     Category_BVETO,
     Category_WJETS,
     Category_TAUJET_PRESEL,
-    Category_TAUJET_BASE,
     Category_BVETO_MT100,
 ]
 
@@ -659,7 +664,6 @@ CATEGORIES["taulep"] = [
     Category_DILEP_BTAG,
     Category_ZEE,
     Category_TAULEP_PRESEL,
-    Category_TAULEP_BASE,
     Category_TTBAR_TAULEP,
 ]
 
@@ -790,7 +794,7 @@ MET_TRIGG_EFF_CUTS_BASE = [
     NUM_BJETS1,
     ROOT.TCut("jet_0_p4->Pt() > 25 && jet_1_p4->Pt() > 25"),
     
-    # - - only for the bkg modelling in this region (not applied for calcualting trigger efficency).
+    # - - only for the bkg modelling in this region (not applied for calculating trigger efficiency).
     #ROOT.TCut("met_p4->Et() > 100"),
 ]
 
@@ -920,27 +924,51 @@ CUTFLOW = {
         [
             # ("cleanEvent",  CLEAN_EVT),
             ("trigger", ROOT.TCut("1.>0")), #<! trigger is applied globally (just a place holder here)
-            #ak ("tauID", TCut("tau_0_jet_bdt_medium==1")),
-            ("tauID", ROOT.TCut("tau_0_jet_rnn_medium==1")),
-            ("taupT40", TAU_PT40["mc16"]+TAU_BASE["mc16"]),  
-            ("lepVeto", ROOT.TCut("(n_muons+n_electrons)==0 &&tau_0_ele_bdt_medium_retuned==1")),
+
+            ("tauBase", TAU_BASE["mc16"] + TAU_PT40["mc16"]),
+            ("tauID", TAUID_MEDIUM),
+
+            ("lepVeto", LEP_VETO),
+
             # ("3jets", NUM_JETS3),
             # ("jetPt25", JET_PT25),
+
             ("1bjets", NUM_BJETS1),
-            ("MET150", MET150),            
+
+            ("MET150", MET150),    
+
             ("mT50", MT50),
         ]),
+
     "taulep":
     OrderedDict(
         [
-            # ("cleanEvent",  CLEAN_EVT),
             ("trigger", {"mc16": ROOT.TCut("1.>0"), "mc15": ROOT.TCut("1.>0")}), #<! trigger is applied globally (just a place holder here)
+            # ("cleanEvent",  CLEAN_EVT),
+
+            ("tauBase", TAU_BASE["mc16"]),
             ("tauID", TAUID_MEDIUM),
-            ("tauPt40", TAU_PT30["mc16"]+TAU_BASE["mc16"]),
-            ("elBase", LEP_BASE),
-            #  ("1jets", NUM_JETS1),
-            #  ("jetPt25", JET_PT25),
-            ("1bjets", NUM_BJETS1),
+            # ("tauPt30", TAU_PT30["mc16"]+TAU_BASE["mc16"]),
+
+            ("lepBase", LEP_BASE["mc16"]),
+            ("OS", OS_TAU_LEP),
+
+
+            # ("elBase", EL_BASE["mc16"]),
+            # ("OS", OS_TAU_EL),
+
+
+            # ("muBase", MU_BASE["mc16"]),
+            # ("OS", OS_TAU_MU),
+
+
+            # ("1jets", NUM_JETS1),
+            # ("jetPt25", JET_PT25),
+            
             ("MET50", MET50),
+
+            ("1bjets", NUM_BJETS1),
+            # ("bjetPt25", BJET_PT25),
+
         ]),
 }

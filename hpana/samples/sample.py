@@ -168,7 +168,7 @@ class Sample(object):
         elif isinstance(self, MC):
             cuts += self.config.true_tau
 
-        # - - place holder for any sample specific custs
+        # - - place holder for any sample specific cuts
         if extra_cuts:
             cuts += extra_cuts
             
@@ -194,9 +194,10 @@ class Sample(object):
             for w in weight_fields:
                 if "MULTIJET" in category.name and "metTrigEff" in w.name:
                     continue #<! Multijet Trigger is used for FFs MULTIJET CR 
+                if "hplus" in self.name.lower() and w.title == "NOMINAL_pileup_combined_weight":
+                    w.title="1."
                 ws.add(w.title)
             weights_dict[category.name] = list(ws)
-
         return weights_dict
 
     @property
@@ -251,7 +252,7 @@ class Sample(object):
         """ list of workers to submit jobs.
         each worker is basically assigned a histogram to fill, one hist per systematic pre dataset.
         please note that additional selections like trigger are applied here and 
-        selection string is passed to the worker. Furtheremore for each selection category a weight is also 
+        selection string is passed to the worker. Furthermore for each selection category a weight is also 
         assigned.
         """
         if not categories:
@@ -354,7 +355,7 @@ class Sample(object):
                 log.debug("--"*70)
                 log.debug(worker)     
                 workers.add(worker)
-
+        
         return list(workers)
 
     def hists(self, categories=[], fields=[], systematics=[], **kwargs):
@@ -421,7 +422,7 @@ class Sample(object):
             
         return 
 
-    def merge_hists(self, hist_set=[], histsdir=None, hists_file=None, write=False, **kwargs):
+    def merge_hists(self, hist_set=[], histsdir="histsdir/", hists_file=None, write=False, **kwargs):
         """ collect histograms for this sample and add them up properly.
         read the hist from the disk or get them on the fly.
         """
@@ -441,6 +442,8 @@ class Sample(object):
             assert histsdir, "hists dir is not provided!"
             # - - retrieve the samples hists
             hfiles = glob.glob("%s/%s.*"%(histsdir, self.name))
+            log.debug('Hist files in %s/%s.*'%(histsdir, self.name))
+            log.debug(hfiles)
             if not hfiles:
                 log.warning("no hists found for the %s in %s dir"%(self.name, histsdir))
                 return []
@@ -511,7 +514,10 @@ class Sample(object):
             
         
         # - - make sure hists are for this sample
-        hist_set = filter(lambda hs: hs.sample.startswith(self.name), hist_set)
+        if "weighted" in hist_set[0].name.lower():
+            hist_set = filter(lambda hs: hs.sample.startswith(self.name), hist_set)
+        else:
+            hist_set = filter(lambda hs: hs.sample.startswith(self.name+"."), hist_set)
         if not hist_set:
             log.warning("no hist is found for %s; skipping the merge!"%self.name)
             return []

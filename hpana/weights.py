@@ -23,7 +23,7 @@ class Weight(object):
     }
 
     W_BASE = {
-        "weight_total": ("NOMINAL_pileup_combined_weight * weight_mc", )
+        "weight_total": ("weight_mc", )
         # "weight_total": ("weight_total", )
     }
     W_TAU = {
@@ -268,7 +268,7 @@ class Weight(object):
     TYPES = {
         "taujet": {
             "BASE": W_BASE,
-            # "PILEUP": W_PILEUP,
+            "PILEUP": W_PILEUP,
             "TAU": W_TAU,
             "JET": W_JET,
             "BJET": W_BJET,
@@ -277,7 +277,7 @@ class Weight(object):
 
         "taulep": {
             "BASE": W_BASE,
-            # "PILEUP": W_PILEUP,
+            "PILEUP": W_PILEUP,
             "TAU": W_TAU,
             "JET": W_JET,
             "BJET": W_BJET,

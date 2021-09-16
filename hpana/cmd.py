@@ -192,11 +192,15 @@ def get_yields_parser(base_parser=None):
     
     yields_parser.add_argument("--samples", nargs="+",
                             help="list of samples to process")
+
     yields_parser.add_argument("--yfile", default="yields.txt",
                             help="write yields to this file")
 
     yields_parser.add_argument('--outdir', '-pd', default="./plots",
                                  help='where to put the plots', )
+
+    yields_parser.add_argument('--weighted', action="store_true",
+                                 help='Do not weight yields', )
     
     return yields_parser
 

@@ -20,6 +20,7 @@ from argparse import ArgumentParser
 # PyIP
 from tabulate import tabulate
 import pandas as pd
+from numpy import sqrt
 
 # - - - - - - - - - parse yields args (needed before ROOT)
 from hpana.cmd import get_yields_parser
@@ -41,7 +42,7 @@ ROOT.gROOT.SetBatch(True)
 # ---------------------------------------------------------------------------
 # simple container class for yields
 # ---------------------------------------------------------------------------
-class Yield(namedtuple("Yields", "sample category systematic events")):
+class Yield(namedtuple("Yields", "sample category systematic events error")):
     pass
 
 
@@ -89,8 +90,9 @@ for st in systematics:
 fields = config.variables[:1]
 
 ## samples
-samples = analysis.backgrounds + [analysis.data] + analysis.get_signals(masses=[80, 160, 400, 3000]) 
+samples = analysis.backgrounds + [analysis.data] + analysis.get_signals() 
 backgrounds = analysis.backgrounds
+
 if YIELDS_ARGS.samples:
     samples = filter(lambda s: s.name in YIELDS_ARGS.samples, samples)
     backgrounds = filter(lambda b: b.name in YIELDS_ARGS.samples, backgrounds)
@@ -125,24 +127,30 @@ if YIELDS_ARGS.yields_table:
                     else:                       
                         hist = hfile.Get(hname)
                         if hist:
-                            events = hist.Integral(0, hist.GetNbinsX()+1)
+                            # events = hist.Integral(0, hist.GetNbinsX()+1)
+                            thiserr = ROOT.Double(-999)
+                            events =  hist.IntegralAndError(0, ( hist.GetNbinsX() + 1), thiserr, "")
                         else:
                             events = 0
+                            thiserr=0
                     yields.append(
-                        Yield(sample=sample.name, category=cat.name, systematic=syst_var.name, events=events))
+                        Yield(sample=sample.name, category=cat.name, systematic=syst_var.name, events=events, error=thiserr))
 
     # - - - - - - - - count on the fly
     else:
         log.info("calculating yields on the fly ...")
         y_hists = analysis.hists(
-            samples=samples, fields=fields, categories=categories, systematics=systematics)
+            samples=samples, fields=fields, categories=categories, systematics=systematics, weighted=YIELDS_ARGS.weighted)
 
         yields = []
         for hs in y_hists:
             # <! include underflow/overflow bins
-            nevents = hs.hist.Integral(0, hs.hist.GetNbinsX()+1)
+            # nevents = hs.hist.Integral(0, hs.hist.GetNbinsX()+1)
+
+            thiserr = ROOT.Double(-999)
+            nevents =  hs.hist.IntegralAndError(0, ( hs.hist.GetNbinsX() + 1), thiserr, "")
             yields.append(
-                Yield(sample=hs.sample, category=hs.category, systematic=hs.systematic, events=nevents))
+                Yield(sample=hs.sample, category=hs.category, systematic=hs.systematic, events=nevents, error=thiserr))
                 
     # - - - - - - - - sum of bkg
     if backgrounds:
@@ -151,7 +159,11 @@ if YIELDS_ARGS.yields_table:
                     lambda y: y.category == cat.name and y.systematic == "NOMINAL", yields)
             bkg_yields_nom = filter(
                     lambda y: y.sample in [b.name for b in backgrounds], yields_nom)
+
             events_sum_nom = sum([y.events for y in bkg_yields_nom])
+            if events_sum_nom == 0:
+                continue
+            event_sum_err = sqrt(sum([y.error**2 for y in bkg_yields_nom]))
 
             for systematic in systematics_vars:
                 yields_cat = filter(
@@ -159,9 +171,12 @@ if YIELDS_ARGS.yields_table:
                 bkg_yields = filter(
                     lambda y: y.sample in [b.name for b in backgrounds], yields_cat)
                 events_sum = sum([y.events for y in bkg_yields])
-                rvalue = "%0.2f"%events_sum if systematic.name=="NOMINAL" else "%0.2f(%0.2f%%)"%(events_sum, ((events_sum-events_sum_nom)/events_sum_nom)*100)
+                events_err = sqrt(sum([y.error**2 for y in bkg_yields]))
+
+                rvalue = "%0.2f +/- %1.2f "%(events_sum, events_err) if systematic.name=="NOMINAL" else "%0.2f +/ - %2.2f (%1.2f%%)"%(events_sum, (events_sum_nom/events_sum_nom)*100, events_err)
+                # errvalue = "%0.2f"%events_sum if systematic.name=="NOMINAL" else "%0.2f(%0.2f%%)"%(events_sum, (events_sum_nom/events_sum_nom)*100)
                 yields.append(
-                    Yield(sample="bkgSum", category=cat.name, systematic=systematic.name, events=rvalue))
+                    Yield(sample="bkgSum", category=cat.name, systematic=systematic.name, events=rvalue, error=events_err))
 
     # - - - - - - - - tabulate the yields
     # yieldDF = pd.DataFrame()
@@ -185,6 +200,7 @@ if YIELDS_ARGS.yields_table:
         # allYields.append(rows_cat)
         if YIELDS_ARGS.latex:
             ostring += tabulate(rows_cat, headers=headers, floatfmt=".2f", tablefmt='latex')
+            # ostring += pd.DataFrame(rows_cat, columns=headers).to_latex(index=False)
         else:
             ostring += tabulate(rows_cat, headers=headers, floatfmt=".2f")
         with open(YIELDS_ARGS.yfile, "a") as yfile:
@@ -196,12 +212,12 @@ if YIELDS_ARGS.yields_table:
     yieldDF = yieldDF.round(2)
     print "\n"
     if YIELDS_ARGS.latex:
-        print yieldDF.to_latex(index=False)
+        print yieldDF.transpose().to_latex(index=False)
     else:
         pd.set_option("display.max_rows", None, "display.max_columns", None)
         print yieldDF
 
-    print yieldDF["bkgSum"].to_string(index=False)
+    # print yieldDF["bkgSum"].to_string(index=False)
     yieldDF.to_csv('%s_%s_yields_1p_3p.csv' %(YIELDS_ARGS.channel,YIELDS_ARGS.db_version),index=False)
 
 if YIELDS_ARGS.compare:
@@ -264,78 +280,96 @@ if YIELDS_ARGS.cutflow:
     table_rows = []
     cutflow_hist_sets = []
     bkg_sum_events = []
-    cutflow_hist_sets = analysis.cutflow(cutflow_selections, samples=samples, tauid=ROOT.TCut("1>0"), trigger=ROOT.TCut("1>0"), systematics=systematics, outdir=YIELDS_ARGS.outdir)
+    bkg_sum_errs = []
+    cutflow_hist_sets = analysis.cutflow(cutflow_selections, samples=samples, tauid=ROOT.TCut("1>0"), trigger=ROOT.TCut("1>0"), systematics=systematics, outdir=YIELDS_ARGS.outdir, weighted=YIELDS_ARGS.weighted)
 
     for sample in samples:
         sample_hists = filter(lambda hs: hs.sample==sample.name, cutflow_hist_sets)
 
         # - - - - make sure the order is correct
         events = []
+        errs = []
         for cname, cf in cutflow_selections.iteritems():
             for hs in sample_hists:
+                if hs.hist==None:
+                    continue
                 if hs.category == cname:
-                    events.append(hs.hist.Integral(0, hs.hist.GetNbinsX()+1))
+                    thiserr = ROOT.Double(-999)
+                    thisIntegral =  hs.hist.IntegralAndError(0, ( hs.hist.GetNbinsX() + 1), thiserr, "")
+                    events.append(thisIntegral)
+                    errs.append(thiserr)
+                    # events.append(hs.hist.Integral(0, hs.hist.GetNbinsX()+1))
 
         if sample.name in [b.name for b in backgrounds]:
            bkg_sum_events += [events]
+           bkg_sum_errs += [errs]
 
         # - - - - the the fraction of events failing
         s_fractions = [0]*len(cutflow_selections)
         for i in range(1, len(events)):
             if events[i-1] != 0:
-                s_fractions[i] = (events[i-1] - events[i])/(events[i-1])
+                s_fractions[i] = events[i]/(events[i-1])
             else:
                 s_fractions[i] = 0
 
         evt_fract = []
-        for evt, frac in zip(events, s_fractions):
+        for evt, frac, err in zip(events, s_fractions, errs):
             if frac != 0:
-                evt_fract.append("{0:0.2f} ({1:0.0f}%)".format(evt, 100*frac))
+                evt_fract.append("{0:0.1f} +/- {1:0.1f} ({2:0.0f}%)".format(evt, err, 100*frac))
             else:
-                evt_fract.append("{0:0.2f}".format(evt))
+                evt_fract.append("{0:0.1f} +/- {1:0.1f}".format(evt, err))
         row = [sample.name] + evt_fract
         table_rows.append(row)
 
     ## bkg sum 
     if len(bkg_sum_events)>0:
         bkg_tot = []
+        bkg_tot_errs = []
         for i in range(len(bkg_sum_events[0])):
             br = 0
+            br_err  = 0
             for be in bkg_sum_events:
                 br += be[i]
             bkg_tot += [br]
+
+            for be_err in bkg_sum_errs:
+                br_err += be_err[i]**2
+            bkg_tot_errs += [br_err]
+
 
         ## the the fraction of events failing
         s_fractions = [0]*len(cutflow_selections)
         for i in range(1, len(bkg_tot)):
             if bkg_tot[i-1] != 0:
-                s_fractions[i] = (bkg_tot[i-1] - bkg_tot[i])/(bkg_tot[i-1])
+                s_fractions[i] = bkg_tot[i]/(bkg_tot[i-1])
             else:
                 s_fractions[i] = 0
 
         evt_fract = []
-        for evt, frac in zip(bkg_tot, s_fractions):
+        for evt, frac, err in zip(bkg_tot, s_fractions, bkg_tot_errs):
             if frac != 0:
-                evt_fract.append("{0:0.2f} ({1:0.0f}%)".format(evt, 100*frac))
+                evt_fract.append("{0:0.1f} +/- {1:0.1f} ({2:0.0f}%)".format(evt, sqrt(err), 100*frac))
             else:
-                evt_fract.append("{0:0.2f}".format(evt))
+                evt_fract.append("{0:0.1f} +/- {1:0.1f}".format(evt, sqrt(err)))
         row = ["Total bkg"] + evt_fract
         table_rows.append(row)
 
     # - - - - format the table
     headers = ["sample"] + cutflow_selections.keys()
-    ostring = "--"*50 + "\n"
+    ostring = "--"*100 + "\n"
     if YIELDS_ARGS.latex:
-        ostring += tabulate(table_rows, headers=headers, tablefmt='latex')
-    else:
-        ostring += tabulate(table_rows, headers=headers)
-    ostring += "\n" + "--"*50 + "\n"
+        ostring_latex = tabulate(table_rows, headers=headers, tablefmt='latex')
+    ostring += tabulate(table_rows, headers=headers)
+    ostring += "\n" + "--"*100 + "\n"
 
     # - - - - save the table
     with open(YIELDS_ARGS.yfile, "a") as yfile:
         yfile.write(ostring)
+        if YIELDS_ARGS.latex:
+            yfile.write(ostring_latex)
     print ostring
-
+    if YIELDS_ARGS.latex:
+        print ostring_latex
 
 end_time = time.time()
 elapsed_time = (end_time - start_time)/60.

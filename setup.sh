@@ -37,7 +37,7 @@ case $USER in
 		;;
 	*)
 		VENVPATH=""
-		echo "User not found when setting virtual envrionment, adjust setup file."
+		echo "User not found when setting virtual environment, adjust setup file."
 
 esac
 

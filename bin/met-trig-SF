@@ -11,8 +11,11 @@
 """
 
 ## stdlib
-import os, sys, time, array, pickle, yaml 
+import os, sys, time, array, pickle, yaml, math 
 import multiprocessing
+## for covariance matrix handling
+from scipy.linalg import eigh
+import numpy as np
 
 ## parse args (needed before ROOT)
 from hpana.cmd import get_trig_eff_parser
@@ -327,7 +330,10 @@ def fit_eff(eff_hists,
             
     ## - - do the fit per trigger per variation
     fit_params  = {}
+    fit_parvar  = {}
     fit_funcs = {}
+    #VARS = ["VAR1", "VAR2"]
+    VARS = ["VAR1", "VAR2", "VAR3", "VAR4"]
 
     samples = sorted(eff_hists.keys())
     for smpl_name, years in eff_hists.iteritems():
@@ -340,6 +346,7 @@ def fit_eff(eff_hists,
           continue
       fit_funcs[smpl_name] = {}
       fit_params[smpl_name] = {}
+      fit_parvar[smpl_name] = {}
       for y, trgs in years.iteritems():
           for trg in trgs:
               total_lumi += MET_TRIGGERS[smpl_type][y][trg]["LUMI"]
@@ -347,10 +354,12 @@ def fit_eff(eff_hists,
       for year, triggers in years.iteritems():
         fit_funcs[smpl_name][year] = {}
         fit_params[smpl_name][year] = {}
+        fit_parvar[smpl_name][year] = {}
         for trigger, variations in triggers.iteritems():
             lumi = MET_TRIGGERS[smpl_type][year][trigger]["LUMI"]
             fit_funcs[smpl_name][year][trigger] = {}
             fit_params[smpl_name][year][trigger] = {}
+            fit_parvar[smpl_name][year][trigger] = {}
             for variation, hist_cat in variations.iteritems():
                 if not variation in fit_params:
                     fit_params[smpl_name][year][trigger][variation] = ""
@@ -366,10 +375,41 @@ def fit_eff(eff_hists,
 
                 ## - - fit and retrieve the function 
                 hist = hist_cat["RATIO"]
-                hist.Fit(err_function, "WW") #<! ignore error bars
+                #hist.Fit(err_function, "WW") #<! ignore error bars 
+                #hist.Fit(err_function, "I") #<! use integral instead of bin centre
+                fitres = hist.Fit(err_function, "IS") #<! use integral instead of bin centre, save Cov matrix
                 fit_func = hist.GetFunction("erf")
                 params = [fit_func.GetParameter(n) for n in range(num_params)]
                 fit_params[smpl_name][year][trigger][variation] = "(%s)"%ERR_FUNC_STR.format(*params)
+                
+                if variation == "MET_TRIG_EFF_CR_NOM":
+                  ## - - deal with the error matrix
+                  C = fitres.GetCovarianceMatrix()
+                  # The following type conversion should work in PyRoot
+                  EigenC = ROOT.TMatrixDEigen(ROOT.TMatrixD(C))
+                  E = EigenC.GetEigenValues()
+                  V = EigenC.GetEigenVectors()
+                  #
+                  # Instead, try using numpy:
+                  #Cm = np.array([[C(i,j) for j in range(num_params)] for i in range(num_params)])
+                  ##print(Cm.shape)
+                  ##print(Cm)
+                  #E, V = eigh(Cm)
+                  #print(E)
+                  #print(V)
+
+                  fit_parvar[smpl_name][year][trigger]["NOM"] = "(%s)"%ERR_FUNC_STR.format(*params)
+                  for k, mode in enumerate(VARS):
+                      # Eigenvalues in descaending order
+                      paramsup = [fit_func.GetParameter(n)+math.sqrt(E[k][k])*V[n][k] for n in range(num_params)]
+                      paramsdown = [fit_func.GetParameter(n)-math.sqrt(E[k][k])*V[n][k] for n in range(num_params)]
+                      # NOTE: The order of indices in V is correct and relevant!
+                      # Eigenvalues are in ascending order
+                      #paramsup = [fit_func.GetParameter(n)+math.sqrt(E[k])*V[n][k] for n in range(num_params)]
+                      #paramsdown = [fit_func.GetParameter(n)-math.sqrt(E[k])*V[n][k] for n in range(num_params)]
+                      fit_parvar[smpl_name][year][trigger][mode+"UP"] = "(%s)"%ERR_FUNC_STR.format(*paramsup)
+                      fit_parvar[smpl_name][year][trigger][mode+"DOWN"] = "(%s)"%ERR_FUNC_STR.format(*paramsdown)
+
                 fit_funcs[smpl_name][year][trigger][variation] = (hist, fit_func)
 
             if fit_cache:
@@ -422,12 +462,51 @@ def fit_eff(eff_hists,
                         p_lumi = MET_TRIGGERS[smpl_type][year][y_trig]["LUMI"]
                         y_eff += ["%0.4f * (%s)"%(p_lumi/year_lumi, fit_params[smpl_name][year][y_trig][variation.name])]
 
-                    cfile.write("\t\t // sample: %s \n"%smpl_name)
+                    #cfile.write("\t\t // sample: %s \n"%smpl_name)
                     cfile.write("\t\t // year: %s \n"%year)
-                    cfile.write("\t\t if(run_number >= %i && run_number <= %i){\n"%(rl, rh))
-                    cfile.write("\t\t\t return %s;"%(" + ".join(y_eff) ) )
-                    cfile.write("\n\t\t }\n")
-                cfile.write("\n\t\t else return 0;\n\t\t}\n\n")
+                    for trigger in y_triggers:    
+                        cfile.write("\t\t // trigger: %s \n"%trigger)
+                        cfile.write("\t\t if(run_number >= %i && run_number <= %i){\n"%(MET_TRIGGERS[smpl_type][year][trigger]["RUNS"][0], MET_TRIGGERS[smpl_type][year][trigger]["RUNS"][1]))
+                        cfile.write("\t\t\t return \n" )
+                        cfile.write("\t\t\t %s; \n"%( fit_params[smpl_name][year][trigger][variation.name] ) )
+                        cfile.write("\n\t\t }\n")
+                cfile.write("\n\t\t else return 0.;\n\t}\n\n")
+
+            # statistical variation:
+            for k, mode in enumerate(VARS):
+                cfile.write("\t //! statistical variation number %d UP\n"%(k+1))
+                cfile.write("\t if(variation_index==%i){\n"%(index+101+2*k))
+
+                for year in years:
+                    y_triggers = MET_TRIGGERS[smpl_type][year].keys()
+                    ## weight periods
+
+                    cfile.write("\t\t // year: %s \n"%year)
+                    for trigger in y_triggers:
+                        cfile.write("\t\t // trigger: %s \n"%trigger)
+                        cfile.write("\t\t if(run_number >= %i && run_number <= %i){\n"%(MET_TRIGGERS[smpl_type][year][trigger]["RUNS"][0], MET_TRIGGERS[smpl_type][year][trigger]["RUNS"][1]))
+                        cfile.write("\t\t\t return \n" )
+                        cfile.write("\t\t\t %s; \n"%( fit_parvar[smpl_name][year][trigger][mode+"UP"] ) )
+                        cfile.write("\n\t\t }\n")
+                cfile.write("\n\t\t else return 0.;\n\t}\n\n")
+
+                cfile.write("\t //! statistical variation number %d DOWN\n"%(k+1))
+                cfile.write("\t if(variation_index==%i){\n"%(index+102+2*k))
+
+                for year in years:
+                    y_triggers = MET_TRIGGERS[smpl_type][year].keys()
+                    ## weight periods
+
+                    cfile.write("\t\t // year: %s \n"%year)
+                    for trigger in y_triggers:
+                        cfile.write("\t\t // trigger: %s \n"%trigger)
+                        cfile.write("\t\t if(run_number >= %i && run_number <= %i){\n"%(MET_TRIGGERS[smpl_type][year][trigger]["RUNS"][0], MET_TRIGGERS[smpl_type][year][trigger]["RUNS"][1]))
+                        cfile.write("\t\t\t return \n" )
+                        cfile.write("\t\t\t %s; \n"%( fit_parvar[smpl_name][year][trigger][mode+"DOWN"] ) )
+                        cfile.write("\n\t\t }\n")
+                cfile.write("\n\t\t else return 0.;\n\t}\n\n")
+
+
             cfile.write("\t else return 1.; \n}\n\n\n")
 
             ## overall efficiency
@@ -459,7 +538,140 @@ def fit_eff(eff_hists,
 
     if fit_cache and len(MET_TRIGGERS["DATA"]) == len(MET_TRIGGERS["MC"]):
             
-      ## SF per year
+
+
+      ## SF per year  (for root plotting)
+      with open("MC_"+fit_cache, "w") as cfile:
+            index = 1000
+            years = MET_TRIGGERS["DATA"].keys()
+            cfile.write("//   CAREFUL!  This is a MonteCarlo Scale Factor data file!\n")
+            cfile.write("//             Use together with MC trigger decision!\n")
+            #cfile.write("#include <string.h>\n\n")
+            ## function of run number:
+            #istring = "float metTrigEff(float met_et, int variation_index, int run_number){\n"
+            istring = "double MC_metTrigEff(double *x, double *par){\n"
+            cfile.write(istring)
+            cfile.write("\t double met_et = x[0];\n")
+            cfile.write("\t int variation_index = par[0];\n")
+            cfile.write("\t int run_number = par[1];\n")
+            for n, variation in enumerate(MET_TRIG_EFF_CRs):
+                cfile.write("\t //! variation: %s\n"%variation.name)
+                cfile.write("\t if(variation_index==%i){\n"%(index+n))
+  
+                for year in years:
+                    y_triggers = MET_TRIGGERS["DATA"][year].keys()
+                    year_lumi = sum([MET_TRIGGERS["DATA"][year][tr]["LUMI"] for tr in y_triggers])
+                    rl = min([MET_TRIGGERS["DATA"][year][tr]["RUNS"][0] for tr in y_triggers])
+                    rh = max([MET_TRIGGERS["DATA"][year][tr]["RUNS"][1] for tr in y_triggers])
+                    y_triggers_MC = MET_TRIGGERS["MC"][year].keys()
+                    year_lumi_MC = sum([MET_TRIGGERS["MC"][year][tr]["LUMI"] for tr in y_triggers])
+                    rl_MC = min([MET_TRIGGERS["MC"][year][tr]["RUNS"][0] for tr in y_triggers])
+                    rh_MC = max([MET_TRIGGERS["MC"][year][tr]["RUNS"][1] for tr in y_triggers])
+
+                    ## weight periods
+                    y_eff = [] 
+                    y_eff_MC = [] 
+                    for y_trig in y_triggers:
+                        p_lumi = MET_TRIGGERS["DATA"][year][y_trig]["LUMI"]
+                        y_eff += ["%0.4f * (%s)"%(p_lumi/year_lumi, fit_params["Data"][year][y_trig][variation.name])]
+                    for y_trig in y_triggers_MC:
+                        p_lumi = MET_TRIGGERS["MC"][year][y_trig]["LUMI"]
+                        y_eff_MC += ["%0.4f * (%s)"%(p_lumi/year_lumi_MC, fit_params["MonteCarlo"][year][y_trig][variation.name])]
+
+                    cfile.write("\t\t // year: %s \n"%year)
+                    for trigger in y_triggers_MC:    
+                        cfile.write("\t\t // trigger: %s \n"%trigger)
+                        cfile.write("\t\t if(run_number >= %i && run_number <= %i){\n"%(MET_TRIGGERS["MC"][year][trigger]["RUNS"][0], MET_TRIGGERS["MC"][year][trigger]["RUNS"][1]))
+                        cfile.write("\t\t\t return \n" )
+                        cfile.write("\t\t\t %s \n"%( fit_params["Data"][year][trigger][variation.name] ) )
+                        cfile.write("\t\t\t / \n" )
+                        cfile.write("\t\t\t %s; \n"%( fit_params["MonteCarlo"][year][trigger][variation.name] ) )
+                        cfile.write("\n\t\t }\n")
+                cfile.write("\n\t\t else return 0.;\n\t}\n\n")
+            
+            # statistical variation:
+            for k, mode in enumerate(VARS):
+                cfile.write("\t //! statistical variation number %d UP\n"%(k+1))
+                cfile.write("\t if(variation_index==%i){\n"%(index+101+2*k))
+
+                for year in years:
+                    y_triggers_MC = MET_TRIGGERS["MC"][year].keys()
+                    ## weight periods                                                                                                                                                  
+
+                    cfile.write("\t\t // year: %s \n"%year)
+                    for trigger in y_triggers_MC:
+                        cfile.write("\t\t // trigger: %s \n"%trigger)
+                        cfile.write("\t\t if(run_number >= %i && run_number <= %i){\n"%(MET_TRIGGERS["MC"][year][trigger]["RUNS"][0], MET_TRIGGERS["MC"][year][trigger]["RUNS"][1]))
+                        cfile.write("\t\t\t return \n" )
+                        cfile.write("\t\t\t %s \n"%( fit_parvar["Data"][year][trigger][mode+"UP"] ) )
+                        cfile.write("\t\t\t / \n" )
+                        cfile.write("\t\t\t %s; \n"%( fit_parvar["MonteCarlo"][year][trigger]["NOM"] ) )
+                        cfile.write("\n\t\t }\n")
+                cfile.write("\n\t\t else return 0.;\n\t}\n\n")
+
+                cfile.write("\t //! statistical variation number %d DOWN\n"%(k+1))
+                cfile.write("\t if(variation_index==%i){\n"%(index+102+2*k))
+
+                for year in years:
+                    y_triggers_MC = MET_TRIGGERS["MC"][year].keys()
+                    ## weight periods
+
+                    cfile.write("\t\t // year: %s \n"%year)
+                    for trigger in y_triggers_MC:
+                        cfile.write("\t\t // trigger: %s \n"%trigger)
+                        cfile.write("\t\t if(run_number >= %i && run_number <= %i){\n"%(MET_TRIGGERS["MC"][year][trigger]["RUNS"][\
+0], MET_TRIGGERS["MC"][year][trigger]["RUNS"][1]))
+                        cfile.write("\t\t\t return \n" )
+                        cfile.write("\t\t\t %s \n"%( fit_parvar["Data"][year][trigger][mode+"DOWN"] ) )
+                        cfile.write("\t\t\t / \n" )
+                        cfile.write("\t\t\t %s; \n"%( fit_parvar["MonteCarlo"][year][trigger]["NOM"] ) )
+                        cfile.write("\n\t\t }\n")
+                cfile.write("\n\t\t else return 0.;\n\t}\n\n")
+
+
+            cfile.write("\t else return 1.; \n}\n\n\n")
+
+            
+            ## overall efficiency
+            ###        with open(smpl_name+"_All_"+fit_cache, "w") as cfile:
+            ###        index = 1000
+            #istring = "\n\n// total efficiency (lumi weighted) \nfloat metTrigEff(float met_et, int variation_index){\n"
+            istring = "double MC_All_metTrigEff(double *x, double *par){\n"
+            cfile.write(istring)
+            cfile.write("\t double met_et = x[0];\n")
+            cfile.write("\t int variation_index = par[0];\n")
+            for n, variation in enumerate(MET_TRIG_EFF_CRs):
+                cfile.write("\t //! variation: %s\n"%variation.name)
+                cfile.write("\t if(variation_index==%i){\n"%(index+n))
+                ## efficiency per year    
+                tot_eff = []
+                tot_eff_MC = []
+                lumi_total = 0
+                lumi_total_MC = 0
+                for year in years:
+                    y_triggers = MET_TRIGGERS["DATA"][year].keys()
+                    lumi_total += sum([MET_TRIGGERS["DATA"][year][tr]["LUMI"] for tr in y_triggers])
+                    y_triggers_MC = MET_TRIGGERS["MC"][year].keys()
+                    lumi_total_MC += sum([MET_TRIGGERS["MC"][year][tr]["LUMI"] for tr in y_triggers_MC])
+                for year in years:
+                    for trigger in MET_TRIGGERS["DATA"][year].keys():
+                        lumi = MET_TRIGGERS["DATA"][year][trigger]["LUMI"]
+                        tot_eff += ["%0.4f * (%s)"%(lumi/lumi_total, fit_params["Data"][year][trigger][variation.name])]
+                    for trigger in MET_TRIGGERS["MC"][year].keys():
+                        lumi_MC = MET_TRIGGERS["MC"][year][trigger]["LUMI"]
+                        tot_eff_MC += ["%0.4f * (%s)"%(lumi_MC/lumi_total_MC, fit_params["MonteCarlo"][year][trigger][variation.name])]
+                cfile.write("\t\t return \n")
+                cfile.write("\t\t ( %s )\n"%("+".join(tot_eff)))
+                cfile.write("\t\t\t / \n" )
+                cfile.write("\t\t ( %s );"%("+".join(tot_eff_MC)))
+                cfile.write("\n\t }\n\n")
+            cfile.write("\n\t else return 0;\n}\n")
+
+            
+
+
+
+      ## SF per year   (for HPANA)
       with open(fit_cache, "w") as cfile:
             index = 1000
             years = MET_TRIGGERS["DATA"].keys()
@@ -489,7 +701,6 @@ def fit_eff(eff_hists,
                     for y_trig in y_triggers:
                         p_lumi = MET_TRIGGERS["DATA"][year][y_trig]["LUMI"]
                         y_eff += ["%0.4f * (%s)"%(p_lumi/year_lumi, fit_params["Data"][year][y_trig][variation.name])]
-                    y_eff_MC = [] 
                     for y_trig in y_triggers_MC:
                         p_lumi = MET_TRIGGERS["MC"][year][y_trig]["LUMI"]
                         y_eff_MC += ["%0.4f * (%s)"%(p_lumi/year_lumi_MC, fit_params["MonteCarlo"][year][y_trig][variation.name])]
@@ -504,6 +715,46 @@ def fit_eff(eff_hists,
                         cfile.write("\t\t\t %s; \n"%( fit_params["MonteCarlo"][year][trigger][variation.name] ) )
                         cfile.write("\n\t\t }\n")
                 cfile.write("\n\t\t else return 0.;\n\t}\n\n")
+
+           # statistical variation:
+            for k, mode in enumerate(VARS):
+                cfile.write("\t //! statistical variation number %d UP\n"%(k+1))
+                cfile.write("\t if(variation_index==%i){\n"%(index+101+2*k))
+
+                for year in years:
+                    y_triggers_MC = MET_TRIGGERS["MC"][year].keys()
+                    ## weight periods
+
+                    cfile.write("\t\t // year: %s \n"%year)
+                    for trigger in y_triggers_MC:
+                        cfile.write("\t\t // trigger: %s \n"%trigger)
+                        cfile.write("\t\t if(run_number >= %i && run_number <= %i){\n"%(MET_TRIGGERS["MC"][year][trigger]["RUNS"][0], MET_TRIGGERS["MC"][year][trigger]["RUNS"][1]))
+                        cfile.write("\t\t\t return \n" )
+                        cfile.write("\t\t\t %s \n"%( fit_parvar["Data"][year][trigger][mode+"UP"] ) )
+                        cfile.write("\t\t\t / \n" )
+                        cfile.write("\t\t\t %s; \n"%( fit_parvar["MonteCarlo"][year][trigger]["NOM"] ) )
+                        cfile.write("\n\t\t }\n")
+                cfile.write("\n\t\t else return 0.;\n\t}\n\n")
+
+                cfile.write("\t //! statistical variation number %d DOWN\n"%(k+1))
+                cfile.write("\t if(variation_index==%i){\n"%(index+102+2*k))
+
+                for year in years:
+                    y_triggers_MC = MET_TRIGGERS["MC"][year].keys()
+                    ## weight periods
+
+                    cfile.write("\t\t // year: %s \n"%year)
+                    for trigger in y_triggers_MC:
+                        cfile.write("\t\t // trigger: %s \n"%trigger)
+                        cfile.write("\t\t if(run_number >= %i && run_number <= %i){\n"%(MET_TRIGGERS["MC"][year][trigger]["RUNS"][0], MET_TRIGGERS["MC"][year][trigger]["RUNS"][1]))
+                        cfile.write("\t\t\t return \n" )
+                        cfile.write("\t\t\t %s \n"%( fit_parvar["Data"][year][trigger][mode+"DOWN"] ) )
+                        cfile.write("\t\t\t / \n" )
+                        cfile.write("\t\t\t %s; \n"%( fit_parvar["MonteCarlo"][year][trigger]["NOM"] ) )
+                        cfile.write("\n\t\t }\n")
+                cfile.write("\n\t\t else return 0.;\n\t}\n\n")
+
+
             cfile.write("\t else return 1.; \n}\n\n\n")
 
             

@@ -168,7 +168,7 @@ class Sample(object):
         elif isinstance(self, MC):
             cuts += self.config.true_tau
 
-        # - - place holder for any sample specific custs
+        # - - place holder for any sample specific cuts
         if extra_cuts:
             cuts += extra_cuts
             
@@ -194,9 +194,10 @@ class Sample(object):
             for w in weight_fields:
                 if "MULTIJET" in category.name and "metTrigEff" in w.name:
                     continue #<! Multijet Trigger is used for FFs MULTIJET CR 
+                if "hplus" in self.name.lower() and w.title == "NOMINAL_pileup_combined_weight":
+                    w.title="1."
                 ws.add(w.title)
             weights_dict[category.name] = list(ws)
-
         return weights_dict
 
     @property
@@ -441,6 +442,8 @@ class Sample(object):
             assert histsdir, "hists dir is not provided!"
             # - - retrieve the samples hists
             hfiles = glob.glob("%s/%s.*"%(histsdir, self.name))
+            log.debug('Hist files in %s/%s.*'%(histsdir, self.name))
+            log.debug(hfiles)
             if not hfiles:
                 log.warning("no hists found for the %s in %s dir"%(self.name, histsdir))
                 return []
@@ -511,7 +514,10 @@ class Sample(object):
             
         
         # - - make sure hists are for this sample
-        hist_set = filter(lambda hs: hs.sample.startswith(self.name), hist_set)
+        if "weighted" in hist_set[0].name.lower():
+            hist_set = filter(lambda hs: hs.sample.startswith(self.name), hist_set)
+        else:
+            hist_set = filter(lambda hs: hs.sample.startswith(self.name+"."), hist_set)
         if not hist_set:
             log.warning("no hist is found for %s; skipping the merge!"%self.name)
             return []

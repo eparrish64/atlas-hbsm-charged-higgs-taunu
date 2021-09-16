@@ -12,7 +12,7 @@ from hpana.cmd import get_ana_parser
 ana_parser = get_ana_parser()
 ANA_ARGS = ana_parser.parse_args()
 if not ANA_ARGS.submitdir:
-    ANA_ARGS.submitdir = ANA_ARGS.outdir\
+    ANA_ARGS.submitdir = ANA_ARGS.outdir
 
 # local
 from hpana import log

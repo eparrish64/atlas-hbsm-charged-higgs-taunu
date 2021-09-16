@@ -341,9 +341,16 @@ class Higgs(MC, Signal):
             w_hset = filter(lambda hs: hs.sample.startswith(self.name+"WEIGHTED"), hist_set)
             uw_hset = filter(lambda hs: hs.sample.startswith(self.name+"UNWEIGHTED"), hist_set)
 
+        log.debug("Weighted Hplus Hitograms")
+        log.debug("Unweighted Hplus Histograms")
+        log.debug(w_hset)
         ## merge weighted/unweighted hists separately and write them to disk
         mr_w_hset = super(Higgs, self).merge_hists(hist_set=w_hset, histsdir=histsdir, hists_file=hists_file, write=False, **kwargs)
         mr_uw_hset = super(Higgs, self).merge_hists(hist_set=uw_hset, histsdir=histsdir, hists_file=hists_file, write=False, **kwargs)
+        log.debug("Merged Weighted Hplus Histograms")
+        log.debug(mr_w_hset)
+        log.debug("Merged Unweighted Hplus Histograms")
+        log.debug(mr_uw_hset)
 
         if len(mr_w_hset) == 0:
             log.warning("No hists were found for %sWEIGHTED. Or got deleted by accident"%(self.name))

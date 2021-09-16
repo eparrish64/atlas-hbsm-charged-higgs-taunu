@@ -777,6 +777,7 @@ CLASSIFIER_CATEGORIES = {
 
 MET_TRIGG_EFF_CUTS_BASE = [
     ROOT.TCut("n_taus==1"),
+    TAUID_LOOSE,
     TAU_EL_OLR_PASS,
     # default (electrons)
     ROOT.TCut("n_electrons==1&&n_muons==0"),
@@ -789,12 +790,14 @@ MET_TRIGG_EFF_CUTS_BASE = [
     #    ROOT.TCut("(n_electrons==1 && el_0_p4->Pt() > 26 && el_0_id_loose && el_0_trig_trigger_matched==1 && tau_0_q*el_0_q==-1)"\
     #              "|| (n_muons==1 && mu_0_p4->Pt() > 30 && mu_0_id_loose && mu_0_trig_trigger_matched==1 && tau_0_q*mu_0_q==-1)"),
     
-    ROOT.TCut("n_jets>1 && n_bjets_DL1r_FixedCutBEff_70>1"),
+    ROOT.TCut("n_jets>1"),
+    NUM_BJETS1,
     ROOT.TCut("jet_0_p4->Pt() > 25 && jet_1_p4->Pt() > 25"),
     
     # - - only for the bkg modelling in this region (not applied for calculating trigger efficiency).
     #ROOT.TCut("met_p4->Et() > 100"),
 ]
+
 
 ## - - - - systematic variations from tau/el ID and number of jets.
 
@@ -804,6 +807,7 @@ MET_TRIG_EFF_CR_NOM = Category(
     ff_index=2011,
     tauid=TAUID_LOOSE,
     # truth_tau=None,
+    # cuts_list=MET_TRIGG_EFF_CUTS_BASE + [NUM_BJETS2],
     cuts_list=MET_TRIGG_EFF_CUTS_BASE,
 )
 
@@ -813,7 +817,8 @@ MET_TRIG_EFF_CR_TAUID_MED = Category(
     ff_index=2011,
     tauid=TAUID_MEDIUM,
     # truth_tau=None,
-    cuts_list=MET_TRIGG_EFF_CUTS_BASE,
+    # cuts_list=MET_TRIGG_EFF_CUTS_BASE + [NUM_BJETS2] + [TAUID_MEDIUM],
+    cuts_list=MET_TRIGG_EFF_CUTS_BASE + [TAUID_MEDIUM],
 )
 
 MET_TRIG_EFF_CR_TAUID_TIGHT = Category(
@@ -822,7 +827,8 @@ MET_TRIG_EFF_CR_TAUID_TIGHT = Category(
     ff_index=2011,
     tauid=TAUID_TIGHT,
     # truth_tau=None,
-    cuts_list=MET_TRIGG_EFF_CUTS_BASE,
+    # cuts_list=MET_TRIGG_EFF_CUTS_BASE + [NUM_BJETS2] + [TAUID_TIGHT],
+    cuts_list=MET_TRIGG_EFF_CUTS_BASE + [TAUID_TIGHT],
 )
 
 MET_TRIG_EFF_CR_ELID_MED = Category(
@@ -831,6 +837,7 @@ MET_TRIG_EFF_CR_ELID_MED = Category(
     ff_index=2011,
     tauid=TAUID_LOOSE,
     # truth_tau=None,
+    # cuts_list=MET_TRIGG_EFF_CUTS_BASE + [NUM_BJETS2] + [ROOT.TCut("n_electrons==0 || el_0_id_medium==1")],
     cuts_list=MET_TRIGG_EFF_CUTS_BASE + [ROOT.TCut("n_electrons==0 || el_0_id_medium==1")],
 )
 
@@ -840,6 +847,7 @@ MET_TRIG_EFF_CR_ELID_TIGHT = Category(
     ff_index=2011,
     tauid=TAUID_LOOSE,
     # truth_tau=None,
+    # cuts_list=MET_TRIGG_EFF_CUTS_BASE + [NUM_BJETS2] + [ROOT.TCut("n_electrons==0 || el_0_id_tight==1")],
     cuts_list=MET_TRIGG_EFF_CUTS_BASE + [ROOT.TCut("n_electrons==0 || el_0_id_tight==1")],
 )
 
@@ -849,7 +857,26 @@ MET_TRIG_EFF_CR_NJETS3 = Category(
     ff_index=2011,
     tauid=TAUID_LOOSE,
     # truth_tau=None,
+    #cuts_list=MET_TRIGG_EFF_CUTS_BASE + [NUM_BJETS2] + [ROOT.TCut("n_jets > 2")],
     cuts_list=MET_TRIGG_EFF_CUTS_BASE + [ROOT.TCut("n_jets > 2")],
+)
+
+MET_TRIG_EFF_CR_NBJET1 = Category(
+    "MET_TRIG_EFF_CR_NBJET1",
+    label="E^{T}_{miss} trig eff CR (1 b-jet)",
+    ff_index=2011,
+    tauid=TAUID_LOOSE,
+    # truth_tau=None,                                                                                                                      
+    cuts_list=MET_TRIGG_EFF_CUTS_BASE,
+)
+
+MET_TRIG_EFF_CR_NBJET2 = Category(
+    "MET_TRIG_EFF_CR_NBJET1",
+    label="E^{T}_{miss} trig eff CR (2 b-jets)",
+    ff_index=2011,
+    tauid=TAUID_LOOSE,
+    # truth_tau=None,
+    cuts_list=MET_TRIGG_EFF_CUTS_BASE + [NUM_BJETS2],
 )
 
 MET_TRIG_EFF_CR_MUID_MED = Category(
@@ -858,6 +885,7 @@ MET_TRIG_EFF_CR_MUID_MED = Category(
     ff_index=2011,
     tauid=TAUID_LOOSE,
     # truth_tau=None,
+    # cuts_list=MET_TRIGG_EFF_CUTS_BASE + [NUM_BJETS2] + [ROOT.TCut("n_muons==0 || mu_0_id_medium==1")],
     cuts_list=MET_TRIGG_EFF_CUTS_BASE + [ROOT.TCut("n_muons==0 || mu_0_id_medium==1")],
 )
 
@@ -867,6 +895,7 @@ MET_TRIG_EFF_CR_MUID_TIGHT = Category(
     ff_index=2011,
     tauid=TAUID_LOOSE,
     # truth_tau=None,
+    # cuts_list=MET_TRIGG_EFF_CUTS_BASE + [NUM_BJETS2] + [ROOT.TCut("n_muons==0 || mu_0_id_tight==1")],
     cuts_list=MET_TRIGG_EFF_CUTS_BASE + [ROOT.TCut("n_muons==0 || mu_0_id_tight==1")],
 )
 
@@ -878,9 +907,12 @@ MET_TRIG_EFF_CRs = [
     MET_TRIG_EFF_CR_ELID_MED,
     MET_TRIG_EFF_CR_ELID_TIGHT,
     MET_TRIG_EFF_CR_NJETS3,
+#    MET_TRIG_EFF_CR_NBJET1,
+    MET_TRIG_EFF_CR_NBJET2,
     #    MET_TRIG_EFF_CR_MUID_MED,
     #    MET_TRIG_EFF_CR_MUID_TIGHT
 ]
+
 
 
 ##------------------------------------------------------------------------------------

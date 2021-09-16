@@ -314,11 +314,10 @@ def get_trigger(channel, dtype="MC", data_streams=("2015", "2016")):
     assert dtype in ("MC", "DATA"), "choose from (DATA, MC)"
 
     # do not apply trigger on MC for taujet as the trig efficiency is applied!
-    # if channel == "taujet" and dtype == "MC":
+    #if channel == "taujet" and dtype == "MC":
     #     trigger_string = ""
-    # else:
-    trigger_string = "||".join(
-        (TRIGGERS[channel][dtype][st] for st in data_streams))
+    #else:
+    trigger_string = "||".join((TRIGGERS[channel][dtype][st] for st in data_streams))
 
     return ROOT.TCut(trigger_string)
 

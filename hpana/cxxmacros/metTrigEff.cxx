@@ -7,52 +7,52 @@ float metTrigEff(float met_et, int variation_index, int run_number){
 		 // trigger: HLT_xe70_mht 
 		 if(run_number >= 266904 && run_number <= 284484){
 			 return 
-			 (0.5*(1 + TMath::Erf((met_et - 93.0619538268)/55.6366810686))+0.0) 
+			 (0.5*(1 + TMath::Erf((met_et - 94.2244030447)/53.5425491514))+0.0) 
 			 / 
-			 (0.5*(1 + TMath::Erf((met_et - 89.5590553282)/56.8194688873))+0.0); 
+			 (0.5*(1 + TMath::Erf((met_et - 88.242495993)/50.2559071015))+0.0); 
 
 		 }
 		 // year: 2017 
 		 // trigger: HLT_xe110_pufit_L1XE50 
 		 if(run_number >= 332303 && run_number <= 341649){
 			 return 
-			 (0.5*(1 + TMath::Erf((met_et - 135.350368777)/56.8400167879))+0.0) 
+			 (0.5*(1 + TMath::Erf((met_et - 137.363529066)/53.7582258192))+0.0) 
 			 / 
-			 (0.5*(1 + TMath::Erf((met_et - 129.249355406)/51.5178628873))+0.0); 
+			 (0.5*(1 + TMath::Erf((met_et - 131.822769043)/53.7980819693))+0.0); 
 
 		 }
 		 // trigger: HLT_xe110_pufit_L1XE55 
 		 if(run_number >= 325713 && run_number <= 331975){
 			 return 
-			 (0.5*(1 + TMath::Erf((met_et - 132.006938735)/47.2507697777))+0.0) 
+			 (0.5*(1 + TMath::Erf((met_et - 135.229526552)/48.4682315456))+0.0) 
 			 / 
-			 (0.5*(1 + TMath::Erf((met_et - 129.749887552)/51.0437616734))+0.0); 
+			 (0.5*(1 + TMath::Erf((met_et - 130.635613661)/48.6934385211))+0.0); 
 
 		 }
 		 // year: 2016 
 		 // trigger: HLT_xe90_mht_L1XE50 
 		 if(run_number >= 296939 && run_number <= 302872){
 			 return 
-			 (0.5*(1 + TMath::Erf((met_et - 103.348990165)/56.3107160114))+0.0) 
+			 (0.5*(1 + TMath::Erf((met_et - 103.474564792)/53.0708621247))+0.0) 
 			 / 
-			 (0.5*(1 + TMath::Erf((met_et - 94.6923317174)/51.6202343985))+0.0); 
+			 (0.5*(1 + TMath::Erf((met_et - 95.8776926341)/50.0138156882))+0.0); 
 
 		 }
 		 // trigger: HLT_xe110_mht_L1XE50 
 		 if(run_number >= 302873 && run_number <= 311481){
 			 return 
-			 (0.5*(1 + TMath::Erf((met_et - 125.234878112)/48.7740968647))+0.0) 
+			 (0.5*(1 + TMath::Erf((met_et - 127.12560676)/49.11715283))+0.0) 
 			 / 
-			 (0.5*(1 + TMath::Erf((met_et - 120.410325866)/49.3915368169))+0.0); 
+			 (0.5*(1 + TMath::Erf((met_et - 121.235599995)/49.5331375731))+0.0); 
 
 		 }
 		 // year: 2018 
 		 // trigger: HLT_xe110_pufit_xe70_L1XE50 
 		 if(run_number >= 348885 && run_number <= 364485){
 			 return 
-			 (0.5*(1 + TMath::Erf((met_et - 135.61670811)/51.6018951346))+0.0) 
+			 (0.5*(1 + TMath::Erf((met_et - 137.519432937)/49.6733202653))+0.0) 
 			 / 
-			 (0.5*(1 + TMath::Erf((met_et - 132.435817256)/50.7042552106))+0.0); 
+			 (0.5*(1 + TMath::Erf((met_et - 134.280791624)/51.4884289577))+0.0); 
 
 		 }
 
@@ -65,52 +65,52 @@ float metTrigEff(float met_et, int variation_index, int run_number){
 		 // trigger: HLT_xe70_mht 
 		 if(run_number >= 266904 && run_number <= 284484){
 			 return 
-			 (0.5*(1 + TMath::Erf((met_et - 91.303757767)/52.8982128111))+0.0) 
+			 (0.5*(1 + TMath::Erf((met_et - 92.6130957527)/50.4536179705))+0.0) 
 			 / 
-			 (0.5*(1 + TMath::Erf((met_et - 88.688123153)/55.4032606324))+0.0); 
+			 (0.5*(1 + TMath::Erf((met_et - 88.4506664291)/50.5422906695))+0.0); 
 
 		 }
 		 // year: 2017 
 		 // trigger: HLT_xe110_pufit_L1XE50 
 		 if(run_number >= 332303 && run_number <= 341649){
 			 return 
-			 (0.5*(1 + TMath::Erf((met_et - 134.475124233)/54.9562948133))+0.0) 
+			 (0.5*(1 + TMath::Erf((met_et - 136.883668077)/53.7743918474))+0.0) 
 			 / 
-			 (0.5*(1 + TMath::Erf((met_et - 129.10814207)/51.2469290957))+0.0); 
+			 (0.5*(1 + TMath::Erf((met_et - 131.813277064)/53.8771033438))+0.0); 
 
 		 }
 		 // trigger: HLT_xe110_pufit_L1XE55 
 		 if(run_number >= 325713 && run_number <= 331975){
 			 return 
-			 (0.5*(1 + TMath::Erf((met_et - 131.334583273)/47.5411325382))+0.0) 
+			 (0.5*(1 + TMath::Erf((met_et - 133.946124856)/47.8586858829))+0.0) 
 			 / 
-			 (0.5*(1 + TMath::Erf((met_et - 129.60370124)/50.423668327))+0.0); 
+			 (0.5*(1 + TMath::Erf((met_et - 130.536181908)/48.322950843))+0.0); 
 
 		 }
 		 // year: 2016 
 		 // trigger: HLT_xe90_mht_L1XE50 
 		 if(run_number >= 296939 && run_number <= 302872){
 			 return 
-			 (0.5*(1 + TMath::Erf((met_et - 100.97632858)/57.1622166401))+0.0) 
+			 (0.5*(1 + TMath::Erf((met_et - 101.93617736)/51.3027697667))+0.0) 
 			 / 
-			 (0.5*(1 + TMath::Erf((met_et - 94.863372632)/51.4470426807))+0.0); 
+			 (0.5*(1 + TMath::Erf((met_et - 95.8239493896)/49.4227950012))+0.0); 
 
 		 }
 		 // trigger: HLT_xe110_mht_L1XE50 
 		 if(run_number >= 302873 && run_number <= 311481){
 			 return 
-			 (0.5*(1 + TMath::Erf((met_et - 125.534627623)/47.0268033264))+0.0) 
+			 (0.5*(1 + TMath::Erf((met_et - 127.037396066)/49.3272951692))+0.0) 
 			 / 
-			 (0.5*(1 + TMath::Erf((met_et - 120.34799564)/49.4545641793))+0.0); 
+			 (0.5*(1 + TMath::Erf((met_et - 121.027197799)/49.2223944845))+0.0); 
 
 		 }
 		 // year: 2018 
 		 // trigger: HLT_xe110_pufit_xe70_L1XE50 
 		 if(run_number >= 348885 && run_number <= 364485){
 			 return 
-			 (0.5*(1 + TMath::Erf((met_et - 134.342266553)/51.3253186459))+0.0) 
+			 (0.5*(1 + TMath::Erf((met_et - 136.333330788)/49.3421998655))+0.0) 
 			 / 
-			 (0.5*(1 + TMath::Erf((met_et - 132.193363806)/50.0839453327))+0.0); 
+			 (0.5*(1 + TMath::Erf((met_et - 134.064644348)/51.167123909))+0.0); 
 
 		 }
 
@@ -123,52 +123,52 @@ float metTrigEff(float met_et, int variation_index, int run_number){
 		 // trigger: HLT_xe70_mht 
 		 if(run_number >= 266904 && run_number <= 284484){
 			 return 
-			 (0.5*(1 + TMath::Erf((met_et - 92.0254713627)/53.5500931898))+0.0) 
+			 (0.5*(1 + TMath::Erf((met_et - 91.3246613222)/50.5430301142))+0.0) 
 			 / 
-			 (0.5*(1 + TMath::Erf((met_et - 89.2749953931)/56.3789836775))+0.0); 
+			 (0.5*(1 + TMath::Erf((met_et - 88.9401960789)/51.6485822161))+0.0); 
 
 		 }
 		 // year: 2017 
 		 // trigger: HLT_xe110_pufit_L1XE50 
 		 if(run_number >= 332303 && run_number <= 341649){
 			 return 
-			 (0.5*(1 + TMath::Erf((met_et - 135.359484838)/56.8402750904))+0.0) 
+			 (0.5*(1 + TMath::Erf((met_et - 136.791711167)/54.1073748052))+0.0) 
 			 / 
-			 (0.5*(1 + TMath::Erf((met_et - 128.646684151)/50.3209622521))+0.0); 
+			 (0.5*(1 + TMath::Erf((met_et - 131.611520114)/53.8220343538))+0.0); 
 
 		 }
 		 // trigger: HLT_xe110_pufit_L1XE55 
 		 if(run_number >= 325713 && run_number <= 331975){
 			 return 
-			 (0.5*(1 + TMath::Erf((met_et - 133.141197399)/50.342657233))+0.0) 
+			 (0.5*(1 + TMath::Erf((met_et - 133.850442527)/48.3463430089))+0.0) 
 			 / 
-			 (0.5*(1 + TMath::Erf((met_et - 130.177786768)/51.3808901105))+0.0); 
+			 (0.5*(1 + TMath::Erf((met_et - 130.323809698)/47.9962856465))+0.0); 
 
 		 }
 		 // year: 2016 
 		 // trigger: HLT_xe90_mht_L1XE50 
 		 if(run_number >= 296939 && run_number <= 302872){
 			 return 
-			 (0.5*(1 + TMath::Erf((met_et - 99.7712927607)/56.7239608431))+0.0) 
+			 (0.5*(1 + TMath::Erf((met_et - 100.214416683)/49.6390108628))+0.0) 
 			 / 
-			 (0.5*(1 + TMath::Erf((met_et - 94.5135107914)/52.2392003706))+0.0); 
+			 (0.5*(1 + TMath::Erf((met_et - 95.4818817491)/48.9900062045))+0.0); 
 
 		 }
 		 // trigger: HLT_xe110_mht_L1XE50 
 		 if(run_number >= 302873 && run_number <= 311481){
 			 return 
-			 (0.5*(1 + TMath::Erf((met_et - 124.787973884)/47.8773406565))+0.0) 
+			 (0.5*(1 + TMath::Erf((met_et - 125.913509985)/48.1743068937))+0.0) 
 			 / 
-			 (0.5*(1 + TMath::Erf((met_et - 120.182349616)/49.5474751025))+0.0); 
+			 (0.5*(1 + TMath::Erf((met_et - 120.760912967)/48.8989958684))+0.0); 
 
 		 }
 		 // year: 2018 
 		 // trigger: HLT_xe110_pufit_xe70_L1XE50 
 		 if(run_number >= 348885 && run_number <= 364485){
 			 return 
-			 (0.5*(1 + TMath::Erf((met_et - 133.87990418)/49.7375864994))+0.0) 
+			 (0.5*(1 + TMath::Erf((met_et - 135.454763523)/49.3244194116))+0.0) 
 			 / 
-			 (0.5*(1 + TMath::Erf((met_et - 131.868152116)/49.3498105469))+0.0); 
+			 (0.5*(1 + TMath::Erf((met_et - 133.768639799)/50.828215865))+0.0); 
 
 		 }
 
@@ -181,52 +181,52 @@ float metTrigEff(float met_et, int variation_index, int run_number){
 		 // trigger: HLT_xe70_mht 
 		 if(run_number >= 266904 && run_number <= 284484){
 			 return 
-			 (0.5*(1 + TMath::Erf((met_et - 93.0492533384)/55.1235482232))+0.0) 
+			 (0.5*(1 + TMath::Erf((met_et - 94.4130198926)/53.8580880148))+0.0) 
 			 / 
-			 (0.5*(1 + TMath::Erf((met_et - 89.4456844224)/56.3371720008))+0.0); 
+			 (0.5*(1 + TMath::Erf((met_et - 88.2837128527)/50.4992714019))+0.0); 
 
 		 }
 		 // year: 2017 
 		 // trigger: HLT_xe110_pufit_L1XE50 
 		 if(run_number >= 332303 && run_number <= 341649){
 			 return 
-			 (0.5*(1 + TMath::Erf((met_et - 135.472927621)/57.0102685359))+0.0) 
+			 (0.5*(1 + TMath::Erf((met_et - 137.400868067)/53.8246527699))+0.0) 
 			 / 
-			 (0.5*(1 + TMath::Erf((met_et - 129.164453815)/51.2693001092))+0.0); 
+			 (0.5*(1 + TMath::Erf((met_et - 131.845728297)/53.8365717314))+0.0); 
 
 		 }
 		 // trigger: HLT_xe110_pufit_L1XE55 
 		 if(run_number >= 325713 && run_number <= 331975){
 			 return 
-			 (0.5*(1 + TMath::Erf((met_et - 132.223574398)/47.3772863008))+0.0) 
+			 (0.5*(1 + TMath::Erf((met_et - 135.158239266)/48.3252743491))+0.0) 
 			 / 
-			 (0.5*(1 + TMath::Erf((met_et - 129.795690411)/51.2611051474))+0.0); 
+			 (0.5*(1 + TMath::Erf((met_et - 130.494545344)/48.5770731315))+0.0); 
 
 		 }
 		 // year: 2016 
 		 // trigger: HLT_xe90_mht_L1XE50 
 		 if(run_number >= 296939 && run_number <= 302872){
 			 return 
-			 (0.5*(1 + TMath::Erf((met_et - 103.574432672)/56.7093693407))+0.0) 
+			 (0.5*(1 + TMath::Erf((met_et - 103.393691057)/52.9520033957))+0.0) 
 			 / 
-			 (0.5*(1 + TMath::Erf((met_et - 94.782189818)/51.8406549107))+0.0); 
+			 (0.5*(1 + TMath::Erf((met_et - 95.9052497303)/50.0211612444))+0.0); 
 
 		 }
 		 // trigger: HLT_xe110_mht_L1XE50 
 		 if(run_number >= 302873 && run_number <= 311481){
 			 return 
-			 (0.5*(1 + TMath::Erf((met_et - 125.252619831)/48.9084534078))+0.0) 
+			 (0.5*(1 + TMath::Erf((met_et - 127.033455146)/48.9644372104))+0.0) 
 			 / 
-			 (0.5*(1 + TMath::Erf((met_et - 120.426046343)/49.4465104523))+0.0); 
+			 (0.5*(1 + TMath::Erf((met_et - 121.23542911)/49.5094498926))+0.0); 
 
 		 }
 		 // year: 2018 
 		 // trigger: HLT_xe110_pufit_xe70_L1XE50 
 		 if(run_number >= 348885 && run_number <= 364485){
 			 return 
-			 (0.5*(1 + TMath::Erf((met_et - 135.775264829)/51.7051074249))+0.0) 
+			 (0.5*(1 + TMath::Erf((met_et - 137.614035396)/49.7590194074))+0.0) 
 			 / 
-			 (0.5*(1 + TMath::Erf((met_et - 132.340255343)/50.6615783029))+0.0); 
+			 (0.5*(1 + TMath::Erf((met_et - 134.256853807)/51.4988258065))+0.0); 
 
 		 }
 
@@ -239,52 +239,52 @@ float metTrigEff(float met_et, int variation_index, int run_number){
 		 // trigger: HLT_xe70_mht 
 		 if(run_number >= 266904 && run_number <= 284484){
 			 return 
-			 (0.5*(1 + TMath::Erf((met_et - 92.9341843738)/55.3953988387))+0.0) 
+			 (0.5*(1 + TMath::Erf((met_et - 94.4424447966)/53.9029512688))+0.0) 
 			 / 
-			 (0.5*(1 + TMath::Erf((met_et - 89.352528096)/56.8102586008))+0.0); 
+			 (0.5*(1 + TMath::Erf((met_et - 88.2457192921)/50.7428917561))+0.0); 
 
 		 }
 		 // year: 2017 
 		 // trigger: HLT_xe110_pufit_L1XE50 
 		 if(run_number >= 332303 && run_number <= 341649){
 			 return 
-			 (0.5*(1 + TMath::Erf((met_et - 135.241553094)/56.7577923716))+0.0) 
+			 (0.5*(1 + TMath::Erf((met_et - 137.317399041)/53.6303341703))+0.0) 
 			 / 
-			 (0.5*(1 + TMath::Erf((met_et - 129.10544772)/51.4138084801))+0.0); 
+			 (0.5*(1 + TMath::Erf((met_et - 131.925492833)/53.9811465594))+0.0); 
 
 		 }
 		 // trigger: HLT_xe110_pufit_L1XE55 
 		 if(run_number >= 325713 && run_number <= 331975){
 			 return 
-			 (0.5*(1 + TMath::Erf((met_et - 131.896176154)/47.9741064366))+0.0) 
+			 (0.5*(1 + TMath::Erf((met_et - 134.925319724)/48.2621022234))+0.0) 
 			 / 
-			 (0.5*(1 + TMath::Erf((met_et - 129.586925146)/51.4303040427))+0.0); 
+			 (0.5*(1 + TMath::Erf((met_et - 130.38960389)/48.5715642926))+0.0); 
 
 		 }
 		 // year: 2016 
 		 // trigger: HLT_xe90_mht_L1XE50 
 		 if(run_number >= 296939 && run_number <= 302872){
 			 return 
-			 (0.5*(1 + TMath::Erf((met_et - 103.45845276)/56.5134118131))+0.0) 
+			 (0.5*(1 + TMath::Erf((met_et - 103.259902347)/52.8892336494))+0.0) 
 			 / 
-			 (0.5*(1 + TMath::Erf((met_et - 94.6381527697)/51.6426332347))+0.0); 
+			 (0.5*(1 + TMath::Erf((met_et - 95.7457555228)/50.0494263774))+0.0); 
 
 		 }
 		 // trigger: HLT_xe110_mht_L1XE50 
 		 if(run_number >= 302873 && run_number <= 311481){
 			 return 
-			 (0.5*(1 + TMath::Erf((met_et - 125.210114236)/48.8767476359))+0.0) 
+			 (0.5*(1 + TMath::Erf((met_et - 126.927025532)/48.8756639543))+0.0) 
 			 / 
-			 (0.5*(1 + TMath::Erf((met_et - 120.501398088)/49.7750508887))+0.0); 
+			 (0.5*(1 + TMath::Erf((met_et - 121.107675724)/49.4726179959))+0.0); 
 
 		 }
 		 // year: 2018 
 		 // trigger: HLT_xe110_pufit_xe70_L1XE50 
 		 if(run_number >= 348885 && run_number <= 364485){
 			 return 
-			 (0.5*(1 + TMath::Erf((met_et - 135.98217633)/52.1065826055))+0.0) 
+			 (0.5*(1 + TMath::Erf((met_et - 137.547553606)/49.6017255261))+0.0) 
 			 / 
-			 (0.5*(1 + TMath::Erf((met_et - 132.226481617)/50.668705068))+0.0); 
+			 (0.5*(1 + TMath::Erf((met_et - 134.14962535)/51.4687338661))+0.0); 
 
 		 }
 
@@ -297,52 +297,574 @@ float metTrigEff(float met_et, int variation_index, int run_number){
 		 // trigger: HLT_xe70_mht 
 		 if(run_number >= 266904 && run_number <= 284484){
 			 return 
-			 (0.5*(1 + TMath::Erf((met_et - 95.2936763228)/55.9352759916))+0.0) 
+			 (0.5*(1 + TMath::Erf((met_et - 95.5632127529)/55.2889283963))+0.0) 
 			 / 
-			 (0.5*(1 + TMath::Erf((met_et - 92.1941773713)/61.4683032925))+0.0); 
+			 (0.5*(1 + TMath::Erf((met_et - 89.9201581295)/53.5001164144))+0.0); 
 
 		 }
 		 // year: 2017 
 		 // trigger: HLT_xe110_pufit_L1XE50 
 		 if(run_number >= 332303 && run_number <= 341649){
 			 return 
-			 (0.5*(1 + TMath::Erf((met_et - 135.551790406)/57.808100319))+0.0) 
+			 (0.5*(1 + TMath::Erf((met_et - 138.525026474)/56.4311629862))+0.0) 
 			 / 
-			 (0.5*(1 + TMath::Erf((met_et - 129.757924966)/53.347471548))+0.0); 
+			 (0.5*(1 + TMath::Erf((met_et - 132.759665445)/57.3516512278))+0.0); 
 
 		 }
 		 // trigger: HLT_xe110_pufit_L1XE55 
 		 if(run_number >= 325713 && run_number <= 331975){
 			 return 
-			 (0.5*(1 + TMath::Erf((met_et - 134.902397115)/52.8939170779))+0.0) 
+			 (0.5*(1 + TMath::Erf((met_et - 136.038938488)/50.2664524553))+0.0) 
 			 / 
-			 (0.5*(1 + TMath::Erf((met_et - 131.571948203)/54.3524102631))+0.0); 
+			 (0.5*(1 + TMath::Erf((met_et - 132.053730854)/52.427371264))+0.0); 
 
 		 }
 		 // year: 2016 
 		 // trigger: HLT_xe90_mht_L1XE50 
 		 if(run_number >= 296939 && run_number <= 302872){
 			 return 
-			 (0.5*(1 + TMath::Erf((met_et - 105.815496649)/58.6273116739))+0.0) 
+			 (0.5*(1 + TMath::Erf((met_et - 107.440286027)/59.7505836314))+0.0) 
 			 / 
-			 (0.5*(1 + TMath::Erf((met_et - 95.4552887489)/53.8100491309))+0.0); 
+			 (0.5*(1 + TMath::Erf((met_et - 96.7533077425)/51.6219839754))+0.0); 
 
 		 }
 		 // trigger: HLT_xe110_mht_L1XE50 
 		 if(run_number >= 302873 && run_number <= 311481){
 			 return 
-			 (0.5*(1 + TMath::Erf((met_et - 127.68809183)/49.7677797061))+0.0) 
+			 (0.5*(1 + TMath::Erf((met_et - 129.735573387)/51.287952519))+0.0) 
 			 / 
-			 (0.5*(1 + TMath::Erf((met_et - 121.229358013)/50.1054578664))+0.0); 
+			 (0.5*(1 + TMath::Erf((met_et - 122.483131193)/50.7309390303))+0.0); 
 
 		 }
 		 // year: 2018 
 		 // trigger: HLT_xe110_pufit_xe70_L1XE50 
 		 if(run_number >= 348885 && run_number <= 364485){
 			 return 
-			 (0.5*(1 + TMath::Erf((met_et - 138.121809959)/54.4110620791))+0.0) 
+			 (0.5*(1 + TMath::Erf((met_et - 140.632188425)/53.4965033715))+0.0) 
 			 / 
-			 (0.5*(1 + TMath::Erf((met_et - 133.91686513)/53.2545134479))+0.0); 
+			 (0.5*(1 + TMath::Erf((met_et - 136.115793946)/55.4527186848))+0.0); 
+
+		 }
+
+		 else return 0.;
+	}
+
+	 //! variation: MET_TRIG_EFF_CR_NBJET1
+	 if(variation_index==1006){
+		 // year: 2015 
+		 // trigger: HLT_xe70_mht 
+		 if(run_number >= 266904 && run_number <= 284484){
+			 return 
+			 (0.5*(1 + TMath::Erf((met_et - 92.3575081547)/49.7192657082))+0.0) 
+			 / 
+			 (0.5*(1 + TMath::Erf((met_et - 88.0098569282)/49.8932398011))+0.0); 
+
+		 }
+		 // year: 2017 
+		 // trigger: HLT_xe110_pufit_L1XE50 
+		 if(run_number >= 332303 && run_number <= 341649){
+			 return 
+			 (0.5*(1 + TMath::Erf((met_et - 135.683834995)/53.993684835))+0.0) 
+			 / 
+			 (0.5*(1 + TMath::Erf((met_et - 131.47069868)/54.2357274948))+0.0); 
+
+		 }
+		 // trigger: HLT_xe110_pufit_L1XE55 
+		 if(run_number >= 325713 && run_number <= 331975){
+			 return 
+			 (0.5*(1 + TMath::Erf((met_et - 133.931382571)/48.7463005625))+0.0) 
+			 / 
+			 (0.5*(1 + TMath::Erf((met_et - 129.53724653)/47.954222171))+0.0); 
+
+		 }
+		 // year: 2016 
+		 // trigger: HLT_xe90_mht_L1XE50 
+		 if(run_number >= 296939 && run_number <= 302872){
+			 return 
+			 (0.5*(1 + TMath::Erf((met_et - 102.709919669)/53.1004676697))+0.0) 
+			 / 
+			 (0.5*(1 + TMath::Erf((met_et - 94.9286009566)/49.8587068057))+0.0); 
+
+		 }
+		 // trigger: HLT_xe110_mht_L1XE50 
+		 if(run_number >= 302873 && run_number <= 311481){
+			 return 
+			 (0.5*(1 + TMath::Erf((met_et - 124.798719121)/47.1218302318))+0.0) 
+			 / 
+			 (0.5*(1 + TMath::Erf((met_et - 120.951551677)/49.1865297834))+0.0); 
+
+		 }
+		 // year: 2018 
+		 // trigger: HLT_xe110_pufit_xe70_L1XE50 
+		 if(run_number >= 348885 && run_number <= 364485){
+			 return 
+			 (0.5*(1 + TMath::Erf((met_et - 135.676292912)/49.2578927023))+0.0) 
+			 / 
+			 (0.5*(1 + TMath::Erf((met_et - 133.853744798)/51.5893330079))+0.0); 
+
+		 }
+
+		 else return 0.;
+	}
+
+	 //! statistical variation number 1 UP
+	 if(variation_index==1101){
+		 // year: 2015 
+		 // trigger: HLT_xe70_mht 
+		 if(run_number >= 266904 && run_number <= 284484){
+			 return 
+			 (0.5*(1 + TMath::Erf((met_et - 96.7862130251)/57.0703627036))+0.0) 
+			 / 
+			 (0.5*(1 + TMath::Erf((met_et - 88.242495993)/50.2559071015))+0.0); 
+
+		 }
+		 // year: 2017 
+		 // trigger: HLT_xe110_pufit_L1XE50 
+		 if(run_number >= 332303 && run_number <= 341649){
+			 return 
+			 (0.5*(1 + TMath::Erf((met_et - 138.661331837)/55.0733014161))+0.0) 
+			 / 
+			 (0.5*(1 + TMath::Erf((met_et - 131.822769043)/53.7980819693))+0.0); 
+
+		 }
+		 // trigger: HLT_xe110_pufit_L1XE55 
+		 if(run_number >= 325713 && run_number <= 331975){
+			 return 
+			 (0.5*(1 + TMath::Erf((met_et - 137.207970547)/50.4993169285))+0.0) 
+			 / 
+			 (0.5*(1 + TMath::Erf((met_et - 130.635613661)/48.6934385211))+0.0); 
+
+		 }
+		 // year: 2016 
+		 // trigger: HLT_xe90_mht_L1XE50 
+		 if(run_number >= 296939 && run_number <= 302872){
+			 return 
+			 (0.5*(1 + TMath::Erf((met_et - 105.523207841)/55.6029480835))+0.0) 
+			 / 
+			 (0.5*(1 + TMath::Erf((met_et - 95.8776926341)/50.0138156882))+0.0); 
+
+		 }
+		 // trigger: HLT_xe110_mht_L1XE50 
+		 if(run_number >= 302873 && run_number <= 311481){
+			 return 
+			 (0.5*(1 + TMath::Erf((met_et - 128.328198098)/50.3340069205))+0.0) 
+			 / 
+			 (0.5*(1 + TMath::Erf((met_et - 121.235599995)/49.5331375731))+0.0); 
+
+		 }
+		 // year: 2018 
+		 // trigger: HLT_xe110_pufit_xe70_L1XE50 
+		 if(run_number >= 348885 && run_number <= 364485){
+			 return 
+			 (0.5*(1 + TMath::Erf((met_et - 138.449324622)/50.6008850688))+0.0) 
+			 / 
+			 (0.5*(1 + TMath::Erf((met_et - 134.280791624)/51.4884289577))+0.0); 
+
+		 }
+
+		 else return 0.;
+	}
+
+	 //! statistical variation number 1 DOWN
+	 if(variation_index==1102){
+		 // year: 2015 
+		 // trigger: HLT_xe70_mht 
+		 if(run_number >= 266904 && run_number <= 284484){
+			 return 
+			 (0.5*(1 + TMath::Erf((met_et - 91.6625930643)/50.0147355991))+0.0) 
+			 / 
+			 (0.5*(1 + TMath::Erf((met_et - 88.242495993)/50.2559071015))+0.0); 
+
+		 }
+		 // year: 2017 
+		 // trigger: HLT_xe110_pufit_L1XE50 
+		 if(run_number >= 332303 && run_number <= 341649){
+			 return 
+			 (0.5*(1 + TMath::Erf((met_et - 136.065726295)/52.4431502223))+0.0) 
+			 / 
+			 (0.5*(1 + TMath::Erf((met_et - 131.822769043)/53.7980819693))+0.0); 
+
+		 }
+		 // trigger: HLT_xe110_pufit_L1XE55 
+		 if(run_number >= 325713 && run_number <= 331975){
+			 return 
+			 (0.5*(1 + TMath::Erf((met_et - 133.251082557)/46.4371461626))+0.0) 
+			 / 
+			 (0.5*(1 + TMath::Erf((met_et - 130.635613661)/48.6934385211))+0.0); 
+
+		 }
+		 // year: 2016 
+		 // trigger: HLT_xe90_mht_L1XE50 
+		 if(run_number >= 296939 && run_number <= 302872){
+			 return 
+			 (0.5*(1 + TMath::Erf((met_et - 101.425921742)/50.538776166))+0.0) 
+			 / 
+			 (0.5*(1 + TMath::Erf((met_et - 95.8776926341)/50.0138156882))+0.0); 
+
+		 }
+		 // trigger: HLT_xe110_mht_L1XE50 
+		 if(run_number >= 302873 && run_number <= 311481){
+			 return 
+			 (0.5*(1 + TMath::Erf((met_et - 125.923015423)/47.9002987394))+0.0) 
+			 / 
+			 (0.5*(1 + TMath::Erf((met_et - 121.235599995)/49.5331375731))+0.0); 
+
+		 }
+		 // year: 2018 
+		 // trigger: HLT_xe110_pufit_xe70_L1XE50 
+		 if(run_number >= 348885 && run_number <= 364485){
+			 return 
+			 (0.5*(1 + TMath::Erf((met_et - 136.589541252)/48.7457554619))+0.0) 
+			 / 
+			 (0.5*(1 + TMath::Erf((met_et - 134.280791624)/51.4884289577))+0.0); 
+
+		 }
+
+		 else return 0.;
+	}
+
+	 //! statistical variation number 2 UP
+	 if(variation_index==1103){
+		 // year: 2015 
+		 // trigger: HLT_xe70_mht 
+		 if(run_number >= 266904 && run_number <= 284484){
+			 return 
+			 (0.5*(1 + TMath::Erf((met_et - 93.2186003058)/54.2729379479))+0.0) 
+			 / 
+			 (0.5*(1 + TMath::Erf((met_et - 88.242495993)/50.2559071015))+0.0); 
+
+		 }
+		 // year: 2017 
+		 // trigger: HLT_xe110_pufit_L1XE50 
+		 if(run_number >= 332303 && run_number <= 341649){
+			 return 
+			 (0.5*(1 + TMath::Erf((met_et - 137.037509381)/54.0799634071))+0.0) 
+			 / 
+			 (0.5*(1 + TMath::Erf((met_et - 131.822769043)/53.7980819693))+0.0); 
+
+		 }
+		 // trigger: HLT_xe110_pufit_L1XE55 
+		 if(run_number >= 325713 && run_number <= 331975){
+			 return 
+			 (0.5*(1 + TMath::Erf((met_et - 134.714238376)/48.9701645544))+0.0) 
+			 / 
+			 (0.5*(1 + TMath::Erf((met_et - 130.635613661)/48.6934385211))+0.0); 
+
+		 }
+		 // year: 2016 
+		 // trigger: HLT_xe90_mht_L1XE50 
+		 if(run_number >= 296939 && run_number <= 302872){
+			 return 
+			 (0.5*(1 + TMath::Erf((met_et - 102.756822911)/53.6515678901))+0.0) 
+			 / 
+			 (0.5*(1 + TMath::Erf((met_et - 95.8776926341)/50.0138156882))+0.0); 
+
+		 }
+		 // trigger: HLT_xe110_mht_L1XE50 
+		 if(run_number >= 302873 && run_number <= 311481){
+			 return 
+			 (0.5*(1 + TMath::Erf((met_et - 126.799166426)/49.4397669558))+0.0) 
+			 / 
+			 (0.5*(1 + TMath::Erf((met_et - 121.235599995)/49.5331375731))+0.0); 
+
+		 }
+		 // year: 2018 
+		 // trigger: HLT_xe110_pufit_xe70_L1XE50 
+		 if(run_number >= 348885 && run_number <= 364485){
+			 return 
+			 (0.5*(1 + TMath::Erf((met_et - 137.75480846)/49.4373542808))+0.0) 
+			 / 
+			 (0.5*(1 + TMath::Erf((met_et - 134.280791624)/51.4884289577))+0.0); 
+
+		 }
+
+		 else return 0.;
+	}
+
+	 //! statistical variation number 2 DOWN
+	 if(variation_index==1104){
+		 // year: 2015 
+		 // trigger: HLT_xe70_mht 
+		 if(run_number >= 266904 && run_number <= 284484){
+			 return 
+			 (0.5*(1 + TMath::Erf((met_et - 95.2302057836)/52.8121603548))+0.0) 
+			 / 
+			 (0.5*(1 + TMath::Erf((met_et - 88.242495993)/50.2559071015))+0.0); 
+
+		 }
+		 // year: 2017 
+		 // trigger: HLT_xe110_pufit_L1XE50 
+		 if(run_number >= 332303 && run_number <= 341649){
+			 return 
+			 (0.5*(1 + TMath::Erf((met_et - 137.689548751)/53.4364882313))+0.0) 
+			 / 
+			 (0.5*(1 + TMath::Erf((met_et - 131.822769043)/53.7980819693))+0.0); 
+
+		 }
+		 // trigger: HLT_xe110_pufit_L1XE55 
+		 if(run_number >= 325713 && run_number <= 331975){
+			 return 
+			 (0.5*(1 + TMath::Erf((met_et - 135.744814728)/47.9662985367))+0.0) 
+			 / 
+			 (0.5*(1 + TMath::Erf((met_et - 130.635613661)/48.6934385211))+0.0); 
+
+		 }
+		 // year: 2016 
+		 // trigger: HLT_xe90_mht_L1XE50 
+		 if(run_number >= 296939 && run_number <= 302872){
+			 return 
+			 (0.5*(1 + TMath::Erf((met_et - 104.192306672)/52.4901563594))+0.0) 
+			 / 
+			 (0.5*(1 + TMath::Erf((met_et - 95.8776926341)/50.0138156882))+0.0); 
+
+		 }
+		 // trigger: HLT_xe110_mht_L1XE50 
+		 if(run_number >= 302873 && run_number <= 311481){
+			 return 
+			 (0.5*(1 + TMath::Erf((met_et - 127.452047095)/48.7945387042))+0.0) 
+			 / 
+			 (0.5*(1 + TMath::Erf((met_et - 121.235599995)/49.5331375731))+0.0); 
+
+		 }
+		 // year: 2018 
+		 // trigger: HLT_xe110_pufit_xe70_L1XE50 
+		 if(run_number >= 348885 && run_number <= 364485){
+			 return 
+			 (0.5*(1 + TMath::Erf((met_et - 137.284057413)/49.9092862498))+0.0) 
+			 / 
+			 (0.5*(1 + TMath::Erf((met_et - 134.280791624)/51.4884289577))+0.0); 
+
+		 }
+
+		 else return 0.;
+	}
+
+	 //! statistical variation number 3 UP
+	 if(variation_index==1105){
+		 // year: 2015 
+		 // trigger: HLT_xe70_mht 
+		 if(run_number >= 266904 && run_number <= 284484){
+			 return 
+			 (0.5*(1 + TMath::Erf((met_et - 94.2244030447)/53.5425491514))+0.0) 
+			 / 
+			 (0.5*(1 + TMath::Erf((met_et - 88.242495993)/50.2559071015))+0.0); 
+
+		 }
+		 // year: 2017 
+		 // trigger: HLT_xe110_pufit_L1XE50 
+		 if(run_number >= 332303 && run_number <= 341649){
+			 return 
+			 (0.5*(1 + TMath::Erf((met_et - 137.363529066)/53.7582258192))+0.0) 
+			 / 
+			 (0.5*(1 + TMath::Erf((met_et - 131.822769043)/53.7980819693))+0.0); 
+
+		 }
+		 // trigger: HLT_xe110_pufit_L1XE55 
+		 if(run_number >= 325713 && run_number <= 331975){
+			 return 
+			 (0.5*(1 + TMath::Erf((met_et - 135.229526552)/48.4682315456))+0.0) 
+			 / 
+			 (0.5*(1 + TMath::Erf((met_et - 130.635613661)/48.6934385211))+0.0); 
+
+		 }
+		 // year: 2016 
+		 // trigger: HLT_xe90_mht_L1XE50 
+		 if(run_number >= 296939 && run_number <= 302872){
+			 return 
+			 (0.5*(1 + TMath::Erf((met_et - 103.474564792)/53.0708621247))+0.0) 
+			 / 
+			 (0.5*(1 + TMath::Erf((met_et - 95.8776926341)/50.0138156882))+0.0); 
+
+		 }
+		 // trigger: HLT_xe110_mht_L1XE50 
+		 if(run_number >= 302873 && run_number <= 311481){
+			 return 
+			 (0.5*(1 + TMath::Erf((met_et - 127.12560676)/49.11715283))+0.0) 
+			 / 
+			 (0.5*(1 + TMath::Erf((met_et - 121.235599995)/49.5331375731))+0.0); 
+
+		 }
+		 // year: 2018 
+		 // trigger: HLT_xe110_pufit_xe70_L1XE50 
+		 if(run_number >= 348885 && run_number <= 364485){
+			 return 
+			 (0.5*(1 + TMath::Erf((met_et - 137.519432937)/49.6733202653))+0.0) 
+			 / 
+			 (0.5*(1 + TMath::Erf((met_et - 134.280791624)/51.4884289577))+0.0); 
+
+		 }
+
+		 else return 0.;
+	}
+
+	 //! statistical variation number 3 DOWN
+	 if(variation_index==1106){
+		 // year: 2015 
+		 // trigger: HLT_xe70_mht 
+		 if(run_number >= 266904 && run_number <= 284484){
+			 return 
+			 (0.5*(1 + TMath::Erf((met_et - 94.2244030447)/53.5425491514))+0.0) 
+			 / 
+			 (0.5*(1 + TMath::Erf((met_et - 88.242495993)/50.2559071015))+0.0); 
+
+		 }
+		 // year: 2017 
+		 // trigger: HLT_xe110_pufit_L1XE50 
+		 if(run_number >= 332303 && run_number <= 341649){
+			 return 
+			 (0.5*(1 + TMath::Erf((met_et - 137.363529066)/53.7582258192))+0.0) 
+			 / 
+			 (0.5*(1 + TMath::Erf((met_et - 131.822769043)/53.7980819693))+0.0); 
+
+		 }
+		 // trigger: HLT_xe110_pufit_L1XE55 
+		 if(run_number >= 325713 && run_number <= 331975){
+			 return 
+			 (0.5*(1 + TMath::Erf((met_et - 135.229526552)/48.4682315456))+0.0) 
+			 / 
+			 (0.5*(1 + TMath::Erf((met_et - 130.635613661)/48.6934385211))+0.0); 
+
+		 }
+		 // year: 2016 
+		 // trigger: HLT_xe90_mht_L1XE50 
+		 if(run_number >= 296939 && run_number <= 302872){
+			 return 
+			 (0.5*(1 + TMath::Erf((met_et - 103.474564792)/53.0708621247))+0.0) 
+			 / 
+			 (0.5*(1 + TMath::Erf((met_et - 95.8776926341)/50.0138156882))+0.0); 
+
+		 }
+		 // trigger: HLT_xe110_mht_L1XE50 
+		 if(run_number >= 302873 && run_number <= 311481){
+			 return 
+			 (0.5*(1 + TMath::Erf((met_et - 127.12560676)/49.11715283))+0.0) 
+			 / 
+			 (0.5*(1 + TMath::Erf((met_et - 121.235599995)/49.5331375731))+0.0); 
+
+		 }
+		 // year: 2018 
+		 // trigger: HLT_xe110_pufit_xe70_L1XE50 
+		 if(run_number >= 348885 && run_number <= 364485){
+			 return 
+			 (0.5*(1 + TMath::Erf((met_et - 137.519432937)/49.6733202653))+0.0) 
+			 / 
+			 (0.5*(1 + TMath::Erf((met_et - 134.280791624)/51.4884289577))+0.0); 
+
+		 }
+
+		 else return 0.;
+	}
+
+	 //! statistical variation number 4 UP
+	 if(variation_index==1107){
+		 // year: 2015 
+		 // trigger: HLT_xe70_mht 
+		 if(run_number >= 266904 && run_number <= 284484){
+			 return 
+			 (0.5*(1 + TMath::Erf((met_et - 94.2244030447)/53.5425491514))+0.0) 
+			 / 
+			 (0.5*(1 + TMath::Erf((met_et - 88.242495993)/50.2559071015))+0.0); 
+
+		 }
+		 // year: 2017 
+		 // trigger: HLT_xe110_pufit_L1XE50 
+		 if(run_number >= 332303 && run_number <= 341649){
+			 return 
+			 (0.5*(1 + TMath::Erf((met_et - 137.363529066)/53.7582258192))+0.0) 
+			 / 
+			 (0.5*(1 + TMath::Erf((met_et - 131.822769043)/53.7980819693))+0.0); 
+
+		 }
+		 // trigger: HLT_xe110_pufit_L1XE55 
+		 if(run_number >= 325713 && run_number <= 331975){
+			 return 
+			 (0.5*(1 + TMath::Erf((met_et - 135.229526552)/48.4682315456))+0.0) 
+			 / 
+			 (0.5*(1 + TMath::Erf((met_et - 130.635613661)/48.6934385211))+0.0); 
+
+		 }
+		 // year: 2016 
+		 // trigger: HLT_xe90_mht_L1XE50 
+		 if(run_number >= 296939 && run_number <= 302872){
+			 return 
+			 (0.5*(1 + TMath::Erf((met_et - 103.474564792)/53.0708621247))+0.0) 
+			 / 
+			 (0.5*(1 + TMath::Erf((met_et - 95.8776926341)/50.0138156882))+0.0); 
+
+		 }
+		 // trigger: HLT_xe110_mht_L1XE50 
+		 if(run_number >= 302873 && run_number <= 311481){
+			 return 
+			 (0.5*(1 + TMath::Erf((met_et - 127.12560676)/49.11715283))+0.0) 
+			 / 
+			 (0.5*(1 + TMath::Erf((met_et - 121.235599995)/49.5331375731))+0.0); 
+
+		 }
+		 // year: 2018 
+		 // trigger: HLT_xe110_pufit_xe70_L1XE50 
+		 if(run_number >= 348885 && run_number <= 364485){
+			 return 
+			 (0.5*(1 + TMath::Erf((met_et - 137.519432937)/49.6733202653))+0.0) 
+			 / 
+			 (0.5*(1 + TMath::Erf((met_et - 134.280791624)/51.4884289577))+0.0); 
+
+		 }
+
+		 else return 0.;
+	}
+
+	 //! statistical variation number 4 DOWN
+	 if(variation_index==1108){
+		 // year: 2015 
+		 // trigger: HLT_xe70_mht 
+		 if(run_number >= 266904 && run_number <= 284484){
+			 return 
+			 (0.5*(1 + TMath::Erf((met_et - 94.2244030447)/53.5425491514))+0.0) 
+			 / 
+			 (0.5*(1 + TMath::Erf((met_et - 88.242495993)/50.2559071015))+0.0); 
+
+		 }
+		 // year: 2017 
+		 // trigger: HLT_xe110_pufit_L1XE50 
+		 if(run_number >= 332303 && run_number <= 341649){
+			 return 
+			 (0.5*(1 + TMath::Erf((met_et - 137.363529066)/53.7582258192))+0.0) 
+			 / 
+			 (0.5*(1 + TMath::Erf((met_et - 131.822769043)/53.7980819693))+0.0); 
+
+		 }
+		 // trigger: HLT_xe110_pufit_L1XE55 
+		 if(run_number >= 325713 && run_number <= 331975){
+			 return 
+			 (0.5*(1 + TMath::Erf((met_et - 135.229526552)/48.4682315456))+0.0) 
+			 / 
+			 (0.5*(1 + TMath::Erf((met_et - 130.635613661)/48.6934385211))+0.0); 
+
+		 }
+		 // year: 2016 
+		 // trigger: HLT_xe90_mht_L1XE50 
+		 if(run_number >= 296939 && run_number <= 302872){
+			 return 
+			 (0.5*(1 + TMath::Erf((met_et - 103.474564792)/53.0708621247))+0.0) 
+			 / 
+			 (0.5*(1 + TMath::Erf((met_et - 95.8776926341)/50.0138156882))+0.0); 
+
+		 }
+		 // trigger: HLT_xe110_mht_L1XE50 
+		 if(run_number >= 302873 && run_number <= 311481){
+			 return 
+			 (0.5*(1 + TMath::Erf((met_et - 127.12560676)/49.11715283))+0.0) 
+			 / 
+			 (0.5*(1 + TMath::Erf((met_et - 121.235599995)/49.5331375731))+0.0); 
+
+		 }
+		 // year: 2018 
+		 // trigger: HLT_xe110_pufit_xe70_L1XE50 
+		 if(run_number >= 348885 && run_number <= 364485){
+			 return 
+			 (0.5*(1 + TMath::Erf((met_et - 137.519432937)/49.6733202653))+0.0) 
+			 / 
+			 (0.5*(1 + TMath::Erf((met_et - 134.280791624)/51.4884289577))+0.0); 
 
 		 }
 
@@ -360,49 +882,57 @@ float metTrigEff(float met_et, int variation_index){
 	 //! variation: MET_TRIG_EFF_CR_NOM
 	 if(variation_index==1000){
 		 return 
-		 ( 0.0232 * ((0.5*(1 + TMath::Erf((met_et - 93.0619538268)/55.6366810686))+0.0))+0.2265 * ((0.5*(1 + TMath::Erf((met_et - 135.350368777)/56.8400167879))+0.0))+0.0923 * ((0.5*(1 + TMath::Erf((met_et - 132.006938735)/47.2507697777))+0.0))+0.0442 * ((0.5*(1 + TMath::Erf((met_et - 103.348990165)/56.3107160114))+0.0))+0.1932 * ((0.5*(1 + TMath::Erf((met_et - 125.234878112)/48.7740968647))+0.0))+0.4206 * ((0.5*(1 + TMath::Erf((met_et - 135.61670811)/51.6018951346))+0.0)) )
+		 ( 0.0232 * ((0.5*(1 + TMath::Erf((met_et - 94.2244030447)/53.5425491514))+0.0))+0.2265 * ((0.5*(1 + TMath::Erf((met_et - 137.363529066)/53.7582258192))+0.0))+0.0923 * ((0.5*(1 + TMath::Erf((met_et - 135.229526552)/48.4682315456))+0.0))+0.0442 * ((0.5*(1 + TMath::Erf((met_et - 103.474564792)/53.0708621247))+0.0))+0.1932 * ((0.5*(1 + TMath::Erf((met_et - 127.12560676)/49.11715283))+0.0))+0.4206 * ((0.5*(1 + TMath::Erf((met_et - 137.519432937)/49.6733202653))+0.0)) )
 			 / 
-		 ( 0.0244 * ((0.5*(1 + TMath::Erf((met_et - 89.5590553282)/56.8194688873))+0.0))+0.2401 * ((0.5*(1 + TMath::Erf((met_et - 129.249355406)/51.5178628873))+0.0))+0.0389 * ((0.5*(1 + TMath::Erf((met_et - 129.749887552)/51.0437616734))+0.0))+0.0466 * ((0.5*(1 + TMath::Erf((met_et - 94.6923317174)/51.6202343985))+0.0))+0.2041 * ((0.5*(1 + TMath::Erf((met_et - 120.410325866)/49.3915368169))+0.0))+0.4459 * ((0.5*(1 + TMath::Erf((met_et - 132.435817256)/50.7042552106))+0.0)) );
+		 ( 0.0244 * ((0.5*(1 + TMath::Erf((met_et - 88.242495993)/50.2559071015))+0.0))+0.2401 * ((0.5*(1 + TMath::Erf((met_et - 131.822769043)/53.7980819693))+0.0))+0.0389 * ((0.5*(1 + TMath::Erf((met_et - 130.635613661)/48.6934385211))+0.0))+0.0466 * ((0.5*(1 + TMath::Erf((met_et - 95.8776926341)/50.0138156882))+0.0))+0.2041 * ((0.5*(1 + TMath::Erf((met_et - 121.235599995)/49.5331375731))+0.0))+0.4459 * ((0.5*(1 + TMath::Erf((met_et - 134.280791624)/51.4884289577))+0.0)) );
 	 }
 
 	 //! variation: MET_TRIG_EFF_CR_TAUID_MED
 	 if(variation_index==1001){
 		 return 
-		 ( 0.0232 * ((0.5*(1 + TMath::Erf((met_et - 91.303757767)/52.8982128111))+0.0))+0.2265 * ((0.5*(1 + TMath::Erf((met_et - 134.475124233)/54.9562948133))+0.0))+0.0923 * ((0.5*(1 + TMath::Erf((met_et - 131.334583273)/47.5411325382))+0.0))+0.0442 * ((0.5*(1 + TMath::Erf((met_et - 100.97632858)/57.1622166401))+0.0))+0.1932 * ((0.5*(1 + TMath::Erf((met_et - 125.534627623)/47.0268033264))+0.0))+0.4206 * ((0.5*(1 + TMath::Erf((met_et - 134.342266553)/51.3253186459))+0.0)) )
+		 ( 0.0232 * ((0.5*(1 + TMath::Erf((met_et - 92.6130957527)/50.4536179705))+0.0))+0.2265 * ((0.5*(1 + TMath::Erf((met_et - 136.883668077)/53.7743918474))+0.0))+0.0923 * ((0.5*(1 + TMath::Erf((met_et - 133.946124856)/47.8586858829))+0.0))+0.0442 * ((0.5*(1 + TMath::Erf((met_et - 101.93617736)/51.3027697667))+0.0))+0.1932 * ((0.5*(1 + TMath::Erf((met_et - 127.037396066)/49.3272951692))+0.0))+0.4206 * ((0.5*(1 + TMath::Erf((met_et - 136.333330788)/49.3421998655))+0.0)) )
 			 / 
-		 ( 0.0244 * ((0.5*(1 + TMath::Erf((met_et - 88.688123153)/55.4032606324))+0.0))+0.2401 * ((0.5*(1 + TMath::Erf((met_et - 129.10814207)/51.2469290957))+0.0))+0.0389 * ((0.5*(1 + TMath::Erf((met_et - 129.60370124)/50.423668327))+0.0))+0.0466 * ((0.5*(1 + TMath::Erf((met_et - 94.863372632)/51.4470426807))+0.0))+0.2041 * ((0.5*(1 + TMath::Erf((met_et - 120.34799564)/49.4545641793))+0.0))+0.4459 * ((0.5*(1 + TMath::Erf((met_et - 132.193363806)/50.0839453327))+0.0)) );
+		 ( 0.0244 * ((0.5*(1 + TMath::Erf((met_et - 88.4506664291)/50.5422906695))+0.0))+0.2401 * ((0.5*(1 + TMath::Erf((met_et - 131.813277064)/53.8771033438))+0.0))+0.0389 * ((0.5*(1 + TMath::Erf((met_et - 130.536181908)/48.322950843))+0.0))+0.0466 * ((0.5*(1 + TMath::Erf((met_et - 95.8239493896)/49.4227950012))+0.0))+0.2041 * ((0.5*(1 + TMath::Erf((met_et - 121.027197799)/49.2223944845))+0.0))+0.4459 * ((0.5*(1 + TMath::Erf((met_et - 134.064644348)/51.167123909))+0.0)) );
 	 }
 
 	 //! variation: MET_TRIG_EFF_CR_TAUID_TIGHT
 	 if(variation_index==1002){
 		 return 
-		 ( 0.0232 * ((0.5*(1 + TMath::Erf((met_et - 92.0254713627)/53.5500931898))+0.0))+0.2265 * ((0.5*(1 + TMath::Erf((met_et - 135.359484838)/56.8402750904))+0.0))+0.0923 * ((0.5*(1 + TMath::Erf((met_et - 133.141197399)/50.342657233))+0.0))+0.0442 * ((0.5*(1 + TMath::Erf((met_et - 99.7712927607)/56.7239608431))+0.0))+0.1932 * ((0.5*(1 + TMath::Erf((met_et - 124.787973884)/47.8773406565))+0.0))+0.4206 * ((0.5*(1 + TMath::Erf((met_et - 133.87990418)/49.7375864994))+0.0)) )
+		 ( 0.0232 * ((0.5*(1 + TMath::Erf((met_et - 91.3246613222)/50.5430301142))+0.0))+0.2265 * ((0.5*(1 + TMath::Erf((met_et - 136.791711167)/54.1073748052))+0.0))+0.0923 * ((0.5*(1 + TMath::Erf((met_et - 133.850442527)/48.3463430089))+0.0))+0.0442 * ((0.5*(1 + TMath::Erf((met_et - 100.214416683)/49.6390108628))+0.0))+0.1932 * ((0.5*(1 + TMath::Erf((met_et - 125.913509985)/48.1743068937))+0.0))+0.4206 * ((0.5*(1 + TMath::Erf((met_et - 135.454763523)/49.3244194116))+0.0)) )
 			 / 
-		 ( 0.0244 * ((0.5*(1 + TMath::Erf((met_et - 89.2749953931)/56.3789836775))+0.0))+0.2401 * ((0.5*(1 + TMath::Erf((met_et - 128.646684151)/50.3209622521))+0.0))+0.0389 * ((0.5*(1 + TMath::Erf((met_et - 130.177786768)/51.3808901105))+0.0))+0.0466 * ((0.5*(1 + TMath::Erf((met_et - 94.5135107914)/52.2392003706))+0.0))+0.2041 * ((0.5*(1 + TMath::Erf((met_et - 120.182349616)/49.5474751025))+0.0))+0.4459 * ((0.5*(1 + TMath::Erf((met_et - 131.868152116)/49.3498105469))+0.0)) );
+		 ( 0.0244 * ((0.5*(1 + TMath::Erf((met_et - 88.9401960789)/51.6485822161))+0.0))+0.2401 * ((0.5*(1 + TMath::Erf((met_et - 131.611520114)/53.8220343538))+0.0))+0.0389 * ((0.5*(1 + TMath::Erf((met_et - 130.323809698)/47.9962856465))+0.0))+0.0466 * ((0.5*(1 + TMath::Erf((met_et - 95.4818817491)/48.9900062045))+0.0))+0.2041 * ((0.5*(1 + TMath::Erf((met_et - 120.760912967)/48.8989958684))+0.0))+0.4459 * ((0.5*(1 + TMath::Erf((met_et - 133.768639799)/50.828215865))+0.0)) );
 	 }
 
 	 //! variation: MET_TRIG_EFF_CR_ELID_MED
 	 if(variation_index==1003){
 		 return 
-		 ( 0.0232 * ((0.5*(1 + TMath::Erf((met_et - 93.0492533384)/55.1235482232))+0.0))+0.2265 * ((0.5*(1 + TMath::Erf((met_et - 135.472927621)/57.0102685359))+0.0))+0.0923 * ((0.5*(1 + TMath::Erf((met_et - 132.223574398)/47.3772863008))+0.0))+0.0442 * ((0.5*(1 + TMath::Erf((met_et - 103.574432672)/56.7093693407))+0.0))+0.1932 * ((0.5*(1 + TMath::Erf((met_et - 125.252619831)/48.9084534078))+0.0))+0.4206 * ((0.5*(1 + TMath::Erf((met_et - 135.775264829)/51.7051074249))+0.0)) )
+		 ( 0.0232 * ((0.5*(1 + TMath::Erf((met_et - 94.4130198926)/53.8580880148))+0.0))+0.2265 * ((0.5*(1 + TMath::Erf((met_et - 137.400868067)/53.8246527699))+0.0))+0.0923 * ((0.5*(1 + TMath::Erf((met_et - 135.158239266)/48.3252743491))+0.0))+0.0442 * ((0.5*(1 + TMath::Erf((met_et - 103.393691057)/52.9520033957))+0.0))+0.1932 * ((0.5*(1 + TMath::Erf((met_et - 127.033455146)/48.9644372104))+0.0))+0.4206 * ((0.5*(1 + TMath::Erf((met_et - 137.614035396)/49.7590194074))+0.0)) )
 			 / 
-		 ( 0.0244 * ((0.5*(1 + TMath::Erf((met_et - 89.4456844224)/56.3371720008))+0.0))+0.2401 * ((0.5*(1 + TMath::Erf((met_et - 129.164453815)/51.2693001092))+0.0))+0.0389 * ((0.5*(1 + TMath::Erf((met_et - 129.795690411)/51.2611051474))+0.0))+0.0466 * ((0.5*(1 + TMath::Erf((met_et - 94.782189818)/51.8406549107))+0.0))+0.2041 * ((0.5*(1 + TMath::Erf((met_et - 120.426046343)/49.4465104523))+0.0))+0.4459 * ((0.5*(1 + TMath::Erf((met_et - 132.340255343)/50.6615783029))+0.0)) );
+		 ( 0.0244 * ((0.5*(1 + TMath::Erf((met_et - 88.2837128527)/50.4992714019))+0.0))+0.2401 * ((0.5*(1 + TMath::Erf((met_et - 131.845728297)/53.8365717314))+0.0))+0.0389 * ((0.5*(1 + TMath::Erf((met_et - 130.494545344)/48.5770731315))+0.0))+0.0466 * ((0.5*(1 + TMath::Erf((met_et - 95.9052497303)/50.0211612444))+0.0))+0.2041 * ((0.5*(1 + TMath::Erf((met_et - 121.23542911)/49.5094498926))+0.0))+0.4459 * ((0.5*(1 + TMath::Erf((met_et - 134.256853807)/51.4988258065))+0.0)) );
 	 }
 
 	 //! variation: MET_TRIG_EFF_CR_ELID_TIGHT
 	 if(variation_index==1004){
 		 return 
-		 ( 0.0232 * ((0.5*(1 + TMath::Erf((met_et - 92.9341843738)/55.3953988387))+0.0))+0.2265 * ((0.5*(1 + TMath::Erf((met_et - 135.241553094)/56.7577923716))+0.0))+0.0923 * ((0.5*(1 + TMath::Erf((met_et - 131.896176154)/47.9741064366))+0.0))+0.0442 * ((0.5*(1 + TMath::Erf((met_et - 103.45845276)/56.5134118131))+0.0))+0.1932 * ((0.5*(1 + TMath::Erf((met_et - 125.210114236)/48.8767476359))+0.0))+0.4206 * ((0.5*(1 + TMath::Erf((met_et - 135.98217633)/52.1065826055))+0.0)) )
+		 ( 0.0232 * ((0.5*(1 + TMath::Erf((met_et - 94.4424447966)/53.9029512688))+0.0))+0.2265 * ((0.5*(1 + TMath::Erf((met_et - 137.317399041)/53.6303341703))+0.0))+0.0923 * ((0.5*(1 + TMath::Erf((met_et - 134.925319724)/48.2621022234))+0.0))+0.0442 * ((0.5*(1 + TMath::Erf((met_et - 103.259902347)/52.8892336494))+0.0))+0.1932 * ((0.5*(1 + TMath::Erf((met_et - 126.927025532)/48.8756639543))+0.0))+0.4206 * ((0.5*(1 + TMath::Erf((met_et - 137.547553606)/49.6017255261))+0.0)) )
 			 / 
-		 ( 0.0244 * ((0.5*(1 + TMath::Erf((met_et - 89.352528096)/56.8102586008))+0.0))+0.2401 * ((0.5*(1 + TMath::Erf((met_et - 129.10544772)/51.4138084801))+0.0))+0.0389 * ((0.5*(1 + TMath::Erf((met_et - 129.586925146)/51.4303040427))+0.0))+0.0466 * ((0.5*(1 + TMath::Erf((met_et - 94.6381527697)/51.6426332347))+0.0))+0.2041 * ((0.5*(1 + TMath::Erf((met_et - 120.501398088)/49.7750508887))+0.0))+0.4459 * ((0.5*(1 + TMath::Erf((met_et - 132.226481617)/50.668705068))+0.0)) );
+		 ( 0.0244 * ((0.5*(1 + TMath::Erf((met_et - 88.2457192921)/50.7428917561))+0.0))+0.2401 * ((0.5*(1 + TMath::Erf((met_et - 131.925492833)/53.9811465594))+0.0))+0.0389 * ((0.5*(1 + TMath::Erf((met_et - 130.38960389)/48.5715642926))+0.0))+0.0466 * ((0.5*(1 + TMath::Erf((met_et - 95.7457555228)/50.0494263774))+0.0))+0.2041 * ((0.5*(1 + TMath::Erf((met_et - 121.107675724)/49.4726179959))+0.0))+0.4459 * ((0.5*(1 + TMath::Erf((met_et - 134.14962535)/51.4687338661))+0.0)) );
 	 }
 
 	 //! variation: MET_TRIG_EFF_CR_NJETS3
 	 if(variation_index==1005){
 		 return 
-		 ( 0.0232 * ((0.5*(1 + TMath::Erf((met_et - 95.2936763228)/55.9352759916))+0.0))+0.2265 * ((0.5*(1 + TMath::Erf((met_et - 135.551790406)/57.808100319))+0.0))+0.0923 * ((0.5*(1 + TMath::Erf((met_et - 134.902397115)/52.8939170779))+0.0))+0.0442 * ((0.5*(1 + TMath::Erf((met_et - 105.815496649)/58.6273116739))+0.0))+0.1932 * ((0.5*(1 + TMath::Erf((met_et - 127.68809183)/49.7677797061))+0.0))+0.4206 * ((0.5*(1 + TMath::Erf((met_et - 138.121809959)/54.4110620791))+0.0)) )
+		 ( 0.0232 * ((0.5*(1 + TMath::Erf((met_et - 95.5632127529)/55.2889283963))+0.0))+0.2265 * ((0.5*(1 + TMath::Erf((met_et - 138.525026474)/56.4311629862))+0.0))+0.0923 * ((0.5*(1 + TMath::Erf((met_et - 136.038938488)/50.2664524553))+0.0))+0.0442 * ((0.5*(1 + TMath::Erf((met_et - 107.440286027)/59.7505836314))+0.0))+0.1932 * ((0.5*(1 + TMath::Erf((met_et - 129.735573387)/51.287952519))+0.0))+0.4206 * ((0.5*(1 + TMath::Erf((met_et - 140.632188425)/53.4965033715))+0.0)) )
 			 / 
-		 ( 0.0244 * ((0.5*(1 + TMath::Erf((met_et - 92.1941773713)/61.4683032925))+0.0))+0.2401 * ((0.5*(1 + TMath::Erf((met_et - 129.757924966)/53.347471548))+0.0))+0.0389 * ((0.5*(1 + TMath::Erf((met_et - 131.571948203)/54.3524102631))+0.0))+0.0466 * ((0.5*(1 + TMath::Erf((met_et - 95.4552887489)/53.8100491309))+0.0))+0.2041 * ((0.5*(1 + TMath::Erf((met_et - 121.229358013)/50.1054578664))+0.0))+0.4459 * ((0.5*(1 + TMath::Erf((met_et - 133.91686513)/53.2545134479))+0.0)) );
+		 ( 0.0244 * ((0.5*(1 + TMath::Erf((met_et - 89.9201581295)/53.5001164144))+0.0))+0.2401 * ((0.5*(1 + TMath::Erf((met_et - 132.759665445)/57.3516512278))+0.0))+0.0389 * ((0.5*(1 + TMath::Erf((met_et - 132.053730854)/52.427371264))+0.0))+0.0466 * ((0.5*(1 + TMath::Erf((met_et - 96.7533077425)/51.6219839754))+0.0))+0.2041 * ((0.5*(1 + TMath::Erf((met_et - 122.483131193)/50.7309390303))+0.0))+0.4459 * ((0.5*(1 + TMath::Erf((met_et - 136.115793946)/55.4527186848))+0.0)) );
+	 }
+
+	 //! variation: MET_TRIG_EFF_CR_NBJET1
+	 if(variation_index==1006){
+		 return 
+		 ( 0.0232 * ((0.5*(1 + TMath::Erf((met_et - 92.3575081547)/49.7192657082))+0.0))+0.2265 * ((0.5*(1 + TMath::Erf((met_et - 135.683834995)/53.993684835))+0.0))+0.0923 * ((0.5*(1 + TMath::Erf((met_et - 133.931382571)/48.7463005625))+0.0))+0.0442 * ((0.5*(1 + TMath::Erf((met_et - 102.709919669)/53.1004676697))+0.0))+0.1932 * ((0.5*(1 + TMath::Erf((met_et - 124.798719121)/47.1218302318))+0.0))+0.4206 * ((0.5*(1 + TMath::Erf((met_et - 135.676292912)/49.2578927023))+0.0)) )
+			 / 
+		 ( 0.0244 * ((0.5*(1 + TMath::Erf((met_et - 88.0098569282)/49.8932398011))+0.0))+0.2401 * ((0.5*(1 + TMath::Erf((met_et - 131.47069868)/54.2357274948))+0.0))+0.0389 * ((0.5*(1 + TMath::Erf((met_et - 129.53724653)/47.954222171))+0.0))+0.0466 * ((0.5*(1 + TMath::Erf((met_et - 94.9286009566)/49.8587068057))+0.0))+0.2041 * ((0.5*(1 + TMath::Erf((met_et - 120.951551677)/49.1865297834))+0.0))+0.4459 * ((0.5*(1 + TMath::Erf((met_et - 133.853744798)/51.5893330079))+0.0)) );
 	 }
 
 

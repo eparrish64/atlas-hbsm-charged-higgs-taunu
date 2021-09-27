@@ -514,10 +514,14 @@ class Sample(object):
             
         
         # - - make sure hists are for this sample
+        log.debug("Full hist_set")
+        log.debug(hist_set)
         if "weighted" in hist_set[0].name.lower():
             hist_set = filter(lambda hs: hs.sample.startswith(self.name), hist_set)
-        else:
+        elif "hplus" in self.name.lower():
             hist_set = filter(lambda hs: hs.sample.startswith(self.name+"."), hist_set)
+        else:
+            hist_set = filter(lambda hs: hs.sample.startswith(self.name), hist_set)
         if not hist_set:
             log.warning("no hist is found for %s; skipping the merge!"%self.name)
             return []

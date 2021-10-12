@@ -437,7 +437,7 @@ Category_BVETO_MT100 = Category(
         NUM_JETS3,
         JET_PT25,
         BVETO,
-	MET150,
+	    MET150,
         MT100,],
 )
 
@@ -640,32 +640,6 @@ Category_TTBAR_TAULEP = Category(
 
 
 
-##--------------------------------------------------------------
-# - - analysis selection regions (PLEASE KEEP THE ORDER)
-##--------------------------------------------------------------
-CATEGORIES = OrderedDict()
-CATEGORIES["taujet"] = [
-    Category_SR_TAUJET,
-    Category_TTBAR,
-    Category_BVETO,
-    Category_WJETS,
-    Category_TAUJET_PRESEL,
-    Category_BVETO_MT100,
-]
-
-CATEGORIES["taulep"] = [
-    Category_SR_TAULEP,
-    Category_SR_TAUEL,
-    Category_SR_TAUMU,
-    Category_TAUEL_BVETO,
-    Category_TAUMU_BVETO,
-    Category_SS_TAUEL,
-    Category_SS_TAUMU,
-    Category_DILEP_BTAG,
-    Category_ZEE,
-    Category_TAULEP_PRESEL,
-    Category_TTBAR_TAULEP,
-]
 
     
 ##------------------------------------------------------------------------------------
@@ -950,16 +924,16 @@ CUTFLOW = {
             ("tauID", TAUID_MEDIUM),
             # ("tauPt30", TAU_PT30["mc16"]+TAU_BASE["mc16"]),
 
-            ("lepBase", LEP_BASE["mc16"]),
-            ("OS", OS_TAU_LEP),
+            # ("lepBase", LEP_BASE["mc16"]),
+            # ("OS", OS_TAU_LEP),
 
 
             # ("elBase", EL_BASE["mc16"]),
             # ("OS", OS_TAU_EL),
 
 
-            # ("muBase", MU_BASE["mc16"]),
-            # ("OS", OS_TAU_MU),
+            ("muBase", MU_BASE["mc16"]),
+            ("OS", OS_TAU_MU),
 
 
             # ("1jets", NUM_JETS1),
@@ -972,3 +946,32 @@ CUTFLOW = {
 
         ]),
 }
+
+
+##--------------------------------------------------------------
+# - - analysis selection regions (PLEASE KEEP THE ORDER)
+##--------------------------------------------------------------
+CATEGORIES = OrderedDict()
+CATEGORIES["taujet"] = [
+    Category_SR_TAUJET,
+    Category_TTBAR,
+    Category_BVETO,
+    Category_WJETS,
+    Category_TAUJET_PRESEL,
+    Category_BVETO_MT100,
+]
+
+CATEGORIES["taulep"] = [
+    Category_SR_TAULEP,
+    Category_SR_TAUEL,
+    Category_SR_TAUMU,
+    Category_TAUEL_BVETO,
+    Category_TAUMU_BVETO,
+    Category_SS_TAUEL,
+    Category_SS_TAUMU,
+    Category_DILEP_BTAG,
+    Category_ZEE,
+    Category_TAULEP_PRESEL,
+    Category_TTBAR_TAULEP,
+    MET_TRIG_EFF_CR_NOM,
+]

@@ -1276,8 +1276,8 @@ VARIABLES_TAUJET = [
     tau_pol_cms,
 
     effm_tau,
-    # Pileup_Weight,
-    # mc_Weight,
+    Pileup_Weight,
+    mc_Weight,
 ]
 
 ##-----------------------------------------------------------------

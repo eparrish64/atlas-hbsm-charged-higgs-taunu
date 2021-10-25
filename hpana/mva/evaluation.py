@@ -489,7 +489,7 @@ def get_trees(tfile, systs=False):
 ##-----------------------------------------------
 ##
 ##-----------------------------------------------
-def setup_score_branches(tree, models):
+def setup_score_branches(tree, models, outTree=None):
     """
     # Setup MVA score output branches
     # TODO look up how many mass points there are based on number of trained Models...
@@ -498,14 +498,14 @@ def setup_score_branches(tree, models):
     scores = dict()
     score_branches = []
     for mass in sorted(list(models.keys())):
-        for name in models[mass][0]:
+        for name in [models[mass][0].name]: #models[mass][0]:
             # if score branch is already in tree do nothing.
-            if name in [b.GetName() for b in tree.GetListOfBranches()]:
+            if name in [b.GetName() for b in outTree.GetListOfBranches()]:
                 log.warning("%s is already in %s (skipping tree)"%(name, tree.GetName()))
                 continue
             score = array.array('f', [-100.])
             scores[name] = score
-            sb = tree.Branch(name, score, name+"/F")
+            sb = outTree.Branch(name, score, name+"/F")
             score_branches.append(sb)
     
     return scores, score_branches
@@ -517,6 +517,7 @@ def setup_tformulas(tree, features):
     # Setup a TTreeFormula for each feature
     forms_tau = []
     for feat in features:
+        if feat.name == "TruthMass": feat.tformula="80" # FIXME DEBUG
         forms_tau.append(ROOT.TTreeFormula(feat.name, feat.tformula, tree) )
     forms_fake = forms_tau[:]
     
@@ -808,7 +809,7 @@ def fill_scores_mult(tree, all_models, hist_templates,
 ##-----------------------------------------------
 ##
 ##-----------------------------------------------
-def evaluate_scores_on_trees(file_name, models, features=[], backend="sklearn"):
+def evaluate_scores_on_trees(file_name, models, features=[], backend="keras"):
     """
     Update tree with score branches which are
     evaluated using the available trained models.
@@ -823,10 +824,18 @@ def evaluate_scores_on_trees(file_name, models, features=[], backend="sklearn"):
     None
     """
 
+    models, Keras_models = models[0], models[1]
     scaler = StandardScaler()
     # retrive trees in the tfile and loop over them
-    tfile = ROOT.TFile.Open(file_name, 'UPDATE')
+    tfile = ROOT.TFile.Open(file_name, 'READONLY')
     trees = get_trees(tfile)
+    FRIEND_FILE_DIR="/afs/cern.ch/work/b/bburghgr/private/hpana/workarea/run/friendfiles/"
+    friendFilePath = os.path.normpath(FRIEND_FILE_DIR + file_name +".friend")
+    ffile = ROOT.TFile.Open(friendFilePath, "RECREATE") # TODO writeable
+    features = []
+    for mass in models:
+        features += models[mass][0].features
+        break
     for tree in trees:
         ## - - setup input features tformulas and score branches
         tree_name = tree.GetName()
@@ -836,7 +845,8 @@ def evaluate_scores_on_trees(file_name, models, features=[], backend="sklearn"):
         isFake = ROOT.TTreeFormula("tau_0_jet_rnn_loose==0", "tau_0_jet_rnn_loose==0", tree)
         
         forms_tau, forms_fake = setup_tformulas(tree, features)
-        scores, score_branches = setup_score_branches(tree, models)
+        outTree = ROOT.TTree(tree_name, tree_name) # in the friend file (ffile)
+        scores, score_branches = setup_score_branches(tree, models, outTree)
         ## - - if all branches exist in tree, nothing to do!
         if len(score_branches)==0:
             continue
@@ -850,7 +860,8 @@ def evaluate_scores_on_trees(file_name, models, features=[], backend="sklearn"):
         for block in xrange(blocks+1):
             for entry in xrange(block*blockSize, 
                                 min(totalEntries, (block+1)*blockSize)):
-                if (entry%10000==0): 
+                #if (entry%10000==0): 
+                if True:
                     log.info("Tree: {0}, Event: {1}/{2}".format(tree_name, entry+1, totalEntries))
                 tree.LoadTree(entry)
                 if False: 
@@ -868,12 +879,17 @@ def evaluate_scores_on_trees(file_name, models, features=[], backend="sklearn"):
                 
                 ## - - get prediction from each classifier
                 for mass, rem_dict in models.iteritems():
-                    for rem, clf_dict in rem_dict.iteritems():
+                    #for rem, clf_dict in rem_dict.iteritems():
+                    for clf_dict in rem_dict:
+                        rem = clf_dict.fold_num
                         ## - - trained on all with rem!= event_numbr%kFOLDS --> evaluate on the complementary
-                        if int(rem)!= event_num%kFOLDS: 
+                        if int(rem)!= event_num%clf_dict.kfolds: 
                             continue
                         ## - - set clf's features vector
-                        for name, clf in clf_dict.iteritems():
+                        #for name, clf in clf_dict.iteritems():
+                        #for clf in [clf_dict]:
+                        for clf in [Keras_models[mass][rem]]:
+                            name = scores.keys()[0] #clf.name
                             if backend=="tmva":
                                 features_dict = OrderedDict()
                                 for i, ft in enumerate(features):
@@ -886,13 +902,20 @@ def evaluate_scores_on_trees(file_name, models, features=[], backend="sklearn"):
                                 ifeats = np.array([feats])
                                 log.debug(ifeats)
                                 #scores[name][0] = clf.predict_proba(scaler.fit_transform(ifeats))[0][1] #<! probability of belonging to class 1 (SIGNAL)
-                                scores[name][0] = clf.predict(ifeats)[0][1] #<! probability of belonging to class 1 (SIGNAL)
+                                #scores[name][0] = clf.predict(ifeats)[0][1] #<! probability of belonging to class 1 (SIGNAL)
+                                print "DEBUG: about to predict"
+                                scores[name][0] = clf.predict(ifeats)[0] #<! only 1 output score? (not bkg/sig proba)
+                                print "DEBUG: did predict" # FIXME we don't get here -- predict hangs, why?
                 log.debug(scores)
                 log.debug("--"*70)
                 for sb in score_branches:
                     sb.Fill()
-        tree.Write(tree.GetName(), ROOT.TObject.kOverwrite)
+            # End loop over entries (within a block)
+            # This is where we should evaluate models and fill branches...
+        #tree.Write(tree.GetName(), ROOT.TObject.kOverwrite)
+        outTree.Write(outTree.GetName(), ROOT.TObject.kOverwrite)
     pass #<! trees loop
     tfile.Close()
+    ffile.Close()
 
     return 

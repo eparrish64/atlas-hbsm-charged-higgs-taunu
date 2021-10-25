@@ -66,7 +66,7 @@ TMP_DATASETS = [
 
 __HERE = os.path.dirname(os.path.abspath(__file__))
 
-COPY_FILE = True
+COPY_FILE = False
 USE_FASTBDT = False
 kFOLDS = ECLF_ARGS.kfolds
 METHOD_TYPE = TMVA.Types.kBDT #<! TMVA method 
@@ -739,12 +739,15 @@ def main():
     if ECLF_ARGS.append:
         ## sort files based on size to start the heavier ones sooner.
         ECLF_ARGS.files.sort(key=lambda f: os.path.getsize(f), reverse=True)
-        jobs = [AppendJob(f, models, copy_file=COPY_FILE, outdir=ECLF_ARGS.outdir) for f in ECLF_ARGS.files]
+        # Load keras models after sorting the files
+        models, Keras_models = get_models(ECLF_ARGS.models, isNN=ECLF_ARGS.eval_nn)
+
+        jobs = [AppendJob(f, [models, Keras_models], copy_file=COPY_FILE, outdir=ECLF_ARGS.outdir) for f in ECLF_ARGS.files]
 
         st = time.time()
         ## run a pool of jobs
-        if ECLF_ARGS.parallel or len(jobs)> 1:
-            run_pool(jobs, n_jobs=-1)
+        if False: #ECLF_ARGS.parallel or len(jobs)> 1: # TODO Keras models need to be re-loaded in child jobs
+            run_pool(jobs, n_jobs=ECLF_ARGS.ncpu)
         else:
             ## processing one file only (also for PBS, CONDOR Batch)
             for job in jobs:

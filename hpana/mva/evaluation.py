@@ -482,14 +482,16 @@ def get_trees(tfile, systs=False):
         for k in keys:
             if k=='EventLoop_FileExecuted':
                 continue
-            trees.add(tfile.Get(k))
+            tree = tfile.Get(k)
+            tree.SetName(k) # Rename UNICORNBASE to systematic name
+            trees.add(tree)
         
     return trees
 
 ##-----------------------------------------------
 ##
 ##-----------------------------------------------
-def setup_score_branches(tree, models, outTree=None):
+def setup_score_branches(tree, models, outTree=None, truthmasses=None):
     """
     # Setup MVA score output branches
     # TODO look up how many mass points there are based on number of trained Models...
@@ -503,21 +505,29 @@ def setup_score_branches(tree, models, outTree=None):
             if name in [b.GetName() for b in outTree.GetListOfBranches()]:
                 log.warning("%s is already in %s (skipping tree)"%(name, tree.GetName()))
                 continue
-            score = array.array('f', [-100.])
-            scores[name] = score
-            sb = outTree.Branch(name, score, name+"/F")
-            score_branches.append(sb)
+            if truthmasses is None:
+                score = array.array('f', [-100.])
+                scores[name] = score
+                sb = outTree.Branch(name, score, name+"/F")
+                score_branches.append(sb)
+            else:
+                for truthmass in truthmasses:
+                    newname = name+"_mass_{}".format(truthmass)
+                    score = array.array('f', [-100.])
+                    scores[newname] = score
+                    sb = outTree.Branch(newname, score, newname+"/F")
+                    score_branches.append(sb)
     
     return scores, score_branches
 
 ##-----------------------------------------------
 ##
 ##-----------------------------------------------
-def setup_tformulas(tree, features):
+def setup_tformulas(tree, features, truthmass=None):
     # Setup a TTreeFormula for each feature
     forms_tau = []
     for feat in features:
-        if feat.name == "TruthMass": feat.tformula="80" # FIXME DEBUG
+        if truthmass is not None and feat.name == "TruthMass": feat.tformula=str(truthmass)
         forms_tau.append(ROOT.TTreeFormula(feat.name, feat.tformula, tree) )
     forms_fake = forms_tau[:]
     
@@ -828,7 +838,8 @@ def evaluate_scores_on_trees(file_name, models, features=[], backend="keras"):
     scaler = StandardScaler()
     # retrive trees in the tfile and loop over them
     tfile = ROOT.TFile.Open(file_name, 'READONLY')
-    trees = get_trees(tfile)
+    #trees = get_trees(tfile)
+    trees = get_trees(tfile, systs=True) # With systematics
     FRIEND_FILE_DIR="/afs/cern.ch/work/b/bburghgr/private/hpana/workarea/run/friendfiles/"
     friendFilePath = os.path.normpath(FRIEND_FILE_DIR + file_name +".friend")
     ffile = ROOT.TFile.Open(friendFilePath, "RECREATE") # TODO writeable
@@ -836,17 +847,23 @@ def evaluate_scores_on_trees(file_name, models, features=[], backend="keras"):
     for mass in models:
         features += models[mass][0].features
         break
+    # TODO load this from somewhere, instead of hard-coding it here
+    truthmasses = [80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200, 225, 250, 275, 300, 350, 400, 500, 600, 700, 800, 900, 1000, 1200, 1400, 1600, 1800, 2000, 2500, 3000]
     for tree in trees:
         ## - - setup input features tformulas and score branches
         tree_name = tree.GetName()
         tau_0_n_tracks =  ROOT.TTreeFormula("tau_0_n_charged_tracks", "tau_0_n_charged_tracks", tree)
         tau_0_decay_mode = ROOT.TTreeFormula("tau_0_decay_mode", "tau_0_decay_mode", tree)
         event_number = ROOT.TTreeFormula("event_number", "event_number", tree)
+        # TODO use isFake to apply the upsilon transformation
         isFake = ROOT.TTreeFormula("tau_0_jet_rnn_loose==0", "tau_0_jet_rnn_loose==0", tree)
         
-        forms_tau, forms_fake = setup_tformulas(tree, features)
+        forms_tau, forms_fake = dict(), dict()
+        for truthmass in truthmasses:
+          forms_tau[truthmass], forms_fake[truthmass] = setup_tformulas(tree, features, truthmass)
+        #forms_tau, forms_fake = setup_tformulas(tree, features)
         outTree = ROOT.TTree(tree_name, tree_name) # in the friend file (ffile)
-        scores, score_branches = setup_score_branches(tree, models, outTree)
+        scores, score_branches = setup_score_branches(tree, models, outTree, truthmasses)
         ## - - if all branches exist in tree, nothing to do!
         if len(score_branches)==0:
             continue
@@ -870,9 +887,13 @@ def evaluate_scores_on_trees(file_name, models, features=[], backend="keras"):
                 #--------------------------
                 # Evaluate features vector
                 #--------------------------
-                feats = []
-                for form in forms_tau:
-                    feats.append(float(form.EvalInstance()))
+                feats = dict()
+                for truthmass in truthmasses:
+                    feats[truthmass] = []
+                    for form in forms_tau[truthmass]:
+                        feats[truthmass].append(float(form.EvalInstance()))
+                #for form in forms_tau:
+                #    feats.append(float(form.EvalInstance()))
 
                 ## - - event number is used in kfold cut, use proper offset for evaluation
                 event_num = int(event_number.EvalInstance())
@@ -899,19 +920,21 @@ def evaluate_scores_on_trees(file_name, models, features=[], backend="keras"):
                                 #scores[name][0] = clf.predict(scaler.fit_transform(features_dict))
                                 scores[name][0] = clf.predict(features_dict)
                             else:
-                                ifeats = np.array([feats])
-                                log.debug(ifeats)
-                                #scores[name][0] = clf.predict_proba(scaler.fit_transform(ifeats))[0][1] #<! probability of belonging to class 1 (SIGNAL)
-                                #scores[name][0] = clf.predict(ifeats)[0][1] #<! probability of belonging to class 1 (SIGNAL)
-                                print "DEBUG: about to predict"
-                                scores[name][0] = clf.predict(ifeats)[0] #<! only 1 output score? (not bkg/sig proba)
-                                print "DEBUG: did predict" # FIXME we don't get here -- predict hangs, why?
+                                for name in scores.keys():
+                                    truthmass = int(name.split('_')[-1])
+                                    ifeats = np.array([feats[truthmass]])
+                                    log.debug(ifeats)
+                                    #scores[name][0] = clf.predict_proba(scaler.fit_transform(ifeats))[0][1] #<! probability of belonging to class 1 (SIGNAL)
+                                    #scores[name][0] = clf.predict(ifeats)[0][1] #<! probability of belonging to class 1 (SIGNAL)
+                                    #print "DEBUG: about to predict:", name
+                                    scores[name][0] = clf.predict(ifeats)[0] #<! only 1 output score? (not bkg/sig proba)
+                                    #print "DEBUG: did predict" # FIXME we don't get here -- predict hangs, why?
                 log.debug(scores)
                 log.debug("--"*70)
                 for sb in score_branches:
                     sb.Fill()
             # End loop over entries (within a block)
-            # This is where we should evaluate models and fill branches...
+            # This is where we should evaluate models and fill branches... if we can get the kfolds working right
         #tree.Write(tree.GetName(), ROOT.TObject.kOverwrite)
         outTree.Write(outTree.GetName(), ROOT.TObject.kOverwrite)
     pass #<! trees loop

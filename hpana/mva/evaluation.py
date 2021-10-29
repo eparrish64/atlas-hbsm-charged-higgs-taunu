@@ -491,6 +491,27 @@ def get_trees(tfile, systs=False):
 ##-----------------------------------------------
 ##
 ##-----------------------------------------------
+
+def get_trees_and_keys(tfile, systs=False):
+    trees = []
+    trees.append((tfile.Get('NOMINAL'), ['NOMINAL']))
+    if systs:
+        keys = [k.GetName() for k in tfile.GetListOfKeys()]
+        keys = filter(lambda k: isinstance(tfile.Get(k), ROOT.TTree), keys)
+        baseKeys = []
+        for k in keys:
+            if k=='EventLoop_FileExecuted':
+                continue
+            if k == "NOMINAL": continue
+            baseKeys.append(k)
+        base = tfile.xCompression.Get('UNICORNBASE')
+        trees.append((base, baseKeys))
+
+    return trees
+
+##-----------------------------------------------
+##
+##-----------------------------------------------
 def setup_score_branches(tree, models, outTree=None, truthmasses=None):
     """
     # Setup MVA score output branches
@@ -513,9 +534,9 @@ def setup_score_branches(tree, models, outTree=None, truthmasses=None):
             else:
                 for truthmass in truthmasses:
                     newname = name+"_mass_{}".format(truthmass)
-                    score = array.array('f', [-100.])
+                    score = array.array('B', [255])
                     scores[newname] = score
-                    sb = outTree.Branch(newname, score, newname+"/F")
+                    sb = outTree.Branch(newname, score, newname+"/b")
                     score_branches.append(sb)
     
     return scores, score_branches
@@ -839,7 +860,8 @@ def evaluate_scores_on_trees(file_name, models, features=[], backend="keras"):
     # retrive trees in the tfile and loop over them
     tfile = ROOT.TFile.Open(file_name, 'READONLY')
     #trees = get_trees(tfile)
-    trees = get_trees(tfile, systs=True) # With systematics
+    #trees = get_trees(tfile, systs=True) # With systematics
+    trees = get_trees_and_keys(tfile, systs=True)
     FRIEND_FILE_DIR="/afs/cern.ch/work/b/bburghgr/private/hpana/workarea/run/friendfiles/"
     friendFilePath = os.path.normpath(FRIEND_FILE_DIR + file_name +".friend")
     ffile = ROOT.TFile.Open(friendFilePath, "RECREATE") # TODO writeable
@@ -849,8 +871,10 @@ def evaluate_scores_on_trees(file_name, models, features=[], backend="keras"):
         break
     # TODO load this from somewhere, instead of hard-coding it here
     truthmasses = [80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200, 225, 250, 275, 300, 350, 400, 500, 600, 700, 800, 900, 1000, 1200, 1400, 1600, 1800, 2000, 2500, 3000]
-    for tree in trees:
+    for treeInfo in trees:
         ## - - setup input features tformulas and score branches
+        tree = treeInfo[0]
+        treeKeys = treeInfo[1]
         tree_name = tree.GetName()
         tau_0_n_tracks =  ROOT.TTreeFormula("tau_0_n_charged_tracks", "tau_0_n_charged_tracks", tree)
         tau_0_decay_mode = ROOT.TTreeFormula("tau_0_decay_mode", "tau_0_decay_mode", tree)
@@ -927,16 +951,20 @@ def evaluate_scores_on_trees(file_name, models, features=[], backend="keras"):
                                     #scores[name][0] = clf.predict_proba(scaler.fit_transform(ifeats))[0][1] #<! probability of belonging to class 1 (SIGNAL)
                                     #scores[name][0] = clf.predict(ifeats)[0][1] #<! probability of belonging to class 1 (SIGNAL)
                                     #print "DEBUG: about to predict:", name
-                                    scores[name][0] = clf.predict(ifeats)[0] #<! only 1 output score? (not bkg/sig proba)
+                                    scores[name][0] = int(255*clf.predict(ifeats)[0]) #<! only 1 output score? (not bkg/sig proba)
                                     #print "DEBUG: did predict" # FIXME we don't get here -- predict hangs, why?
                 log.debug(scores)
                 log.debug("--"*70)
-                for sb in score_branches:
-                    sb.Fill()
+                #for sb in score_branches:
+                #    sb.Fill()
+                outTree.Fill()
             # End loop over entries (within a block)
             # This is where we should evaluate models and fill branches... if we can get the kfolds working right
         #tree.Write(tree.GetName(), ROOT.TObject.kOverwrite)
-        outTree.Write(outTree.GetName(), ROOT.TObject.kOverwrite)
+        #outTree.Write(outTree.GetName(), ROOT.TObject.kOverwrite)
+        for key in treeKeys:
+          outTree.SetName(key)
+          outTree.Write(key, ROOT.TObject.kOverwrite)
     pass #<! trees loop
     tfile.Close()
     ffile.Close()

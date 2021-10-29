@@ -533,7 +533,7 @@ def setup_score_branches(tree, models, outTree=None, truthmasses=None):
                 score_branches.append(sb)
             else:
                 for truthmass in truthmasses:
-                    newname = name+"_mass_{}".format(truthmass)
+                    newname = mass+"_{}".format(truthmass)
                     score = array.array('B', [255])
                     scores[newname] = score
                     sb = outTree.Branch(newname, score, newname+"/b")
@@ -876,6 +876,7 @@ def evaluate_scores_on_trees(file_name, models, features=[], backend="keras"):
         tree = treeInfo[0]
         treeKeys = treeInfo[1]
         tree_name = tree.GetName()
+        # TODO correctly use tau_0_n_tracks for prong numbers
         tau_0_n_tracks =  ROOT.TTreeFormula("tau_0_n_charged_tracks", "tau_0_n_charged_tracks", tree)
         tau_0_decay_mode = ROOT.TTreeFormula("tau_0_decay_mode", "tau_0_decay_mode", tree)
         event_number = ROOT.TTreeFormula("event_number", "event_number", tree)
@@ -896,13 +897,29 @@ def evaluate_scores_on_trees(file_name, models, features=[], backend="keras"):
         tree.SetCacheSize(32*2**20)
         tree.SetCacheLearnEntries()
         totalEntries = tree.GetEntries()
-        blockSize = 2**18
+        blockSize = 2**10
         blocks = totalEntries/blockSize
         for block in xrange(blocks+1):
+            eventNums = []
+            inputs = dict()
+            outputs = dict()
+            offsets = dict()
+            for mass, rem_dict in models.iteritems():
+                    #for rem, clf_dict in rem_dict.iteritems():
+                    for clf_dict in rem_dict:
+                        kfolds = clf_dict.kfolds
+                        break
+                    break
+            for rem in xrange(kfolds):
+                inputs[rem] = dict()
+                outputs[rem] = dict()
+                offsets[rem] = 0
+                for mass in truthmasses:
+                    inputs[rem][mass] = []
+                    outputs[rem][mass] = []
             for entry in xrange(block*blockSize, 
                                 min(totalEntries, (block+1)*blockSize)):
-                #if (entry%10000==0): 
-                if True:
+                if (entry%10000==0): 
                     log.info("Tree: {0}, Event: {1}/{2}".format(tree_name, entry+1, totalEntries))
                 tree.LoadTree(entry)
                 if False: 
@@ -911,19 +928,20 @@ def evaluate_scores_on_trees(file_name, models, features=[], backend="keras"):
                 #--------------------------
                 # Evaluate features vector
                 #--------------------------
-                feats = dict()
-                for truthmass in truthmasses:
-                    feats[truthmass] = []
-                    for form in forms_tau[truthmass]:
-                        feats[truthmass].append(float(form.EvalInstance()))
-                #for form in forms_tau:
-                #    feats.append(float(form.EvalInstance()))
-
                 ## - - event number is used in kfold cut, use proper offset for evaluation
                 event_num = int(event_number.EvalInstance())
-                
+                eventNums.append(event_num)
+                rem = event_num % kfolds
+
+                for truthmass in truthmasses:
+                    feats = []
+                    for form in forms_tau[truthmass]:
+                        feats.append(float(form.EvalInstance()))
+                    inputs[rem][truthmass].append(feats)
+
                 ## - - get prediction from each classifier
                 for mass, rem_dict in models.iteritems():
+                    break
                     #for rem, clf_dict in rem_dict.iteritems():
                     for clf_dict in rem_dict:
                         rem = clf_dict.fold_num
@@ -957,9 +975,23 @@ def evaluate_scores_on_trees(file_name, models, features=[], backend="keras"):
                 log.debug("--"*70)
                 #for sb in score_branches:
                 #    sb.Fill()
-                outTree.Fill()
+                #outTree.Fill()
             # End loop over entries (within a block)
             # This is where we should evaluate models and fill branches... if we can get the kfolds working right
+            for mass in models:
+                for rem in xrange(kfolds):
+                    clf = Keras_models[mass][rem]
+                    for name in scores.keys():
+                        truthmass = int(name.split('_')[-1])
+                        ifeats = np.array(inputs[rem][truthmass])
+                        outputs[rem][truthmass] = clf.predict(ifeats)
+            for event_num in eventNums:
+                rem = event_num % kfolds
+                for name in scores.keys():
+                    truthmass = int(name.split('_')[-1])
+                    scores[name][0] = int(255*outputs[rem][truthmass][offsets[rem]])
+                offsets[rem] += 1
+                outTree.Fill()
         #tree.Write(tree.GetName(), ROOT.TObject.kOverwrite)
         #outTree.Write(outTree.GetName(), ROOT.TObject.kOverwrite)
         for key in treeKeys:

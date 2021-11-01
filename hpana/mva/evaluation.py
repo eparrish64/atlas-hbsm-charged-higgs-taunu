@@ -546,11 +546,14 @@ def setup_score_branches(tree, models, outTree=None, truthmasses=None):
 ##-----------------------------------------------
 def setup_tformulas(tree, features, truthmass=None):
     # Setup a TTreeFormula for each feature
-    forms_tau = []
+    forms_tau, forms_fake = [], []
     for feat in features:
         if truthmass is not None and feat.name == "TruthMass": feat.tformula=str(truthmass)
-        forms_tau.append(ROOT.TTreeFormula(feat.name, feat.tformula, tree) )
-    forms_fake = forms_tau[:]
+        form = ROOT.TTreeFormula(feat.name, feat.tformula, tree)
+        forms_tau.append(form)
+        if "upsilong" in feat.name:
+            form = ROOT.TTreeFormula(feat.name, QCD.UPSILON_CORRECTED["mc16"], tree)
+        forms_fake.append(form)
     
     for form in forms_tau: form.SetQuickLoad(True)
     for form in forms_fake: form.SetQuickLoad(True)
@@ -937,9 +940,14 @@ def evaluate_scores_on_trees(file_name, models, features=[], backend="keras"):
                 eventNums.append(event_num)
                 rem = event_num % kfolds
 
+                if isFake.EvalInstance():
+                    forms = forms_fake
+                else:
+                    forms = forms_tau
+
                 for truthmass in truthmasses:
                     feats = []
-                    for form in forms_tau[truthmass]:
+                    for form in forms[truthmass]:
                         feats.append(float(form.EvalInstance()))
                     inputs[rem][truthmass].append(feats)
 

@@ -863,8 +863,12 @@ def evaluate_scores_on_trees(file_name, models, features=[], backend="keras"):
     #trees = get_trees(tfile, systs=True) # With systematics
     trees = get_trees_and_keys(tfile, systs=True)
     FRIEND_FILE_DIR="/afs/cern.ch/work/b/bburghgr/private/hpana/workarea/run/friendfiles/"
-    friendFilePath = os.path.normpath(FRIEND_FILE_DIR + file_name +".friend")
-    ffile = ROOT.TFile.Open(friendFilePath, "RECREATE") # TODO writeable
+    reldir = file_name.split('/')[-2]
+    fname = file_name.split('/')[-1]
+    opath = os.path.join(FRIEND_FILE_DIR, reldir)
+    os.system("mkdir -p {}".format(opath))
+    fpath = os.path.join(opath, fname) + ".friend"
+    ffile = ROOT.TFile.Open(fpath, "RECREATE") # TODO writeable
     features = []
     for mass in models:
         features += models[mass][0].features

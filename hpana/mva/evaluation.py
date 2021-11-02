@@ -872,10 +872,11 @@ def evaluate_scores_on_trees(file_name, models, features=[], backend="keras"):
     os.system("mkdir -p {}".format(opath))
     fpath = os.path.join(opath, fname) + ".friend"
     ffile = ROOT.TFile.Open(fpath, "RECREATE") # TODO writeable
-    features = []
+    #features = []
+    features = dict() # indexed by ntracks
     for mass in models:
-        features += models[mass][0].features
-        break
+        for model in models[mass]:
+            features[model.ntracks] = model.features[:]
     # TODO load this from somewhere, instead of hard-coding it here
     truthmasses = [80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200, 225, 250, 275, 300, 350, 400, 500, 600, 700, 800, 900, 1000, 1200, 1400, 1600, 1800, 2000, 2500, 3000]
     for treeInfo in trees:
@@ -891,9 +892,10 @@ def evaluate_scores_on_trees(file_name, models, features=[], backend="keras"):
         isFake = ROOT.TTreeFormula("tau_0_jet_rnn_loose==0", "tau_0_jet_rnn_loose==0", tree)
         
         forms_tau, forms_fake = dict(), dict()
-        for truthmass in truthmasses:
-          forms_tau[truthmass], forms_fake[truthmass] = setup_tformulas(tree, features, truthmass)
-        #forms_tau, forms_fake = setup_tformulas(tree, features)
+        for ntracks in features:
+          forms_tau[ntracks], forms_fake[ntracks] = dict(), dict()
+          for truthmass in truthmasses:
+            forms_tau[ntracks][truthmass], forms_fake[ntracks][truthmass] = setup_tformulas(tree, features[ntracks], truthmass)
         outTree = ROOT.TTree(tree_name, tree_name) # in the friend file (ffile)
         scores, score_branches = setup_score_branches(tree, models, outTree, truthmasses)
         ## - - if all branches exist in tree, nothing to do!
@@ -907,23 +909,25 @@ def evaluate_scores_on_trees(file_name, models, features=[], backend="keras"):
         blockSize = 2**10
         blocks = totalEntries/blockSize
         for block in xrange(blocks+1):
-            eventNums = []
+            event_numbers = []
+            track_numbers = []
             inputs = dict()
             outputs = dict()
             offsets = dict()
             for mass, rem_dict in models.iteritems():
-                    #for rem, clf_dict in rem_dict.iteritems():
                     for clf_dict in rem_dict:
                         kfolds = clf_dict.kfolds
                         break
                     break
-            for rem in xrange(kfolds):
-                inputs[rem] = dict()
-                outputs[rem] = dict()
-                offsets[rem] = 0
-                for mass in truthmasses:
-                    inputs[rem][mass] = []
-                    outputs[rem][mass] = []
+            for ntracks in features:
+                inputs[ntracks], outputs[ntracks], offsets[ntracks] = dict(), dict(), dict()
+                for rem in xrange(kfolds):
+                    inputs[ntracks][rem] = dict()
+                    outputs[ntracks][rem] = dict()
+                    offsets[ntracks][rem] = 0
+                    for mass in truthmasses:
+                        inputs[ntracks][rem][mass] = []
+                        outputs[ntracks][rem][mass] = []
             for entry in xrange(block*blockSize, 
                                 min(totalEntries, (block+1)*blockSize)):
                 if (entry%10000==0): 
@@ -937,19 +941,23 @@ def evaluate_scores_on_trees(file_name, models, features=[], backend="keras"):
                 #--------------------------
                 ## - - event number is used in kfold cut, use proper offset for evaluation
                 event_num = int(event_number.EvalInstance())
-                eventNums.append(event_num)
+                event_numbers.append(event_num)
                 rem = event_num % kfolds
 
+                ntracks = int(tau_0_n_tracks.EvalInstance())
+                if ntracks != 1: ntracks = 1 # TODO test with 3p taus
+                track_numbers.append(ntracks)
+
                 if isFake.EvalInstance():
-                    forms = forms_fake
+                    forms = forms_fake[ntracks]
                 else:
-                    forms = forms_tau
+                    forms = forms_tau[ntracks]
 
                 for truthmass in truthmasses:
                     feats = []
                     for form in forms[truthmass]:
                         feats.append(float(form.EvalInstance()))
-                    inputs[rem][truthmass].append(feats)
+                    inputs[ntracks][rem][truthmass].append(feats)
 
                 ## - - get prediction from each classifier
                 for mass, rem_dict in models.iteritems():
@@ -991,18 +999,20 @@ def evaluate_scores_on_trees(file_name, models, features=[], backend="keras"):
             # End loop over entries (within a block)
             # This is where we should evaluate models and fill branches... if we can get the kfolds working right
             for mass in models:
-                for rem in xrange(kfolds):
-                    clf = Keras_models[mass][rem]
+                for mIdx in xrange(len(models[mass])):
+                    model = models[mass][mIdx]
+                    clf = Keras_models[mass][mIdx]
                     for name in scores.keys():
                         truthmass = int(name.split('_')[-1])
-                        ifeats = np.array(inputs[rem][truthmass])
-                        outputs[rem][truthmass] = clf.predict(ifeats)
-            for event_num in eventNums:
-                rem = event_num % kfolds
+                        ifeats = np.array(inputs[model.ntracks][model.fold_num][truthmass])
+                        outputs[model.ntracks][model.fold_num][truthmass] = clf.predict(ifeats)
+            for eIdx in xrange(len(event_numbers)):
+                rem = event_numbers[eIdx] % kfolds
+                ntracks = track_numbers[eIdx]
                 for name in scores.keys():
                     truthmass = int(name.split('_')[-1])
-                    scores[name][0] = int(255*outputs[rem][truthmass][offsets[rem]])
-                offsets[rem] += 1
+                    scores[name][0] = int(255*outputs[ntracks][rem][truthmass][offsets[ntracks][rem]])
+                offsets[ntracks][rem] ++ 1
                 outTree.Fill()
         #tree.Write(tree.GetName(), ROOT.TObject.kOverwrite)
         #outTree.Write(outTree.GetName(), ROOT.TObject.kOverwrite)

@@ -406,7 +406,7 @@ def get_evalclf_parser(base_parser=None):
         evalclf_parser = base_parser
 
     evalclf_parser.add_argument('--files', nargs='+', 
-                        help='ntuples to append clf score to them')
+                        help='ntuples to create friend files for')
 
     evalclf_parser.add_argument('--models', '-w', nargs="+",
                             help='path to xml or pickled trained models')
@@ -435,8 +435,8 @@ def get_evalclf_parser(base_parser=None):
     evalclf_parser.add_argument("--merge-hists", action="store_true",
                                 help="merge histograms")
 
-    evalclf_parser.add_argument("--append", action="store_true",
-                                help="append clf scores to TTrees")
+    evalclf_parser.add_argument("--friend", action="store_true",
+                                help="save clf scores to TTrees in a friend file")
 
     evalclf_parser.add_argument("--direct", action="store_true",
                                 help="calculate clf scores on the fly")

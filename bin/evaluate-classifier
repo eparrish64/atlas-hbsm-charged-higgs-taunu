@@ -736,7 +736,7 @@ def main():
         analysis.merge_hists(samples=samples, histsdir=ECLF_ARGS.outdir, overwrite=True, write=True)
 
 
-    if ECLF_ARGS.append:
+    if ECLF_ARGS.friend:
         ## sort files based on size to start the heavier ones sooner.
         ECLF_ARGS.files.sort(key=lambda f: os.path.getsize(f), reverse=True)
         # Load keras models after sorting the files

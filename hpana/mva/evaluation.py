@@ -70,7 +70,7 @@ class AppendJob(Process):
             output = self.file_name
         
         # the actual calculation happens here
-        evaluate_scores_on_trees(output, self.models)
+        evaluate_scores_on_trees(output, self.models, outdir=self.outdir)
 
         return 
 
@@ -843,7 +843,7 @@ def fill_scores_mult(tree, all_models, hist_templates,
 ##-----------------------------------------------
 ##
 ##-----------------------------------------------
-def evaluate_scores_on_trees(file_name, models, features=[], backend="keras"):
+def evaluate_scores_on_trees(file_name, models, features=[], backend="keras", outdir=None):
     """
     Update tree with score branches which are
     evaluated using the available trained models.
@@ -865,11 +865,10 @@ def evaluate_scores_on_trees(file_name, models, features=[], backend="keras"):
     #trees = get_trees(tfile)
     #trees = get_trees(tfile, systs=True) # With systematics
     trees = get_trees_and_keys(tfile, systs=True)
-    FRIEND_FILE_DIR="/afs/cern.ch/work/b/bburghgr/private/hpana/workarea/run/friendfiles/"
     reldir = file_name.split('/')[-2]
     fname = file_name.split('/')[-1]
     debug_fname = os.path.join(reldir, fname)
-    opath = os.path.join(FRIEND_FILE_DIR, reldir)
+    opath = os.path.join(outdir, reldir)
     os.system("mkdir -p {}".format(opath))
     fpath = os.path.join(opath, fname) + ".friend"
     ffile = ROOT.TFile.Open(fpath, "RECREATE") # TODO writeable

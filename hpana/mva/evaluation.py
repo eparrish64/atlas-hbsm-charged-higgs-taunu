@@ -868,6 +868,7 @@ def evaluate_scores_on_trees(file_name, models, features=[], backend="keras"):
     FRIEND_FILE_DIR="/afs/cern.ch/work/b/bburghgr/private/hpana/workarea/run/friendfiles/"
     reldir = file_name.split('/')[-2]
     fname = file_name.split('/')[-1]
+    debug_fname = os.path.join(reldir, fname)
     opath = os.path.join(FRIEND_FILE_DIR, reldir)
     os.system("mkdir -p {}".format(opath))
     fpath = os.path.join(opath, fname) + ".friend"
@@ -931,7 +932,7 @@ def evaluate_scores_on_trees(file_name, models, features=[], backend="keras"):
             for entry in xrange(block*blockSize, 
                                 min(totalEntries, (block+1)*blockSize)):
                 if (entry%10000==0): 
-                    log.info("Tree: {0}, Event: {1}/{2}".format(tree_name, entry+1, totalEntries))
+                    log.info("File: {0}, Tree: {1}, Event: {2}/{3}".format(debug_fname, tree_name, entry+1, totalEntries))
                 tree.LoadTree(entry)
                 if False: 
                     t.GetEntry(entry) # Try with this on a small file, to make sure the output is identical
@@ -1008,7 +1009,9 @@ def evaluate_scores_on_trees(file_name, models, features=[], backend="keras"):
                     clf = Keras_models[mass][mIdx]
                     for name in scores.keys():
                         truthmass = int(name.split('_')[-1])
-                        ifeats = np.array(inputs[model.ntracks][model.fold_num][truthmass])
+                        ifeats = inputs[model.ntracks][model.fold_num][truthmass]
+                        if len(ifeats) == 0: continue
+                        ifeats = np.array(ifeats)
                         outputs[model.ntracks][model.fold_num][truthmass] = clf.predict(ifeats)
             for eIdx in xrange(len(event_numbers)):
                 rem = event_numbers[eIdx] % kfolds

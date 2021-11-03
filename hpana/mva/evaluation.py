@@ -945,7 +945,11 @@ def evaluate_scores_on_trees(file_name, models, features=[], backend="keras"):
                 rem = event_num % kfolds
 
                 ntracks = int(tau_0_n_tracks.EvalInstance())
-                if ntracks != 1: ntracks = 1 # TODO test with 3p taus
+                if ntracks != 1:
+                    # If there's no tau, then we get 0, so we need to do something
+                    # Technically we could have 2p taus, but we (shouldn't) be saving them
+                    # 3p has no upsilon, so it's the safer network to default to, I guess...
+                    ntracks = 3
                 track_numbers.append(ntracks)
 
                 if isFake.EvalInstance():

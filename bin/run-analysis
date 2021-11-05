@@ -112,7 +112,7 @@ def main():
     elif ANA_ARGS.parallel:
         jobs = []
         for worker in ana_workers:
-            jobs.append(Job(dataset_hists, worker, write_hists=True, outdir=ANA_ARGS.outdir))
+            jobs.append(Job(dataset_hists, worker, write_hists=True, outdir=ANA_ARGS.outdir, frienddir=ANA_ARGS.frienddir))
 
         ostr = "**"*20 + "... Submitting %i jobs ..."% len(jobs) + "**"*20 
         log.info(ostr)

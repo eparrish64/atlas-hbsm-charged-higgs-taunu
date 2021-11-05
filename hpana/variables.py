@@ -2308,3 +2308,20 @@ for channel in ["taujet", "taulep"]:
             plot_bins=np.arange(0.5, 1.5, 0.01),
         )
         WEIGHT_VARS[channel] += [wv]
+
+##-----------------------------------------##
+# MVA scores for partial unblinding studies #
+##-----------------------------------------##
+
+VARIABLES_PARTIAL_UNBLIND_SCORES = []
+
+for mass in [80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200, 225, 250, 275, 300, 350, 400, 500, 600, 700, 800, 900, 1000, 1200, 1400, 1600, 1800, 2000, 2500, 3000]:
+    VARIABLES_PARTIAL_UNBLIND_SCORES.append(
+        Variable(
+            '80to3000_{0}'.format(mass),
+            title='NN Score (uint8)',
+            binning=(256,0,255),
+        )
+    )
+
+VARIABLES_TAULEP += VARIABLES_PARTIAL_UNBLIND_SCORES

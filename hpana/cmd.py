@@ -84,6 +84,9 @@ def get_ana_parser(base_parser=None):
     ana_parser.add_argument("--merge-hists", action="store_true",
                             help="merge histograms")
 
+    ana_parser.add_argument("--frienddir", type=str, default="",
+                            help="Where to find friend files")
+
     ana_parser.add_argument("--outdir", type=str, default="outdir",
                             help="Where to put the processed histograms")
 

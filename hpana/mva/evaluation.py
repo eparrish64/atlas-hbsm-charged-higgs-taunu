@@ -860,17 +860,21 @@ def evaluate_scores_on_trees(file_name, models, features=[], backend="keras", ou
 
     models, Keras_models = models[0], models[1]
     scaler = StandardScaler()
+    # check if friend file already exists
+    reldir = file_name.split('/')[-2]
+    fname = file_name.split('/')[-1]
+    debug_fname = os.path.join(reldir, fname)
+    opath = os.path.join(outdir, reldir)
+    fpath = os.path.join(opath, fname) + ".friend"
+    if os.path.exists(fpath):
+        log.info("Friend File already exists, skipping: {0}".format(debug_fname))
+        return
     # retrive trees in the tfile and loop over them
     tfile = ROOT.TFile.Open(file_name, 'READONLY')
     #trees = get_trees(tfile)
     #trees = get_trees(tfile, systs=True) # With systematics
     trees = get_trees_and_keys(tfile, systs=True)
-    reldir = file_name.split('/')[-2]
-    fname = file_name.split('/')[-1]
-    debug_fname = os.path.join(reldir, fname)
-    opath = os.path.join(outdir, reldir)
     os.system("mkdir -p {}".format(opath))
-    fpath = os.path.join(opath, fname) + ".friend"
     ffile = ROOT.TFile.Open(fpath, "RECREATE") # TODO writeable
     #features = []
     features = dict() # indexed by ntracks

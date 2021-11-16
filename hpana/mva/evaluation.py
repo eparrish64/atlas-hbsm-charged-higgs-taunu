@@ -969,43 +969,6 @@ def evaluate_scores_on_trees(file_name, models, features=[], backend="keras", ou
                         feats.append(float(form.EvalInstance()))
                     inputs[ntracks][rem][truthmass].append(feats)
 
-                ## - - get prediction from each classifier
-                for mass, rem_dict in models.iteritems():
-                    break
-                    #for rem, clf_dict in rem_dict.iteritems():
-                    for clf_dict in rem_dict:
-                        rem = clf_dict.fold_num
-                        ## - - trained on all with rem!= event_numbr%kFOLDS --> evaluate on the complementary
-                        if int(rem)!= event_num%clf_dict.kfolds: 
-                            continue
-                        ## - - set clf's features vector
-                        #for name, clf in clf_dict.iteritems():
-                        #for clf in [clf_dict]:
-                        for clf in [Keras_models[mass][rem]]:
-                            name = scores.keys()[0] #clf.name
-                            if backend=="tmva":
-                                features_dict = OrderedDict()
-                                for i, ft in enumerate(features):
-                                    ## - - update features_dict in place, 
-                                    clf.features_dict[ft.tformula] = array.array("f", [feats[i]])
-                                log.debug(clf.features_dict)
-                                #scores[name][0] = clf.predict(scaler.fit_transform(features_dict))
-                                scores[name][0] = clf.predict(features_dict)
-                            else:
-                                for name in scores.keys():
-                                    truthmass = int(name.split('_')[-1])
-                                    ifeats = np.array([feats[truthmass]])
-                                    log.debug(ifeats)
-                                    #scores[name][0] = clf.predict_proba(scaler.fit_transform(ifeats))[0][1] #<! probability of belonging to class 1 (SIGNAL)
-                                    #scores[name][0] = clf.predict(ifeats)[0][1] #<! probability of belonging to class 1 (SIGNAL)
-                                    #print "DEBUG: about to predict:", name
-                                    scores[name][0] = int(255*clf.predict(ifeats)[0]) #<! only 1 output score? (not bkg/sig proba)
-                                    #print "DEBUG: did predict" # FIXME we don't get here -- predict hangs, why?
-                log.debug(scores)
-                log.debug("--"*70)
-                #for sb in score_branches:
-                #    sb.Fill()
-                #outTree.Fill()
             # End loop over entries (within a block)
             # This is where we should evaluate models and fill branches... if we can get the kfolds working right
             for mass in models:
@@ -1024,7 +987,7 @@ def evaluate_scores_on_trees(file_name, models, features=[], backend="keras", ou
                 for name in scores.keys():
                     truthmass = int(name.split('_')[-1])
                     scores[name][0] = int(255*outputs[ntracks][rem][truthmass][offsets[ntracks][rem]])
-                offsets[ntracks][rem] ++ 1
+                offsets[ntracks][rem] += 1
                 outTree.Fill()
         #tree.Write(tree.GetName(), ROOT.TObject.kOverwrite)
         #outTree.Write(outTree.GetName(), ROOT.TObject.kOverwrite)

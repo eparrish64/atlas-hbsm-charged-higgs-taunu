@@ -864,7 +864,7 @@ def evaluate_scores_on_trees(file_name, models, features=[], backend="keras", ou
     reldir = file_name.split('/')[-2]
     fname = file_name.split('/')[-1]
     debug_fname = os.path.join(reldir, fname)
-    opath = os.path.join(outdir, reldir)
+    opath = outdir #os.path.join(outdir, reldir)
     fpath = os.path.join(opath, fname) + ".friend"
     if os.path.exists(fpath):
         log.info("Friend File already exists, skipping: {0}".format(debug_fname))
@@ -874,7 +874,8 @@ def evaluate_scores_on_trees(file_name, models, features=[], backend="keras", ou
     #trees = get_trees(tfile)
     #trees = get_trees(tfile, systs=True) # With systematics
     trees = get_trees_and_keys(tfile, systs=True)
-    os.system("mkdir -p {}".format(opath))
+    if not os.path.exists(opath):
+        os.system("mkdir -p {}".format(opath))
     ffile = ROOT.TFile.Open(fpath, "RECREATE") # TODO writeable
     #features = []
     features = dict() # indexed by ntracks
@@ -952,7 +953,8 @@ def evaluate_scores_on_trees(file_name, models, features=[], backend="keras", ou
                 if ntracks != 1:
                     # If there's no tau, then we get 0, so we need to do something
                     # Technically we could have 2p taus, but we (shouldn't) be saving them
-                    # 3p has no upsilon, so it's the safer network to default to, I guess...
+                    # The most technically correct thing to do seems to be using 1p (with upsilon) only for 1p taus
+                    # So we use the 3p network in all other cases (e.g. no tau, in the dilepton region)
                     ntracks = 3
                 track_numbers.append(ntracks)
 

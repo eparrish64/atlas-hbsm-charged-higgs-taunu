@@ -81,10 +81,8 @@ def dataset_hists(hist_worker,
         fname = fn.split("/")[-1]
         tfile = ROOT.TFile(fn)
         if frienddir:
-            import glob
-            friendpaths = glob.glob(os.path.join(frienddir, "*", fname+".friend"))
-            if not friendpaths: print "DEBUG:", fn, friendpaths
-            friendfile = ROOT.TFile.Open(friendpaths[0], "READONLY")
+            friendpath = os.path.join(frienddir, fname+".friend")
+            friendfile = ROOT.TFile.Open(friendpath, "READONLY")
         for systematic in systematics:
             syst_type = systematic._type
             log.debug(

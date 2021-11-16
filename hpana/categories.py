@@ -521,6 +521,7 @@ Category_SR_TAUEL = Category(
         JET_PT25,
         NUM_BJETS1,     
         MET50,
+        PARTIAL_UNBLIND_TAULEP,
     ],
 )
 
@@ -538,6 +539,7 @@ Category_SR_TAUMU = Category(
         JET_PT25,
         NUM_BJETS1,
         MET50,
+        PARTIAL_UNBLIND_TAULEP,
     ],
 )
 
@@ -555,6 +557,7 @@ Category_TAUEL_BVETO = Category(
         JET_PT25,
         BVETO,
         MET50,
+        PARTIAL_UNBLIND_TAULEP,
     ],
 )
 
@@ -572,6 +575,7 @@ Category_TAUMU_BVETO = Category(
         JET_PT25,
         BVETO,
         MET50,
+        PARTIAL_UNBLIND_TAULEP,
     ],
 )
 
@@ -591,6 +595,7 @@ Category_DILEP_BTAG = Category(
         JET_PT25,
         NUM_BJETS1,        
         MET50,
+        PARTIAL_UNBLIND_TAULEP,
     ],
 )
 
@@ -607,6 +612,7 @@ Category_SS_TAUEL = Category(
         NUM_JETS1,
         JET_PT25,
         MET50,
+        PARTIAL_UNBLIND_TAULEP,
     ],
 )
 
@@ -623,6 +629,7 @@ Category_SS_TAUMU = Category(
         NUM_JETS1,
         JET_PT25,
         MET50,
+        PARTIAL_UNBLIND_TAULEP,
     ],
 )
 
@@ -640,6 +647,7 @@ Category_ZEE = Category(
         JET_PT25,
         BVETO,
         TAU_EL_MASS,
+        PARTIAL_UNBLIND_TAULEP,
     ],
 )
 
@@ -657,6 +665,7 @@ Category_TTBAR_TAULEP = Category(
         NUM_BJETS2,
         MT_MAX70,
         MET80,
+        PARTIAL_UNBLIND_TAULEP,
     ],
 )
 

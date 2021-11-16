@@ -738,7 +738,7 @@ def main():
 
     if ECLF_ARGS.friend:
         ## sort files based on size to start the heavier ones sooner.
-        ECLF_ARGS.files.sort(key=lambda f: os.path.getsize(f), reverse=True)
+        #ECLF_ARGS.files.sort(key=lambda f: os.path.getsize(f), reverse=True)
         # Load keras models after sorting the files
         models, Keras_models = get_models(ECLF_ARGS.models, isNN=ECLF_ARGS.eval_nn)
 

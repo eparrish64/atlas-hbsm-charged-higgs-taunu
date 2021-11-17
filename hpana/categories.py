@@ -280,18 +280,12 @@ POSITIVE_MC_WEIGHT = ROOT.TCut("weight_mc>=0")
 # Make that RNN scores, this is a simple <128 cut on a uint8 score for all mass points
 PARTIAL_UNBLIND_TAULEP = ROOT.TCut("1")
 taulep_partial_unblind_cut_dict = {
-  80: 100,
-  90: 102,
-  100: 107,
-  110: 103,
-  120: 105,
-  130: 114,
-  140: 117,
-  150: 116,
-  160: 122,
-  170: 124,
-  180: 120,
-  190: 126,
+  80: 110,
+  90: 110,
+  100: 113,
+  110: 115,
+  120: 117,
+  130: 120,
 }
 for mass in [80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200, 225, 250, 275, 300, 350, 400, 500, 600, 700, 800, 900, 1000, 1200, 1400, 1600, 1800, 2000, 2500, 3000]:
     cut = 128
@@ -503,7 +497,7 @@ Category_SR_TAULEP = Category(
         JET_PT25,
         NUM_BJETS1,  
         MET50,
-        PARTIAL_UNBLIND_TAULEP,
+        #PARTIAL_UNBLIND_TAULEP,
     ],
 )
 

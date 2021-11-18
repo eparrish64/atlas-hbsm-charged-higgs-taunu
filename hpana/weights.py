@@ -250,17 +250,20 @@ class Weight(object):
     W_TRIGGER_TAUJET = {
         "metTrigEff": (
             "metTrigEff(met_p4->Et(), 1000, NOMINAL_pileup_random_run_number)", #<! NOMINAL
-            ("metTrigEff_MEDIUM_TAU", "metTrigEff(met_p4->Et(), 1001, NOMINAL_pileup_random_run_number)"),
-            ("metTrigEff_TIGHT_TAU", "metTrigEff(met_p4->Et(), 1002, NOMINAL_pileup_random_run_number)"),
-            ("metTrigEff_MEDIUM_EL", "metTrigEff(met_p4->Et(), 1003, NOMINAL_pileup_random_run_number)"),
-            ("metTrigEff_TIGHT_EL", "metTrigEff(met_p4->Et(), 1004, NOMINAL_pileup_random_run_number)"),
-            ("metTrigEff_THREE_JETS",  "metTrigEff(met_p4->Et(), 1005, NOMINAL_pileup_random_run_number)"),
-            ("metTrigEff_TWO_BJETS",  "metTrigEff(met_p4->Et(), 1006, NOMINAL_pileup_random_run_number)"),
-            ("metTrigEff_STAT_1UP",  "metTrigEff(met_p4->Et(), 1101, NOMINAL_pileup_random_run_number)"),
-            ("metTrigEff_STAT_1DOWN",  "metTrigEff(met_p4->Et(), 1102, NOMINAL_pileup_random_run_number)"),
-            ("metTrigEff_STAT_2UP",  "metTrigEff(met_p4->Et(), 1103, NOMINAL_pileup_random_run_number)"),
-            ("metTrigEff_STAT_2DOWN",  "metTrigEff(met_p4->Et(), 1104, NOMINAL_pileup_random_run_number)"),
-            #("metTrigEff(met_p4->Et(), 1000)",
+            ("metTrigEff_SYST_UP", "metTrigEff(met_p4->Et(), 1001, NOMINAL_pileup_random_run_number)"),
+            ("metTrigEff_SYST_DOWN", "metTrigEff(met_p4->Et(), 1002, NOMINAL_pileup_random_run_number)"),
+            ("metTrigEff_STAT_UP",  "metTrigEff(met_p4->Et(), 1101, NOMINAL_pileup_random_run_number)"),
+            ("metTrigEff_STAT_DOWN",  "metTrigEff(met_p4->Et(), 1102, NOMINAL_pileup_random_run_number)"),
+            #("metTrigEff_MEDIUM_TAU", "metTrigEff(met_p4->Et(), 1001, NOMINAL_pileup_random_run_number)"),
+            #("metTrigEff_TIGHT_TAU", "metTrigEff(met_p4->Et(), 1002, NOMINAL_pileup_random_run_number)"),
+            #("metTrigEff_MEDIUM_EL", "metTrigEff(met_p4->Et(), 1003, NOMINAL_pileup_random_run_number)"),
+            #("metTrigEff_TIGHT_EL", "metTrigEff(met_p4->Et(), 1004, NOMINAL_pileup_random_run_number)"),
+            #("metTrigEff_THREE_JETS",  "metTrigEff(met_p4->Et(), 1005, NOMINAL_pileup_random_run_number)"),
+            #("metTrigEff_TWO_BJETS",  "metTrigEff(met_p4->Et(), 1006, NOMINAL_pileup_random_run_number)"),
+            #("metTrigEff_STAT_1UP",  "metTrigEff(met_p4->Et(), 1101, NOMINAL_pileup_random_run_number)"),
+            #("metTrigEff_STAT_1DOWN",  "metTrigEff(met_p4->Et(), 1102, NOMINAL_pileup_random_run_number)"),
+            #("metTrigEff_STAT_2UP",  "metTrigEff(met_p4->Et(), 1103, NOMINAL_pileup_random_run_number)"),
+            #("metTrigEff_STAT_2DOWN",  "metTrigEff(met_p4->Et(), 1104, NOMINAL_pileup_random_run_number)"),
         ),
     }
 

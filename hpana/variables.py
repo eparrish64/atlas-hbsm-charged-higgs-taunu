@@ -2319,8 +2319,8 @@ for mass in [80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200, 225,
     VARIABLES_PARTIAL_UNBLIND_SCORES.append(
         Variable(
             '80to3000_{0}'.format(mass),
-            title='NN Score (uint8)',
-            binning=(256,0,255),
+            title='{0} GeV NN Score (uint8)'.format(mass),
+            binning=(256,0,256),
         )
     )
 

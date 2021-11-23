@@ -195,7 +195,7 @@ class Sample(object):
                 if "MULTIJET" in category.name and "metTrigEff" in w.name:
                     continue #<! Multijet Trigger is used for FFs MULTIJET CR 
                 if "hplus" in self.name.lower() and w.title == "NOMINAL_pileup_combined_weight":
-                    w.title="1."
+                    w.title="1." #<! Setting pileup weights for signal to 1. PU weights for > 200 GeV mass points are incorrect with some values being > abs(1000)
                 ws.add(w.title)
             weights_dict[category.name] = list(ws)
         return weights_dict

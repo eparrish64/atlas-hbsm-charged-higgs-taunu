@@ -551,7 +551,7 @@ def setup_tformulas(tree, features, truthmass=None):
         if truthmass is not None and feat.name == "TruthMass": feat.tformula=str(truthmass)
         form = ROOT.TTreeFormula(feat.name, feat.tformula, tree)
         forms_tau.append(form)
-        if "upsilong" in feat.name:
+        if "upsilon" in feat.name.lower():
             form = ROOT.TTreeFormula(feat.name, QCD.UPSILON_CORRECTED["mc16"], tree)
         forms_fake.append(form)
     

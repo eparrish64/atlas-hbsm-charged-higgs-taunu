@@ -741,6 +741,10 @@ def main():
         #ECLF_ARGS.files.sort(key=lambda f: os.path.getsize(f), reverse=True)
         # Load keras models after sorting the files
         models, Keras_models = get_models(ECLF_ARGS.models, isNN=ECLF_ARGS.eval_nn)
+        # - -  build analysis main configuration object
+        config = Configuration(ECLF_ARGS.channel, data_streams=ECLF_ARGS.data_streams, db_version=ECLF_ARGS.db_version)
+        # - -  instantiate the analysis, this is honestly just for compile_css
+        analysis = Analysis(config, compile_cxx=True)
 
         jobs = [AppendJob(f, [models, Keras_models], copy_file=COPY_FILE, outdir=ECLF_ARGS.outdir) for f in ECLF_ARGS.files]
 

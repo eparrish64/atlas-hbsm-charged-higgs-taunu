@@ -341,28 +341,28 @@ for signal_masses in train_masses:
                     edf = dframe[e_where]
 
                     # s_v_overlap = pd.merge(sdf, vdf, how="inner")
-                    s_e_overlap = pd.merge(sdf, edf, how="inner")
+                    # s_e_overlap = pd.merge(sdf, edf, how="inner")
                     # v_e_overlap = pd.merge(vdf, edf, how="inner")
 
-                    if s_e_overlap.empty:
-                        # print s_e_overlap
-                        # print "No Overlap in train and evaluate"
-                        pass
-                    else:
-                        log.info(s_e_overlap)
-                        raise Excpetion("Overlap in train and evaluate")
+                    # if s_e_overlap.empty:
+                    #     # print s_e_overlap
+                    #     # print "No Overlap in train and evaluate"
+                    #     pass
+                    # else:
+                    #     log.info(s_e_overlap)
+                    #     raise Exception("Overlap in train and evaluate")
 
                     # if s_v_overlap.empty:
                         # pass
                     # else:
                         # log.info(s_v_overlap)
-                        # raise Excpetion("Overlap in train and validation")
+                        # raise Exception("Overlap in train and validation")
 
                     # if v_e_overlap.empty:
                     #     pass
                     # else:
                     #     log.info(v_e_overlap)
-                    #     raise Excpetion("Overlap in evaluation and validation")
+                    #     raise Exception("Overlap in evaluation and validation")
 
                     log.info("Training in mass range:%s on ntracks=%i, nevents=%i, and nfeatures=%i\n\t\tHyperparams: %r\n"%(
                         mass_tag, ntracks, sdf.shape[0], sdf.shape[1]-4, hyper_params))

@@ -253,7 +253,7 @@ tau_0_eta = Variable(
     tformula={
         "mc16": "tau_0_p4->Eta()",
         "mc15": "tau_0_eta"},
-    binning=(60, -2.5, 2.5))
+    binning=(50, -2.5, 2.5))
 
 tau_0_phi = Variable(
     "tau_0_phi" , 
@@ -478,7 +478,7 @@ mu_0_eta = Variable(
     tformula={
         "mc16":"mu_0_p4->Eta()",
         "mc15":"mu_0_p4->Eta()",},
-    binning=(60, -2.5, 2.5))
+    binning=(50, -2.5, 2.5))
     
 mu_0_phi = Variable(
     "mu_0_phi",
@@ -543,7 +543,7 @@ el_0_eta = Variable(
     tformula={
         "mc16":"el_0_p4->Eta()",
         "mc15":"el_0_p4->Eta()",},
-    binning=(60, -2.5, 2.5))
+    binning=(50, -2.5, 2.5))
     
 el_0_phi = Variable(
     "el_0_phi",
@@ -628,7 +628,7 @@ bjet_0_eta = Variable(
     tformula={
         "mc16":"bjet_0_p4->Eta()",
         "mc15":"bjet_0_eta",},
-    binning=(60, -2.5, 2.5))
+    binning=(50, -2.5, 2.5))
 
 bjet_0_phi = Variable(
     "bjet_0_phi",
@@ -696,7 +696,7 @@ bjet_1_eta = Variable(
     tformula={
         "mc16":"bjet_1_p4->Eta()",
         "mc15":"bjet_1_eta",},
-    binning=(60, -2.5, 2.5))
+    binning=(50, -2.5, 2.5))
 
 bjet_1_phi = Variable(
     "bjet_1_phi",
@@ -768,7 +768,7 @@ jet_0_eta = Variable(
     tformula={
         "mc16":"jet_0_p4->Eta()",
         "mc15":"jet_0_eta",},
-    binning=(60, -2.5, 2.5))
+    binning=(50, -2.5, 2.5))
 
 jet_0_phi = Variable(
     "jet_0_phi",
@@ -808,7 +808,7 @@ jet_1_eta = Variable(
     tformula={
         "mc16":"jet_1_p4->Eta()",
         "mc15":"jet_1_eta",},
-    binning=(60, -2.5, 2.5))
+    binning=(50, -2.5, 2.5))
 
 jet_1_phi = Variable(
     "jet_1_phi",
@@ -836,7 +836,7 @@ jet_2_eta = Variable(
     tformula={
         "mc16":"jet_2_p4->Eta()",
         "mc15":"jet_2_eta",},
-    binning=(60, -2.5, 2.5))
+    binning=(50, -2.5, 2.5))
 
 jet_2_phi = Variable(
     "jet_2_phi",
@@ -1097,7 +1097,7 @@ lep_0_eta = Variable(
     tformula={
         "mc16": "mu_0_p4->Eta()+el_0_p4->Eta()",
         "mc15": "mu_0_p4->Eta()+el_0_p4->Eta()"},
-    binning=(60, -2.5, 2.5),
+    binning=(50, -2.5, 2.5),
     plot_bins=np.arange(-2.5, 2.5, 0.1))
 
 lep_0_phi = Variable(
@@ -1243,6 +1243,7 @@ VARIABLES_TAUJET = [
     tau_0_met_dphi,
 
     met_et,
+    met_phi,
     met_jet_dphi_ratio,
     
     n_jets,
@@ -1269,11 +1270,6 @@ VARIABLES_TAUJET = [
     # bjet_1_pt,   
     # bjet_1_eta,
     # bjet_1_phi,
-
-    r_min,
-    r_min_cut,
-
-    tau_pol_cms,
 
     effm_tau,
     Pileup_Weight,
@@ -1385,26 +1381,75 @@ VARIABLES["taulep"] = VARIABLES_TAULEP
 CLF_FEATURES = {
     "taujet": {
         "LOW": [
-            tau_0_met_dphi,
-            tau_0_pt,
-            met_et,
-            bjet_0_pt,
-            bjet_0_met_dphi,
-            bjet_0_tau_0_dr,
-            met_jet_dphi_ratio,
-            tau_0_upsilon,
+            # tau_0_met_dphi,
+            # tau_0_pt,
+            # met_et,
+            # bjet_0_pt,
+            # bjet_0_met_dphi,
+            # bjet_0_tau_0_dr,
+            # met_jet_dphi_ratio,
+            # tau_0_upsilon,
             # TruthMass,
+            tau_0_pt,
+            tau_0_eta,
+            tau_0_phi,
+            tau_0_E,
+            tau_0_upsilon,
+            # tau_0_charged_tracks_0_pt,
+            bjet_0_pt,
+            bjet_0_eta,
+            bjet_0_phi,
+            bjet_0_E,
+            met_et,
+            met_phi,
+            jet_0_pt,
+            jet_0_eta,
+            jet_0_phi,
+            jet_0_E,
+            jet_1_pt,
+            jet_1_eta,
+            jet_1_phi,
+            # jet_1_E,
+            jet_2_pt,
+            jet_2_eta,
+            jet_2_phi,
+            # jet_2_E,
         ],
         
         "HIGH": [ #<! above 400 [GeV]
-            tau_0_met_dphi,
-            tau_0_pt,
-            met_et,
-            bjet_0_pt,
-            bjet_0_met_dphi,
-            bjet_0_tau_0_dr,
-            met_jet_dphi_ratio,
+            # tau_0_met_dphi,
+            # tau_0_pt,
+            # met_et,
+            # bjet_0_pt,
+            # bjet_0_met_dphi,
+            # bjet_0_tau_0_dr,
+            # met_jet_dphi_ratio,
             # TruthMass,
+
+            tau_0_pt,
+            tau_0_eta,
+            tau_0_phi,
+            tau_0_E,
+            # tau_0_upsilon,
+            # tau_0_charged_tracks_0_pt,
+            bjet_0_pt,
+            bjet_0_eta,
+            bjet_0_phi,
+            bjet_0_E,
+            met_et,
+            met_phi,
+            jet_0_pt,
+            jet_0_eta,
+            jet_0_phi,
+            jet_0_E,
+            jet_1_pt,
+            jet_1_eta,
+            jet_1_phi,
+            # jet_1_E,
+            jet_2_pt,
+            jet_2_eta,
+            jet_2_phi,
+            # jet_2_E,
         ],
     },
 
@@ -1491,7 +1536,7 @@ CLF_FEATURES = {
             tau_0_phi,
             tau_0_E,
             tau_0_upsilon,
-            tau_0_charged_tracks_0_pt,
+            # tau_0_charged_tracks_0_pt,
             lep_0_pt,
             lep_0_eta,
             lep_0_phi,
@@ -1626,8 +1671,8 @@ CLF_FEATURES = {
             tau_0_eta,
             tau_0_phi,
             tau_0_E,
-            tau_0_upsilon,
-            tau_0_charged_tracks_0_pt,
+            # tau_0_upsilon,
+            # tau_0_charged_tracks_0_pt,
             lep_0_pt,
             lep_0_eta,
             lep_0_phi,

@@ -231,8 +231,8 @@ def main():
                             else:
                                 continue
 
-                    # log.info("************** creating %i jobs for HTCondor submission ************" % len(sum(len(v)for v in indivmodels.values())))
-                    # log.info("**************************************************************")
+                    log.info("************** creating %i jobs for HTCondor submission ************" % len(sum(len(v)for v in indivmodels.values())))
+                    log.info("**************************************************************")
 
                     for mass_point in indivmodels:
 

@@ -8,7 +8,7 @@ import random
 import datetime
 import multiprocessing
 
-## ROOT imorts 
+## ROOT imports 
 import ROOT
 
 ## local imports
@@ -35,7 +35,7 @@ class Sample(object):
     name: 
         string; sample's name
     label: 
-        string; sample's lable (used for plotting, etc.) 
+        string; sample's label (used for plotting, etc.) 
     """
 
     ## these are some of the heavy datasets which will take a very long time to process if we want to process
@@ -195,7 +195,8 @@ class Sample(object):
                 if "MULTIJET" in category.name and "metTrigEff" in w.name:
                     continue #<! Multijet Trigger is used for FFs MULTIJET CR 
                 if "hplus" in self.name.lower() and w.title == "NOMINAL_pileup_combined_weight":
-                    w.title="1."
+                    w.title="(NOMINAL_pileup_combined_weight < 0) + (NOMINAL_pileup_combined_weight > 2.5) + (NOMINAL_pileup_combined_weight > 0)*(NOMINAL_pileup_combined_weight < 2.5)*NOMINAL_pileup_combined_weight" #<! Setting pileup weights for signal to 1. PU weights for > 200 GeV mass points are incorrect with some values being > abs(1000)
+                    # w.title="1." #<! Setting pileup weights for signal to 1. PU weights for > 200 GeV mass points are incorrect with some values being > abs(1000)
                 ws.add(w.title)
             weights_dict[category.name] = list(ws)
         return weights_dict

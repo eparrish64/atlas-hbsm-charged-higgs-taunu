@@ -6,7 +6,7 @@ xmin = 50
 xmax = 250
 npoints = 100
 halfbin = 0.5*(xmax-xmin)/npoints
-outfilename = "metTrigEff.cxx"
+outfilename = "metTrigEff_merged.cxx"
 
 def plot_SF(runnumber, run_first, run_last, year, titleLabel, fileName):
 
@@ -19,11 +19,11 @@ def plot_SF(runnumber, run_first, run_last, year, titleLabel, fileName):
 
   fs = []
     
-  ROOT.gROOT.LoadMacro("../Data_metTrigEff.cxx")
+  ROOT.gROOT.LoadMacro("Data_metTrigEff.cxx")
   from ROOT import Data_metTrigEff
-  ROOT.gROOT.LoadMacro("../MonteCarlo_metTrigEff.cxx")
+  ROOT.gROOT.LoadMacro("MonteCarlo_metTrigEff.cxx")
   from ROOT import MonteCarlo_metTrigEff
-  ROOT.gROOT.LoadMacro("../MC_metTrigEff.cxx")
+  ROOT.gROOT.LoadMacro("MC_metTrigEff.cxx")
   from ROOT import MC_metTrigEff
   f1 = ROOT.TF1("f1",Data_metTrigEff,xmin,xmax,2)
   f2 = ROOT.TF1("f2",MonteCarlo_metTrigEff,xmin,xmax,2)
@@ -174,7 +174,7 @@ if __name__=="__main__":
             cfile.write("\t //! xmax: %4.1f \n"%( xmax ) )
             cfile.write("\t //! npoints: %i \n"%( npoints ) )
             cfile.write("\t int i = static_cast<int>(%i*(met_et - %4.1f)/(%4.1f - %4.1f)); \n"%(npoints, xmin, xmax, xmin))
-            cfile.write("\t if ( i < 0 || i > %i ) i=100; \n"%(npoints))
+            cfile.write("\t if ( i < 0 || i > %i ) i=%i; \n"%(npoints,npoints))
             cfile.write("\n")
     
     for trigger in triggers:

@@ -36,7 +36,8 @@ def plot_njets(fileName):
     #print(" int(xx+halfbin) = ",xx)
     
     for i, syst in enumerate(systs):
-      y = njets(int(xx+halfbin),i) - ynom
+      #print(" i = ",i,"  syst = ",syst)
+      y = njets(int(xx+halfbin),syst) - ynom
       if y>0:
           statplus += y*y
       else:

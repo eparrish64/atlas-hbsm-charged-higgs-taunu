@@ -280,18 +280,34 @@ POSITIVE_MC_WEIGHT = ROOT.TCut("weight_mc>=0")
 # Make that RNN scores, this is a simple <128 cut on a uint8 score for all mass points
 PARTIAL_UNBLIND_TAULEP = ROOT.TCut("1")
 taulep_partial_unblind_cut_dict = {
-  80: 110,
-  90: 110,
-  100: 113,
-  110: 115,
-  120: 117,
-  130: 120,
+  80: 45,
+  90: 60,
+  100: 60,
+  110: 73,
+  120: 85,
+  130: 80,
+  140: 106,
+}
+PARTIAL_UNBLIND_TAUJET = ROOT.TCut("1")
+taujet_partial_unblind_cut_dict = {
+  80: 45,
+  90: 69,
+  100: 65,
+  110: 78,
+  120: 88,
+  130: 74,
+  140: 98,
+  150: 115,
 }
 for mass in [80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200, 225, 250, 275, 300, 350, 400, 500, 600, 700, 800, 900, 1000, 1200, 1400, 1600, 1800, 2000, 2500, 3000]:
     cut = 128
     if mass in taulep_partial_unblind_cut_dict:
         cut = taulep_partial_unblind_cut_dict[mass]
     PARTIAL_UNBLIND_TAULEP += ROOT.TCut("80to3000_{0} < {1}".format(mass, cut))
+    cut = 128
+    if mass in taujet_partial_unblind_cut_dict:
+        cut = taujet_partial_unblind_cut_dict[mass]
+    PARTIAL_UNBLIND_TAUJET += ROOT.TCut("80to3000_{0} < {1}".format(mass, cut))
 
 ##------------------------------------------------------------------------------------
 ## - - base class for selection categories
@@ -389,6 +405,7 @@ Category_SR_TAUJET = Category(
         MET150,
         MT50,
         NUM_BJETS1,
+        PARTIAL_UNBLIND_TAUJET,
     ],
 )
 
@@ -405,6 +422,7 @@ Category_TTBAR = Category(
         NUM_BJETS2,     
         MET150,
         MT_MAX100,
+        PARTIAL_UNBLIND_TAUJET,
         ],
 )
 
@@ -551,7 +569,7 @@ Category_TAUEL_BVETO = Category(
         JET_PT25,
         BVETO,
         MET50,
-        PARTIAL_UNBLIND_TAULEP,
+        #PARTIAL_UNBLIND_TAULEP,
     ],
 )
 
@@ -569,7 +587,7 @@ Category_TAUMU_BVETO = Category(
         JET_PT25,
         BVETO,
         MET50,
-        PARTIAL_UNBLIND_TAULEP,
+        #PARTIAL_UNBLIND_TAULEP,
     ],
 )
 
@@ -589,7 +607,7 @@ Category_DILEP_BTAG = Category(
         JET_PT25,
         NUM_BJETS1,        
         MET50,
-        PARTIAL_UNBLIND_TAULEP,
+        #PARTIAL_UNBLIND_TAULEP,
     ],
 )
 
@@ -606,7 +624,7 @@ Category_SS_TAUEL = Category(
         NUM_JETS1,
         JET_PT25,
         MET50,
-        PARTIAL_UNBLIND_TAULEP,
+        #PARTIAL_UNBLIND_TAULEP,
     ],
 )
 
@@ -623,7 +641,7 @@ Category_SS_TAUMU = Category(
         NUM_JETS1,
         JET_PT25,
         MET50,
-        PARTIAL_UNBLIND_TAULEP,
+        #PARTIAL_UNBLIND_TAULEP,
     ],
 )
 
@@ -641,7 +659,7 @@ Category_ZEE = Category(
         JET_PT25,
         BVETO,
         TAU_EL_MASS,
-        PARTIAL_UNBLIND_TAULEP,
+        #PARTIAL_UNBLIND_TAULEP,
     ],
 )
 

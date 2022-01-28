@@ -1,55 +1,35 @@
-float njets(int n_jets,int var)
-{
+//             This is a number of jets reweighting for wjets - from fit
+//             To be used for both tau+jets and tau+lep channels!
+//             in a the lookup table form (after compactification)
+float njets(int n_jets,int var){
+	 //! xmin:  0.0 
+	 //! xmax: 10.0 
+	 //! npoints: 10 
+	 int i = static_cast<int>(10*(n_jets -  0.0)/(10.0 -  0.0)); 
+	 if ( i < 0 || i > 10 ) i=10; 
 
-//njets reweighting for wjets - from fit
-// Functional form:   p0 + p1x + p2xx + p3xxx
-
- double par0 = 0.;
- double par1 = 0.;
- double par2 = 0.;
- double par3 = 0.;
-
- if (var == 0 || var==1)
- {
-   par0 =    0.846034;
-   par1 =    0.204287; 
-   par2 =   -0.067187;
-   par3 =    0.004877;
- }
- else if (var==2) //mod 0 up
- {
-   par0 =    1.057846;
-   par1 =    0.064605;
-   par2 =   -0.038565;
-   par3 =    0.003049;
- }
- else if (var==3) //mod 0 down
- {
-   par0 =    0.634222;
-   par1 =    0.343970;
-   par2 =   -0.095808;
-   par3 =    0.006706;
- } 
- else if (var==4) //mod 1 up
- {
-   par0 =    0.852330;
-   par1 =    0.212911;
-   par2 =   -0.071661; 
-   par3 =    0.005330; 
- }  
- else if (var==5) //mod 1 down
- {
-   par0 =    0.839739;
-   par1 =    0.195664;
-   par2 =   -0.062712;
-   par3 =    0.004424;
- }  
- else 
-   par0 = 1.;
-
- double x = (double) n_jets;
- double myfunc = par0 + par1*x + par2*x*x + par3*x*x*x;
- //std::cout<<"myfunc "<<myfunc <<std::endl;
- return myfunc;	
-
-}
+		 //! NOMINAL 
+		 if(var==0 || var==1){
+			 float SF_temp[12] = { 
+0.846, 0.988, 1.025, 0.986, 0.900, 0.797, 0.706, 0.657, 0.677, 0.798, 1.047, 1.000 
+			  }; 
+			 return SF_temp[i]; 
+		  }; 
+		 //! statistical variation UP
+		 if(var==2){
+			 float SF_temp[12] = { 
+1.058, 1.088, 1.058, 0.990, 0.907, 0.803, 0.717, 0.667, 0.701, 0.877, 1.228, 1.000 
+			  }; 
+			 return SF_temp[i]; 
+		  }; 
+		 //! statistical variation DOWN
+		 if(var==3){
+			 float SF_temp[12] = { 
+0.634, 0.888, 0.991, 0.982, 0.894, 0.792, 0.696, 0.647, 0.654, 0.719, 0.867, 1.000 
+			  }; 
+			 return SF_temp[i]; 
+		  }; 
+		 std::cout << "njet SF ERROR:   Unrecognized variation index! " << var << std::endl; 
+		 return 1.0; 
+ }; 
+ 

@@ -15,17 +15,17 @@ float njets(int n_jets,int var){
 			  }; 
 			 return SF_temp[i]; 
 		  }; 
-		 //! statistical variation UP
+		 //! total variation UP
 		 if(var==2){
 			 float SF_temp[12] = { 
-1.058, 1.088, 1.058, 0.990, 0.907, 0.803, 0.717, 0.667, 0.701, 0.877, 1.228, 1.000 
+1.071, 1.088, 1.060, 0.993, 0.948, 0.895, 0.849, 0.823, 0.834, 0.921, 1.228, 1.000 
 			  }; 
 			 return SF_temp[i]; 
 		  }; 
-		 //! statistical variation DOWN
+		 //! total variation DOWN
 		 if(var==3){
 			 float SF_temp[12] = { 
-0.634, 0.888, 0.991, 0.982, 0.894, 0.792, 0.696, 0.647, 0.654, 0.719, 0.867, 1.000 
+0.620, 0.888, 0.989, 0.974, 0.843, 0.685, 0.545, 0.467, 0.494, 0.652, 0.864, 1.000 
 			  }; 
 			 return SF_temp[i]; 
 		  }; 

@@ -36,7 +36,8 @@ def plot_meff(fileName):
     #print(" int(xx+halfbin) = ",xx)
     
     for i, syst in enumerate(systs):
-      y = eff_mass_taulep(int(xx+halfbin),i) - ynom
+      #print(" i = ",i,"  syst = ",syst)
+      y = eff_mass_taulep(int(xx+halfbin),syst) - ynom
       if y>0:
           statplus += y*y
       else:

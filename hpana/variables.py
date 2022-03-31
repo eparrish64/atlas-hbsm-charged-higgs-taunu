@@ -1272,8 +1272,8 @@ VARIABLES_TAUJET = [
     # bjet_1_phi,
 
     effm_tau,
-    Pileup_Weight,
-    mc_Weight,
+    # Pileup_Weight,
+    # mc_Weight,
 ]
 
 ##-----------------------------------------------------------------
@@ -1364,8 +1364,8 @@ VARIABLES_TAULEP = [
 
     effm_taulep,
 
-    Pileup_Weight,
-    mc_Weight,
+    # Pileup_Weight,
+    # mc_Weight,
 ]
 
 

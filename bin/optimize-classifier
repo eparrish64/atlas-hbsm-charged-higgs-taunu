@@ -571,6 +571,8 @@ for signal_masses in train_masses:
 
 
                     if CLF_ARGS.cluster:
+                        submit_file_name = "%s/submitAllJobs.sh" % (CLF_ARGS.outdir)
+                        submit_file = open(submit_file_name, "w")
                         submit_file.write("\nArguments = %s %s %s %s %s %s %s \nqueue\n" %(   sclf.name, 
                                                                                         os.path.join(__HERE, "classifier-optimizer"), 
                                                                                         os.path.join(os.getcwd(),CLF_ARGS.outdir),

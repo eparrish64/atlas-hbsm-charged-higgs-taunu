@@ -271,6 +271,9 @@ def dataset_hists_direct(hist_worker,
     systematics = hist_worker.systematics
     outname = kwargs.pop("outname", hist_worker.name)
     hist_templates = hist_worker.hist_templates
+    frienddir = None
+    if "frienddir" in kwargs:
+        frienddir = kwargs["frienddir"]
 
     log.debug("*********** processing %s dataset ***********" % dataset.name)
     if not dataset.files:
@@ -324,6 +327,9 @@ def dataset_hists_direct(hist_worker,
     for fn in dataset.files:
         fname = fn.split("/")[-1]
         tfile = ROOT.TFile(fn)
+        if frienddir:
+            friendpath = os.path.join(frienddir, fname+".friend")
+            friendfile = ROOT.TFile.Open(friendpath, "READONLY")
         for systematic in systematics:
             syst_type = systematic._type
             log.debug(
@@ -359,12 +365,16 @@ def dataset_hists_direct(hist_worker,
 
                     # - - get the tree
                     tree = tfile.Get(tree_name)
+                    if frienddir:
+                        tree.AddFriend(tree_name, friendfile)
                     # - - speed up by reading to memory only the branches that are required
                     branches = [br.GetName() for br in tree.GetListOfBranches()]                    
                     keep_branches = filter(lambda b: not b in VETO_BRANCHES[channel], branches)
                     tree.SetBranchStatus("*", 0)
                     for br in keep_branches:
                         tree.SetBranchStatus(br, 1)
+                    if frienddir:
+                      tree.SetBranchStatus("80to3000_*", 1)
 
                     # - - cache only the events that pass the selections
                     selection = category.cuts.GetTitle()
@@ -427,6 +437,8 @@ def dataset_hists_direct(hist_worker,
                                     hs.hist.Fill(hs.variable, event_weight.EvalInstance())
                                     hs.hist.SetName("%s_category_%s_var_%s" %(outname, category.name, hs.variable))
                     tree.Delete()
+        if frienddir:
+            friendfile.Close()  
         tfile.Close()                    
 
     write_hists = kwargs.pop("write_hists", False)

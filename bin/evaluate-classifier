@@ -344,13 +344,13 @@ def main():
             jobs = []
             for w in ana_workers:
                 if ECLF_ARGS.eval_nn == True:
-                    dataset_hists_direct(w, clf_models=models, clf_Keras_models=Keras_models, write_hists=True, outdir=ECLF_ARGS.outdir, isNN=ECLF_ARGS.eval_nn)
+                    dataset_hists_direct(w, clf_models=models, clf_Keras_models=Keras_models, write_hists=True, outdir=ECLF_ARGS.outdir, isNN=ECLF_ARGS.eval_nn, frienddir=ECLF_ARGS.frienddir)
                 else:
                     ## multicore processing 
                     if ECLF_ARGS.parallel:
-                        jobs.append(Job(dataset_hists_direct, w, clf_models=models, clf_Keras_models=Keras_models, write_hists=True, outdir=ECLF_ARGS.outdir, isNN=ECLF_ARGS.eval_nn))
+                        jobs.append(Job(dataset_hists_direct, w, clf_models=models, clf_Keras_models=Keras_models, write_hists=True, outdir=ECLF_ARGS.outdir, isNN=ECLF_ARGS.eval_nn, frienddir=ECLF_ARGS.frienddir))
                     else:
-                        dataset_hists_direct(w, clf_models=models, write_hists=True, outdir=ECLF_ARGS.outdir, isNN=ECLF_ARGS.eval_nn)
+                        dataset_hists_direct(w, clf_models=models, write_hists=True, outdir=ECLF_ARGS.outdir, isNN=ECLF_ARGS.eval_nn, frienddir=ECLF_ARGS.frienddir)
 
             if ECLF_ARGS.parallel:
                 log.info("************** submitting %i jobs  ************" % len(jobs))

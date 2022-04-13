@@ -441,6 +441,9 @@ def get_evalclf_parser(base_parser=None):
     evalclf_parser.add_argument("--friend", action="store_true",
                                 help="save clf scores to TTrees in a friend file")
 
+    evalclf_parser.add_argument("--frienddir", type=str, default="",
+                            help="Where to find friend files when evaluating on the fly")
+
     evalclf_parser.add_argument("--direct", action="store_true",
                                 help="calculate clf scores on the fly")
 

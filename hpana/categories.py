@@ -280,24 +280,24 @@ POSITIVE_MC_WEIGHT = ROOT.TCut("weight_mc>=0")
 # Make that RNN scores, this is a simple <128 cut on a uint8 score for all mass points
 PARTIAL_UNBLIND_TAULEP = ROOT.TCut("1")
 taulep_partial_unblind_cut_dict = {
-  80: 57, #45,
-  90: 60,
-  100: 60,
-  110: 73,
-  120: 85,
-  130: 80,
-  140: 106,
+  80: 52, #57, #45,
+  90: 54, #60,
+  100: 56, #60,
+  110: 71, #73,
+  120: 81, #85,
+  130: 77, #80,
+  140: 105, #106,
 }
 PARTIAL_UNBLIND_TAUJET = ROOT.TCut("1")
 taujet_partial_unblind_cut_dict = {
-  80: 69, #45,
-  90: 69,
-  100: 65,
-  110: 78,
-  120: 88,
-  130: 74,
-  140: 98,
-  150: 115,
+  80: 66, #69, #45,
+  90: 73, #69,
+  100: 67, #65,
+  110: 86, #78,
+  120: 95, #88,
+  130: 84, #74,
+  140: 103, #98,
+  150: 120, #115,
 }
 for mass in [80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200, 225, 250, 275, 300, 350, 400, 500, 600, 700, 800, 900, 1000, 1200, 1400, 1600, 1800, 2000, 2500, 3000]:
     cut = 128
@@ -394,6 +394,23 @@ Category_TAUJET_PRESEL = Category(
 Category_SR_TAUJET = Category(
     name="SR_TAUJET",
     label="#tau-jet SR",
+    ff_index=1001,
+    cuts_list = [
+        CLEAN_EVT,
+        TAU_BASE,
+        LEP_VETO,
+        TAU_PT40,
+        NUM_JETS3,
+        JET_PT25,
+        MET150,
+        MT50,
+        NUM_BJETS1,
+    ],
+)
+
+Category_TAUJET_PARTIAL = Category(
+    name="TAUJET_PARTIAL",
+    label="#tau-jet partially unblinded SR",
     ff_index=1001,
     cuts_list = [
         CLEAN_EVT,
@@ -533,13 +550,47 @@ Category_SR_TAUEL = Category(
         JET_PT25,
         NUM_BJETS1,     
         MET50,
-        PARTIAL_UNBLIND_TAULEP,
     ],
 )
 
 Category_SR_TAUMU = Category(
     name="SR_TAUMU",
     label="#tau-#mu SR",
+    ff_index=2003,
+    cuts_list = [
+        CLEAN_EVT,
+        TAU_BASE,
+        MU_BASE,
+        OS_TAU_MU,
+        VETO_EL,
+        NUM_JETS1,
+        JET_PT25,
+        NUM_BJETS1,
+        MET50,
+    ],
+)
+
+Category_TAUEL_PARTIAL = Category(
+    name="TAUEL_PARTIAL",
+    label="#tau-e partially unblinded SR",
+    ff_index=2002,
+    cuts_list = [
+        CLEAN_EVT,
+        TAU_BASE,
+        EL_BASE,
+        OS_TAU_EL,
+        VETO_MU,
+        NUM_JETS1,
+        JET_PT25,
+        NUM_BJETS1,
+        MET50,
+        PARTIAL_UNBLIND_TAULEP,
+    ],
+)
+
+Category_TAUMU_PARTIAL = Category(
+    name="TAUMU_PARTIAL",
+    label="#tau-#mu partially unblinded SR",
     ff_index=2003,
     cuts_list = [
         CLEAN_EVT,
@@ -1002,6 +1053,7 @@ CATEGORIES["taujet"] = [
     Category_WJETS,
     Category_TAUJET_PRESEL,
     Category_BVETO_MT100,
+    Category_TAUJET_PARTIAL,
 ]
 
 CATEGORIES["taulep"] = [
@@ -1017,4 +1069,6 @@ CATEGORIES["taulep"] = [
     Category_TAULEP_PRESEL,
     Category_TTBAR_TAULEP,
     MET_TRIG_EFF_CR_NOM,
+    Category_TAUEL_PARTIAL,
+    Category_TAUMU_PARTIAL,
 ]

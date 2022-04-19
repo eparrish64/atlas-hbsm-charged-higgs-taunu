@@ -277,7 +277,7 @@ POSITIVE_MC_WEIGHT = ROOT.TCut("weight_mc>=0")
 
 #WIP! - - - - BDT scores for partial blinding 
 
-# Make that RNN scores, this is a simple <128 cut on a uint8 score for all mass points
+# Make that PNN scores, this is a simple <128 cut on a uint8 score for all mass points
 PARTIAL_UNBLIND_TAULEP = ROOT.TCut("1")
 taulep_partial_unblind_cut_dict = {
   80: 52, #57, #45,
@@ -408,7 +408,7 @@ Category_SR_TAUJET = Category(
     ],
 )
 
-Category_TAUJET_PARTIAL = Category(
+Category_SR_TAUJET_PARTIAL = Category(
     name="TAUJET_PARTIAL",
     label="#tau-jet partially unblinded SR",
     ff_index=1001,
@@ -439,7 +439,6 @@ Category_TTBAR = Category(
         NUM_BJETS2,     
         MET150,
         MT_MAX100,
-        PARTIAL_UNBLIND_TAUJET,
         ],
 )
 
@@ -532,7 +531,6 @@ Category_SR_TAULEP = Category(
         JET_PT25,
         NUM_BJETS1,  
         MET50,
-        #PARTIAL_UNBLIND_TAULEP,
     ],
 )
 
@@ -570,7 +568,24 @@ Category_SR_TAUMU = Category(
     ],
 )
 
-Category_TAUEL_PARTIAL = Category(
+Category_SR_TAULEP_PARTIAL = Category(
+    name="SR_TAULEP",
+    label="#tau-lep SR",
+    ff_index=2001,
+    cuts_list = [
+        CLEAN_EVT,
+        TAU_BASE,
+        LEP_BASE,
+        OS_TAU_LEP,
+        NUM_JETS1,
+        JET_PT25,
+        NUM_BJETS1,  
+        MET50,
+        PARTIAL_UNBLIND_TAULEP,
+    ],
+)
+
+Category_SR_TAUEL_PARTIAL = Category(
     name="TAUEL_PARTIAL",
     label="#tau-e partially unblinded SR",
     ff_index=2002,
@@ -588,7 +603,7 @@ Category_TAUEL_PARTIAL = Category(
     ],
 )
 
-Category_TAUMU_PARTIAL = Category(
+Category_SR_TAUMU_PARTIAL = Category(
     name="TAUMU_PARTIAL",
     label="#tau-#mu partially unblinded SR",
     ff_index=2003,
@@ -620,7 +635,6 @@ Category_TAUEL_BVETO = Category(
         JET_PT25,
         BVETO,
         MET50,
-        #PARTIAL_UNBLIND_TAULEP,
     ],
 )
 
@@ -638,7 +652,6 @@ Category_TAUMU_BVETO = Category(
         JET_PT25,
         BVETO,
         MET50,
-        #PARTIAL_UNBLIND_TAULEP,
     ],
 )
 
@@ -658,7 +671,6 @@ Category_DILEP_BTAG = Category(
         JET_PT25,
         NUM_BJETS1,        
         MET50,
-        #PARTIAL_UNBLIND_TAULEP,
     ],
 )
 
@@ -675,7 +687,6 @@ Category_SS_TAUEL = Category(
         NUM_JETS1,
         JET_PT25,
         MET50,
-        #PARTIAL_UNBLIND_TAULEP,
     ],
 )
 
@@ -692,7 +703,6 @@ Category_SS_TAUMU = Category(
         NUM_JETS1,
         JET_PT25,
         MET50,
-        #PARTIAL_UNBLIND_TAULEP,
     ],
 )
 
@@ -710,7 +720,6 @@ Category_ZEE = Category(
         JET_PT25,
         BVETO,
         TAU_EL_MASS,
-        #PARTIAL_UNBLIND_TAULEP,
     ],
 )
 
@@ -728,14 +737,9 @@ Category_TTBAR_TAULEP = Category(
         NUM_BJETS2,
         MT_MAX70,
         MET80,
-        PARTIAL_UNBLIND_TAULEP,
     ],
 )
 
-
-
-
-    
 ##------------------------------------------------------------------------------------
 ## - - Fake Factors CR
 ##------------------------------------------------------------------------------------
@@ -1053,7 +1057,7 @@ CATEGORIES["taujet"] = [
     Category_WJETS,
     Category_TAUJET_PRESEL,
     Category_BVETO_MT100,
-    Category_TAUJET_PARTIAL,
+    # Category_SR_TAUJET_PARTIAL,
 ]
 
 CATEGORIES["taulep"] = [
@@ -1069,6 +1073,7 @@ CATEGORIES["taulep"] = [
     Category_TAULEP_PRESEL,
     Category_TTBAR_TAULEP,
     MET_TRIG_EFF_CR_NOM,
-    Category_TAUEL_PARTIAL,
-    Category_TAUMU_PARTIAL,
+    # Category_SR_TAUEL_PARTIAL,
+    # Category_SR_TAUMU_PARTIAL,
+    # Category_SR_TAULEP_PARTIAL,
 ]

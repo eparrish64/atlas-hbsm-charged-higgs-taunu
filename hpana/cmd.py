@@ -84,7 +84,7 @@ def get_ana_parser(base_parser=None):
     ana_parser.add_argument("--merge-hists", action="store_true",
                             help="merge histograms")
 
-    ana_parser.add_argument("--frienddir", type=str, default="",
+    ana_parser.add_argument("--frienddir", type=str, default="/eos/home-b/bburghgr/hptaunu/friendfiles-taujet/",
                             help="Where to find friend files")
 
     ana_parser.add_argument("--outdir", type=str, default="outdir",
@@ -441,7 +441,7 @@ def get_evalclf_parser(base_parser=None):
     evalclf_parser.add_argument("--friend", action="store_true",
                                 help="save clf scores to TTrees in a friend file")
 
-    evalclf_parser.add_argument("--frienddir", type=str, default="",
+    evalclf_parser.add_argument("--frienddir", type=str, default="/eos/home-b/bburghgr/hptaunu/friendfiles-taujet/",
                             help="Where to find friend files when evaluating on the fly")
 
     evalclf_parser.add_argument("--direct", action="store_true",

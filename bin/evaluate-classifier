@@ -653,7 +653,7 @@ def main():
 
                         # else:
 
-                        submit_file.write("\nArguments = %s %s %s %s %s %d %s \nqueue\n" %(     ",".join([m.name for m in aw]),
+                        submit_file.write("\nArguments = %s %s %s %s %s %d %s %s \nqueue\n" %(     ",".join([m.name for m in aw]),
                                                                                             os.path.join(__HERE, "classifier-evaluator"), 
                                                                                             os.path.join(os.getcwd(), ECLF_ARGS.submitdir), 
                                                                                             os.path.abspath(ECLF_ARGS.pickled_analysis), 
@@ -661,9 +661,15 @@ def main():
                                                                                             ",".join([os.path.abspath(m) for m in ECLF_ARGS.models]),
                                                                                             int(ECLF_ARGS.eval_nn),
                                                                                             ECLF_ARGS.outdir,
+                                                                                            ECLF_ARGS.frienddir,
                                                                                             )
                          )
 
+
+
+
+
+                    # dataset_hists_direct(w, clf_models=models, clf_Keras_models=Keras_models, write_hists=True, outdir=ECLF_ARGS.outdir, isNN=ECLF_ARGS.eval_nn, frienddir=ECLF_ARGS.frienddir)
 
 
                         # - - - - write submission to file to be used outside container

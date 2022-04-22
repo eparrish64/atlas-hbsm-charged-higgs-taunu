@@ -14,7 +14,7 @@ fail(){
     echo "failed";
     cd ..;
     rm -rf "$JOBSCRATCH";
-    # exit 1;
+    exit 1;
 }
 
 # Creating scratch directory on a remote node
@@ -54,5 +54,5 @@ else
     cd ..;
     rm -rf "$JOBSCRATCH" || fail;
     echo "Job finished and cleaned up after itself";
-    # exit 0;
+    exit 0;
 fi

@@ -23,7 +23,9 @@ rsync -axvH --no-g --no-p ${2}  ./ || fail;
 tar -xvf ${2} || fail;
 source setup.sh || fail;
 
-python ${3} ${4} ${1} || fail;
+echo "python ${3} ${4} ${1} ${6} ${7}";
+
+python ${3} ${4} ${1} ${6} ${7} || fail;
 
 files="$JOBSCRATCH"/*.root
 if [ ${#files[@]} -eq 0 ]; then

@@ -91,6 +91,11 @@ def chunks(a, n):
     for i in xrange(0, len(a), n):
         yield a[i:i+n]
 
+###
+## Setting up friend file directory correctly
+ECLF_ARGS.frienddir += ECLF_ARGS.channel + "/"
+###
+
 ##-----------------------------------------------
 ## main driver
 ##-----------------------------------------------
@@ -168,9 +173,9 @@ def main():
 
         if ECLF_ARGS.categories:
             categories = filter(
-                lambda c: c.name in ECLF_ARGS.categories, config.categories)
+                lambda c: c.name in ECLF_ARGS.categories, config.categories_func(partial_unblind=ECLF_ARGS.partial_unblind))
         else:
-            categories = config.categories
+            categories = config.categories_func(partial_unblind=ECLF_ARGS.partial_unblind)
 
         ## systematics
         all_systematics = config.systematics[:]  # <! common systematics
@@ -314,9 +319,9 @@ def main():
 
         if ECLF_ARGS.categories:
             categories = filter(
-                lambda c: c.name in ECLF_ARGS.categories, config.categories)
+                lambda c: c.name in ECLF_ARGS.categories, config.categories_func(partial_unblind=ECLF_ARGS.partial_unblind))
         else:
-            categories = config.categories
+            categories = config.categories_func(partial_unblind=ECLF_ARGS.partial_unblind)
 
         ## systematics
         all_systematics = config.systematics[:]  # <! common systematics
@@ -555,6 +560,7 @@ def main():
                                                                                                 # ",".join([os.path.abspath(m) for m in indivmodels[thismass]]),
                                                                                                 int(ECLF_ARGS.eval_nn),
                                                                                                 ECLF_ARGS.outdir,
+                                                                                                ECLF_ARGS.frienddir,
                                                                                             )
                         )
 

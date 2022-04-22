@@ -569,8 +569,8 @@ Category_SR_TAUMU = Category(
 )
 
 Category_SR_TAULEP_PARTIAL = Category(
-    name="SR_TAULEP",
-    label="#tau-lep SR",
+    name="SR_TAULEP_PARTIAL",
+    label="#tau-lep partially unblinded SR",
     ff_index=2001,
     cuts_list = [
         CLEAN_EVT,
@@ -586,7 +586,7 @@ Category_SR_TAULEP_PARTIAL = Category(
 )
 
 Category_SR_TAUEL_PARTIAL = Category(
-    name="TAUEL_PARTIAL",
+    name="SR_TAUEL_PARTIAL",
     label="#tau-e partially unblinded SR",
     ff_index=2002,
     cuts_list = [
@@ -604,7 +604,7 @@ Category_SR_TAUEL_PARTIAL = Category(
 )
 
 Category_SR_TAUMU_PARTIAL = Category(
-    name="TAUMU_PARTIAL",
+    name="SR_TAUMU_PARTIAL",
     label="#tau-#mu partially unblinded SR",
     ff_index=2003,
     cuts_list = [

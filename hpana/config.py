@@ -116,7 +116,7 @@ class Configuration(object):
             if self.channel == "taulep":
                 cats += [Category_SR_TAULEP_PARTIAL, Category_SR_TAUEL_PARTIAL, Category_SR_TAUMU_PARTIAL]
             elif self.channel == "taujet":
-                cats += Category_SR_TAUJET_PARTIAL
+                cats += [Category_SR_TAUJET_PARTIAL]
             else:
                 pass
         # if self.channel=="taulep":

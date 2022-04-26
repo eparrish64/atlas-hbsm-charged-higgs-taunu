@@ -238,6 +238,8 @@ class Higgs(MC, Signal):
             w_hfiles = glob.glob("%s/%sWEIGHTED.*"%(histsdir, self.name))
             uw_hfiles = glob.glob("%s/%sUNWEIGHTED.*"%(histsdir, self.name))
 
+            log.info("%s files found for %s" %(len(w_hfiles)+len(uw_hfiles),self.name))
+
             if len(w_hfiles)!=len(uw_hfiles):
                 log.error("number of weighted  and unweighted histograms don't match!")
                 return[]
@@ -364,7 +366,12 @@ class Higgs(MC, Signal):
         if write:
             if hists_file is None:
                 hists_file = self.config.hists_file
-            ofile = ROOT.TFile(os.path.join(histsdir, hists_file), "UPDATE")
+
+            if "eos" in histsdir:
+                ofile = ROOT.TFile(hists_file, "UPDATE")
+            else:
+                ofile = ROOT.TFile(os.path.join(histsdir, hists_file), "UPDATE")
+            # ofile = ROOT.TFile(os.path.join(histsdir, hists_file), "UPDATE")
 
         ## normalized unweighted to weighted and use that in the analysis! 
         norm_hset = []

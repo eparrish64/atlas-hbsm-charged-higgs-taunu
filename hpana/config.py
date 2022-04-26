@@ -173,7 +173,7 @@ class Configuration(object):
     def signal_masses(self):
         return SIGNAL_MASSES
 
-    @property
+    @cached_property
     def hists_file(self):
         return "HISTS_%s_%s.root" % (self.channel, datetime.datetime.today().strftime("%Y_%m_%d"))
 

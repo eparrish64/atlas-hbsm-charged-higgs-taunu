@@ -228,13 +228,48 @@ def main():
     # - - @NOTE: if you submitted jobs to the cluster wait till they're all done!
     if ANA_ARGS.merge_hists:
         if ANA_ARGS.cluster:
-            raise RuntimeError(
-                "jobs are submitted to the cluster wait for them to get done")
-        log.info(
-            "************** merging histograms  ************")
-        log.info(
-            "***********************************************")
-        analysis.merge_hists(samples=samples, histsdir=ANA_ARGS.outdir, overwrite=True, write=True,)
+            # raise RuntimeError(
+            #     "jobs are submitted to the cluster wait for them to get done")
+
+            if ANA_ARGS.rs_manager == "CONDOR":
+                # -- write jobs
+                from hpana.cluster.job_template import CONDOR_JOB_TEMPLATE
+
+                submitfile_name = "%s/%s.sh" %(ANA_ARGS.submitdir, "submitAllMerge")
+                submit_file = os.open(submitfile_name, os.O_CREAT | os.O_WRONLY, 0755)
+
+                log.info("************** creating 1 merge jobs for HTCondor submission ************" )
+                log.info("**************************************************************")
+
+                submit_file_name = "%s/submitAllMerge.sh" % (ANA_ARGS.submitdir)
+                submit_file = open(submit_file_name, "w")
+                submit_file.write(
+                             CONDOR_JOB_TEMPLATE.format(
+                                 logsdir=os.path.join(
+                                     ANA_ARGS.submitdir, ANA_ARGS.logsdir),
+                                 execScript=os.path.join(__HERE, "condor_merge.sh"),
+                                 memory="64GB",
+                             )
+                             )
+                submit_file.write("\nArguments = %s %s %s %s %s \nqueue\n" %(  "Merging",
+                                                                                source_code_tarball, 
+                                                                                os.path.join(__HERE, "merge-datasets"), 
+                                                                                ANA_ARGS.conf_file,
+                                                                                ANA_ARGS.outdir)
+                                                                        )
+
+
+                submit_file.close()
+                log.warning("Submission not supported from within container.")
+                log.warning("Please launch outside container via:")
+                log.warning("\t condor_submit {0}".format(submit_file_name))
+
+        else:
+            log.info(
+                "************** merging histograms  ************")
+            log.info(
+                "***********************************************")
+            analysis.merge_hists(samples=samples, histsdir=ANA_ARGS.outdir, overwrite=True, write=True,)
 
 
 # -------------------------------------------------------------

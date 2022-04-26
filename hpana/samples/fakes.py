@@ -380,6 +380,7 @@ class QCD(Sample):
         """
         log.info("merging %s hists"%self.name)
 
+
         if not hist_set:
             log.info("reading dataset hists from %s"%histsdir)
             assert histsdir, "hists dir is not provided!"
@@ -387,6 +388,8 @@ class QCD(Sample):
             ## retrieve the samples hists
             data_hfiles = glob.glob("%s/%s.DATA*"%(histsdir, self.name) )             
             mc_hfiles = list(set(glob.glob("%s/%s.*"%(histsdir, self.name) ) ) - set(data_hfiles) )
+
+            log.info("%s files found for %s" %(len(data_hfiles)+len(mc_hfiles),self.name))
 
             if (not (data_hfiles and mc_hfiles)):
                 log.warning(" incomplete hists for %s in %s dir"%(self.name, histsdir))
@@ -420,8 +423,11 @@ class QCD(Sample):
                 for syst in systs:
                     systdir = htf.Get(syst)
                     for hname in [k.GetName() for k in systdir.GetListOfKeys()]:
+                        if "dilep" in hname:
+                            log.warning("AHHHH")
                         # - - regex match the hist name
                         match = re.match(self.config.hist_name_regex, hname)
+                        log.debug(hname)
                         if match:
                             sample = match.group("sample")
                             # raise Exception("AHHHH, I am debugging parsing file names")
@@ -431,6 +437,10 @@ class QCD(Sample):
                             variable = match.group("variable")
                             fields.add(variable)
                             categories.add(category)
+                            # log.warning(category)
+
+                            log.debug(variable)
+                            log.debug(fields)
 
                             hist = htf.Get("%s/%s"%(syst, hname))
                             hist.SetDirectory(0) #<! detach
@@ -439,6 +449,9 @@ class QCD(Sample):
                                             systematic=syst, hist=hist)
                             # mc_hist_set.append(hset)
                             pushToDictMC(hset)
+                        if not match:
+                            log.warning("No match found for %s" %(hname))
+
                 htf.Close()
                 for i in mc_hist_dict:
                     for j in mc_hist_dict[i]:
@@ -478,7 +491,19 @@ class QCD(Sample):
                             category = match.group("category")
                             variable = match.group("variable")
 
-                            assert (variable in fields and category in categories), "sth missing!"
+                            log.debug("variable")
+                            log.debug(variable)
+                            log.debug("fields")
+                            log.debug(fields)
+                            log.debug("category")
+                            log.debug(category)
+                            log.debug("list of categories")
+                            log.debug(categories)
+                            log.debug(hf)
+
+                            if not (variable in fields and category in categories):
+                                log.warning("requested variable (%s) or category (%s) not in %s!"%(variable, category, hf))
+                            # assert (variable in fields and category in categories), "requested variable (%s) or category (%s) not in master list!"%(variable, category)
 
                             hist = htf.Get("%s/%s"%(syst, hname))
                             hist.SetDirectory(0) #<! detach from the htf
@@ -511,11 +536,20 @@ class QCD(Sample):
             log.warning("no hist is found for %s; skipping the merge!"%self.name)
             return []
 
+        # if write:
+        #     ## output file
+        #     if not hists_file:
+        #         hists_file = self.config.hists_file
+        #     merged_hists_file = ROOT.TFile(os.path.join(histsdir, hists_file), "UPDATE")
+
         if write:
-            ## output file
+            # - - output file
             if not hists_file:
                 hists_file = self.config.hists_file
-            merged_hists_file = ROOT.TFile(os.path.join(histsdir, hists_file), "UPDATE")
+            if "eos" in histsdir:
+                merged_hists_file = ROOT.TFile(hists_file, "UPDATE")
+            else:
+                merged_hists_file = ROOT.TFile(os.path.join(histsdir, hists_file), "UPDATE")
 
         ## add them up
         merged_hist_set = []

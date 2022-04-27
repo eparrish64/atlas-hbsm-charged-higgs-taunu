@@ -491,19 +491,19 @@ class QCD(Sample):
                             category = match.group("category")
                             variable = match.group("variable")
 
-                            log.debug("variable")
-                            log.debug(variable)
-                            log.debug("fields")
-                            log.debug(fields)
-                            log.debug("category")
-                            log.debug(category)
-                            log.debug("list of categories")
-                            log.debug(categories)
-                            log.debug(hf)
+                            # log.debug("variable")
+                            # log.debug(variable)
+                            # log.debug("fields")
+                            # log.debug(fields)
+                            # log.debug("category")
+                            # log.debug(category)
+                            # log.debug("list of categories")
+                            # log.debug(categories)
+                            # log.debug(hf)
 
-                            if not (variable in fields and category in categories):
-                                log.warning("requested variable (%s) or category (%s) not in %s!"%(variable, category, hf))
-                            # assert (variable in fields and category in categories), "requested variable (%s) or category (%s) not in master list!"%(variable, category)
+                            # if not (variable in fields and category in categories):
+                            #     log.warning("requested variable (%s) or category (%s) not in %s!"%(variable, category, hf))
+                            assert (variable in fields and category in categories), "requested variable (%s) or category (%s) not in master list!"%(variable, category)
 
                             hist = htf.Get("%s/%s"%(syst, hname))
                             hist.SetDirectory(0) #<! detach from the htf

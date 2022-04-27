@@ -43,9 +43,9 @@ if __name__=="__main__":
 
         if conf["categories"]:
             categories = filter(
-                lambda c: c.name in conf["categories"], config.categories+ config.ff_cr_regions+ config.clf_regions)
+                lambda c: c.name in conf["categories"], config.categories_func(partial_unblind=int(sys.argv[4]))+ config.ff_cr_regions+ config.clf_regions)
         else:
-            categories = config.categories 
+            categories = config.categories_func(partial_unblind=int(sys.argv[4])) 
 
         ## systematics
         all_systematics = config.systematics[:]  # <! common systematics
@@ -79,6 +79,6 @@ if __name__=="__main__":
             worker = workers[0]
 
             # - - get the hists 
-            dataset_hists(worker, write_hists=True, outdir="./")
+            dataset_hists(worker, write_hists=True, outdir="./", frienddir=sys.argv[3])
         end_time = time.time()
         print "Execution Time:\t %0.2f"%(end_time - start_time)

@@ -34,7 +34,7 @@ def get_base_parser():
                         help="database version; should match the database version you use when creating database")
 
     base_parser.add_argument("--data-streams", nargs="+", choices=["2015","2016", "2017", "2018",],
-                             help="DATA taking yeats", default=["2015", "2016", "2017", "2018"])
+                             help="DATA taking years", default=["2015", "2016", "2017", "2018"])
     
     base_parser.add_argument("--fields", nargs="+",
                         help="list of the variables that you want to analyze")
@@ -84,6 +84,11 @@ def get_ana_parser(base_parser=None):
     ana_parser.add_argument("--merge-hists", action="store_true",
                             help="merge histograms")
 
+    ana_parser.add_argument("--frienddir", type=str, default="/eos/home-b/bburghgr/hptaunu/friendfiles-",
+                            help="Where to find friend files")
+
+    ana_parser.add_argument("--partial-unblind", action="store_true", help="Partially unblind signal regions with classifier cuts defined in hpana/categories.py")
+
     ana_parser.add_argument("--outdir", type=str, default="outdir",
                             help="Where to put the processed histograms")
 
@@ -91,7 +96,7 @@ def get_ana_parser(base_parser=None):
                             help="where to put the job scripts. You will launch condor jobs from here.")
 
     ana_parser.add_argument("--cluster", action="store_true",
-                            help="if you wnat to submit jobs to the cluster")
+                            help="if you want to submit jobs to the cluster")
 
     ana_parser.add_argument("--local-scratch", type=str, choices=["tmp", "scratch"], default="tmp",
                             help="name of the local scratch disk on the nodes")
@@ -103,7 +108,7 @@ def get_ana_parser(base_parser=None):
                             help="main analysis object pickled to be shipped to the worker nodes")
 
     ana_parser.add_argument("--conf-file", type=str, default="config.yml",
-                            help="main analysis configuration flags are writen to this file")
+                            help="main analysis configuration flags are written to this file")
 
     ana_parser.add_argument("--dry-run", action="store_true",
                             help="if you just want to see the scripts that will be submitted to the cluster")
@@ -160,7 +165,7 @@ def get_plotting_parser(base_parser=None):
                                  help='Y axis in log scale', )
     
     plotting_parser.add_argument('--no-data', action="store_true",
-                                 help='dont plot data', )
+                                 help='do NOT plot data', )
 
     plotting_parser.add_argument('--bdt-only', action="store_true",
                                 help='Plot only bdt scores')
@@ -219,7 +224,7 @@ def get_ffs_parser(base_parser=None):
                         help="database version; should match the database version you use when creating database")
 
     ffs_parser.add_argument("--data-streams", nargs="+", choices=["2015","2016", "2017", "2018",],
-                             help="DATA taking yeats", default=["2015", "2016"])
+                             help="DATA taking years", default=["2015", "2016"])
     
     ffs_parser.add_argument("--fake-sources", action="store_true",
                               help="what is the source of fake tau")
@@ -332,7 +337,7 @@ def get_clf_parser(base_parser=None):
                             help="how many cores to use")
 
     clf_parser.add_argument("--validation-plots", action="store_true",
-                            help="plot some roc curves to see the training performance")
+                            help="plot some ROC curves to see the training performance")
     
     clf_parser.add_argument("--rank-feats", action="store_true",
                             help="features importance ")
@@ -365,7 +370,7 @@ def get_clf_parser(base_parser=None):
                             help="if you just want to see the scripts that will be submitted to the cluster")
                                 
     clf_parser.add_argument("--cluster", action="store_true",
-                            help="if you wnat to submit jobs to the cluster")
+                            help="if you want to submit jobs to the cluster")
 
     clf_parser.add_argument("--local-scratch", type=str, choices=["tmp", "scratch"], default="scratch",
                             help="name of the local scratch disk on the nodes")
@@ -412,7 +417,7 @@ def get_evalclf_parser(base_parser=None):
                             help="main analysis configuration flags are writen to this file")
     
     evalclf_parser.add_argument('--files', nargs='+', 
-                        help='ntuples to append clf score to them')
+                        help='ntuples to create friend files for')
 
     evalclf_parser.add_argument('--models', '-w', nargs="+",
                             help='path to xml or pickled trained models')
@@ -441,8 +446,13 @@ def get_evalclf_parser(base_parser=None):
     evalclf_parser.add_argument("--merge-hists", action="store_true",
                                 help="merge histograms")
 
-    evalclf_parser.add_argument("--append", action="store_true",
-                                help="append clf scores to TTrees")
+    evalclf_parser.add_argument("--friend", action="store_true",
+                                help="save clf scores to TTrees in a friend file")
+
+    evalclf_parser.add_argument("--partial-unblind", action="store_true", help="Partially unblind signal regions with classifier cuts defined in hpana/categories.py")
+
+    evalclf_parser.add_argument("--frienddir", type=str, default="/eos/home-b/bburghgr/hptaunu/friendfiles-",
+                            help="Where to find friend files when evaluating on the fly")
 
     evalclf_parser.add_argument("--direct", action="store_true",
                                 help="calculate clf scores on the fly")

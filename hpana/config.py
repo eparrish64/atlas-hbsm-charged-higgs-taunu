@@ -110,6 +110,21 @@ class Configuration(object):
             c.mc_camp = self.mc_camp
         return cats
 
+    def categories_func(self, partial_unblind=False):
+        cats = CATEGORIES[self.channel] #+ self.ff_cr_regions
+        if partial_unblind==True:
+            if self.channel == "taulep":
+                cats += [Category_SR_TAULEP_PARTIAL, Category_SR_TAUEL_PARTIAL, Category_SR_TAUMU_PARTIAL]
+            elif self.channel == "taujet":
+                cats += [Category_SR_TAUJET_PARTIAL]
+            else:
+                pass
+        # if self.channel=="taulep":
+        #     cats += self.met_trigeff_regions
+        for c in cats:
+            c.mc_camp = self.mc_camp
+        return cats
+
     @property
     def systematics(self):
         """common systematics components

@@ -255,6 +255,7 @@ def draw(var, category,
         for sig in signals:    
             sig_hist = hists_dict[sig.name]["NOMINAL"]
             # - - - - scale signals if needed
+            bh_sum, stot = 1., 1.
             if scale_sig_to_bkg_sum:
                 bh_sum = 0
                 nbins = bkg_hist.GetNbinsX()
@@ -264,10 +265,12 @@ def draw(var, category,
                 sig_hist.Scale(bh_sum/stot)
 
             if signal_scale!=1.:
-                sig_hist *= signal_scale
+                #sig_hist *= signal_scale
+                sig_altscale = (bh_sum/stot)/signal_scale
             init_label = sig.label
-            sig_label = "%i #times %s"%(signal_scale, init_label) if signal_scale!=1. else init_label
-                
+            #sig_label = "%i #times %s"%(signal_scale, init_label) if signal_scale!=1. else init_label
+            sig_label = "%i #times %s"%(sig_altscale, init_label) if signal_scale!=1. else init_label
+
             # - - - - fold the overflow bin to the last bin
             if overflow:
                 fold_overflow(sig_hist)

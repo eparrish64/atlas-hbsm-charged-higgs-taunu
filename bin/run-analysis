@@ -40,6 +40,11 @@ def chunks(a, n):
     for i in xrange(0, len(a), n):
         yield a[i:i+n]
 
+###
+## Setting up friend file directory correctly
+ANA_ARGS.frienddir += ANA_ARGS.channel + "/"
+###
+
 # -------------------------------------------------------------
 # consts
 # -------------------------------------------------------------
@@ -72,13 +77,14 @@ else:
 if ANA_ARGS.categories:
     categories = filter(
         lambda c: c.name in ANA_ARGS.categories, 
-            config.categories+ config.ff_cr_regions+ config.clf_regions)#+config.met_trigeff_regions)
+            config.categories_func(partial_unblind=ANA_ARGS.partial_unblind)+ config.ff_cr_regions+ config.clf_regions)#+config.met_trigeff_regions)
 else:
-    categories = config.categories 
+    categories = config.categories_func(partial_unblind=ANA_ARGS.partial_unblind) 
 
 ## systematics
 all_systematics = config.systematics[:]  # <! common systematics
 all_systematics += analysis.qcd.systematics  # <! QCD fakes only
+all_systematics += analysis.ttbar.systematics  # <! TTBar reweighting only
 if ANA_ARGS.systematics:
     systematics = filter(
         lambda s: s.name in ANA_ARGS.systematics, all_systematics)
@@ -112,7 +118,7 @@ def main():
     elif ANA_ARGS.parallel:
         jobs = []
         for worker in ana_workers:
-            jobs.append(Job(dataset_hists, worker, write_hists=True, outdir=ANA_ARGS.outdir))
+            jobs.append(Job(dataset_hists, worker, write_hists=True, outdir=ANA_ARGS.outdir, frienddir=ANA_ARGS.frienddir))
 
         ostr = "**"*20 + "... Submitting %i jobs ..."% len(jobs) + "**"*20 
         log.info(ostr)
@@ -160,7 +166,8 @@ def main():
             "samples": ANA_ARGS.samples,
             "systematics":ANA_ARGS.systematics,
             "systs":ANA_ARGS.systs,
-            "categories":ANA_ARGS.categories,
+            # "categories":ANA_ARGS.categories,
+            "categories":categories,
             "fields":ANA_ARGS.fields,
         }
 
@@ -210,11 +217,13 @@ def main():
             #                                                         )
 
             for worker in ana_workers: 
-                submit_file.write("\nArguments = %s %s %s %s %s \nqueue\n" %(  worker.name,
+                submit_file.write("\nArguments = %s %s %s %s %s %s %s \nqueue\n" %(  worker.name,
                                                                             source_code_tarball, 
                                                                             os.path.join(__HERE, "process-dataset"), 
                                                                             ANA_ARGS.conf_file,
-                                                                            os.path.join(os.getcwd(), ANA_ARGS.outdir))
+                                                                            os.path.join(os.getcwd(), ANA_ARGS.outdir),
+                                                                            ANA_ARGS.frienddir,
+                                                                            int(ANA_ARGS.partial_unblind),)
                                                                     )
 
 

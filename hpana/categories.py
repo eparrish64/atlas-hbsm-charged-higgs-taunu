@@ -278,6 +278,37 @@ POSITIVE_MC_WEIGHT = ROOT.TCut("weight_mc>=0")
 
 #WIP! - - - - BDT scores for partial blinding 
 
+# Make that PNN scores, this is a simple <128 cut on a uint8 score for all mass points
+PARTIAL_UNBLIND_TAULEP = ROOT.TCut("1")
+taulep_partial_unblind_cut_dict = {
+  80: 52, #57, #45,
+  90: 54, #60,
+  100: 56, #60,
+  110: 71, #73,
+  120: 81, #85,
+  130: 77, #80,
+  140: 105, #106,
+}
+PARTIAL_UNBLIND_TAUJET = ROOT.TCut("1")
+taujet_partial_unblind_cut_dict = {
+  80: 66, #69, #45,
+  90: 73, #69,
+  100: 67, #65,
+  110: 86, #78,
+  120: 95, #88,
+  130: 84, #74,
+  140: 103, #98,
+  150: 120, #115,
+}
+for mass in [80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200, 225, 250, 275, 300, 350, 400, 500, 600, 700, 800, 900, 1000, 1200, 1400, 1600, 1800, 2000, 2500, 3000]:
+    cut = 128
+    if mass in taulep_partial_unblind_cut_dict:
+        cut = taulep_partial_unblind_cut_dict[mass]
+    PARTIAL_UNBLIND_TAULEP += ROOT.TCut("80to3000_{0} < {1}".format(mass, cut))
+    cut = 128
+    if mass in taujet_partial_unblind_cut_dict:
+        cut = taujet_partial_unblind_cut_dict[mass]
+    PARTIAL_UNBLIND_TAUJET += ROOT.TCut("80to3000_{0} < {1}".format(mass, cut))
 
 ##------------------------------------------------------------------------------------
 ## - - base class for selection categories
@@ -375,6 +406,24 @@ Category_SR_TAUJET = Category(
         MET150,
         MT50,
         NUM_BJETS1,
+    ],
+)
+
+Category_SR_TAUJET_PARTIAL = Category(
+    name="TAUJET_PARTIAL",
+    label="#tau-jet partially unblinded SR",
+    ff_index=1001,
+    cuts_list = [
+        CLEAN_EVT,
+        TAU_BASE,
+        LEP_VETO,
+        TAU_PT40,
+        NUM_JETS3,
+        JET_PT25,
+        MET150,
+        MT50,
+        NUM_BJETS1,
+        PARTIAL_UNBLIND_TAUJET,
     ],
 )
 
@@ -522,6 +571,59 @@ Category_SR_TAUMU = Category(
     ],
 )
 
+Category_SR_TAULEP_PARTIAL = Category(
+    name="SR_TAULEP_PARTIAL",
+    label="#tau-lep partially unblinded SR",
+    ff_index=2001,
+    cuts_list = [
+        CLEAN_EVT,
+        TAU_BASE,
+        LEP_BASE,
+        OS_TAU_LEP,
+        NUM_JETS1,
+        JET_PT25,
+        NUM_BJETS1,  
+        MET50,
+        PARTIAL_UNBLIND_TAULEP,
+    ],
+)
+
+Category_SR_TAUEL_PARTIAL = Category(
+    name="SR_TAUEL_PARTIAL",
+    label="#tau-e partially unblinded SR",
+    ff_index=2002,
+    cuts_list = [
+        CLEAN_EVT,
+        TAU_BASE,
+        EL_BASE,
+        OS_TAU_EL,
+        VETO_MU,
+        NUM_JETS1,
+        JET_PT25,
+        NUM_BJETS1,
+        MET50,
+        PARTIAL_UNBLIND_TAULEP,
+    ],
+)
+
+Category_SR_TAUMU_PARTIAL = Category(
+    name="SR_TAUMU_PARTIAL",
+    label="#tau-#mu partially unblinded SR",
+    ff_index=2003,
+    cuts_list = [
+        CLEAN_EVT,
+        TAU_BASE,
+        MU_BASE,
+        OS_TAU_MU,
+        VETO_EL,
+        NUM_JETS1,
+        JET_PT25,
+        NUM_BJETS1,
+        MET50,
+        PARTIAL_UNBLIND_TAULEP,
+    ],
+)
+
 Category_TAUEL_BVETO = Category(
     name="TAUEL_BVETO",
     label="#tau-e b-veto CR",
@@ -642,36 +744,6 @@ Category_TTBAR_TAULEP = Category(
     ],
 )
 
-
-##--------------------------------------------------------------
-# - - analysis selection regions (PLEASE KEEP THE ORDER)
-##--------------------------------------------------------------
-CATEGORIES = OrderedDict()
-CATEGORIES["taujet"] = [
-    Category_SR_TAUJET,
-    Category_TTBAR,
-    Category_BVETO,
-    Category_WJETS,
-    Category_TAUJET_PRESEL,
-    Category_BVETO_MT100,
-]
-
-CATEGORIES["taulep"] = [
-    Category_SR_TAULEP,
-    Category_SR_TAUEL,
-    Category_SR_TAUMU,
-    Category_TAUEL_BVETO,
-    Category_TAUMU_BVETO,
-    Category_SS_TAUEL,
-    Category_SS_TAUMU,
-    Category_DILEP_BTAG,
-    Category_ZEE,
-    Category_TAULEP_PRESEL,
-    Category_TTBAR_TAULEP,
-]
-
-
-    
 ##------------------------------------------------------------------------------------
 ## - - Fake Factors CR
 ##------------------------------------------------------------------------------------
@@ -978,3 +1050,34 @@ CUTFLOW = {
 }
 
 
+##--------------------------------------------------------------
+# - - analysis selection regions (PLEASE KEEP THE ORDER)
+##--------------------------------------------------------------
+CATEGORIES = OrderedDict()
+CATEGORIES["taujet"] = [
+    Category_SR_TAUJET,
+    Category_TTBAR,
+    Category_BVETO,
+    Category_WJETS,
+    Category_TAUJET_PRESEL,
+    Category_BVETO_MT100,
+    # Category_SR_TAUJET_PARTIAL,
+]
+
+CATEGORIES["taulep"] = [
+    Category_SR_TAULEP,
+    Category_SR_TAUEL,
+    Category_SR_TAUMU,
+    Category_TAUEL_BVETO,
+    Category_TAUMU_BVETO,
+    Category_SS_TAUEL,
+    Category_SS_TAUMU,
+    Category_DILEP_BTAG,
+    Category_ZEE,
+    Category_TAULEP_PRESEL,
+    Category_TTBAR_TAULEP,
+    MET_TRIG_EFF_CR_NOM,
+    # Category_SR_TAUEL_PARTIAL,
+    # Category_SR_TAUMU_PARTIAL,
+    # Category_SR_TAULEP_PARTIAL,
+]

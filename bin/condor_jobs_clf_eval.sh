@@ -32,7 +32,7 @@ source setup.sh || fail;
 
 echo "python ${2} ${4} ${5} ${1} ${6} || fail;"
 
-python ${2} ${4} ${5} ${1} ${6} || fail;
+python ${2} ${4} ${5} ${1} ${6} ${8} || fail;
 
 files="$JOBSCRATCH"/*.root
 if [ ${#files[@]} -eq 0 ]; then

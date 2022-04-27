@@ -44,6 +44,11 @@ the following
 - example via condor:  ``run-analysis --db-version v09 --data-streams 2015 2016 --samples DiBoson --categories SR_TAUJET --cluster --rs-manager CONDOR --outdir myOutDir``
 - If running via condor, will have to rerun after jobs are done with --merge-hists option
 
+#### merging histogram files
+After you have all of the histogram files, you need to merge them all into one file. This goes for histogram files from `run-analysis` as well as `evaluate-classifier`.
+- To merge interactively, add the `--merge-hists` argument.
+- To merge via a condor job, add the arguments `--merge-hists` and `--cluster`.
+- Make sure your `outdir` points to the directory with the histogram files and your `submitdir` points to a local directory not on `eos`.
 
 #### plotting 
 After you have the histograms ready you can produce various plots
@@ -71,5 +76,7 @@ After you have the database for the two channels ready (if the caches are alread
   ``evaluate-classifier --channel taulep --db-version v01 --data-streams 2015 2016 2017 2018 --train-data TRAIN_DATA_taulep_fullRun2.pkl --bin-scheme SINGLE --models myOutDirClf/trained_models/model*.pkl --direct --eval-nn --outdir myOutDirClfEval --categories SR_TAUEL SR_TAUMU DILEP_BTAG --cluster --rs-manager CONDOR``
 
 - If running via condor, will have to rerun after jobs are done with --merge-hists option
-- Evaluating with partial unblinding (PNN):
- ``evaluate-classifier --channel taulep --db-version v01 --data-streams 2015 2016 2017 2018 --train-data TRAIN_DATA_taulep_fullRun2.pkl --bin-scheme SINGLE --models myOutDirClf/trained_models/model*.pkl --direct --eval-nn --outdir myOutDirClfEval --categories SR_TAUEL SR_TAUMU DILEP_BTAG --cluster --rs-manager CONDOR --frienddir /eos/home-b/bburghgr/hptaunu/friendfiles-taulep/``
+
+### Partial Unblinding
+- Add the `--partial-unblind` option to either `run-analysis` or `evaluate-classifier`. This will add the unblinded signal regions to your list of categories to run over. 
+- If you want to use different friend files that contain the MVA scores for cutting, specify so with the `--frienddir` option.

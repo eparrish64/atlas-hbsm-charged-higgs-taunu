@@ -293,7 +293,7 @@ def get_trig_eff_parser(base_parser=None):
 
 ##--------------------------------------------------------------------------------------------------
 ## base parser
-def get_clf_parser():
+def get_clf_parser(base_parser=None):
 
     clf_parser = ArgumentParser("hpana clf parser")
 
@@ -410,6 +410,12 @@ def get_evalclf_parser(base_parser=None):
     else:
         evalclf_parser = base_parser
 
+    evalclf_parser.add_argument("--year", "-y", type=str, choices=("2017", "2018", "2016"), default="2018",
+                        help="analysis year, should match the db/samples/<CHANNEL>/YEAR samples you want to use")
+
+    evalclf_parser.add_argument("--conf-file", type=str, default="config.yml",
+                            help="main analysis configuration flags are writen to this file")
+    
     evalclf_parser.add_argument('--files', nargs='+', 
                         help='ntuples to create friend files for')
 

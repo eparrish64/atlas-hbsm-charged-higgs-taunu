@@ -125,7 +125,7 @@ TAU_ETA = {
     "mc16": ROOT.TCut("abs(tau_0_p4->Eta())<2.3 && !(abs(tau_0_p4->Eta())< 1.52 && abs(tau_0_p4->Eta())> 1.37)") ,
 }
 
-## tau truth lable
+## tau truth label
 TAU_IS_TRUE = ROOT.TCut("true_tau_0_isHadTau")
 TAU_IS_LEP = ROOT.TCut("true_tau_0_isMuon || true_tau_0_isEle")
 TAU_IS_EL = ROOT.TCut("true_tau_0_isEle")
@@ -145,6 +145,7 @@ TAU_IS_FAKE = ROOT.TCut("!(%s || %s)"%(TAU_IS_TRUE, TAU_IS_LEP))
 #ANTI_TAU = ROOT.TCut("tau_0_jet_rnn_score_trans > 0.01 && tau_0_jet_rnn_loose==0")
 #ANTI_TAU = ROOT.TCut("tau_0_jet_rnn_score_trans > 0.01 && tau_0_jet_rnn_medium==0")
 ANTI_TAU = ROOT.TCut("tau_0_jet_rnn_score_trans > 0.01 && tau_0_jet_rnn_loose==0")
+# ANTI_TAU = ROOT.TCut("tau_0_jet_rnn_loose==0")
 
 
 VETO_TAU = ROOT.TCut("n_taus==0")
@@ -487,7 +488,8 @@ Category_BVETO_MT100 = Category(
         JET_PT25,
         BVETO,
 	    MET150,
-        MT100,],
+        MT100,
+    ],
 )
 
 
@@ -514,7 +516,8 @@ Category_TAULEP_PRESEL = Category(
         LEP_BASE,
         OS_TAU_LEP,
         NUM_JETS1,
-        JET_PT25
+        JET_PT25,
+        MET50,
     ],
 )
 
@@ -720,6 +723,7 @@ Category_ZEE = Category(
         JET_PT25,
         BVETO,
         TAU_EL_MASS,
+        MET50,
     ],
 )
 

@@ -42,7 +42,10 @@ def chunks(a, n):
 
 ###
 ## Setting up friend file directory correctly
-ANA_ARGS.frienddir += ANA_ARGS.channel + "/"
+if ANA_ARGS.frienddir == "/eos/home-b/bburghgr/hptaunu/friendfiles-":
+    ANA_ARGS.frienddir += ANA_ARGS.channel + "/"
+else:
+    pass
 ###
 
 # -------------------------------------------------------------

@@ -93,7 +93,10 @@ def chunks(a, n):
 
 ###
 ## Setting up friend file directory correctly
-ECLF_ARGS.frienddir += ECLF_ARGS.channel + "/"
+if ECLF_ARGS.frienddir == "/eos/home-b/bburghgr/hptaunu/friendfiles-":
+    ECLF_ARGS.frienddir += ECLF_ARGS.channel + "/"
+else:
+    pass
 ###
 
 ##-----------------------------------------------

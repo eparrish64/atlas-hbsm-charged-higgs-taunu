@@ -658,6 +658,25 @@ Category_TAUMU_BVETO = Category(
     ],
 )
 
+Category_DILEP_BVETO = Category(
+    name="DILEP_BVETO",
+    label="dilep-bveto CR",
+    ff_index=2006,
+    tauid=None,
+    truth_tau=None,
+    cuts_list = [
+        CLEAN_EVT,
+        EL_BASE,
+        MU_BASE,
+        OS_MU_EL,
+        VETO_TAU,
+        NUM_JETS1,
+        JET_PT25,
+        BVETO,
+        MET50,
+    ],
+)
+
 Category_DILEP_BTAG = Category(
     name="DILEP_BTAG",
     label="dilep-btag CR",
@@ -1073,6 +1092,7 @@ CATEGORIES["taulep"] = [
     Category_SS_TAUEL,
     Category_SS_TAUMU,
     Category_DILEP_BTAG,
+    Category_DILEP_BVETO,
     Category_ZEE,
     Category_TAULEP_PRESEL,
     Category_TTBAR_TAULEP,

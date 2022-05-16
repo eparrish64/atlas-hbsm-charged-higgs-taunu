@@ -180,7 +180,7 @@ n_actual_int_cor = Variable(
 
 
 ##############################################
-# - - - - - - - - tau
+# - - - - - - - - 
 ##############################################
 tau_0_pt = Variable(
     "tau_0_pt", 
@@ -189,11 +189,16 @@ tau_0_pt = Variable(
     tformula={
         "mc16": "tau_0_p4->Pt()",
         "mc15": "0.001*tau_0_pt"},
-    binning=(200, 30, 1000),
+    binning=(18, 30, 300),
     plot_bins={
-        "COMMON": range(30, 300, 30) + range(300, 500, 50) + range(500,1050,50),
-        # "FF_CR_MULTIJET": [30, 35, 40, 45, 50, 60, 80, 100, 200, 3500],
-        # "FF_CR_WJETS": [30, 35, 40, 45, 50, 60, 80, 100, 200, 3500],
+        "COMMON": range(30,300, 15), # range(40, 100, 10) + range(100, 300, 20) + range(300, 500, 50),
+        "TTBAR": range(40, 400, 20),
+        "WJETS": range(40, 400, 20),
+        "BVETO": range(40, 400, 20),
+        "TAUJET_PRESEL": range(40, 400, 20),
+        "BVETO_MT100": range(40, 400, 20),
+        "TAUJET_PRESEL": range(40, 400, 20),
+        "SR_TAUJET": range(40, 400, 20),
     },
     unit='[GeV]',
     scale=1.)
@@ -253,7 +258,7 @@ tau_0_eta = Variable(
     tformula={
         "mc16": "tau_0_p4->Eta()",
         "mc15": "tau_0_eta"},
-    binning=(50, -2.5, 2.5))
+    binning=(26, -2.6, 2.6))
 
 tau_0_phi = Variable(
     "tau_0_phi" , 
@@ -302,8 +307,9 @@ tau_0_upsilon = Variable(
         "mc15": '(tau_0_n_tracks==1)*(2.0*tau_0_allTrk_pt/tau_0_pt-1) + -111*(tau_0_n_tracks!=1)',
         "mc16": "(-999*(tau_0_n_charged_tracks!=1)) + (tau_0_upsilon_pt_based*(tau_0_n_charged_tracks==1))",
     },
-    binning=(3000, -1.0, 2.0),
-    plot_bins=np.arange(-1, 1.2, 0.05))
+    binning=(22, -1.0, 1.2),
+    # plot_bins=(-1, 1.2, 0.05))
+    )
 
 tau_0_charged_tracks_0_pt = Variable(
     "tau_0_charged_tracks_0_pt",
@@ -329,7 +335,8 @@ tau_pol_cms = Variable(
         "mc16": "tau_0_allTrk_pt/tau_0_p4->Pt()",
     },
     binning=(3000, -1.0, 2.0),
-    plot_bins=np.arange(-1, 1.2, 0.05))
+    # plot_bins=np.arange(-1, 1.2, 0.05)
+    )
 
 tau_0_jet_rnn_score = Variable(
     "tau_0_jet_rnn_score",
@@ -444,7 +451,7 @@ mu_0_pt = Variable(
     "mu_0_pt", 
     title='#font[52]{p}_{T}(#mu_{0}) [GeV]',
     tformula="mu_0_p4->Pt()",
-    binning=(20, 20, 400),
+    binning=(18, 30, 300),
     unit='[GeV]',
     scale=1.)
 
@@ -478,7 +485,7 @@ mu_0_eta = Variable(
     tformula={
         "mc16":"mu_0_p4->Eta()",
         "mc15":"mu_0_p4->Eta()",},
-    binning=(50, -2.5, 2.5))
+    binning=(26, -2.6, 2.6))
     
 mu_0_phi = Variable(
     "mu_0_phi",
@@ -486,7 +493,7 @@ mu_0_phi = Variable(
     tformula={
         "mc16":"mu_0_p4->Phi()",
         "mc15":"mu_0_p4->Phi()",},
-    binning=(20, -3, 3)
+    binning=(64, -3.2, 3.2)
     )
 
 mu_0_E = Variable(
@@ -505,7 +512,7 @@ el_0_pt = Variable(
     "el_0_pt", 
     title='#font[52]{p}_{T}(e_{0}) [GeV]',
     tformula="el_0_p4->Pt()",
-    binning=(20, 20, 400),
+    binning=(18, 30, 300),
     unit='[GeV]',
     scale=1.
     )
@@ -514,7 +521,7 @@ el_0_px = Variable(
     "el_0_px", 
     title='#font[52]{p}_{x}(e_{0}) [GeV]',
     tformula="el_0_p4->Px()",
-    binning=(40, -1000, 1000),
+    binning=(18, 30, 300),
     unit='[GeV]',
     scale=1.
     )
@@ -523,7 +530,7 @@ el_0_py = Variable(
     "el_0_py", 
     title='#font[52]{p}_{y}(e_{0}) [GeV]',
     tformula="el_0_p4->Py()",
-    binning=(40, -1000, 1000),
+    binning=(18, 30, 300),
     unit='[GeV]',
     scale=1.
     )
@@ -532,7 +539,7 @@ el_0_pz = Variable(
     "el_0_pz", 
     title='#font[52]{p}_{z}(e_{0}) [GeV]',
     tformula="el_0_p4->Pz()",
-    binning=(40, -1000, 10000),
+    binning=(18, 30, 300),
     unit='[GeV]',
     scale=1.
     )
@@ -543,7 +550,7 @@ el_0_eta = Variable(
     tformula={
         "mc16":"el_0_p4->Eta()",
         "mc15":"el_0_p4->Eta()",},
-    binning=(50, -2.5, 2.5))
+    binning=(26, -2.6, 2.6))
     
 el_0_phi = Variable(
     "el_0_phi",
@@ -551,7 +558,7 @@ el_0_phi = Variable(
     tformula={
         "mc16":"el_0_p4->Phi()",
         "mc15":"el_0_p4->Phi()",},
-    binning=(20, -3, 3)
+    binning=(64, -3.2, 3.2)
     )
 
 el_0_E = Variable(
@@ -569,25 +576,34 @@ el_0_E = Variable(
 n_jets = Variable(
     "n_jets", 
     title='#font[52]{Number of Selected Jets}',
-    binning= (10, -.5, 9.5))
+    binning= (10, 0, 10))
 
 n_bjets = Variable(
     "n_bjets", 
     title='#font[52]{Number of Selected b-Jets}',
-    binning= (10, -.5, 9.5))
+    binning= (10, 0, 10))
 
 n_bjets_DL1r_FixedCutBEff_70 = Variable(
     "n_bjets_DL1r_FixedCutBEff_70", 
     title='#font[52]{Number of Selected b-Jets (FixedCutBEff 70)}',
-    binning= (10, -.5, 9.5))
+    binning= (10, 0, 10))
 
 bjet_0_pt =  Variable(
     "bjet_0_pt",
     title='#font[52]{p}_{T}lead b-jet [GeV]',
     latex=r"$b-jet_{p_T}$",
     tformula="bjet_0_p4->Pt()",
-    binning=(200, 25, 1000),
-    plot_bins=range(25, 1000, 25),
+    binning=(15, 25, 400),
+    plot_bins={
+        "COMMON": range(25, 400, 25), # range(40, 100, 10) + range(100, 300, 20) + range(300, 500, 50),
+        "TTBAR": range(25, 500, 25),
+        "WJETS": range(25, 500, 25),
+        "BVETO": range(25, 500, 25),
+        "TAUJET_PRESEL": range(25, 500, 25),
+        "BVETO_MT100": range(25, 500, 25),
+        "TAUJET_PRESEL": range(25, 500, 25),
+        "SR_TAUJET": range(25, 500, 25),
+    },
     scale=1.,
     unit='[GeV]')
 
@@ -858,8 +874,17 @@ met_et = Variable(
     tformula={
         "mc16":"met_p4->Et()",
         "mc15": "met_et"},
-    binning=(200, 0, 1000),
-    plot_bins=range(50, 300, 20) + range(300, 500, 50),
+    binning=(11, 25, 300),
+    plot_bins={
+        "COMMON": range(25, 300, 25), # range(40, 100, 10) + range(100, 300, 20) + range(300, 500, 50),
+        "TTBAR": range(150, 450, 25),
+        "WJETS": range(150, 450, 25),
+        "BVETO": range(150, 450, 25),
+        "TAUJET_PRESEL": range(150, 450, 25),
+        "BVETO_MT100": range(150, 450, 25),
+        "TAUJET_PRESEL": range(150, 450, 25),
+        "SR_TAUJET": range(150, 450, 25),
+    },
     scale=1.,
     unit='[GeV]')
 
@@ -887,7 +912,7 @@ met_ey = Variable(
 
 met_phi = Variable(
     "met_phi", 
-    title='#font[52]{E}^{miss}_{T} #phi',
+    title='#font[52]{E}^{miss}_{T} {#phi}',
     latex=r"$E^{miss}_{T} \phi$",
     tformula={
         "mc16":"met_p4->Phi()",
@@ -901,20 +926,29 @@ tau_0_met_dphi = Variable(
     "tau_0_met_dphi",
     title='#Delta#phi(#tau, E^{miss}_{T})',
     latex=r"$\Delta\phi(\tau, E^{miss}_{T})$",
-    binning=(800, -4, 4),
-    plot_bins=np.arange(-2, 2.4, .4))
+    tformula={
+        "mc16":"abs(acos(cos(met_p4->Phi() - {})))".format("tau_0_p4->Phi()"),
+        "mc15": "abs(acos(cos(met_phi-tau_0_eta)))",},
+    binning=(16, 0.0, math.pi),
+    # plot_bins=np.arange(-2, 2.4, .4)
+    )
 
 tau_0_met_mt = Variable(
     "tau_0_met_mt",
     title='m_{T}(#tau, E^{miss}_{T})[GeV]',
     latex=r"$m_{T}(\tau, E^{miss}_{T})$",
-    binning=(3000, 0, 3000), #<! fine binning needed for WS (rebin for plotting)
+    binning=(16, 0, 400), #<! fine binning needed for WS (rebin for plotting)
     plot_bins={
-        "COMMON": range(40, 100, 10) + range(100, 300, 20) + range(300, 500, 50),
-        "TTBAR": range(0, 100, 5),
-        "WJETS": range(0, 100, 5),
-        "FF_CR_MULTIJET": range(50, 200, 15) + range(200, 500, 50),
-        "FF_CR_WJETS": range(50, 200, 15) + range(200, 500, 50),
+        "COMMON": range(0,400, 25), # range(40, 100, 10) + range(100, 300, 20) + range(300, 500, 50),
+        "TTBAR": range(50, 500, 50),
+        "WJETS": range(50, 500, 50),
+        "BVETO": range(50, 500, 50),
+        "TAUJET_PRESEL": range(50, 500, 50),
+        "BVETO_MT100": range(50, 500, 50),
+        "TAUJET_PRESEL": range(50, 500, 50),
+        "SR_TAUJET": range(50, 500, 50),
+        # "FF_CR_MULTIJET": range(50, 200, 15) + range(200, 500, 50),
+        # "FF_CR_WJETS": range(50, 200, 15) + range(200, 500, 50),
     },        
     scale=1.,
     unit='[GeV]')
@@ -1034,10 +1068,10 @@ bjet_0_met_dphi = Variable(
     title='#font[52]{#Delta#phi}(b-jet ,E^{miss}_{T})',
     latex=r"$\Delta\phi(b-jet ,E^{miss}_{T})$",
     tformula={
-        "mc16":"acos(cos(met_p4->Phi() - {}))".format("bjet_0_p4->Phi()"),
-        "mc15": "acos(cos(met_phi-bjet_0_eta))",},
-    binning=(100, .0, 4),
-    plot_bins=np.arange(0, 4, 0.5),
+        "mc16":"abs(acos(cos(met_p4->Phi() - {})))".format("bjet_0_p4->Phi()"),
+        "mc15": "abs(acos(cos(met_phi-bjet_0_eta)))",},
+    binning=(16, .0, math.pi),
+    # plot_bins=np.arange(0, 4, 0.5),
     )
 
 bjet_0_tau_0_dr = Variable(
@@ -1048,7 +1082,7 @@ bjet_0_tau_0_dr = Variable(
         "mc16": "sqrt(acos(cos(tau_0_p4->Phi() - {0}))**2 + (tau_0_p4->Phi() - {1})**2)".format(
             "bjet_0_p4->Phi()", "bjet_0_p4->Eta()"),
         "mc15": "sqrt(acos(cos(tau_0_phi-bjet_0_eta))**2 + (tau_0_eta-bjet_0_eta)**2)",},
-    binning=(20, 0, 6.4))
+    binning=(25, 0, 5))
 
 
 ##############################################
@@ -1059,7 +1093,7 @@ lep_0_pt = Variable(
     title='#font[52]{p}_{T}(l_{0}) [GeV]',
     latex=r"$\ell_{p_T}$",
     tformula="mu_0_p4->Pt()+el_0_p4->Pt()",
-    binning=(20, 20, 1000),
+    binning=(18, 30, 300),
     unit='[GeV]',
     scale=1.)
 
@@ -1068,7 +1102,7 @@ lep_0_px = Variable(
     title='#font[52]{p}_{x}(l_{0}) [GeV]',
     latex=r"$\ell_{p_x}$",
     tformula="mu_0_p4->Px()+el_0_p4->Px()",
-    binning=(40, -1000, 1000),
+    binning=(18, 30, 300),
     unit='[GeV]',
     scale=1.)
 
@@ -1077,7 +1111,7 @@ lep_0_py = Variable(
     title='#font[52]{p}_{y}(l_{0}) [GeV]',
     latex=r"$\ell_{p_y}$",
     tformula="mu_0_p4->Py()+el_0_p4->Py()",
-    binning=(40, -1000, 1000),
+    binning=(18, 30, 300),
     unit='[GeV]',
     scale=1.)
 
@@ -1086,7 +1120,7 @@ lep_0_pz = Variable(
     title='#font[52]{p}_{z}(l_{0}) [GeV]',
     latex=r"$\ell_{p_z}$",
     tformula="mu_0_p4->Pz()+el_0_p4->Pz()",
-    binning=(40, -1000, 1000),
+    binning=(18, 30, 300),
     unit='[GeV]',
     scale=1.)
 
@@ -1097,25 +1131,27 @@ lep_0_eta = Variable(
     tformula={
         "mc16": "mu_0_p4->Eta()+el_0_p4->Eta()",
         "mc15": "mu_0_p4->Eta()+el_0_p4->Eta()"},
-    binning=(50, -2.5, 2.5),
-    plot_bins=np.arange(-2.5, 2.5, 0.1))
+    binning=(26, -2.6, 2.6),
+    # plot_bins=np.arange(-2.6, 2.6, 0.2)
+    )
 
 lep_0_phi = Variable(
     "lep_0_phi" , 
-    title='#font[52]#phi(l_{0})',
+    title='#font[52]{#phi}(l_{0})',
     latex=r"$\ell_{\phi}$",
     tformula={
         "mc16": "mu_0_p4->Phi()+el_0_p4->Phi()",
         "mc15": "mu_0_p4->Phi()+el_0_p4->Phi()"},
-    binning=(20, -3.2, 3.2),
-    plot_bins=np.arange(-2.5, 2.5, 0.1))
+    binning=(64, -3.2, 3.2),
+    # plot_bins=np.arange(-2.5, 2.5, 0.1)
+    )
 
 lep_0_E = Variable(
     "lep_0_E", 
     title='#font[52]{E}(l_{0}) [GeV]',
     latex=r"$\ell_{E}$",
     tformula="mu_0_p4->E()+el_0_p4-E()",
-    binning=(20, 0, 1000),
+    binning=(18, 30, 300),
     unit='[GeV]',
     scale=1.)
 
@@ -1124,8 +1160,8 @@ tau_0_lep_0_mass = Variable(
     title='#font[52]{m}_{#tau l} [GeV]',
     latex=r"$m_{ll}$",
     tformula="sqrt((tau_0_p4->E()+el_0_p4->E())**2 - ((tau_0_p4->Px()+el_0_p4->Px())**2 + (tau_0_p4->Py()+el_0_p4->Py())**2 + (tau_0_p4->Pz()+el_0_p4->Pz())**2))",
-    binning=(120, 40, 160),
-    plot_bins=range(60, 160, 2),
+    binning=(50, 40, 140),
+    plot_bins=range(40, 140, 2),
     unit='[GeV]',
     scale=1.)
 
@@ -1146,35 +1182,35 @@ mu_0_met_dphi = Variable(
     "mu_0_met_dphi",
     title='#Delta#phi(#mu, E^{miss}_{T})',
     latex=r"$\Delta\phi(\mu, E^{miss}_{T})$",
-    tformula="acos(cos(met_p4->Phi() - mu_0_p4->Phi()))",
-    binning=(800, -4, 4),
-    plot_bins=np.arange(0, 3.2, 0.2)
+    tformula="abs(acos(cos(met_p4->Phi() - mu_0_p4->Phi())))",
+    binning=(16, 0.0, math.pi),
+    # plot_bins=np.arange(0, 3.2, 0.2)
     )
 
 el_0_met_dphi = Variable(
-    "mu_0_met_dphi",
-    title='#Delta#phi(#tau, E^{miss}_{T})',
+    "el_0_met_dphi",
+    title='#Delta#phi(e, E^{miss}_{T})',
     latex=r"$\Delta\phi(e, E^{miss}_{T})$",
-    tformula="acos(cos(met_p4->Phi() - el_0_p4->Phi()))",
-    binning=(800, -4, 4),
-    plot_bins=np.arange(0, 3.2, 0.2)
+    tformula="abs(acos(cos(met_p4->Phi() - el_0_p4->Phi())))",
+    binning=(16, 0.0, math.pi),
+    # plot_bins=np.arange(0, 3.2, 0.2)
     )
 
 lep_0_met_dphi = Variable(
     "lep_0_met_dphi",
     title='#Delta#phi(l, E^{miss}_{T})',
     latex=r"$\Delta\phi(\ell, E^{miss}_{T})$",
-    tformula="acos(cos(met_p4->Phi() - el_0_p4->Phi() - mu_0_p4->Phi()))",
-    binning=(800, -4, 4),
-    plot_bins=np.arange(0, 3.2, 0.2)
+    tformula="abs(acos(cos(met_p4->Phi() - el_0_p4->Phi() - mu_0_p4->Phi())))",
+    binning=(16, 0.0, math.pi),
+    # plot_bins=np.arange(0, 3.2, 0.2)
     )
 
 lep_0_met_mt = Variable(
     "lep_0_met_mt",
     title='m_{T}(l, E^{miss}_{T})[GeV]',
     latex=r"$m_{T}(\ell, E^{miss}_{T}$)",
-    binning=(200, 0, 1000),
-    plot_bins=range(60, 160, 5),
+    binning=(16, 0.0, 400),
+    plot_bins=range(0, 400, 25),
     tformula="sqrt(2 * (el_0_p4->Pt() + mu_0_p4->Pt()) * met_p4->Et() * (1 - cos(met_p4->Phi() - el_0_p4->Phi() - mu_0_p4->Phi() ) ) )", 
     unit='[GeV]')
 
@@ -1187,7 +1223,25 @@ bjet_0_lep_0_dr = Variable(
     latex=r"$\Delta\phi(\ell, b-jet)$",
     tformula="sqrt(acos(cos({0} - el_0_p4->Phi() - mu_0_p4->Phi()))**2 + ({1} - el_0_p4->Eta() - mu_0_p4->Eta())**2)".format(
         "bjet_0_p4->Phi()", "bjet_0_p4->Eta()"),
-    binning=(60, 0, 6.)
+    binning=(25, 0, 5)
+    )
+
+bjet_0_el_0_dr = Variable(
+    "bjet_0_el_0_dr",
+    title='#Delta#phi(e, b-jet)',
+    latex=r"$\Delta\phi(e, b-jet)$",
+    tformula="sqrt(acos(cos({0} - el_0_p4->Phi() ))**2 + ({1} - el_0_p4->Eta() )**2)".format(
+        "bjet_0_p4->Phi()", "bjet_0_p4->Eta()"),
+    binning=(25, 0, 5)
+    )
+
+bjet_0_mu_0_dr = Variable(
+    "bjet_0_mu_0_dr",
+    title='#Delta#phi(#mu, b-jet)',
+    latex=r"$\Delta\phi(\mu, b-jet)$",
+    tformula="sqrt(acos(cos({0} - mu_0_p4->Phi() ))**2 + ({1} - mu_0_p4->Eta() )**2)".format(
+        "bjet_0_p4->Phi()", "bjet_0_p4->Eta()"),
+    binning=(25, 0, 5)
     )
 
 ##############################################
@@ -1207,7 +1261,7 @@ Pileup_Weight = Variable(
     title='pileup weight',
     tformula="NOMINAL_pileup_combined_weight",
     binning=(1000, -5, 5),
-    plot_bins=np.arange(-5,5,0.1)
+    # plot_bins=np.arange(-5,5,0.1)
     )
 
 ##############################################
@@ -1218,7 +1272,7 @@ mc_Weight = Variable(
     title='mc weight',
     tformula="weight_mc",
     binning=(1000, -2000, 2000),
-    plot_bins=np.arange(-5,5,0.1)
+    # plot_bins=np.arange(-5,5,0.1)
     )
 
 ##-----------------------------------------------------------------
@@ -1316,6 +1370,7 @@ VARIABLES_TAULEP = [
     el_0_eta,
     el_0_phi,
     # el_0_E,
+    el_0_met_dphi,
 
     mu_0_pt,
     # mu_0_px,
@@ -1324,6 +1379,7 @@ VARIABLES_TAULEP = [
     mu_0_eta,
     mu_0_phi,
     # mu_0_E,
+    mu_0_met_dphi,
 
     met_et,
     # met_ex,
@@ -1361,6 +1417,8 @@ VARIABLES_TAULEP = [
     bjet_0_met_dphi,
     bjet_0_tau_0_dr,
     bjet_0_lep_0_dr,
+    bjet_0_el_0_dr,
+    bjet_0_mu_0_dr,
 
     effm_taulep,
 

@@ -410,7 +410,7 @@ Category_SR_TAUJET = Category(
 )
 
 Category_SR_TAUJET_PARTIAL = Category(
-    name="TAUJET_PARTIAL",
+    name="SR_TAUJET_PARTIAL",
     label="#tau-jet partially unblinded SR",
     ff_index=1001,
     cuts_list = [
@@ -487,7 +487,7 @@ Category_BVETO_MT100 = Category(
         NUM_JETS3,
         JET_PT25,
         BVETO,
-	    MET150,
+        MET150,
         MT100,
     ],
 )
@@ -1007,7 +1007,6 @@ MET_TRIG_EFF_CRs = [
     #    MET_TRIG_EFF_CR_MUID_MED,
     #    MET_TRIG_EFF_CR_MUID_TIGHT
 ]
-
 
 
 ##------------------------------------------------------------------------------------

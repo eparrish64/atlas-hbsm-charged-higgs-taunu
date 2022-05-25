@@ -884,6 +884,7 @@ met_et = Variable(
         "BVETO_MT100": range(150, 450, 25),
         "TAUJET_PRESEL": range(150, 450, 25),
         "SR_TAUJET": range(150, 450, 25),
+        "SR_TAUJET_PARTIAL": range(150, 450, 25),
     },
     scale=1.,
     unit='[GeV]')
@@ -1127,7 +1128,7 @@ lep_0_pz = Variable(
 lep_0_eta = Variable(
     "lep_0_eta" , 
     title='#font[52]{#eta}(l_{0})',
-    latex=r"$\ell_{\eta}$",
+    latex=r"$l_{\eta}$",
     tformula={
         "mc16": "mu_0_p4->Eta()+el_0_p4->Eta()",
         "mc15": "mu_0_p4->Eta()+el_0_p4->Eta()"},
@@ -1138,7 +1139,7 @@ lep_0_eta = Variable(
 lep_0_phi = Variable(
     "lep_0_phi" , 
     title='#font[52]{#phi}(l_{0})',
-    latex=r"$\ell_{\phi}$",
+    latex=r"$l_{\phi}$",
     tformula={
         "mc16": "mu_0_p4->Phi()+el_0_p4->Phi()",
         "mc15": "mu_0_p4->Phi()+el_0_p4->Phi()"},

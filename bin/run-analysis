@@ -306,6 +306,7 @@ def draw_plots(hists_file, fields, categories):
         "bin_optimization":False,
         "scale_sig_to_bkg_sum":True,
         "output_formats":ANA_ARGS.fmt,
+        "overflow":True,
         # "ratio_range": (0.5, 1.5),
         # "blind_range":(0.5, 1),
     }
@@ -333,7 +334,7 @@ def draw_plots(hists_file, fields, categories):
                 jparams["blind_range"] = ()
 
             jobs += [Job(draw, var, cat, **jparams)]
-    run_pool(jobs, n_jobs=-1)
+    run_pool(jobs, n_jobs=1)
 
 # -------------------------------------------------------------
 # run

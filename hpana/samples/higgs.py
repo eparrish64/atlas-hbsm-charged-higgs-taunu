@@ -171,7 +171,7 @@ class Higgs(MC, Signal):
             hist_templates=None,
             **kwargs):
 
-        ## signals only in signla regions (or classifier training region)
+        ## signals only in signal regions (or classifier training region)
         # categories = filter(lambda c: "SR_" in c.name or "CLF" in c.name, categories)
         ## Now we can see signal in the control regions to look at signal contamination
 

@@ -27,10 +27,10 @@ __all__= [
 ]
 
 """
-* Note about locks: we dont need this in cases where ROOT has a
+* Note about locks: we don't need this in cases where ROOT has a
 * thread-specific variable, so gDirectory and gPad are safe.  Not so for
 * gStyle, IsBatch and TH1.AddDirectory, so we use a lock in these
-* cases. To prevent out-of-order lock grabbing, just use one reentrant
+* cases. To prevent out-of-order lock grabbing, just use one re-entrant
 * lock for all of them.
 """
 LOCK = threading.RLock()
@@ -349,7 +349,7 @@ def fold_overflow(hist):
     first_bin = hist.GetBinContent(0) + hist.GetBinContent(1)  
     hist.SetBinContent(1, first_bin)
     last_bin = hist.GetBinContent(nbins+1) + hist.GetBinContent(nbins)
-    hist.SetBinContent(nbins-1, last_bin)
+    hist.SetBinContent(nbins, last_bin)
     return 
 
 ##----------------------------------------------------------------------------
@@ -408,8 +408,8 @@ def uncertainty_band(hists_dict, overflow=True):
     
     Returns
     -------
-    total_backgrounds, high_band, low_band: ROO.TH1F, 
-    corrsponding to total nom, low band and high band error
+    total_backgrounds, high_band, low_band: ROOT.TH1F, 
+    corresponding to total nom, low band and high band error
     """
 
     ## explicit copy and don't touch the original hists
@@ -482,6 +482,7 @@ def uncertainty_band(hists_dict, overflow=True):
                     log.warning(
                         "Content of bin %i is %r while a float is expected; check %s histogram; skipping this bin!"%(i, bnom, total_nom.GetName()))
                     continue
+
                 bvar = bnom - hists_dict["TOTAL"][syst].GetBinContent(i)
                 if math.isnan(bvar) or math.isinf(bvar):
                     log.warning(
@@ -491,7 +492,8 @@ def uncertainty_band(hists_dict, overflow=True):
                 ## spot suspiciously large variations  
                 var_pcnt = (abs(bvar)/bnom) * 100
                 if  var_pcnt> 200 and bnom > 10:
-                    log.warning("Suspiciously large variation for %s: %i%%; check %s histogram; skipping!"%(syst, var_pcnt, hists_dict["TOTAL"][syst].GetName()))
+                    log.warning("Suspiciously large variation for %s: %i%%; check %s histogram; Difference: %s ; skipping!"%(syst, var_pcnt, hists_dict["TOTAL"][syst].GetTitle(), bvar))
+                    # log.warning("%s: %i%%; Difference: %s"%(syst, var_pcnt, bvar))
                     continue
 
                 if bvar > 0:

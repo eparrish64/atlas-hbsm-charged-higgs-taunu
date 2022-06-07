@@ -12,6 +12,7 @@ if __name__=="__main__":
         from hpana.dataset_hists import dataset_hists
         from hpana.config import Configuration
         from hpana.analysis import Analysis
+        from hpana import log 
 
         jobname = sys.argv[2]
 
@@ -58,7 +59,14 @@ if __name__=="__main__":
         else:
             systematics = config.systematics[:1] #<! NOMINAL
 
-        samples = filter(lambda s: s.name in jobname.split(".")[:1], analysis.samples)  #<! DON"T MESS AROUND WITH JOB NAME
+        # samples = filter(lambda s: s.name in jobname.split(".")[:1], analysis.samples)  #<! DON"T MESS AROUND WITH JOB NAME
+
+        ## This allows multiple samples to be run over
+        samplenames = []
+        for job in jobname.split(","):
+            samplenames.append(job.split(".")[0])
+
+        samples = filter(lambda s: s.name in samplenames, analysis.samples)
 
         ## get the worker
         analysis.setWorkers(samples=samples, fields=fields, categories=categories, systematics=systematics)
@@ -71,14 +79,21 @@ if __name__=="__main__":
             workers = filter(lambda w: w.name==wrk, ana_workers)
             
             if len(workers) < 1:
-                raise RuntimeError("no worker with name %s is assigned for the job"%wrk)
+                # raise RuntimeError("no worker with name %s is assigned for the job"%wrk)
+                log.warning("no worker with name %s is assigned for the job"%wrk)
+                continue
 
             if len(workers) > 1:
-                raise RuntimeError("%i workers with the same name %s are assigned the job"%(len(workers), wrk))        
+                # raise RuntimeError("%i workers with the same name %s are assigned the job"%(len(workers), wrk))        
+                log.warning("%i workers with the same name %s are assigned the job"%(len(workers), wrk))
 
             worker = workers[0]
 
             # - - get the hists 
-            dataset_hists(worker, write_hists=True, outdir="./", frienddir=sys.argv[3])
+            try:
+                dataset_hists(worker, write_hists=True, outdir="./", frienddir=sys.argv[3])
+            except:
+                continue
+
         end_time = time.time()
         print "Execution Time:\t %0.2f"%(end_time - start_time)

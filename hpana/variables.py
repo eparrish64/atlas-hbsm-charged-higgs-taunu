@@ -402,7 +402,7 @@ effm_taulep = Variable(
 tau_0_allTrk_eta = Variable(
     "tau_0_allTrk_eta",
     title="tau_0_allTrk_eta",
-    binning=(50, -2.5, 2.5),    
+    binning=(26, -2.6, 2.6),    
     )
 
 tau_0_allTrk_n = Variable(
@@ -450,7 +450,7 @@ tau_0_jet_width_trks_dr04 = Variable(
 tau_0_leadTrk_eta  = Variable(
     "tau_0_leadTrk_eta",
     title="tau_0_leadTrk_eta",
-    binning=(50, -2.5, 2.5),    
+    binning=(26, -2.6, 2.6),    
 )
 
 tau_0_leadTrk_phi = Variable(
@@ -666,7 +666,7 @@ bjet_0_eta = Variable(
     tformula={
         "mc16":"bjet_0_p4->Eta()",
         "mc15":"bjet_0_eta",},
-    binning=(50, -2.5, 2.5))
+    binning=(26, -2.6, 2.6))
 
 bjet_0_phi = Variable(
     "bjet_0_phi",
@@ -734,7 +734,7 @@ bjet_1_eta = Variable(
     tformula={
         "mc16":"bjet_1_p4->Eta()",
         "mc15":"bjet_1_eta",},
-    binning=(50, -2.5, 2.5))
+    binning=(26, -2.6, 2.6))
 
 bjet_1_phi = Variable(
     "bjet_1_phi",
@@ -806,7 +806,7 @@ jet_0_eta = Variable(
     tformula={
         "mc16":"jet_0_p4->Eta()",
         "mc15":"jet_0_eta",},
-    binning=(50, -2.5, 2.5))
+    binning=(26, -2.6, 2.6))
 
 jet_0_phi = Variable(
     "jet_0_phi",
@@ -846,7 +846,7 @@ jet_1_eta = Variable(
     tformula={
         "mc16":"jet_1_p4->Eta()",
         "mc15":"jet_1_eta",},
-    binning=(50, -2.5, 2.5))
+    binning=(26, -2.6, 2.6))
 
 jet_1_phi = Variable(
     "jet_1_phi",
@@ -874,7 +874,7 @@ jet_2_eta = Variable(
     tformula={
         "mc16":"jet_2_p4->Eta()",
         "mc15":"jet_2_eta",},
-    binning=(50, -2.5, 2.5))
+    binning=(26, -2.6, 2.6))
 
 jet_2_phi = Variable(
     "jet_2_phi",
@@ -978,8 +978,8 @@ tau_0_met_mt = Variable(
     binning=(16, 0, 400),
     plot_bins={
         "COMMON": range(0,400, 25), # range(40, 100, 10) + range(100, 300, 20) + range(300, 500, 50),
-        "TTBAR": range(0, 100, 25),
-        "WJETS": range(0, 100, 25),
+        "TTBAR": range(0, 125, 25),
+        "WJETS": range(0, 125, 25),
         "BVETO": range(50, 400, 25),
         "BVETO_MT100": range(100, 400, 25),
         "SR_TAUJET": range(50, 400, 25),

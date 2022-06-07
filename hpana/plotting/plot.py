@@ -345,11 +345,20 @@ def save_canvas(canvas, directory, name, formats=None):
 ##----------------------------------------------------------------------------
 ##
 def fold_overflow(hist):
-    nbins = hist.GetNbinsX()
-    first_bin = hist.GetBinContent(0) + hist.GetBinContent(1)  
-    hist.SetBinContent(1, first_bin)
-    last_bin = hist.GetBinContent(nbins+1) + hist.GetBinContent(nbins)
-    hist.SetBinContent(nbins, last_bin)
+    if "upsilon" in hist.GetTitle().lower():
+        return
+    if "nom" not in hist.GetTitle().lower():
+        nbins = hist.GetNbinsX()
+        first_bin = math.sqrt(hist.GetBinContent(0)**2 + hist.GetBinContent(1)**2)
+        hist.SetBinContent(1, first_bin)
+        last_bin = math.sqrt(hist.GetBinContent(nbins+1)**2 + hist.GetBinContent(nbins)**2)
+        hist.SetBinContent(nbins, last_bin)
+    else:   
+        nbins = hist.GetNbinsX()
+        first_bin = hist.GetBinContent(0) + hist.GetBinContent(1)  
+        hist.SetBinContent(1, first_bin)
+        last_bin = hist.GetBinContent(nbins+1) + hist.GetBinContent(nbins)
+        hist.SetBinContent(nbins, last_bin)
     return 
 
 ##----------------------------------------------------------------------------
@@ -437,8 +446,12 @@ def uncertainty_band(hists_dict, overflow=True):
         total_syst.Reset()
         for s in samples:
             if syst in hists_dict[s]:
+                # if overflow:
+                #     fold_overflow(hists_dict[s][syst])
                 total_syst.Add(hists_dict[s][syst])
             else:
+                # if overflow:
+                #     fold_overflow(hists_dict[s]["NOMINAL"])
                 total_syst.Add(hists_dict[s]["NOMINAL"]) 
 
         if not "TOTAL" in hists_dict:
@@ -450,7 +463,7 @@ def uncertainty_band(hists_dict, overflow=True):
     var_low = {}
 
     ## include stat errors 
-    for i in range(1, total_nom.GetNbinsX()+1):
+    for i in range(1, total_nom.GetNbinsX()+2):
         bkey = "BIN%i"%i
         if not bkey in var_high:
             var_high[bkey] = []
@@ -473,6 +486,9 @@ def uncertainty_band(hists_dict, overflow=True):
                 bkey = "BIN%i"%i
             
                 ## get bin variation 
+                # if overflow:
+                # #     fold_overflow(total_nom)
+                #     fold_overflow(hists_dict["TOTAL"][syst])
                 bnom = total_nom.GetBinContent(i)
 
                 ## be extra cautious 
@@ -484,6 +500,9 @@ def uncertainty_band(hists_dict, overflow=True):
                     continue
 
                 bvar = bnom - hists_dict["TOTAL"][syst].GetBinContent(i)
+                # if overflow and i==total_nom.GetNbinsX():
+                #     bvar = math.sqrt(bvar**2 + (bnom - hists_dict["TOTAL"][syst].GetBinContent(i+1))**2 )
+
                 if math.isnan(bvar) or math.isinf(bvar):
                     log.warning(
                         "Content of bin %i is %r while a float is expected; check %s histogram; skipping this bin!"%(i, bvar, hists_dict["TOTAL"][syst].GetName()))
@@ -494,7 +513,7 @@ def uncertainty_band(hists_dict, overflow=True):
                 if  var_pcnt> 200 and bnom > 10:
                     log.warning("Suspiciously large variation for %s: %i%%; check %s histogram; Difference: %s ; skipping!"%(syst, var_pcnt, hists_dict["TOTAL"][syst].GetTitle(), bvar))
                     # log.warning("%s: %i%%; Difference: %s"%(syst, var_pcnt, bvar))
-                    continue
+                    # continue
 
                 if bvar > 0:
                     var_low[bkey] += [bvar]
@@ -507,8 +526,25 @@ def uncertainty_band(hists_dict, overflow=True):
     low_band = high_band.Clone()
     for i in range(1, high_band.GetNbinsX()+1):
         bkey="BIN%i"%i
+        # if overflow and i==high_band.GetNbinsX():
+        #     bkey_overflow = "BIN%i"%(i+1)
+
+        #     sum_high = math.sqrt(sum([v**2 for v in var_high[bkey]])) 
+        #     sum_high_overflow = math.sqrt(sum([v**2 for v in var_high[bkey_overflow]]))
+        #     print "HIGH last bin: %s, overflow: %s" %(sum_high, sum_high_overflow)
+        #     sum_high = math.sqrt(sum_high**2 + sum_high_overflow**2)
+
+        #     sum_low = math.sqrt(sum([v**2 for v in var_low[bkey]]))
+        #     sum_low_overflow = math.sqrt(sum([v**2 for v in var_low[bkey_overflow]]))
+        #     print "LOW last bin: %s, overflow: %s" %(sum_low, sum_low_overflow)
+        #     sum_low = math.sqrt(sum_low**2 + sum_low_overflow**2)
+
+        #     print sum_high, sum_low
+        # else:    
         sum_high = math.sqrt(sum([v**2 for v in var_high[bkey]]))
         sum_low = math.sqrt(sum([v**2 for v in var_low[bkey]]))
+
+        print bkey, sum_high, sum_low
 
         high_band.SetBinContent(i, sum_high)
         low_band.SetBinContent(i, sum_low)

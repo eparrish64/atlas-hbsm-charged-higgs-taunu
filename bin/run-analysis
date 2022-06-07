@@ -154,7 +154,8 @@ def main():
         ## setup submission dir
         os.system("mkdir -p {0}/jobs  {0}/logs {0}/hists {0}/logs/log {0}/logs/err {0}/logs/out".format(ANA_ARGS.submitdir))
         if not os.path.isdir(ANA_ARGS.outdir):
-            os.system("mkdir -p {0}".format(ANA_ARGS.outdir))
+            os.system("mkdir -p {0}/hists/".format(ANA_ARGS.outdir))
+
 
         ## Analysis Configuration parameters to be copied to the worker nodes
         conf_params = {
@@ -196,8 +197,6 @@ def main():
             submitfile_name = "%s/%s.sh" %(ANA_ARGS.submitdir, "submitAllJobs")
             submit_file = os.open(submitfile_name, os.O_CREAT | os.O_WRONLY, 0755)
 
-            log.info("************** creating %i jobs for HTCondor submission ************" % len(ana_workers))
-            log.info("**************************************************************")
 
             submit_file_name = "%s/submitAllJobs.sh" % (ANA_ARGS.submitdir)
             submit_file = open(submit_file_name, "w")
@@ -209,25 +208,32 @@ def main():
                              memory="1GB",
                          )
                          )
-            # split_workers = list(chunks(ana_workers, 50))
+            split_workers = list(chunks(ana_workers, 50))
 
-            # for workers in split_workers:
-            #     submit_file.write("\nArguments = %s %s %s %s %s \nqueue\n" %(  ",".join([m.name for m in workers]),
-            #                                                                 source_code_tarball, 
-            #                                                                 os.path.join(__HERE, "process-dataset"), 
-            #                                                                 ANA_ARGS.conf_file,
-            #                                                                 os.path.join(os.getcwd(), ANA_ARGS.outdir))
-            #                                                         )
 
-            for worker in ana_workers: 
-                submit_file.write("\nArguments = %s %s %s %s %s %s %s \nqueue\n" %(  worker.name,
+            log.info("************** creating %i jobs for HTCondor submission ************" % len(split_workers))
+            log.info("**************************************************************")
+
+            for workers in split_workers:
+                submit_file.write("\nArguments = %s %s %s %s %s %s %s \nqueue\n" %(  ",".join([m.name for m in workers]),
                                                                             source_code_tarball, 
                                                                             os.path.join(__HERE, "process-dataset"), 
                                                                             ANA_ARGS.conf_file,
                                                                             os.path.join(os.getcwd(), ANA_ARGS.outdir),
+
                                                                             ANA_ARGS.frienddir,
                                                                             int(ANA_ARGS.partial_unblind),)
                                                                     )
+
+            # for worker in ana_workers: 
+            #     submit_file.write("\nArguments = %s %s %s %s %s %s %s \nqueue\n" %(  worker.name,
+            #                                                                 source_code_tarball, 
+            #                                                                 os.path.join(__HERE, "process-dataset"), 
+            #                                                                 ANA_ARGS.conf_file,
+            #                                                                 os.path.join(os.getcwd(), ANA_ARGS.outdir),
+            #                                                                 ANA_ARGS.frienddir,
+            #                                                                 int(ANA_ARGS.partial_unblind),)
+            #                                                         )
 
 
             submit_file.close()
@@ -294,10 +300,12 @@ def draw_plots(hists_file, fields, categories):
         "backgrounds":analysis.backgrounds,
         "data":analysis.data,
         # "blind": False,
-        "signals":analysis.get_signals(masses=[80, 160, 400, 3000]),        
+        # "signals":analysis.get_signals(masses=[80, 160, 400, 3000]),       
+        "signals":analysis.get_signals(masses=[80, 400]),       
         "signal_scale":1,
         "systematics":ANA_ARGS.systs,
-        "output_dir":ANA_ARGS.outdir+"/plots/",
+        "output_dir":ANA_ARGS.outdir+"../plots/",
+        # "output_dir":ANA_ARGS.outdir + ANA_ARGS.outdir.split("/")[-2] +,
         "logy":ANA_ARGS.logy,
         "logx":False,
         "show_ratio":True,

@@ -89,7 +89,7 @@ def draw(var, category,
     if hists_file:
         hfile = ROOT.TFile(hists_file, "READ")
 
-    # - - - - - - - - insantiate the legend
+    # - - - - - - - - instantiate the legend
     legend = ROOT.TLegend(0.6, 0.75, 0.92, 0.92)
     legend.SetNColumns(2)
     legend.SetBorderSize(0)
@@ -156,6 +156,7 @@ def draw(var, category,
 
                     s_hist = s_hist.Rebin(len(bins)-1, "hn", array.array("d", bins))
 
+
                 ## normalize ttbar bkg
                 if ttbar_norm_factor!=1 and sample.name=="TTbar":
                     s_hist.Scale(ttbar_norm_factor)
@@ -172,6 +173,10 @@ def draw(var, category,
                             d_hist.SetBinContent(bn, 0)
                         s_hist =  d_hist
                         
+                
+                # # - - - - fold the overflow bin to the last bin
+                if overflow:
+                    fold_overflow(s_hist)
                 hists_dict[sample.name][syst_var.name] = s_hist
 
 
@@ -209,15 +214,15 @@ def draw(var, category,
         for bkg_hist in backgrounds_hists_nom:
             if opt_bins and bin_optimization:
                 hnew = rebin(bkg_hist, opt_bins)
-                # - - - - fold the overflow bin to the last bin
-                if overflow:
-                    fold_overflow(hnew)
+                # # - - - - fold the overflow bin to the last bin
+                # if overflow:
+                #     fold_overflow(hnew)
                 bkg_stack.Add(hnew)
                 rebinned_bkg_hists.append(hnew)
             else:
                 # - - - - fold the overflow bin to the last bin
-                if overflow:
-                    fold_overflow(bkg_hist)
+                # if overflow:
+                #     fold_overflow(bkg_hist)
                 bkg_stack.Add(bkg_hist)
         backgrounds_stack.append(bkg_stack)
         if bin_optimization and opt_bins:

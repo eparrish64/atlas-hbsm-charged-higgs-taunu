@@ -435,7 +435,10 @@ class Sample(object):
             # - - output file
             if not hists_file:
                 hists_file = self.config.hists_file
-            merged_hists_file = ROOT.TFile(os.path.join(histsdir, hists_file), "UPDATE")
+            if "eos" in histsdir:
+                merged_hists_file = ROOT.TFile(hists_file, "UPDATE")
+            else:
+                merged_hists_file = ROOT.TFile(os.path.join(histsdir, hists_file), "UPDATE")
 
 
         if not hist_set:
@@ -443,6 +446,7 @@ class Sample(object):
             assert histsdir, "hists dir is not provided!"
             # - - retrieve the samples hists
             hfiles = glob.glob("%s/%s.*"%(histsdir, self.name))
+            log.info("%s files found for %s" %(len(hfiles),self.name))
             log.debug('Hist files in %s/%s.*'%(histsdir, self.name))
             log.debug(hfiles)
             if not hfiles:

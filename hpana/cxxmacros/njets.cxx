@@ -29,7 +29,7 @@ float njets(int n_jets,int var){
 			  }; 
 			 return SF_temp[i]; 
 		  }; 
-		 std::cout << "njet SF ERROR:   Unrecognized variation index! " << var << std::endl; 
+		  if (var!=-1){std::cout << "njet SF ERROR:   Unrecognized variation index! " << var << std::endl;}
 		 return 1.0; 
  }; 
  

@@ -66,7 +66,7 @@ TMP_DATASETS = [
 
 __HERE = os.path.dirname(os.path.abspath(__file__))
 
-COPY_FILE = True
+COPY_FILE = False
 USE_FASTBDT = False
 kFOLDS = ECLF_ARGS.kfolds
 METHOD_TYPE = TMVA.Types.kBDT #<! TMVA method 
@@ -90,6 +90,14 @@ def split(a, n):
 def chunks(a, n):
     for i in xrange(0, len(a), n):
         yield a[i:i+n]
+
+###
+## Setting up friend file directory correctly
+if ECLF_ARGS.frienddir == "/eos/home-b/bburghgr/hptaunu/friendfiles-":
+    ECLF_ARGS.frienddir += ECLF_ARGS.channel + "/"
+else:
+    pass
+###
 
 ##-----------------------------------------------
 ## main driver
@@ -168,9 +176,9 @@ def main():
 
         if ECLF_ARGS.categories:
             categories = filter(
-                lambda c: c.name in ECLF_ARGS.categories, config.categories)
+                lambda c: c.name in ECLF_ARGS.categories, config.categories_func(partial_unblind=ECLF_ARGS.partial_unblind))
         else:
-            categories = config.categories
+            categories = config.categories_func(partial_unblind=ECLF_ARGS.partial_unblind)
 
         ## systematics
         all_systematics = config.systematics[:]  # <! common systematics
@@ -314,9 +322,9 @@ def main():
 
         if ECLF_ARGS.categories:
             categories = filter(
-                lambda c: c.name in ECLF_ARGS.categories, config.categories)
+                lambda c: c.name in ECLF_ARGS.categories, config.categories_func(partial_unblind=ECLF_ARGS.partial_unblind))
         else:
-            categories = config.categories
+            categories = config.categories_func(partial_unblind=ECLF_ARGS.partial_unblind)
 
         ## systematics
         all_systematics = config.systematics[:]  # <! common systematics
@@ -344,13 +352,13 @@ def main():
             jobs = []
             for w in ana_workers:
                 if ECLF_ARGS.eval_nn == True:
-                    dataset_hists_direct(w, clf_models=models, clf_Keras_models=Keras_models, write_hists=True, outdir=ECLF_ARGS.outdir, isNN=ECLF_ARGS.eval_nn)
+                    dataset_hists_direct(w, clf_models=models, clf_Keras_models=Keras_models, write_hists=True, outdir=ECLF_ARGS.outdir, isNN=ECLF_ARGS.eval_nn, frienddir=ECLF_ARGS.frienddir)
                 else:
                     ## multicore processing 
                     if ECLF_ARGS.parallel:
-                        jobs.append(Job(dataset_hists_direct, w, clf_models=models, clf_Keras_models=Keras_models, write_hists=True, outdir=ECLF_ARGS.outdir, isNN=ECLF_ARGS.eval_nn))
+                        jobs.append(Job(dataset_hists_direct, w, clf_models=models, clf_Keras_models=Keras_models, write_hists=True, outdir=ECLF_ARGS.outdir, isNN=ECLF_ARGS.eval_nn, frienddir=ECLF_ARGS.frienddir))
                     else:
-                        dataset_hists_direct(w, clf_models=models, write_hists=True, outdir=ECLF_ARGS.outdir, isNN=ECLF_ARGS.eval_nn)
+                        dataset_hists_direct(w, clf_models=models, write_hists=True, outdir=ECLF_ARGS.outdir, isNN=ECLF_ARGS.eval_nn, frienddir=ECLF_ARGS.frienddir)
 
             if ECLF_ARGS.parallel:
                 log.info("************** submitting %i jobs  ************" % len(jobs))
@@ -555,6 +563,7 @@ def main():
                                                                                                 # ",".join([os.path.abspath(m) for m in indivmodels[thismass]]),
                                                                                                 int(ECLF_ARGS.eval_nn),
                                                                                                 ECLF_ARGS.outdir,
+                                                                                                ECLF_ARGS.frienddir,
                                                                                             )
                         )
 
@@ -653,7 +662,7 @@ def main():
 
                         # else:
 
-                        submit_file.write("\nArguments = %s %s %s %s %s %d %s \nqueue\n" %(     ",".join([m.name for m in aw]),
+                        submit_file.write("\nArguments = %s %s %s %s %s %d %s %s \nqueue\n" %(     ",".join([m.name for m in aw]),
                                                                                             os.path.join(__HERE, "classifier-evaluator"), 
                                                                                             os.path.join(os.getcwd(), ECLF_ARGS.submitdir), 
                                                                                             os.path.abspath(ECLF_ARGS.pickled_analysis), 
@@ -661,9 +670,15 @@ def main():
                                                                                             ",".join([os.path.abspath(m) for m in ECLF_ARGS.models]),
                                                                                             int(ECLF_ARGS.eval_nn),
                                                                                             ECLF_ARGS.outdir,
+                                                                                            ECLF_ARGS.frienddir,
                                                                                             )
                          )
 
+
+
+
+
+                    # dataset_hists_direct(w, clf_models=models, clf_Keras_models=Keras_models, write_hists=True, outdir=ECLF_ARGS.outdir, isNN=ECLF_ARGS.eval_nn, frienddir=ECLF_ARGS.frienddir)
 
 
                         # - - - - write submission to file to be used outside container
@@ -718,33 +733,108 @@ def main():
             samples = filter(lambda s: s.name in ECLF_ARGS.samples, analysis.samples)
         else:
             samples = analysis.samples #get_signals()
+        if ECLF_ARGS.cluster:
+            # raise RuntimeError(
+            #     "jobs are submitted to the cluster wait for them to get done")
+                    ## zip source code
+            log.info("Creating source code tarball...")
+            source_code_tarball = os.path.abspath(ECLF_ARGS.submitdir+"/source_code.tar.gz")
+            if os.path.isfile(source_code_tarball):
+                os.system("rm -rf %s"%source_code_tarball)
 
-        # ## - - prepare testing dataFrame 
-        # backgrounds =  filter(lambda b: not b.name in ["LepFakes"], analysis.backgrounds)
-        # if ECLF_ARGS.bkg:
-        #     backgrounds = filter(lambda b: b.name in ECLF_ARGS.bkg, backgrounds)
+            src_ds = ["bin", "hpana", "aux", "setup.sh"]
+            src_ds = " ".join(src_ds)
+            os.system("cd {src_dir} && tar --exclude 'symlinks/*' -cf {target_tar} {source_files} && cd - && tar --append --file={target_tar} {conf_file}".format(
+            src_dir=__HERE+"/../", conf_file=ECLF_ARGS.conf_file, target_tar=source_code_tarball, source_files=src_ds))
 
-        # signals = analysis.get_signals()
-        # if ECLF_ARGS.sig:
-        #     signals = filter(lambda s: s.name in ECLF_ARGS.sig, signals)
-        # if ECLF_ARGS.mass_range:
-        #     signals = filter(lambda s:int(ECLF_ARGS.mass_range[0]) <= s.mass <= int(ECLF_ARGS.mass_range[1]), signals)   
-        log.info(
-            "************** merging histograms  ************")
-        log.info(
-            "***********************************************")
-        analysis.merge_hists(samples=samples, histsdir=ECLF_ARGS.outdir, overwrite=True, write=True)
+            if ECLF_ARGS.rs_manager == "CONDOR":
+
+                # -- write jobs
+                from hpana.cluster.job_template import CONDOR_JOB_TEMPLATE
+
+                submitfile_name = "%s/%s.sh" %(ECLF_ARGS.submitdir, "submitAllMerge")
+                submit_file = os.open(submitfile_name, os.O_CREAT | os.O_WRONLY, 0755)
+
+                log.info("************** creating 1 merge jobs for HTCondor submission ************" )
+                log.info("**************************************************************")
+
+                submit_file_name = "%s/submitAllMerge.sh" % (ECLF_ARGS.submitdir)
+                submit_file = open(submit_file_name, "w")
+                submit_file.write(
+                             CONDOR_JOB_TEMPLATE.format(
+                                 logsdir=os.path.join(
+                                     ECLF_ARGS.submitdir, ECLF_ARGS.logsdir),
+                                 execScript=os.path.join(__HERE, "condor_merge.sh"),
+                                 memory="64GB",
+                             )
+                             )
+                submit_file.write("\nArguments = %s %s %s %s %s \nqueue\n" %(  "Merging",
+                                                                                source_code_tarball, 
+                                                                                os.path.join(__HERE, "merge-datasets"), 
+                                                                                ECLF_ARGS.conf_file,
+                                                                                ECLF_ARGS.outdir)
+                                                                        )
 
 
-    if ECLF_ARGS.append:
+                submit_file.close()
+                log.warning("Submission not supported from within container.")
+                log.warning("Please launch outside container via:")
+                log.warning("\t condor_submit {0}".format(submit_file_name))
+
+        else:
+            log.info(
+                "************** merging histograms  ************")
+            log.info(
+                "***********************************************")
+            analysis.merge_hists(samples=samples, histsdir=ECLF_ARGS.outdir, overwrite=True, write=True,)
+
+
+
+
+        # config = Configuration(ECLF_ARGS.channel, data_streams=ECLF_ARGS.data_streams, db_version=ECLF_ARGS.db_version)
+        
+        # # - -  instantiate the analysis
+        # analysis = Analysis(config, compile_cxx=True)
+
+        # # - -  if you wish to look at specific samples
+        # if ECLF_ARGS.samples:
+        #     samples = filter(lambda s: s.name in ECLF_ARGS.samples, analysis.samples)
+        # else:
+        #     samples = analysis.samples #get_signals()
+
+        # # ## - - prepare testing dataFrame 
+        # # backgrounds =  filter(lambda b: not b.name in ["LepFakes"], analysis.backgrounds)
+        # # if ECLF_ARGS.bkg:
+        # #     backgrounds = filter(lambda b: b.name in ECLF_ARGS.bkg, backgrounds)
+
+        # # signals = analysis.get_signals()
+        # # if ECLF_ARGS.sig:
+        # #     signals = filter(lambda s: s.name in ECLF_ARGS.sig, signals)
+        # # if ECLF_ARGS.mass_range:
+        # #     signals = filter(lambda s:int(ECLF_ARGS.mass_range[0]) <= s.mass <= int(ECLF_ARGS.mass_range[1]), signals)   
+        # log.info(
+        #     "************** merging histograms  ************")
+        # log.info(
+        #     "***********************************************")
+        # analysis.merge_hists(samples=samples, histsdir=ECLF_ARGS.outdir, overwrite=True, write=True)
+
+
+    if ECLF_ARGS.friend:
         ## sort files based on size to start the heavier ones sooner.
-        ECLF_ARGS.files.sort(key=lambda f: os.path.getsize(f), reverse=True)
-        jobs = [AppendJob(f, models, copy_file=COPY_FILE, outdir=ECLF_ARGS.outdir) for f in ECLF_ARGS.files]
+        #ECLF_ARGS.files.sort(key=lambda f: os.path.getsize(f), reverse=True)
+        # Load keras models after sorting the files
+        models, Keras_models = get_models(ECLF_ARGS.models, isNN=ECLF_ARGS.eval_nn)
+        # - -  build analysis main configuration object
+        config = Configuration(ECLF_ARGS.channel, data_streams=ECLF_ARGS.data_streams, db_version=ECLF_ARGS.db_version)
+        # - -  instantiate the analysis, this is honestly just for compile_css
+        analysis = Analysis(config, compile_cxx=True)
+
+        jobs = [AppendJob(f, [models, Keras_models], copy_file=COPY_FILE, outdir=ECLF_ARGS.outdir) for f in ECLF_ARGS.files]
 
         st = time.time()
         ## run a pool of jobs
-        if ECLF_ARGS.parallel or len(jobs)> 1:
-            run_pool(jobs, n_jobs=-1)
+        if False: #ECLF_ARGS.parallel or len(jobs)> 1: # TODO Keras models need to be re-loaded in child jobs
+            run_pool(jobs, n_jobs=ECLF_ARGS.ncpu)
         else:
             ## processing one file only (also for PBS, CONDOR Batch)
             for job in jobs:

@@ -3,6 +3,86 @@
 * This scripts provides functionalities for training a binary classifier in order to separate signal from background.
 * It's build on top of the MVA with the option for Pythonic keras & scikit-learn backends.
 """
+## matplotlib
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+
+## stdlib
+import os, sys, glob, multiprocessing
+from subprocess import call
+from os import environ
+
+## - -  parse ana args (needed before ROOT)
+from hpana.cmd import get_clf_parser
+clf_parser = get_clf_parser()
+CLF_ARGS = clf_parser.parse_args()
+
+## PyPI
+from root_numpy import root2array, tree2array
+import h5py
+import numpy as np
+import pickle, cPickle
+import pandas as pd
+
+## local
+from hpana.config import Configuration
+from hpana.analysis import Analysis
+from hpana.samples.sample  import Sample
+from hpana.samples.higgs import Higgs
+from hpana.variables import CLF_FEATURES, TruthMass
+from hpana.categories import CLASSIFIER_CATEGORIES
+from hpana.cluster.parallel import run_pool, Job
+
+from hpana.mva.classifier import Classifier, SClassifier, train_model
+from hpana.mva.optimization import get_hparams, optimize_model, get_hparam_grid
+from hpana.mva import N_TRACKS, FOLD_CUT_STR, TRAINING_MASS_BINS, BRANCHES, ALL_FEATS, GB_HYPERPARAMS, NN_HYPERPARAMS
+from hpana.mva.validation import plot_sig_dist, plot_bkg_dist
+from hpana.mva.evaluation import calculate_scores
+import linecache
+
+
+## - - set log level
+from hpana import log
+log.setLevel(CLF_ARGS.log)
+
+# - - speed things up a bit
+import ROOT
+ROOT.SetSignalPolicy(ROOT.kSignalFast)
+ROOT.gROOT.SetBatch(True)
+log.info("ROOT is in batch mode")
+
+##-------------------------------------------------------------
+## consts
+##-------------------------------------------------------------
+__HERE = os.path.dirname(os.path.abspath(__file__))
+
+## - - build analysis main configuration object
+CONFIG = Configuration(CLF_ARGS.channel, db_version=CLF_ARGS.db_version, data_streams=CLF_ARGS.data_streams,)
+
+## - - instantiate Analysis
+ANALYSIS  = Analysis(CONFIG, compile_cxx=True)
+
+## - - training samples (no need for l-->tau fakes or MC j--> tau fakes for masses < 500GeV)
+BKGS = filter(lambda b: not b.name in ["LepFakes"], ANALYSIS.backgrounds)
+if CLF_ARGS.bkg:
+    BKGS = filter(lambda b: b.name in CLF_ARGS.bkg, BKGS)
+
+SIGS = ANALYSIS.get_signals()
+if CLF_ARGS.sig:
+    SIGS = filter(lambda s: s.name in CLF_ARGS.sig, SIGS)
+
+## different set of bkgs for different signals regions
+TRAINING_BKGS = {
+    "LOW": filter(lambda b: not b.name in ["QCD"] , BKGS),
+    "HIGH":  BKGS[:], #<! above 500 GeV
+}
+
+"""
+* This scripts provides functionalities for training a binary classifier in order to separate signal from background.
+* It's build on top of the MVA with the option for Pythonic keras & scikit-learn backends.
+"""
+"""
 from __future__ import division
 
 ## stdlib
@@ -13,7 +93,7 @@ import glob
 import linecache
 
 ## - -  parse ana args (needed before ROOT)
-from hpana.cmd import get_clf_parser 
+from hpana.cmd import get_clf_parser
 clf_parser = get_clf_parser()
 # clf_parser.add_argument("--plot-sample-size", action="store_true")
 CLF_ARGS = clf_parser.parse_args()
@@ -33,7 +113,7 @@ import pandas as pd
 from hpana.config import Configuration
 from hpana.analysis import Analysis
 from hpana.samples.sample  import Sample
-from hpana.samples.higgs import Higgs 
+from hpana.samples.higgs import Higgs
 from hpana.variables import CLF_FEATURES
 from hpana.categories import CLASSIFIER_CATEGORIES
 from hpana.cluster.parallel import run_pool, Job
@@ -54,7 +134,7 @@ ROOT.gROOT.SetBatch(True)
 log.info("ROOT is in batch mode")
 
 ##-------------------------------------------------------------
-## consts 
+## consts
 ##-------------------------------------------------------------
 __HERE = os.path.dirname(os.path.abspath(__file__))
 
@@ -73,15 +153,15 @@ SIGS = ANALYSIS.get_signals()
 if CLF_ARGS.sig:
     SIGS = filter(lambda s: s.name in CLF_ARGS.sig, SIGS)
 
-## different set of bkgs for different signals regions 
-TRAINING_BKGS = { 
+## different set of bkgs for different signals regions
+TRAINING_BKGS = {
     "LOW": filter(lambda b: not b.name in ["QCD"] , BKGS),
     "HIGH":  BKGS[:], #<! above 500 GeV
-}  
+}
 
 ## - - setup outdir
 os.system("mkdir -p %s"%CLF_ARGS.outdir)
-    
+    """
 ##-----------------------------
 ## Parsing AUC text files
 ##-----------------------------
@@ -91,374 +171,660 @@ if CLF_ARGS.parse_auc:
     hyper_params_grid = get_hparam_grid()
 
     allScores={}
-
     avgAUCs = {}
 
-    for signal_masses in train_masses:
+    # for signal_masses in train_masses:
+    #     thisMassPointDict = {}
 
-        thisMassPointDict = {}
+    #     mass_tag = "%ito%i"%(signal_masses[0], signal_masses[-1]) if signal_masses else "ALL_MASSES"
 
-        mass_tag = "%ito%i"%(signal_masses[0], signal_masses[-1]) if signal_masses else "ALL_MASSES"
+    #     signals = filter(lambda s: s.mass in signal_masses, SIGS)
 
-        signals = filter(lambda s: s.mass in signal_masses, SIGS)
+    #     if CLF_ARGS.mass_range:
+    #         signals = filter(lambda s:int(CLF_ARGS.mass_range[0]) <= s.mass <= int(CLF_ARGS.mass_range[1]), signals)
+    #     if not signals:
+    #         log.info("No signal in %s mass range; skipping!"%mass_tag)
+    #         continue
 
-        if CLF_ARGS.mass_range:
-            signals = filter(lambda s:int(CLF_ARGS.mass_range[0]) <= s.mass <= int(CLF_ARGS.mass_range[1]), signals)   
-        if not signals:
-            log.info("No signal in %s mass range; skipping!"%mass_tag)
-            continue
+    mass_tag = "80to3000"
+    feats = CLF_FEATURES[CLF_ARGS.channel]["HIGH"] + [TruthMass]
+    hparams_aucs=[]
 
+    fullDF=pd.DataFrame(columns=hyper_params_grid[0].keys())
+    # print masspointDF
+    for hparam in hyper_params_grid:
 
-        if (len(signals)==1 and signals[0].mass > 400) or any([s.mass>500 for s in signals]):
-            feats = CLF_FEATURES[CLF_ARGS.channel]["HIGH"]
+        this_hparam_aucs = {
+            "80": [],
+            "90": [],
+            "100": [],
+            "110": [],
+            "120": [],
+            "130": [],
+            "140": [],
+            "150": [],
+            "160": [],
+            "170": [],
+            "180": [],
+            "190": [],
+            "200": [],
+            "225": [],
+            "250": [],
+            "275": [],
+            "300": [],
+            "350": [],
+            "400": [],
+            "500": [],
+            "600": [],
+            "700": [],
+            "800": [],
+            "900": [],
+            "1000": [],
+            "1200": [],
+            "1400": [],
+            "1600": [],
+            "1800": [],
+            "2000": [],
+            "2500": [],
+            "3000": [],
+            "Avg": [],
+        }
+
+        # hparamDF = pd.DataFrame(columns=)
+        #                         model_GB1024_channel_taulep_mass_80to3000_ntracks_1_nfolds_5_fold_2_nvars_11_batch_size_1024_epochs_1000_dense_layer_size_32_activation_function_softsign_depth_10_loss_binary_crossentropy_dropout_0.3_auc.txt
+        # taulep_optmize_CPU//AUC/model_GB_1024_channel_taulep_mass_80to3000_ntracks_1_nfolds_5_fold_4_nvars_11_batch_size_1024_epochs_1000_dense_layer_size_32_activation_function_softsign_depth_10_loss_binary_crossentropy_dropout_0.3_auc.txt
+
+        if CLF_ARGS.inc_trks:
+            ntracks = 13 #<! a dummy value for consistency
+            for rem in range(CLF_ARGS.kfolds):
+               clf_name = SClassifier.MODEL_NAME_STR_FORMAT.format(
+                    "GB_%i"%hparam['batch_size'], CLF_ARGS.channel, mass_tag, ntracks, CLF_ARGS.kfolds, rem, len(feats), hparam['batch_size'], hparam['epochs'], hparam['dense_layer_size'], hparam['activation_function'], hparam["depth"], hparam["loss_function"], hparam["dropout"], hparam["alpha"])
         else:
-            feats = CLF_FEATURES[CLF_ARGS.channel]["LOW"]
-
-        hparams_aucs=[]
-
-        masspointDF=pd.DataFrame(columns=hyper_params_grid[0].keys())
-        # print masspointDF
-        for hparam in hyper_params_grid:
-
-            # files = glob.glob("/xdata/eparrish/HPlusTauNuOutput/fullRun2/taulep_OptimizeClassifierCondor_SINGLE/AUC/*%s*.txt" %(mass_tag))
-
-            this_hparam_aucs = []
-
-            # print hparam.keys(), hparam.values()
-            # print hparam
-
-            # hparamDf = pd.DataFrame(columns=hparam.keys(), data=hparam.values())
-
-            if CLF_ARGS.inc_trks:
-                ntracks = 13 #<! a dummy value for consistency 
+            for ntracks in N_TRACKS:
                 for rem in range(CLF_ARGS.kfolds):
                     clf_name = SClassifier.MODEL_NAME_STR_FORMAT.format(
-                            "GB%i"%hparam["n_estimators"],CLF_ARGS.channel, mass_tag, ntracks, CLF_ARGS.kfolds, rem, len(feats), hparam['learning_rate'], hparam['min_samples_leaf'], hparam['n_estimators'], hparam['min_samples_split'], hparam['max_depth'])
-            else:
-                for ntracks in N_TRACKS:
-                    for rem in range(CLF_ARGS.kfolds):
-                        clf_name = SClassifier.MODEL_NAME_STR_FORMAT.format(
-                            "GB%i"%hparam["n_estimators"],CLF_ARGS.channel, mass_tag, ntracks, CLF_ARGS.kfolds, rem, len(feats), hparam['learning_rate'], hparam['min_samples_leaf'], hparam['n_estimators'], hparam['min_samples_split'], hparam['max_depth'])
-                        # print clf_name
-                        # f = "/xdata/eparrish/HPlusTauNuOutput/fullRun2/taulep_OptimizeClassifierCondor_SINGLE/AUC/%s_auc.txt" %(clf_name.replace(".pkl",""))
-                        f = CLF_ARGS.outdir+"AUC/%s_auc.txt" %(clf_name.replace(".pkl",""))
-                        # print f
-                        # print f
-                        if os.path.isfile(f):
-                            line = linecache.getline(f, 4)
-                            # print line
-                            this_hparam_aucs.append(float(line.split(":")[1]))
-                        else:
-                            # log.info("What the efffffffffff")
-                            # log.info(f)\
+                    "GB_%i"%hparam['batch_size'], CLF_ARGS.channel, mass_tag, ntracks, CLF_ARGS.kfolds, rem, len(feats), hparam['batch_size'], hparam['epochs'], hparam['dense_layer_size'], hparam['activation_function'], hparam["depth"], hparam["loss_function"], hparam["dropout"], hparam["alpha"])
 
-                            this_hparam_aucs.append(-999999999999999999999999)
+                    # clf_name = SClassifier.MODEL_NAME_STR_FORMAT.format(
+                    #     "GB%i"%hparam['batch_size'], CLF_ARGS.channel, mass_tag, ntracks, CLF_ARGS.kfolds, rem, len(feats), hparam['batch_size'], hparam['epochs'], hparam['dense_layer_size'], hparam['activation_function'], hparam["depth"], hparam["loss_function"], hparam["dropout"])
+                    # print clf_name
+                    # f = "/xdata/eparrish/HPlusTauNuOutput/fullRun2/taulep_OptimizeClassifierCondor_SINGLE/AUC/%s_auc.txt" %(clf_name.replace(".pkl",""))
+                    f = CLF_ARGS.outdir+"/AUC/%s_auc.txt" %(clf_name.replace(".pkl",""))
+                    # print f
+                    # print f
+                    if os.path.isfile(f):
+                        # print f, float( linecache.getline(f, 2).split("\t")[2])
+                        this_hparam_aucs["80"].append(float( linecache.getline(f, 2).split("\t")[2]))
+                        this_hparam_aucs["90"].append(float( linecache.getline(f, 3).split("\t")[2]))
+                        this_hparam_aucs["100"].append(float(linecache.getline(f, 4).split("\t")[2]))
+                        this_hparam_aucs["110"].append(float( linecache.getline(f, 5).split("\t")[2]))
+                        this_hparam_aucs["120"].append(float( linecache.getline(f, 6).split("\t")[2]))
+                        this_hparam_aucs["130"].append(float( linecache.getline(f, 7).split("\t")[2]))
+                        this_hparam_aucs["140"].append(float( linecache.getline(f, 8).split("\t")[2]))
+                        this_hparam_aucs["150"].append(float( linecache.getline(f, 9).split("\t")[2]))
+                        this_hparam_aucs["160"].append(float( linecache.getline(f, 10).split("\t")[2]))
+                        this_hparam_aucs["170"].append(float( linecache.getline(f, 11).split("\t")[2]))
+                        this_hparam_aucs["180"].append(float( linecache.getline(f, 12).split("\t")[2]))
+                        this_hparam_aucs["190"].append(float( linecache.getline(f, 13).split("\t")[2]))
+                        this_hparam_aucs["200"].append(float( linecache.getline(f, 14).split("\t")[2]))
+                        this_hparam_aucs["225"].append(float( linecache.getline(f, 15).split("\t")[2]))
+                        this_hparam_aucs["250"].append(float( linecache.getline(f, 16).split("\t")[2]))
+                        this_hparam_aucs["275"].append(float(linecache.getline(f, 17).split("\t")[2]))
+                        this_hparam_aucs["300"].append(float( linecache.getline(f, 18).split("\t")[2]))
+                        this_hparam_aucs["350"].append(float(linecache.getline(f, 19).split("\t")[2]))
+                        this_hparam_aucs["400"].append(float( linecache.getline(f, 20).split("\t")[2]))
+                        this_hparam_aucs["500"].append(float( linecache.getline(f, 21).split("\t")[2]))
+                        this_hparam_aucs["600"].append(float( linecache.getline(f, 22).split("\t")[2]))
+                        this_hparam_aucs["700"].append(float( linecache.getline(f, 23).split("\t")[2]))
+                        this_hparam_aucs["800"].append(float( linecache.getline(f, 24).split("\t")[2]))
+                        this_hparam_aucs["900"].append(float( linecache.getline(f, 25).split("\t")[2]))
+                        this_hparam_aucs["1000"].append(float( linecache.getline(f, 26).split("\t")[2]))
+                        this_hparam_aucs["1200"].append(float( linecache.getline(f, 27).split("\t")[2]))
+                        this_hparam_aucs["1400"].append(float( linecache.getline(f, 28).split("\t")[2]))
+                        this_hparam_aucs["1600"].append(float( linecache.getline(f, 29).split("\t")[2]))
+                        this_hparam_aucs["1800"].append(float( linecache.getline(f, 30).split("\t")[2]))
+                        this_hparam_aucs["2000"].append(float( linecache.getline(f, 31).split("\t")[2]))
+                        this_hparam_aucs["2500"].append(float( linecache.getline(f, 32).split("\t")[2]))
+                        this_hparam_aucs["3000"].append(float( linecache.getline(f, 33).split("\t")[2]))
+                        this_hparam_aucs["Avg"].append(float(linecache.getline(f, 35).split(":")[1]))
 
 
+                        # this_hparam_aucs.append(float(line.split("\t")[2]))
+                    else:
+                        # log.info("What the efffffffffff")cat
+                        # log.info(f)\
+                        print "%s is not a valid file" %(f)
+                        continue
+                        # this_hparam_aucs["80"].append(np.nan)
+                        # this_hparam_aucs["90"].append(np.nan)
+                        # this_hparam_aucs["100"].append(np.nan)
+                        # this_hparam_aucs["110"].append(np.nan)
+                        # this_hparam_aucs["120"].append(np.nan)
+                        # this_hparam_aucs["130"].append(np.nan)
+                        # this_hparam_aucs["140"].append(np.nan)
+                        # this_hparam_aucs["150"].append(np.nan)
+                        # this_hparam_aucs["160"].append(np.nan)
+                        # this_hparam_aucs["170"].append(np.nan)
+                        # this_hparam_aucs["180"].append(np.nan)
+                        # this_hparam_aucs["190"].append(np.nan)
+                        # this_hparam_aucs["200"].append(np.nan)
+                        # this_hparam_aucs["225"].append(np.nan)
+                        # this_hparam_aucs["250"].append(np.nan)
+                        # this_hparam_aucs["275"].append(np.nan)
+                        # this_hparam_aucs["300"].append(np.nan)
+                        # this_hparam_aucs["350"].append(np.nan)
+                        # this_hparam_aucs["400"].append(np.nan)
+                        # this_hparam_aucs["500"].append(np.nan)
+                        # this_hparam_aucs["600"].append(np.nan)
+                        # this_hparam_aucs["700"].append(np.nan)
+                        # this_hparam_aucs["800"].append(np.nan)
+                        # this_hparam_aucs["900"].append(np.nan)
+                        # this_hparam_aucs["1000"].append(np.nan)
+                        # this_hparam_aucs["1200"].append(np.nan)
+                        # this_hparam_aucs["1400"].append(np.nan)
+                        # this_hparam_aucs["1600"].append(np.nan)
+                        # this_hparam_aucs["1800"].append(np.nan)
+                        # this_hparam_aucs["2000"].append(np.nan)
+                        # this_hparam_aucs["2500"].append(np.nan)
+                        # this_hparam_aucs["3000"].append(np.nan)
+                        # this_hparam_aucs["Avg"] = np.nan
+                        # this_hparam_aucs.append(np.nan)
 
-            thisMassPointDict["%s"%hparam] = np.mean(this_hparam_aucs)
-            hparamDF = pd.DataFrame(data=hparam, index=[0])
-            hparams_aucs.append(np.mean(this_hparam_aucs))
+                for i in this_hparam_aucs.keys():
+                    this_hparam_aucs["%sStd"%(i)] = np.std(this_hparam_aucs[i])
+                    this_hparam_aucs[i] = np.mean(this_hparam_aucs[i])
+            # print this_hparam_aucs
+
+            # thisMassPointDict["%s"%hparam] = np.mean(this_hparam_aucs)
+            hparamdata = hparam.copy()
+            hparamdata.update(this_hparam_aucs)
+            # print hparamdata
+            hparamDF = pd.DataFrame(data=hparamdata, index=[0])
+            fullDF = fullDF.append(hparamDF, sort=False)
+
+            # for i in this_hparam_aucs.keys():
+            #     if i == "Avg": continue
+            #     fullDF[i] = np.mean(this_hparam_aucs[i])
+            #     fullDF["%sStd"%(i)] = np.std(this_hparam_aucs[i])
+
+
+            # fullDF["Avg"] = this_hparam_aucs["Avg"]
+            # print masspointDF.head()
+
+            # hparams_aucs.append(np.mean(this_hparam_aucs))
             # print hparamDF
             # print thisMassPointDict
-            masspointDF = masspointDF.append(hparamDF, sort=False)
-            # maspointDF["AUC"] = 
+            # maspointDF["AUC"] =
 
             # allScores[mass_tag]=thisMassPointDict
 
-            masspointDF["AUC"] = hparams_aucs
+            # masspointDF["AUC"] = hparams_aucs
 
         # print masspointDF
 
-        avgAUCs[mass_tag] = masspointDF
+        # avgAUCs[mass_tag] = masspointDF
 
-    # for i in allScores["80to80"]:
-    #     print i, allScores["80to80"][i]
+    print fullDF
+    print fullDF.columns
+    print fullDF.sort_values("Avg", ascending=False).head()
+    print fullDF.sort_values("Avg", ascending=False).describe()
+    print fullDF.sort_values("Avg",ascending=False).to_latex(index=False)
+#     "batch_size": [1024],
+#     "epochs": [1000],
+#     "dense_layer_size": [32],
+#     "depth": [10],
+#     "activation_function": ["softsign", "relu", "LeakyRelu"],
+#     "loss_function": ["binary_crossentropy", "mean_squared_error", "mean_absolute_error"],
+#     "dropout": [0.1],
+# }
 
-    for i in sorted(avgAUCs.keys()):
-        print i
-        print avgAUCs[i].sort_values("AUC", ascending=False).head(5)
+    smallDF = fullDF[["dense_layer_size", "depth", "alpha", "80", "80Std", "200", "200Std", "3000", "3000Std", "Avg", "AvgStd"]]
+
+    print smallDF
+    print smallDF.columns
+    print smallDF.sort_values("Avg", ascending=False).head()
+    print smallDF.sort_values("Avg", ascending=False).describe()
+    print smallDF.sort_values("Avg",ascending=False).to_latex(index=False)
+
+    masses = [80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200, 225, 250, 275, 300, 350, 400, 500, 600, 700, 800, 900, 1000, 1200, 1400, 1600, 1800, 2000, 2500, 3000]
+
+    for index, row in fullDF.iterrows():
+        # print index, row
+        fig = plt.figure()
+
+
+        AUCs = [ float(row[str(mass)]) for mass in masses]
+        AUCErrors = [float(row["%sStd"%mass]) for mass in masses]
+        # print masses
+        # print AUCs
+
+        ax = plt.errorbar(x=masses, y=AUCs, yerr=AUCErrors, fmt="o", ecolor="red", barsabove=True)
+        plt.xlabel(r"$mass_{H^{\pm}}$ [GeV]")
+        plt.ylabel("AUC")
+        plt.xlim(70,3010)
+        plt.ylim(0.50,1.0)
+
+        textstr = '\n'.join((
+                        'width: %s' %(row["dense_layer_size"]),
+                        'depth: %s' %(row["depth"]),
+                        'alpha: %s' %(row["alpha"]),
+                        'activation_function: %s' %(row["activation_function"]),
+                        'loss_function: %s' %(row["loss_function"]),
+                        r'Avg AUC: %s $\pm$ %s' %(row['Avg'], row['AvgStd'])
+                        )
+        )
+
+        plt.text(1500, .55, textstr)#, transform=ax.transAxes, fontsize=14, verticalalignment='top', bbox=props)
+
+
+        fileName = SClassifier.MODEL_NAME_STR_FORMAT.format(
+                    "GB_%i"%row['batch_size'], CLF_ARGS.channel, mass_tag, ntracks, CLF_ARGS.kfolds, rem, len(feats), row['batch_size'], row['epochs'], row['dense_layer_size'], row['activation_function'], row["depth"], row["loss_function"], row["dropout"], row["alpha"])
+        # clf_name =
+        # fileName = SClassifier.MODEL_NAME_STR_FORMAT.format(
+        #                 "GB%i"%row['batch_size'], CLF_ARGS.channel, mass_tag, ntracks, CLF_ARGS.kfolds, rem, len(feats), row['batch_size'], row['epochs'], row['dense_layer_size'], row['activation_function'], row["depth"], row["loss_function"], row["dropout"])
+        fileName = fileName.replace(".pkl", "")
+        print "Saving histogram: %s" %("%s/AUC/%s.eps"%(CLF_ARGS.outdir,fileName))
+        # print row
+
+        fig.savefig("%s/AUC/%s.eps"%(CLF_ARGS.outdir,fileName))
+        plt.close()
+
+
     # print avgAUCs
+    # for i in sorted(fullDF.keys()):
+    #     print i
+    #     print fullDF[i].sort_values("Avg", ascending=False).head()
+    #     print fullDF[i].sort_values("Avg", ascending=False).describe()
+    #     print fullDF[i].to_latex(index=False)
+    # print avgAUCs
+
+    # fig = plt.figure(figsize=(15,10))
+
+    # for i, (name, row) in enumerate(fullDF.iterrows()):
+    #     ax = plt.subplot(2,3, i+1)
+    #     ax.set_title(row.name)
+    #     ax.set_aspect('equal')
+    #     ax.pie(row, labels=row.index)
+
+    # plt.show()
     sys.exit(0)
 
-##-----------------------------
-## sklearn backend 
-##-----------------------------
-if CLF_ARGS.backend=="sklearn":
-    try:
-        import sklearn
-    except ImportError:
-        raise RuntimeError("Please install sklearn; (pip install sklearn)")
 
-    ## - - prepare training Dataframe
-    DFRAME = SClassifier.prepare_data(BKGS, SIGS, ALL_FEATS[CLF_ARGS.channel], data_lumi=CONFIG.data_lumi,
-                                      channel=CLF_ARGS.channel, branches=BRANCHES[CLF_ARGS.channel], train_data=CLF_ARGS.train_data)
-    jobs = []
-    models = []
-    train_masses = TRAINING_MASS_BINS[CLF_ARGS.bin_scheme]
-    # if CLF_ARGS.plot_sample_size:
-    #     plot_sig_dist(DFRAME, signals=SIGS, outdir=CLF_ARGS.outdir)
-    #     plot_bkg_dist(DFRAME, backgrounds=BKGS, outdir=CLF_ARGS.outdir)
-    # print train_masses
-    #ak
-    # i = 0
-    #ak
-    for signal_masses in train_masses:
-        mass_tag = "%ito%i"%(signal_masses[0], signal_masses[-1]) if signal_masses else "ALL_MASSES"
 
-        if CLF_ARGS.bin_scheme == "UP_DOWN":
-            #ak
-            #print signal_masses[0],signal_masses[-1],signal_masses
-            f_sig = 0
-            l_sig = 0
-            if (signal_masses[0] == 80):
-                f_sig = signal_masses[0]
-            else:
-                f_sig = train_masses[i-1][0]
+## - - setup outdir
+os.system("mkdir -p %s"%CLF_ARGS.outdir)
 
-            if (signal_masses[0] == 3000):
-                l_sig = signal_masses[0]
-            else:
-                l_sig = train_masses[i+1][0]
-            
-            #print f_sig,l_sig
-            
-            signals = filter(lambda s:f_sig <= s.mass <= l_sig, SIGS)
-            i = i +1
-            #ak
+## - - prepare training Dataframe
+DFRAME = SClassifier.prepare_data(BKGS, SIGS, ALL_FEATS[CLF_ARGS.channel], data_lumi=CONFIG.data_lumi,
+                                  channel=CLF_ARGS.channel, branches=BRANCHES[CLF_ARGS.channel], train_data=CLF_ARGS.train_data)
 
+jobs = []
+models = []
+kerasModels = []
+train_masses = TRAINING_MASS_BINS[CLF_ARGS.bin_scheme]
+if CLF_ARGS.plot_sample_size:
+    plot_sig_dist(DFRAME, signals=SIGS, outdir=CLF_ARGS.outdir)
+    plot_bkg_dist(DFRAME, backgrounds=BKGS, outdir=CLF_ARGS.outdir)
+# ak
+i = 0
+# ak
+
+try:
+    import sklearn
+except ImportError:
+    raise RuntimeError("Please install sklearn; (pip install sklearn)")
+
+## - - instantiate the Keras model
+import tensorflow as tf
+import keras
+from keras.models import Sequential
+from keras.layers import Dense, Activation, BatchNormalization, Dropout
+from keras.regularizers import l2
+from keras import initializers
+from keras.optimizers import SGD
+from keras.wrappers.scikit_learn import KerasClassifier
+from keras.models import load_model
+log.info("Keras version: %s" %keras.__version__)
+log.info("TensorFlow version: %s" %tf.version.VERSION)
+from keras import backend as K
+K.tensorflow_backend._get_available_gpus()
+from tensorflow.python.client import device_lib
+log.info(device_lib.list_local_devices())
+log.info("GPU Available: %s" %tf.test.is_gpu_available())
+
+if CLF_ARGS.cluster:
+
+    if CLF_ARGS.rs_manager=="CONDOR":
+        # - - write jobs
+        from hpana.cluster.job_template import CONDOR_JOB_TEMPLATE
+
+        ## zip source code
+        log.info("Creating source code tarball...")
+        source_code_tarball = os.path.abspath(CLF_ARGS.outdir+"/source_code.tar.gz")
+        if os.path.isfile(source_code_tarball):
+            os.system("rm -rf %s"%source_code_tarball)
+
+        src_ds = ["bin", "hpana", "aux", "setup.sh"]
+        src_ds = " ".join(src_ds)
+        os.system("cd {src_dir} && tar -cf {target_tar} {source_files} && cd - && tar --append --file={target_tar}".format(
+            src_dir=__HERE+"/../", target_tar=source_code_tarball, source_files=src_ds))
+
+        # - - setup the submit dir
+        os.system("mkdir -p {0}/jobs  {0}/logs {0}/hists {0}/logs/log {0}/logs/err {0}/logs/out {0}/models {0}/AUC".format(CLF_ARGS.outdir))
+
+        log.info("************** creating %i jobs for HTCondor submission ************" % len(models))
+        log.info("**************************************************************")
+
+
+        submit_file_name = "%s/submitAllJobs.sh" % (CLF_ARGS.outdir)
+        submit_file = open(submit_file_name, "w")
+        submit_file.write(
+                     CONDOR_JOB_TEMPLATE.format(
+                         logsdir=os.path.join(
+                             CLF_ARGS.outdir, CLF_ARGS.logsdir),
+                         execScript=os.path.join(__HERE, "condor_jobs_clf_optimize.sh"),
+                         memory="1GB",
+                     )
+                     )
+
+for signal_masses in train_masses:
+    mass_tag = "%ito%i"%(signal_masses[0], signal_masses[-1]) if signal_masses else "ALL_MASSES"
+
+    if CLF_ARGS.bin_scheme=="UP_DOWN":
+        # ak
+        log.info("%s, %s, %s"%(signal_masses[0],signal_masses[-1],signal_masses))
+        f_sig = 0
+        l_sig = 0
+        if (signal_masses[0] == 80):
+            f_sig = signal_masses[0]
+        else:
+            f_sig = train_masses[i-1][0]
+
+        if (signal_masses[0] == 3000):
+            l_sig = signal_masses[0]
+        else:
+            l_sig = train_masses[i+1][0]
+
+        # print f_sig,l_sig
+
+        signals = filter(lambda s:f_sig <= s.mass <= l_sig, SIGS)
+        i = i +1
+        # # ak
+    else:
         signals = filter(lambda s: s.mass in signal_masses, SIGS)
 
+    if CLF_ARGS.mass_range:
+        signals = filter(lambda s:int(CLF_ARGS.mass_range[0]) <= s.mass <= int(CLF_ARGS.mass_range[1]), signals)
+    if not signals:
+        log.info("No signal in %s mass range; skipping!"%mass_tag)
+        continue
 
-        if CLF_ARGS.mass_range:
-            signals = filter(lambda s:int(CLF_ARGS.mass_range[0]) <= s.mass <= int(CLF_ARGS.mass_range[1]), signals)   
-        if not signals:
-            log.info("No signal in %s mass range; skipping!"%mass_tag)
-            continue
-
-        ## - - different set of features for low mass and high mass
-        if (len(signals)==1 and signals[0].mass > 400) or any([s.mass>500 for s in signals]):
+    ## - - different set of features for low mass and high mass
+    ## - - if training PNN, need to add truth mass as a training variable
+    if (len(signals)==1 and signals[0].mass > 400) or any([s.mass>500 for s in signals]):
+        if bool(CLF_ARGS.optimize_nn) == True:
+            feats = CLF_FEATURES[CLF_ARGS.channel]["HIGH"] + [TruthMass]
+        else:
             feats = CLF_FEATURES[CLF_ARGS.channel]["HIGH"]
+    else:
+        if bool(CLF_ARGS.optimize_nn) == True:
+            feats = CLF_FEATURES[CLF_ARGS.channel]["LOW"] + [TruthMass]
         else:
             feats = CLF_FEATURES[CLF_ARGS.channel]["LOW"]
 
-        hyper_params_grid = get_hparam_grid()
+    ## get hyperparamter grid to scan over
+    hyper_params_grid = get_hparam_grid()
 
-        ## get list of backgrounds to be used in this signal region 
-        if max(signal_masses) > 400:
-            reg_bkgs = TRAINING_BKGS["HIGH"]
-        else:
-            reg_bkgs = TRAINING_BKGS["LOW"]
+    ## get list of backgrounds to be used in this signal region
+    if max(signal_masses) > 400:
+        reg_bkgs = TRAINING_BKGS["HIGH"]
+    else:
+        reg_bkgs = TRAINING_BKGS["LOW"]
 
-        ## retrive Dataframe     
-        dframe = DFRAME.loc[[bkg.name for bkg in reg_bkgs]+[sig.name for sig in signals]]
-        s_dframe = DFRAME.loc[[sig.name for sig in signals]]
-        log.info("*"*80)
-        log.info("Signals: {0} | #events: {1} ; backgrounds: {2} | #events: {3}".format(
-            [s.name for s in signals], s_dframe.shape[0], [b.name for b in reg_bkgs], dframe.shape[0]-s_dframe.shape[0]))
-        log.debug(30*"*" + " Training Data Frame " + 30*"*")
-        log.debug(dframe)
+    ## retrive Dataframe
+    dframe = DFRAME.loc[[bkg.name for bkg in reg_bkgs]+[sig.name for sig in signals]]
+    s_dframe = DFRAME.loc[[sig.name for sig in signals]]
+    log.info("*"*80)
+    log.info("Signals: {0} | #events: {1} ; backgrounds: {2} | #events: {3}".format(
+        [s.name for s in signals], s_dframe.shape[0], [b.name for b in reg_bkgs], dframe.shape[0]-s_dframe.shape[0]))
+    log.debug(30*"*" + " Training Data Frame " + 30*"*")
+    log.debug(dframe)
 
-        ## training separately for 1p and 3p taus or inclusively(do not include QCD fakes for 1p training)
-        if CLF_ARGS.inc_trks:
-            ntracks = 13 #<! a dummy value for consistency 
+    ## training separately for 1p and 3p taus or inclusively(do not include QCD fakes for 1p training)
+    if CLF_ARGS.inc_trks:
+        ntracks = 13 #<! a dummy value for consistency
+        for rem in range(CLF_ARGS.kfolds): #<@NOTE 1 obviously is all
+            where = ""
+            if CLF_ARGS.kfolds>1:
+                where = (dframe["event_number"]%CLF_ARGS.kfolds!=rem)
+            sdf = dframe[where]
+
+            log.info("Training in mass range:%s on ntracks=%i, nevents=%i, and nfeatures=%i\n\t\tHyperparams: %r\n"%(
+                mass_tag, ntracks, sdf.shape[0], sdf.shape[1]-4, hyper_params))
+
+            ## - - instantiate the model
+            clf_name = SClassifier.MODEL_NAME_STR_FORMAT.format(
+                "GB%i"%hyper_params["n_estimators"],CLF_ARGS.channel, mass_tag, ntracks, CLF_ARGS.kfolds, rem, len(feats))
+            sclf = SClassifier(CLF_ARGS.channel,
+                train_df=sdf, name=clf_name, features=feats, weight_sample=False, mass_range=signal_masses, kfolds=CLF_ARGS.kfolds, fold_num=rem, **hyper_params)
+            models += [sclf]
+
+            ## - - assign the job
+            if CLF_ARGS.train_bdt and CLF_ARGS.parallel:
+                jobs.append(Job(train_model, sclf, weight_sample=False, balanced=CLF_ARGS.balanced, scale_features=False, outdir=CLF_ARGS.outdir, is_NN=CLF_ARGS.optimize_nn))
+
+            ## pickle the model
+            mpath = os.path.join(CLF_ARGS.outdir, sclf.name)
+            if os.path.isfile(mpath):
+                log.warning("Found %s model; skipping the preparation..."%mpath)
+                continue
+            else:
+                log.info("Saving %s model to disk ..."%mpath)
+                with open(mpath, "w") as mcache:
+                    cPickle.dump(sclf, mcache, protocol=2)
+    else:
+        for ntracks in N_TRACKS:
             for rem in range(CLF_ARGS.kfolds): #<@NOTE 1 obviously is all
-                where = ""
-                if CLF_ARGS.kfolds>1:
-                    where = (dframe["event_number"]%CLF_ARGS.kfolds!=rem)
+
+                if CLF_ARGS.kfolds==1:
+                    where = (dframe["tau_0_n_charged_tracks"]==ntracks)
+                    vdf = None
+                    edf = None
+                    raise Exception("Need more than 1 kfold to optimize")
+                else:
+                    if CLF_ARGS.kfolds-1==(rem):
+                        v_where = (dframe["event_number"]%CLF_ARGS.kfolds==0) & (dframe["tau_0_n_charged_tracks"]==ntracks)
+                        where = (dframe["event_number"]%CLF_ARGS.kfolds!=rem) & (dframe["tau_0_n_charged_tracks"]==ntracks) & (dframe["event_number"]%CLF_ARGS.kfolds!=0)
+                        e_where = ((dframe["event_number"]%CLF_ARGS.kfolds==rem) & (dframe["tau_0_n_charged_tracks"]==ntracks))
+
+                    else:
+                        v_where = (dframe["event_number"]%CLF_ARGS.kfolds==(rem+1)) & (dframe["tau_0_n_charged_tracks"]==ntracks)
+                        where = (dframe["event_number"]%CLF_ARGS.kfolds!=rem) & (dframe["tau_0_n_charged_tracks"]==ntracks) & (dframe["event_number"]%CLF_ARGS.kfolds!=(rem+1))
+                        e_where = ((dframe["event_number"]%CLF_ARGS.kfolds==rem) & (dframe["tau_0_n_charged_tracks"]==ntracks))
+
                 sdf = dframe[where]
-                
+                vdf = dframe[v_where]
+                edf = dframe[e_where]
+
+                s_v_overlap = pd.merge(sdf, vdf, how="inner")
+                s_e_overlap = pd.merge(sdf, edf, how="inner")
+                v_e_overlap = pd.merge(vdf, edf, how="inner")
+
+                if s_e_overlap.empty:
+                    # print s_e_overlap
+                    # print "No Overlap in train and evaluate"
+                    pass
+                else:
+                    log.info(s_e_overlap)
+                    raise Excpetion("Overlap in train and evaluate")
+
+                if s_v_overlap.empty:
+                    pass
+                else:
+                    log.info(s_v_overlap)
+                    raise Excpetion("Overlap in train and validation")
+
+                if v_e_overlap.empty:
+                    pass
+                else:
+                    log.info(v_e_overlap)
+                    raise Excpetion("Overlap in evaluation and validation")
+
                 for hparam in hyper_params_grid:
+                    log.debug(hparam)
                     hparam["verbose"] = 1
                     log.info("Training in mass range:%s on ntracks=%i, nevents=%i, and nfeatures=%i\n\t\tHyperparams: %r\n"%(
                         mass_tag, ntracks, sdf.shape[0], sdf.shape[1]-4, hparam))
 
                     ## - - instantiate the model
                     clf_name = SClassifier.MODEL_NAME_STR_FORMAT.format(
-                        "GB%i"%hparam["n_estimators"],CLF_ARGS.channel, mass_tag, ntracks, CLF_ARGS.kfolds, rem, len(feats), hparam['learning_rate'], hparam['min_samples_leaf'], hparam['n_estimators'], hparam['min_samples_split'], hparam['max_depth'])
-                    sclf = SClassifier(CLF_ARGS.channel, 
-                        train_df=sdf, name=clf_name, features=feats, weight_sample=False, mass_range=signal_masses, kfolds=CLF_ARGS.kfolds, fold_num=rem, **hparam)
+                    "GB_%i"%hparam['batch_size'], CLF_ARGS.channel, mass_tag, ntracks, CLF_ARGS.kfolds, rem, len(feats), hparam['batch_size'], hparam['epochs'], hparam['dense_layer_size'], hparam['activation_function'], hparam["depth"], hparam["loss_function"], hparam["dropout"], hparam["alpha"])
+
+                    log.info("Training in mass range:%s on ntracks=%i, nevents=%i, and nfeatures=%i\n\t\tHyperparams: %r\n"%(
+                        mass_tag, ntracks, sdf.shape[0], sdf.shape[1]-4, hparam))
+
+                    ## - - instantiate the model
+                    sclf = SClassifier(CLF_ARGS.channel,
+                        train_df=sdf, valid_df=vdf, eval_df=edf, name=clf_name, features=feats, weight_sample=False, mass_range=signal_masses, kfolds=CLF_ARGS.kfolds, fold_num=rem, optimize=True, sigs=signals, bkgs=reg_bkgs, **hparam)
                     models += [sclf]
 
-                    ## pickle the model                        
+                    if CLF_ARGS.optimize_nn == True:
+                        input_features = [f.tformula for f in feats]
+
+                        early_stopping = tf.keras.callbacks.EarlyStopping(monitor="loss", min_delta=0.001, patience=10, mode="auto", restore_best_weights=True)
+
+                        Keras_model_name = sclf.name.replace(".pkl", "")
+
+                        """
+                        Keras_model = Sequential()
+                        Keras_model.add(BatchNormalization(input_shape=(len(input_features),)))
+
+                        if hparam['activation_function'] == "LeakyRelu":
+                            from keras.layers import LeakyReLU
+                            Keras_model.add(Dense(64))
+                            Keras_model.add(LeakyReLU(alpha=0.1))
+                            Keras_model.add(Dropout(hparam["dropout"]))
+                            Keras_model.add(Dense(32))
+                            Keras_model.add(LeakyReLU(alpha=0.1))
+                            Keras_model.add(Dropout(hparam["dropout"]))
+                            Keras_model.add(Dense(16))
+                            Keras_model.add(LeakyReLU(alpha=0.1))
+                            Keras_model.add(Dropout(hparam["dropout"]))
+                            # Keras_model.add(Dense(8))
+                            # Keras_model.add(LeakyReLU(alpha=0.1))
+                            # Keras_model.add(Dropout(hparam["dropout"]))
+                            # Keras_model.add(Dense(4))
+                            # Keras_model.add(LeakyReLU(alpha=0.1))
+                            # Keras_model.add(Dropout(hparam["dropout"]))
+
+                        else:
+
+                            Keras_model.add(Dense(64,activation=hparam['activation_function']))
+                            Keras_model.add(Dropout(hparam["dropout"]))
+                            Keras_model.add(Dense(32,activation=hparam['activation_function']))
+                            Keras_model.add(Dropout(hparam["dropout"]))
+                            Keras_model.add(Dense(16,activation=hparam['activation_function']))
+                            Keras_model.add(Dropout(hparam["dropout"]))
+                            # Keras_model.add(Dense(8,activation=hparam['activation_function']))
+                            # Keras_model.add(Dropout(hparam["dropout"]))
+                            # Keras_model.add(Dense(4,activation=hparam['activation_function']))
+                            # Keras_model.add(Dropout(hparam["dropout"]))
+
+                        """
+                        print hparam
+                        Keras_model = Sequential()
+                        Keras_model.add(BatchNormalization(input_shape=(len(input_features),)))
+                        if hparam['activation_function'] == "LeakyRelu":
+                            from keras.layers import LeakyReLU
+                            Keras_model.add(Dense(hparam["dense_layer_size"],input_shape=(len(input_features),)))
+                            Keras_model.add(LeakyReLU(alpha=hparam["alpha"]))
+                        else:
+                            Keras_model.add(Dense(hparam["dense_layer_size"], activation=hparam['activation_function'],input_shape=(len(input_features),)))
+
+                        for lay in range(hparam["depth"]):
+                            if hparam['activation_function'] == "LeakyRelu":
+                                from keras.layers import LeakyReLU
+                                Keras_model.add(Dense(hparam["dense_layer_size"]))
+                                Keras_model.add(LeakyReLU(alpha=hparam["alpha"]))
+                                Keras_model.add(Dropout(hparam["dropout"]))
+                            else:
+                                Keras_model.add(Dense(hparam["dense_layer_size"], activation=hparam['activation_function']))
+                                Keras_model.add(Dropout(hparam["dropout"]))
+                                # Keras_model.add(BatchNormalization())
+
+                        Keras_model.add(Dense(1,activation='sigmoid'))
+
+                        # Keras_model = Sequential([
+                        #     BatchNormalization(input_shape=(len(input_features),)),
+                        #     Dense(hparam["dense_layer_size"], activation=hparam['activation_function'],input_shape=(len(input_features),)),
+                        #     Dense(hparam["dense_layer_size"], activation=hparam['activation_function']),
+                        #     BatchNormalization(),
+                        #     Dense(hparam["dense_layer_size"], activation=hparam['activation_function']),
+                        #     BatchNormalization(),
+                        #     Dense(1, activation='sigmoid'),
+                        #     ])
+                        Keras_model.compile(
+                            optimizer='Adam',
+                            loss=hparam["loss_function"],
+                            metrics=['accuracy'],
+                            callbacks=[early_stopping]
+                            )
+                        Keras_model.name=Keras_model_name
+
+                        from keras.utils import plot_model
+                        plot_model(Keras_model, to_file='%s.png'%(CLF_ARGS.outdir+"/"+Keras_model_name), show_shapes=True, show_layer_names=True)
+
+                                        ## pickle the model
                     mpath = os.path.join(CLF_ARGS.outdir, sclf.name)
                     if os.path.isfile(mpath):
                         log.warning("Found %s model; skipping the preparation..."%mpath)
-                        continue
                     else:
                         log.info("Saving %s model to disk ..."%mpath)
                         with open(mpath, "w") as mcache:
                             cPickle.dump(sclf, mcache, protocol=2)
-
-        else:
-            for ntracks in N_TRACKS:
-                # KFSpliter = KFold(n_splits=CLF_ARGS.kfolds, shuffle=False)
-
-                #### Taken from top answer here: https://stackoverflow.com/questions/38250710/how-to-split-data-into-3-sets-train-validation-and-test
-                # np.random.seed(64)
-
-                # tr_df, v_df, e_df = np.split(dframe.sample(frac=1), [int(.6*len(dframe), int(.8*len(dframe)))])
-
-                for rem in range(CLF_ARGS.kfolds): #<@NOTE 1 obviously is all
-
-                    if CLF_ARGS.kfolds==1:
-                        where = (dframe["tau_0_n_charged_tracks"]==ntracks)
-                        vdf = None
-                        edf = None
-                        raise Exception("Need more than 1 kfold to optimize")
-                    else:
-                        if CLF_ARGS.kfolds-1==(rem):
-                            v_where = (dframe["event_number"]%CLF_ARGS.kfolds==0) & (dframe["tau_0_n_charged_tracks"]==ntracks)
-                            where = (dframe["event_number"]%CLF_ARGS.kfolds!=rem) & (dframe["tau_0_n_charged_tracks"]==ntracks) & (dframe["event_number"]%CLF_ARGS.kfolds!=0)
-                            e_where = ((dframe["event_number"]%CLF_ARGS.kfolds==rem) & (dframe["tau_0_n_charged_tracks"]==ntracks))
-
-                        else:
-                            v_where = (dframe["event_number"]%CLF_ARGS.kfolds==(rem+1)) & (dframe["tau_0_n_charged_tracks"]==ntracks)
-                            where = (dframe["event_number"]%CLF_ARGS.kfolds!=rem) & (dframe["tau_0_n_charged_tracks"]==ntracks) & (dframe["event_number"]%CLF_ARGS.kfolds!=(rem+1))
-                            e_where = ((dframe["event_number"]%CLF_ARGS.kfolds==rem) & (dframe["tau_0_n_charged_tracks"]==ntracks))
-
-                    sdf = dframe[where]
-                    vdf = dframe[v_where]
-                    edf = dframe[e_where]
-
-                    log.info("Training Events: %s Validation Events: %s Evaluation Events: %s" %(len(sdf), len(vdf), len(edf)))
-                    log.info("Ratios: %s %s %s" %( len(sdf)/(len(sdf)+len(vdf)+len(edf)), len(vdf)/(len(sdf)+len(vdf)+len(edf)), len(edf)/(len(sdf)+len(vdf)+len(edf))  ) )
-
-                    for hparam in hyper_params_grid:
-                        hparam["verbose"] = 1
-                        log.info("Training in mass range:%s on ntracks=%i, nevents=%i, and nfeatures=%i\n\t\tHyperparams: %r\n"%(
-                            mass_tag, ntracks, sdf.shape[0], sdf.shape[1]-4, hparam))
-
-                        ## - - instantiate the model
-                        clf_name = SClassifier.MODEL_NAME_STR_FORMAT.format(
-                        "GB%i"%hparam["n_estimators"],CLF_ARGS.channel, mass_tag, ntracks, CLF_ARGS.kfolds, rem, len(feats), hparam['learning_rate'], hparam['min_samples_leaf'], hparam['n_estimators'], hparam['min_samples_split'], hparam['max_depth'])
-
-                        sclf = SClassifier(CLF_ARGS.channel, 
-                            train_df=sdf, valid_df=vdf, eval_df=edf, name=clf_name, features=feats, weight_sample=False, mass_range=signal_masses, kfolds=CLF_ARGS.kfolds, fold_num=rem,  optimize=True, sigs=signals, bkgs=reg_bkgs, **hparam)
-                        models += [sclf]
+                            if CLF_ARGS.optimize_nn == True:
+                                cPickle.dump(Keras_model, mcache, protocol=2)
 
 
-                        if CLF_ARGS.parallel:
-                            ###################################################################################################################################################################################################
-                            trained_model = train_model(sclf, train_df=sdf, weight_sample=False, balanced=CLF_ARGS.balanced, scale_features=False, outdir=CLF_ARGS.outdir, features=feats)
-                            # jobs.append(Job(train_model, sclf, weight_sample=False, balanced=CLF_ARGS.balanced, scale_features=False, outdir=CLF_ARGS.outdir))
+                    if CLF_ARGS.parallel:
+                        ###################################################################################################################################################################################################
+                        trained_model = train_model(sclf, train_df=sdf, weight_sample=False, balanced=bool(CLF_ARGS.balanced), scale_features=False, outdir=CLF_ARGS.outdir, features=feats, is_NN=bool(CLF_ARGS.optimize_nn), batch_size=hparam["batch_size"], epochs=hparam["epochs"])
 
-                            aucs = []
-                            for sig in signals:
-                                auc = calculate_scores(trained_model, dframe=trained_model.valid_df, backgrounds=reg_bkgs, sig=sig, outdir=CLF_ARGS.outdir)
-                                aucs.append(auc)
-                                log.info("Calculated roc_auc_score for %s %s"%(sig.name,auc))
-                            avgs_auc = np.mean(aucs)
+                        aucs = []
+                        for sig in signals:
+                            auc = calculate_scores(trained_model, dframe=trained_model.valid_df, backgrounds=reg_bkgs, sig=sig, outdir=CLF_ARGS.outdir)
+                            aucs.append(auc)
+                            log.info("Calculated roc_auc_score for %s %s"%(sig.name,auc))
+                        avgs_auc = np.mean(aucs)
 
-                            with open(r'%s%s_auc.txt'%(CLF_ARGS.outdir,trained_model.name.replace(".pkl", "")), 'w') as f:
-                                f.write("Signals:\n")
-                                for i in signals:
-                                    f.write("\t%s\n"%(i.name))
-                                f.write("Hyperparameters: %s\n" %(hparam))
-                                f.write("AUC: %s\n"%avgs_auc)
-                            # raise Exception("DEBUGGING")
+                        with open(r'%s%s_auc.txt'%(CLF_ARGS.outdir,trained_model.name.replace(".pkl", "")), 'w') as f:
+                            f.write("Signals:\n")
+                            for i in signals:
+                                f.write("\t%s\n"%(i.name))
+                            f.write("Hyperparameters: %s\n" %(hparam))
+                            f.write("AUC: %s\n"%avgs_auc)
+                        # raise Exception("DEBUGGING")
 
-                            ###################################################################################################################################################################################################
-
-                        ## pickle the model                        
-                        mpath = os.path.join(CLF_ARGS.outdir, sclf.name)
-                        if os.path.isfile(mpath):
-                            log.warning("Found %s model; skipping the preparation..."%mpath)
-                            continue
-                        else:
-                            log.info("Saving %s model to disk ..."%mpath)
-                            with open(mpath, "w") as mcache:
-                                cPickle.dump(sclf, mcache, protocol=2)
-
-    # if CLF_ARGS.parallel:
-        # jobs.append(Job(train_model, sclf, weight_sample=False, balanced=CLF_ARGS.balanced, scale_features=False, outdir=CLF_ARGS.outdir))
-        ## - - run
-        # log.info("**"*30 + " Submitting %i jobs "%len(jobs) + "**"*30)
-        # run_pool(jobs, n_jobs=-1)
-
-    if CLF_ARGS.cluster:
-        if CLF_ARGS.rs_manager=="CONDOR":
-            # - - write jobs
-            from hpana.cluster.job_template import CONDOR_JOB_TEMPLATE
-
-            ## zip source code
-            log.info("Creating source code tarball...")
-            source_code_tarball = os.path.abspath(CLF_ARGS.outdir+"/source_code.tar.gz")
-            if os.path.isfile(source_code_tarball):
-                os.system("rm -rf %s"%source_code_tarball)
-
-            src_ds = ["bin", "hpana", "aux", "setup.sh"]
-            src_ds = " ".join(src_ds)
-            os.system("cd {src_dir} && tar -cf {target_tar} {source_files} && cd - && tar --append --file={target_tar}".format(
-                src_dir=__HERE+"/../", target_tar=source_code_tarball, source_files=src_ds))
-
-            nodes = ["pt3wrk0", "pt3wrk1", "pt3wrk2", "pt3wrk3", "pt3wrk4"]
-            # nodes = ["pt3wrk3"]
-
-            # for node in nodes:
-                # globWrkDirectory = "/nfs/work/{0}/eparrish/databank/".format(node)
-
-                # log.info("Creating databank directory ")
-                # os.system("if [ ! -d '%s' ]; then mkdir -p '%s'; fi" %(globWrkDirectory,globWrkDirectory)) 
-
-                # log.info("Copying source code tar to node")
-                # os.system("rsync -axvH --no-g --no-p %s %s; cd %s; tar -xvf source_code.tar.gz; cd -" %(source_code_tarball, globWrkDirectory, globWrkDirectory))
-
-            #     for model in models:
-            #         log.info("Transfering model file %s to %s" %(model.name,globWrkDirectory))
-            #         os.system("rsync -av %s '%s'"%(os.path.join(CLF_ARGS.outdir,model.name), globWrkDirectory))
-
-            wrkDirectory = "/disk/eparrish/databank/"
-
-            # - - setup the submit dir
-            # os.system("mkdir -p {0}/jobs  {0}/logs {0}/models".format(CLF_ARGS.outdir))
-
-            log.info("************** creating %i jobs for HTCondor submission ************" % len(models))
-            log.info("**************************************************************")
+                        ###################################################################################################################################################################################################
 
 
 
-            os.system("mkdir -p {0}/jobs  {0}/logs {0}/hists {0}/logs/log {0}/logs/err {0}/logs/out {0}/models {0}/AUC".format(CLF_ARGS.outdir))
-            
-            submit_file_name = "%s/submitAllJobs.sh" % (CLF_ARGS.outdir)
-            submit_file = open(submit_file_name, "w")
-            submit_file.write(
-                         CONDOR_JOB_TEMPLATE.format(
-                             logsdir=os.path.join(
-                                 CLF_ARGS.outdir, CLF_ARGS.logsdir),
-                             execScript=os.path.join(__HERE, "condor_jobs_clf_optimize.sh"),
-                             userEmail="Z1832314@students.niu.edu",
-                             memory="1GB",
-                         )
-                         )
-
-            for model in models:
-                # # print "Running command: %s" %("rsync -av %s '/nfs/work/pt3wrk0/eparrish/databank/'"%(os.path.join(CLF_ARGS.outdir, model.name)))
-                # log.info("Transfering model file %s to %s" %(model.name,wrkDirectory))
-                # os.system("rsync -av %s '%s'"%(os.path.join(CLF_ARGS.outdir,model.name), wrkDirectory))
-
-                submit_file.write("\nArguments = %s %s %s %s\nqueue\n" %(   model.name, 
-                                                                                os.path.join(__HERE, "classifier-optimizer"), 
-                                                                                wrkDirectory,
-                                                                                os.path.join(os.getcwd(),CLF_ARGS.outdir)
-                                                                            )
-                )
+                    if CLF_ARGS.cluster:
+                        submit_file.write("\nArguments = %s %s %s %s %s %s %s \nqueue\n" %(   sclf.name,
+                                                                                        os.path.join(__HERE, "classifier-optimizer"),
+                                                                                        os.path.join(os.getcwd(),CLF_ARGS.outdir),
+                                                                                        CLF_ARGS.balanced,
+                                                                                        CLF_ARGS.optimize_nn,
+                                                                                        hparam["batch_size"],
+                                                                                        hparam["epochs"],
+                                                                                    )
+                        )
 
 
-                # os.close(jfile)
+                        log.info("Writing to %s for job %s ..." %(submit_file_name, sclf.name))
 
-                # - - - - write submission to file to be used outside container
-                log.info("Writing to %s for job %s ..." %
-                         (submit_file_name, model.name))
-                # os.write(submit_file, "sbatch %s\n" % jfile_name)
-
-            submit_file.close()
-            log.warning("Submission not supported from within container.")
-            log.warning("Please launch outside container via:")
-            log.warning("\t condor_submit {0}".format(submit_file_name))
-        
-##-----------------------------
-## tmva backend
-##-----------------------------
-else:
-    raise Exception("Non Sklearn backend not implemented yet")
+if CLF_ARGS.cluster:
+    submit_file.close()
+    log.warning("Submission not supported from within container.")
+    log.warning("Please launch outside container via:")
+    log.warning("\t condor_submit {0}".format(submit_file_name))

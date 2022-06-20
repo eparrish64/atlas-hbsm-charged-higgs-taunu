@@ -249,7 +249,11 @@ class Data(Sample):
 
             ## write lumi to hists-file 
             oname = os.path.join(histsdir, hists_file)
-            tf = ROOT.TFile(oname, "UPDATE")
+            if "eos" in histsdir:
+                tf = ROOT.TFile(hists_file, "UPDATE")
+            else:
+                # merged_hists_file = ROOT.TFile(os.path.join(histsdir, hists_file), "UPDATE")
+                tf = ROOT.TFile(oname, "UPDATE")
             ln = ROOT.TNamed("lumi", str(self.int_lumi))
             ln.Write()
             tf.Close()

@@ -39,7 +39,7 @@ def draw(var, category,
          legend_position='right',
          output_dir=None,
          output_name=None,
-         overflow=False,
+         overflow=True,
          show_pvalue=False,
          top_label=None,
          poisson_errors=True,
@@ -89,7 +89,7 @@ def draw(var, category,
     if hists_file:
         hfile = ROOT.TFile(hists_file, "READ")
 
-    # - - - - - - - - insantiate the legend
+    # - - - - - - - - instantiate the legend
     legend = ROOT.TLegend(0.6, 0.75, 0.92, 0.92)
     legend.SetNColumns(2)
     legend.SetBorderSize(0)
@@ -156,6 +156,7 @@ def draw(var, category,
 
                     s_hist = s_hist.Rebin(len(bins)-1, "hn", array.array("d", bins))
 
+
                 ## normalize ttbar bkg
                 if ttbar_norm_factor!=1 and sample.name=="TTbar":
                     s_hist.Scale(ttbar_norm_factor)
@@ -172,6 +173,10 @@ def draw(var, category,
                             d_hist.SetBinContent(bn, 0)
                         s_hist =  d_hist
                         
+                
+                # # - - - - fold the overflow bin to the last bin
+                if overflow:
+                    fold_overflow(s_hist)
                 hists_dict[sample.name][syst_var.name] = s_hist
 
 
@@ -209,9 +214,15 @@ def draw(var, category,
         for bkg_hist in backgrounds_hists_nom:
             if opt_bins and bin_optimization:
                 hnew = rebin(bkg_hist, opt_bins)
+                # # - - - - fold the overflow bin to the last bin
+                # if overflow:
+                #     fold_overflow(hnew)
                 bkg_stack.Add(hnew)
                 rebinned_bkg_hists.append(hnew)
             else:
+                # - - - - fold the overflow bin to the last bin
+                # if overflow:
+                #     fold_overflow(bkg_hist)
                 bkg_stack.Add(bkg_hist)
         backgrounds_stack.append(bkg_stack)
         if bin_optimization and opt_bins:
@@ -255,6 +266,7 @@ def draw(var, category,
         for sig in signals:    
             sig_hist = hists_dict[sig.name]["NOMINAL"]
             # - - - - scale signals if needed
+            bh_sum, stot = 1., 1.
             if scale_sig_to_bkg_sum:
                 bh_sum = 0
                 nbins = bkg_hist.GetNbinsX()
@@ -264,15 +276,17 @@ def draw(var, category,
                 sig_hist.Scale(bh_sum/stot)
 
             if signal_scale!=1.:
-                sig_hist *= signal_scale
+                #sig_hist *= signal_scale
+                sig_altscale = (bh_sum/stot)/signal_scale
             init_label = sig.label
-            sig_label = "%i #times %s"%(signal_scale, init_label) if signal_scale!=1. else init_label
-                
-            # - - - - fold the overflow bin to the last bin
-            if overflow:
-                fold_overflow(sig_hist)
+            #sig_label = "%i #times %s"%(signal_scale, init_label) if signal_scale!=1. else init_label
+            sig_label = "%i #times %s"%(sig_altscale, init_label) if signal_scale!=1. else init_label
+
             if bin_optimization and opt_bins:
                 rebin(sig_hist, opt_bins)
+            # - - - - fold the overflow bin to the last bin
+            # if overflow:
+            #     fold_overflow(sig_hist)
                 
             legend.AddEntry(sig_hist, sig_label, 'L')
             signals_hists.append(sig_hist)
@@ -303,11 +317,11 @@ def draw(var, category,
 
             data_hist.SetXTitle(var.title)
             data_hist.SetYTitle("# events")
-            if overflow:
-                fold_overflow(data_hist)
             legend.AddEntry(data_hist, data.label, "P")
             if bin_optimization and opt_bins:
                 data_hist = rebin(data_hist, opt_bins)
+            # if overflow:
+            #     fold_overflow(data_hist)
             
             # - - - - - - - - blind the data in a specific range
             if isinstance(blind, tuple):
@@ -451,7 +465,8 @@ def draw(var, category,
             sh.SetLineStyle(sig.hist_decor["line_style"])
             sh.SetLineWidth(2)
 
-    if error_bars and show_ratio:
+    # if error_bars and show_ratio:
+    if error_bars:
         # - - - - - - - - draw errors
         for erf in main_errors:
             erf.Draw('SAME E2')

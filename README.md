@@ -46,6 +46,11 @@ the following
 - If running via condor, will have to rerun after jobs are done with ``--merge-hists`` option
 - You can run the merging step on condor by specifying the ``--merge-hists`` and ``--cluster`` options in the same command. Give a ``--submitdir`` option to have a condor submission directory separate from your outdir.
 
+#### merging histogram files
+After you have all of the histogram files, you need to merge them all into one file. This goes for histogram files from `run-analysis` as well as `evaluate-classifier`.
+- To merge interactively, add the `--merge-hists` argument.
+- To merge via a condor job, add the arguments `--merge-hists` and `--cluster`.
+- Make sure your `outdir` points to the directory with the histogram files and your `submitdir` points to a local directory not on `eos`.
 
 #### plotting 
 After you have the histograms ready you can produce various plots

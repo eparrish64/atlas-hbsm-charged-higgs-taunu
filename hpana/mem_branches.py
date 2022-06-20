@@ -4,7 +4,7 @@ MAKE it as small as possible if you're looking for an actual boost.
 """
 
 
-## - - - list of branche to read to memory
+## - - - list of branches to read to memory
 MEM_BRANCHES = {}
 
 MEM_BRANCHES["taulep"] = [

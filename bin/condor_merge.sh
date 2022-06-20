@@ -23,9 +23,7 @@ rsync -axvH --no-g --no-p ${2}  ./ || fail;
 tar -xvf ${2} || fail;
 source setup.sh || fail;
 
-echo "python ${3} ${4} ${1} ${6} ${7}";
-
-python ${3} ${4} ${1} ${6} ${7} || fail;
+python ${3} ${4} ${1} ${5} || fail;
 
 files="$JOBSCRATCH"/*.root
 if [ ${#files[@]} -eq 0 ]; then
@@ -33,8 +31,8 @@ if [ ${#files[@]} -eq 0 ]; then
 else    
     for file in $files
     do
-        echo copying the output="$file" to workdir="${5}/hists";
-        rsync -axvH --no-g --no-p "$file" ${5}/hists/ || fail;
+        echo copying the output="$file" to workdir="${5}/";
+        rsync -axvH --no-g --no-p "$file" ${5}/ || fail;
     done
     
     echo "Succeeded";

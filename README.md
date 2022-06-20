@@ -79,8 +79,9 @@ After you have the database for the two channels ready (if the caches are alread
 - Evaluating models (PNN):
   ``evaluate-classifier --channel taulep --db-version v01 --data-streams 2015 2016 2017 2018 --train-data TRAIN_DATA_taulep_fullRun2.pkl --bin-scheme SINGLE --models myOutDirClf/trained_models/model*.pkl --direct --eval-nn --outdir myOutDirClfEval --categories SR_TAUEL SR_TAUMU DILEP_BTAG --cluster --rs-manager CONDOR``
 
-- If running via condor, will have to rerun after jobs are done with --merge-hists option
+- If running via condor, will have to rerun after jobs are done with ``--merge-hists`` option
 - There are many options to for training options and evaluation. Please thoroughly read the ``train-classifier`` script to understand what type of classifier you are training.
 
 #### Partial Unblinded Signal Region
 - The option to run over the partially unblinded signal region (defined in ``hpana/categories.py``) can be used with ``run-analysis``, ``draw-plots``, and ``evaluate-classifier``. 
+- Specify where your friend files are located with the ``frienddir` option. Otherwise, it will default to Blake's eos directory.

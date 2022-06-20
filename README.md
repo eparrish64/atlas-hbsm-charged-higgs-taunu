@@ -1,5 +1,5 @@
 # Introduction 
-Analysis software for _H+ -->tau nu_ searches with _p-p_ collision data recorded by the ATLAS detector during run II (2015-2019)
+Analysis software for _H+ -->tau nu_ searches with _p-p_ collision data recorded by the ATLAS detector during run II (2015-2018)
 
 _[UNDER DEVELOPEMENT]_
 
@@ -26,7 +26,8 @@ Workflow
 It's highly recommended to create a `workAREA` dir and run the scripts from there in order to keep the package clean.
 
 #### creating the database
-If you need to use the HDBS grid location for the ntuples you must first run. i.e. ``create-symlinks --vers v09 taulep`` 
+This step is needed on lxplus, not on uChicago Analysis Facility
+If you need to use the HDBS grid location for the ntuples you must first run. i.e. ``create-symlinks --vers v12 taulep`` 
 This will create symbolic links in the location `hpana/db/symlinks/`
 
 After the ntuples are finished and downloaded, update the paths in
@@ -40,9 +41,10 @@ After you have the database ready, you can produce all the histograms with
 the following
 
 - to see all the options exectute ``run-analysis --help``
-- example in parallel: ``run-analysis --db-version v09 --data-streams 2015 2016 --samples DiBoson --categories SR_TAUJET --parallel --merge-hists --outdir lT01`` 
-- example via condor:  ``run-analysis --db-version v09 --data-streams 2015 2016 --samples DiBoson --categories SR_TAUJET --cluster --rs-manager CONDOR --outdir myOutDir``
-- If running via condor, will have to rerun after jobs are done with --merge-hists option
+- example in parallel: ``run-analysis --db-version v12 --data-streams 2015 2016 --samples DiBoson --categories SR_TAUJET --parallel --merge-hists --outdir lT01`` 
+- example via condor:  ``run-analysis --db-version v12 --data-streams 2015 2016 --samples DiBoson --categories SR_TAUJET --cluster --rs-manager CONDOR --outdir myOutDir``
+- If running via condor, will have to rerun after jobs are done with ``--merge-hists`` option
+- You can run the merging step on condor by specifying the ``--merge-hists`` and ``--cluster`` options in the same command. Give a ``--submitdir`` option to have a condor submission directory separate from your outdir.
 
 #### merging histogram files
 After you have all of the histogram files, you need to merge them all into one file. This goes for histogram files from `run-analysis` as well as `evaluate-classifier`.
@@ -59,6 +61,8 @@ After you have the histograms ready you can produce various plots
 #### yields and cutflows
 - to see all the options exectute ``tabulate-yields --help``
 - example: ``tabulate-yields --db-version 18v01 --data-streams 2015 2016 --categories SR_TAUJET --yields-table ``
+- to run cutflows, remove the ``--yields-table`` option and give ``--cutflow``
+- ``tabulate-yields`` will default to unweighted event numbers. To run with all weights, give ``--weighted`` option.
 
 
 #### calculating Fake-Factors
@@ -76,7 +80,7 @@ After you have the database for the two channels ready (if the caches are alread
   ``evaluate-classifier --channel taulep --db-version v01 --data-streams 2015 2016 2017 2018 --train-data TRAIN_DATA_taulep_fullRun2.pkl --bin-scheme SINGLE --models myOutDirClf/trained_models/model*.pkl --direct --eval-nn --outdir myOutDirClfEval --categories SR_TAUEL SR_TAUMU DILEP_BTAG --cluster --rs-manager CONDOR``
 
 - If running via condor, will have to rerun after jobs are done with --merge-hists option
+- There are many options to for training options and evaluation. Please thoroughly read the ``train-classifier`` script to understand what type of classifier you are training.
 
-### Partial Unblinding
-- Add the `--partial-unblind` option to either `run-analysis` or `evaluate-classifier`. This will add the unblinded signal regions to your list of categories to run over. 
-- If you want to use different friend files that contain the MVA scores for cutting, specify so with the `--frienddir` option.
+#### Partial Unblinded Signal Region
+- The option to run over the partially unblinded signal region (defined in ``hpana/categories.py``) can be used with ``run-analysis``, ``draw-plots``, and ``evaluate-classifier``. 

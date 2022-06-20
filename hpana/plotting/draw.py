@@ -285,8 +285,8 @@ def draw(var, category,
             if bin_optimization and opt_bins:
                 rebin(sig_hist, opt_bins)
             # - - - - fold the overflow bin to the last bin
-            if overflow:
-                fold_overflow(sig_hist)
+            # if overflow:
+            #     fold_overflow(sig_hist)
                 
             legend.AddEntry(sig_hist, sig_label, 'L')
             signals_hists.append(sig_hist)
@@ -320,8 +320,8 @@ def draw(var, category,
             legend.AddEntry(data_hist, data.label, "P")
             if bin_optimization and opt_bins:
                 data_hist = rebin(data_hist, opt_bins)
-            if overflow:
-                fold_overflow(data_hist)
+            # if overflow:
+            #     fold_overflow(data_hist)
             
             # - - - - - - - - blind the data in a specific range
             if isinstance(blind, tuple):

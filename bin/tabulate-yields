@@ -64,9 +64,16 @@ config = Configuration(
 analysis = Analysis(config, compile_cxx=True)
 
 # - - - - - - - - categories & systematics
-categories = config.categories 
+# categories = config.categories 
+# if YIELDS_ARGS.categories:
+#     categories = filter(lambda c: c.name in YIELDS_ARGS.categories, categories+config.ff_cr_regions+config.clf_regions)
 if YIELDS_ARGS.categories:
-    categories = filter(lambda c: c.name in YIELDS_ARGS.categories, categories+config.ff_cr_regions+config.clf_regions)
+    categories = filter(
+        lambda c: c.name in YIELDS_ARGS.categories, 
+            config.categories_func(partial_unblind=YIELDS_ARGS.partial_unblind)+ config.ff_cr_regions+ config.clf_regions)#+config.met_trigeff_regions)
+else:
+    categories = config.categories_func(partial_unblind=YIELDS_ARGS.partial_unblind) 
+
 
 ## systematics
 # if YIELDS_ARGS.cutflow:
@@ -212,7 +219,7 @@ if YIELDS_ARGS.yields_table:
     yieldDF = yieldDF.round(2)
     print "\n"
     if YIELDS_ARGS.latex:
-        print yieldDF.transpose().to_latex(index=False)
+        print yieldDF.transpose().to_latex(index=True)
     else:
         pd.set_option("display.max_rows", None, "display.max_columns", None)
         print yieldDF

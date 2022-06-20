@@ -733,22 +733,90 @@ def main():
             samples = filter(lambda s: s.name in ECLF_ARGS.samples, analysis.samples)
         else:
             samples = analysis.samples #get_signals()
+        if ECLF_ARGS.cluster:
+            # raise RuntimeError(
+            #     "jobs are submitted to the cluster wait for them to get done")
+                    ## zip source code
+            log.info("Creating source code tarball...")
+            source_code_tarball = os.path.abspath(ECLF_ARGS.submitdir+"/source_code.tar.gz")
+            if os.path.isfile(source_code_tarball):
+                os.system("rm -rf %s"%source_code_tarball)
 
-        # ## - - prepare testing dataFrame 
-        # backgrounds =  filter(lambda b: not b.name in ["LepFakes"], analysis.backgrounds)
-        # if ECLF_ARGS.bkg:
-        #     backgrounds = filter(lambda b: b.name in ECLF_ARGS.bkg, backgrounds)
+            src_ds = ["bin", "hpana", "aux", "setup.sh"]
+            src_ds = " ".join(src_ds)
+            os.system("cd {src_dir} && tar --exclude 'symlinks/*' -cf {target_tar} {source_files} && cd - && tar --append --file={target_tar} {conf_file}".format(
+            src_dir=__HERE+"/../", conf_file=ECLF_ARGS.conf_file, target_tar=source_code_tarball, source_files=src_ds))
 
-        # signals = analysis.get_signals()
-        # if ECLF_ARGS.sig:
-        #     signals = filter(lambda s: s.name in ECLF_ARGS.sig, signals)
-        # if ECLF_ARGS.mass_range:
-        #     signals = filter(lambda s:int(ECLF_ARGS.mass_range[0]) <= s.mass <= int(ECLF_ARGS.mass_range[1]), signals)   
-        log.info(
-            "************** merging histograms  ************")
-        log.info(
-            "***********************************************")
-        analysis.merge_hists(samples=samples, histsdir=ECLF_ARGS.outdir, overwrite=True, write=True)
+            if ECLF_ARGS.rs_manager == "CONDOR":
+
+                # -- write jobs
+                from hpana.cluster.job_template import CONDOR_JOB_TEMPLATE
+
+                submitfile_name = "%s/%s.sh" %(ECLF_ARGS.submitdir, "submitAllMerge")
+                submit_file = os.open(submitfile_name, os.O_CREAT | os.O_WRONLY, 0755)
+
+                log.info("************** creating 1 merge jobs for HTCondor submission ************" )
+                log.info("**************************************************************")
+
+                submit_file_name = "%s/submitAllMerge.sh" % (ECLF_ARGS.submitdir)
+                submit_file = open(submit_file_name, "w")
+                submit_file.write(
+                             CONDOR_JOB_TEMPLATE.format(
+                                 logsdir=os.path.join(
+                                     ECLF_ARGS.submitdir, ECLF_ARGS.logsdir),
+                                 execScript=os.path.join(__HERE, "condor_merge.sh"),
+                                 memory="64GB",
+                             )
+                             )
+                submit_file.write("\nArguments = %s %s %s %s %s \nqueue\n" %(  "Merging",
+                                                                                source_code_tarball, 
+                                                                                os.path.join(__HERE, "merge-datasets"), 
+                                                                                ECLF_ARGS.conf_file,
+                                                                                ECLF_ARGS.outdir)
+                                                                        )
+
+
+                submit_file.close()
+                log.warning("Submission not supported from within container.")
+                log.warning("Please launch outside container via:")
+                log.warning("\t condor_submit {0}".format(submit_file_name))
+
+        else:
+            log.info(
+                "************** merging histograms  ************")
+            log.info(
+                "***********************************************")
+            analysis.merge_hists(samples=samples, histsdir=ECLF_ARGS.outdir, overwrite=True, write=True,)
+
+
+
+
+        # config = Configuration(ECLF_ARGS.channel, data_streams=ECLF_ARGS.data_streams, db_version=ECLF_ARGS.db_version)
+        
+        # # - -  instantiate the analysis
+        # analysis = Analysis(config, compile_cxx=True)
+
+        # # - -  if you wish to look at specific samples
+        # if ECLF_ARGS.samples:
+        #     samples = filter(lambda s: s.name in ECLF_ARGS.samples, analysis.samples)
+        # else:
+        #     samples = analysis.samples #get_signals()
+
+        # # ## - - prepare testing dataFrame 
+        # # backgrounds =  filter(lambda b: not b.name in ["LepFakes"], analysis.backgrounds)
+        # # if ECLF_ARGS.bkg:
+        # #     backgrounds = filter(lambda b: b.name in ECLF_ARGS.bkg, backgrounds)
+
+        # # signals = analysis.get_signals()
+        # # if ECLF_ARGS.sig:
+        # #     signals = filter(lambda s: s.name in ECLF_ARGS.sig, signals)
+        # # if ECLF_ARGS.mass_range:
+        # #     signals = filter(lambda s:int(ECLF_ARGS.mass_range[0]) <= s.mass <= int(ECLF_ARGS.mass_range[1]), signals)   
+        # log.info(
+        #     "************** merging histograms  ************")
+        # log.info(
+        #     "***********************************************")
+        # analysis.merge_hists(samples=samples, histsdir=ECLF_ARGS.outdir, overwrite=True, write=True)
 
 
     if ECLF_ARGS.friend:

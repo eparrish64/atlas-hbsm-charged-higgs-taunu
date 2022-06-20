@@ -163,6 +163,12 @@ def get_plotting_parser(base_parser=None):
 
     plotting_parser.add_argument('--logy', action="store_true",
                                  help='Y axis in log scale', )
+
+    plotting_parser.add_argument("--partial-unblind", action="store_true", 
+                                 help="Partially unblind signal regions with classifier cuts defined in hpana/categories.py")
+
+    plotting_parser.add_argument("--frienddir", type=str, default="/eos/home-b/bburghgr/hptaunu/friendfiles-",
+                            help="Where to find friend files")
     
     plotting_parser.add_argument('--no-data', action="store_true",
                                  help='do NOT plot data', )
@@ -207,6 +213,13 @@ def get_yields_parser(base_parser=None):
     yields_parser.add_argument('--weighted', action="store_true",
                                  help='Do not weight yields', )
     
+    yields_parser.add_argument("--partial-unblind", action="store_true", 
+                               help="Partially unblind signal regions with classifier cuts defined in hpana/categories.py")
+
+
+    yields_parser.add_argument("--frienddir", type=str, default="/eos/home-b/bburghgr/hptaunu/friendfiles-",
+                            help="Where to find friend files")
+
     return yields_parser
 
 

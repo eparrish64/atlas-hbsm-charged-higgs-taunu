@@ -526,25 +526,8 @@ def uncertainty_band(hists_dict, overflow=True):
     low_band = high_band.Clone()
     for i in range(1, high_band.GetNbinsX()+1):
         bkey="BIN%i"%i
-        # if overflow and i==high_band.GetNbinsX():
-        #     bkey_overflow = "BIN%i"%(i+1)
-
-        #     sum_high = math.sqrt(sum([v**2 for v in var_high[bkey]])) 
-        #     sum_high_overflow = math.sqrt(sum([v**2 for v in var_high[bkey_overflow]]))
-        #     print "HIGH last bin: %s, overflow: %s" %(sum_high, sum_high_overflow)
-        #     sum_high = math.sqrt(sum_high**2 + sum_high_overflow**2)
-
-        #     sum_low = math.sqrt(sum([v**2 for v in var_low[bkey]]))
-        #     sum_low_overflow = math.sqrt(sum([v**2 for v in var_low[bkey_overflow]]))
-        #     print "LOW last bin: %s, overflow: %s" %(sum_low, sum_low_overflow)
-        #     sum_low = math.sqrt(sum_low**2 + sum_low_overflow**2)
-
-        #     print sum_high, sum_low
-        # else:    
         sum_high = math.sqrt(sum([v**2 for v in var_high[bkey]]))
         sum_low = math.sqrt(sum([v**2 for v in var_low[bkey]]))
-
-        print bkey, sum_high, sum_low
 
         high_band.SetBinContent(i, sum_high)
         low_band.SetBinContent(i, sum_low)

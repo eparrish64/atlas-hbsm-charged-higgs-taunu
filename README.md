@@ -8,17 +8,17 @@ Setup
 
 #### Cluster Account
 It is best to take advantage of the UChicago Analysis Facility https://maniaclab.uchicago.edu/af-docs/
-    - Request an account, it is open to all of ATLAS
-    - Read through their documentation
-    - Data samples are stored in /data/eparrish64/HPlusNTuples/v12/
-    - This cluster uses condor, so the learning curve is very quick
+  - Request an account, it is open to all of ATLAS
+  - Read through their documentation
+  - Data samples are stored in `/data/eparrish64/HPlusNTuples/v12/`
+  - This cluster uses condor, so the learning curve is very quick
 
 #### first time only
 Setting up Python virtualenv for clean PyPI packages setup. 
 
     - setupATLAS; lsetup "root 6.14.08-x86_64-centos7-gcc8-opt" (this is to make sure you have the right Python 2.7; by default on some lxplus machines we have Python 2.6! )
-  %  - Check the newest stable release and replaced 16.7.2 in the following commands, https://virtualenv.pypa.io/en/stable/installation/
-  % Just use 16.7.2 now, since python2 is no longer supported, the newer versions do not work.
+   <!--- - Check the newest stable release and replaced 16.7.2 in the following commands, https://virtualenv.pypa.io/en/stable/installation/
+         Just use 16.7.2 now, since python2 is no longer supported, the newer versions do not work. --->
     - somewhere outside the hpana code do: mkdir -p PythonPackags/Venvs; cd PythonPackags  
     - wget https://pypi.python.org/packages/source/v/virtualenv/virtualenv-16.7.2.tar.gz 
     - tar xzvf virtualenv-16.7.2.tar.gz ; cd virtualenv-16.7.2

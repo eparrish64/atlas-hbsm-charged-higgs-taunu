@@ -6,11 +6,19 @@ _[UNDER DEVELOPEMENT]_
 Setup
 ------
 
+#### Cluster Account
+It is best to take advantage of the UChicago Analysis Facility https://maniaclab.uchicago.edu/af-docs/
+    - Request an account, it is open to all of ATLAS
+    - Read through their documentation
+    - Data samples are stored in /data/eparrish64/HPlusNTuples/v12/
+    - This cluster uses condor, so the learning curve is very quick
+
 #### first time only
 Setting up Python virtualenv for clean PyPI packages setup. 
 
     - setupATLAS; lsetup "root 6.14.08-x86_64-centos7-gcc8-opt" (this is to make sure you have the right Python 2.7; by default on some lxplus machines we have Python 2.6! )
-    - Check the newest stable release and replaced 16.7.2 in the following commands, https://virtualenv.pypa.io/en/stable/installation/
+  %  - Check the newest stable release and replaced 16.7.2 in the following commands, https://virtualenv.pypa.io/en/stable/installation/
+  % Just use 16.7.2 now, since python2 is no longer supported, the newer versions do not work.
     - somewhere outside the hpana code do: mkdir -p PythonPackags/Venvs; cd PythonPackags  
     - wget https://pypi.python.org/packages/source/v/virtualenv/virtualenv-16.7.2.tar.gz 
     - tar xzvf virtualenv-16.7.2.tar.gz ; cd virtualenv-16.7.2
@@ -56,11 +64,11 @@ After you have all of the histogram files, you need to merge them all into one f
 After you have the histograms ready you can produce various plots
 
 - to see all the options exectute ``draw-plots --help``
-- example: ``draw-plots --db-version 18v01 --data-streams 2015 2016 --categories SR_TAUJET --hists-file <PATH TO THE HISTOGRAMS FILE>``
+- example: ``draw-plots --db-version v12 --data-streams 2015 2016 --categories SR_TAUJET --hists-file <PATH TO THE HISTOGRAMS FILE>``
 
 #### yields and cutflows
 - to see all the options exectute ``tabulate-yields --help``
-- example: ``tabulate-yields --db-version 18v01 --data-streams 2015 2016 --categories SR_TAUJET --yields-table ``
+- example: ``tabulate-yields --db-version v12 --data-streams 2015 2016 --categories SR_TAUJET --yields-table ``
 - to run cutflows, remove the ``--yields-table`` option and give ``--cutflow``
 - ``tabulate-yields`` will default to unweighted event numbers. To run with all weights, give ``--weighted`` option.
 
@@ -68,16 +76,16 @@ After you have the histograms ready you can produce various plots
 #### calculating Fake-Factors
 After you have the database for the two channels ready (if the caches are already available please make sure they're healthy)
 - to see all the cmdline flags ``calculate-rqcd --help``
-- to get the FFs for the FFs CRs: ``calculate-rqcd --db-version 18v01 --data-streams 2015 2016 --ffs-cr-cache FFs_CR.yml``
-- producing all the histograms for target-regions in order to find the combined Fake-Factors: ``calculate-rqcd --db-version 18v01 --data-streams 2015 2016  --ffs-hists-cache FFs_HISTS.pkl ``
+- to get the FFs for the FFs CRs: ``calculate-rqcd --db-version v12 --data-streams 2015 2016 --ffs-cr-cache FFs_CR.yml``
+- producing all the histograms for target-regions in order to find the combined Fake-Factors: ``calculate-rqcd --db-version v12 --data-streams 2015 2016  --ffs-hists-cache FFs_HISTS.pkl ``
 - once you have all the histograms  and FFs in the control regions ready (pickled) in order to calcualte the rQCD and produce the validation plots do:
- ``calculate-rqcd --db-version 18v01 --data-streams 2015 2016 --ffs-cr-cache FFs_CR.yml --ffs-hists-cache FFs_HISTS.pkl --rqcd-cache FFs_COMBINED.yml  --eval-rqcd --validation-plots --pdir ffsplots ``
+ ``calculate-rqcd --db-version v12 --data-streams 2015 2016 --ffs-cr-cache FFs_CR.yml --ffs-hists-cache FFs_HISTS.pkl --rqcd-cache FFs_COMBINED.yml  --eval-rqcd --validation-plots --pdir ffsplots ``
 
 
 #### MVA
-- training a model (PNN): ``train-classifier --channel taulep --data-streams 2015 2016 --db-version v09 --train-nn --bin-scheme ALL --train-data TRAIN_DATA.pkl --cluster --rs-manager CONDOR --outdir myOutDirClf`` 
+- training a model (PNN): ``train-classifier --channel taulep --data-streams 2015 2016 --db-version v12 --train-nn --bin-scheme ALL --train-data TRAIN_DATA.pkl --cluster --rs-manager CONDOR --outdir myOutDirClf`` 
 - Evaluating models (PNN):
-  ``evaluate-classifier --channel taulep --db-version v01 --data-streams 2015 2016 2017 2018 --train-data TRAIN_DATA_taulep_fullRun2.pkl --bin-scheme SINGLE --models myOutDirClf/trained_models/model*.pkl --direct --eval-nn --outdir myOutDirClfEval --categories SR_TAUEL SR_TAUMU DILEP_BTAG --cluster --rs-manager CONDOR``
+  ``evaluate-classifier --channel taulep --db-version v12 --data-streams 2015 2016 2017 2018 --train-data TRAIN_DATA_taulep_fullRun2.pkl --bin-scheme SINGLE --models myOutDirClf/trained_models/model*.pkl --direct --eval-nn --outdir myOutDirClfEval --categories SR_TAUEL SR_TAUMU DILEP_BTAG --cluster --rs-manager CONDOR``
 
 - If running via condor, will have to rerun after jobs are done with ``--merge-hists`` option
 - There are many options to for training options and evaluation. Please thoroughly read the ``train-classifier`` script to understand what type of classifier you are training.

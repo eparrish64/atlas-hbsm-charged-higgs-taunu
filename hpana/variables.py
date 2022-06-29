@@ -208,6 +208,33 @@ tau_0_pt = Variable(
         "SR_TAUEL_PARTIAL": range(30, 300, 10),
         "SR_TAULEP_PARTIAL": range(30, 300, 10),
     },
+    # binning=(18, 30, 300),
+    # plot_bins={
+    #     "COMMON": range(30, 300, 15),
+    #     # "TAULEP_PRESEL": range(30, 300, 10),
+    #     # "DILEP_BTAG": range(30, 300, 10),
+    #     # "DILEP_BVETO": range(30, 300, 10),
+    #     # "ZEE": range(30, 300, 10),
+    #     # "SS_TAUEL": range(30, 300, 10),
+    #     # "SS_TAUMU": range(30, 300, 10),
+    #     # "TAUEL_BVETO": range(30, 300, 10),
+    #     # "TAUMU_BVETO": range(30, 300, 10),
+    #     # "TTBAR_TAULEP": range(30, 300, 10),
+    #     # "SR_TAUMU": range(30, 300, 10),
+    #     # "SR_TAUEL": range(30, 300, 10),
+    #     # "SR_TAULEP": range(30, 300, 10),
+    #     # "SR_TAUMU_PARTIAL": range(30, 300, 10),
+    #     # "SR_TAUEL_PARTIAL": range(30, 300, 10),
+    #     # "SR_TAULEP_PARTIAL": range(30, 300, 10),
+    # },
+    # binning=(200, 30, 1000),
+    # plot_bins={
+    #     # "COMMON": range(30, 300, 30) + range(300, 500, 50) + range(500,1050,50),
+    #     "COMMON": range(30,1000,5)
+    #     # "FF_CR_MULTIJET": [30, 35, 40, 45, 50, 60, 80, 100, 200, 3500],
+    #     # "FF_CR_WJETS": [30, 35, 40, 45, 50, 60, 80, 100, 200, 3500],
+    # },
+
     unit='[GeV]',
     scale=1.)
 
@@ -1116,7 +1143,7 @@ bjet_0_tau_0_dr = Variable(
     title='#font[52]{#Delta}R(#tau, b-jet)',
     latex=r"$\Delta R(\tau, b-jet)$",
     tformula={
-        "mc16": "sqrt(acos(cos(tau_0_p4->Phi() - {0}))**2 + (tau_0_p4->Phi() - {1})**2)".format(
+        "mc16": "sqrt(acos(cos(tau_0_p4->Phi() - {0}))**2 + (tau_0_p4->Eta() - {1})**2)".format(
             "bjet_0_p4->Phi()", "bjet_0_p4->Eta()"),
         "mc15": "sqrt(acos(cos(tau_0_phi-bjet_0_eta))**2 + (tau_0_eta-bjet_0_eta)**2)",},
     binning=(25, 0, 5))

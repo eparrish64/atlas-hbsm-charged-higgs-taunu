@@ -347,7 +347,7 @@ def save_canvas(canvas, directory, name, formats=None):
 def fold_overflow(hist):
     if "upsilon" in hist.GetTitle().lower():
         return
-    if "nom" not in hist.GetTitle().lower():
+    if "nom" not in hist.GetTitle().lower() or "data" not in hist.GetTitle().lower():
         nbins = hist.GetNbinsX()
         first_bin = math.sqrt(hist.GetBinContent(0)**2 + hist.GetBinContent(1)**2)
         hist.SetBinContent(1, first_bin)

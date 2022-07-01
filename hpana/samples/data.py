@@ -197,6 +197,7 @@ class Data(Sample):
         # - - - - data trigger
         trigger = kwargs.pop("trigger", self.config.trigger(dtype="DATA"))
         cut = super(Data, self).cuts(trigger=trigger, **kwargs)
+        cut += ROOT.TCut("event_clean_EC_LooseBad") # FIXME this is a hack, we didn't save the branch in systematic ntuples, but it should only affect data, so apply it here
         return cut
 
     def cutflow(self, cuts, **kwargs):

@@ -387,8 +387,8 @@ class Higgs(MC, Signal):
             w_hist = w_hs.hist
             uw_hist = uw_hs.hist
 
-            w_intg = w_hist.Integral()
-            uw_intg = final_hist.Integral()
+            w_intg = w_hist.Integral(0, -1)
+            uw_intg = final_hist.Integral(0, -1)
 
             if(w_intg<=0):
                 log.warning("%s integral is <=0  for %s sample! skipping scaling to the weighted histogram and using weighted histogram"%(final_hist.GetName(), self.name))

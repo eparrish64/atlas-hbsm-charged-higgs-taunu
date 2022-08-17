@@ -47,6 +47,7 @@ class QCD(Sample):
         "NOMINAL": "GetFFCombined_NOMINAL({0}, {1}, {2}, {3}, {4})",
         "1up": "GetFFCombined_1up({0}, {1}, {2}, {3}, {4})",
         "1down": "GetFFCombined_1down({0}, {1}, {2}, {3}, {4})",
+        "Heavy_Flavour_FF": "GetFFCombined_Heavy_Flavour_FF({0}, {1}, {2}, {3}, {4})",
         }
 
     ## correction factor for  (1prong) tau polarization variable (using Inverse Smirnov transformation)
@@ -156,6 +157,7 @@ class QCD(Sample):
         ffs_rQCD_syst.variations = [
             Variation("rQCD_1up", title=ff_ws["rQCD_1up"], _type="WEIGHT"),
             Variation("rQCD_1down", title=ff_ws["rQCD_1down"], _type="WEIGHT"),
+            Variation("rQCD_Heavy_Flavour_FF", title=ff_ws["rQCD_Heavy_Flavour_FF"], _type="WEIGHT"),
         ]
 
         return [ffs_nom, ffs_tauID_syst, ffs_rQCD_syst]

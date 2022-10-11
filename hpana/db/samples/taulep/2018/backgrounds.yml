@@ -179,6 +179,7 @@ ttbar:
       - PowhegHerwig7EvtGen_H7UE_tt_hdamp258p75_allhad
       - PhPy8EG_A14_ttbar_hdamp517p5_SingleLep
       - PhPy8EG_A14_ttbar_hdamp517p5_allhad
+      - PhPy8EG_A14_ttbar_hdamp517p5_dil
 
 single_top:
     name: SingleTop
@@ -192,6 +193,10 @@ single_top:
       - PowhegPythia8EvtGen_A14_Wt_DR_inclusive_top
       - PowhegPythia8EvtGen_A14_singletop_schan_lept_antitop
       - PowhegPythia8EvtGen_A14_singletop_schan_lept_top
+
+    systematics:
+      - PowhegPythia8EvtGen_A14_Wt_DR_dilepton_antitop
+      - PowhegPythia8EvtGen_A14_Wt_DR_dilepton_top
       
 diboson:
     name: Diboson

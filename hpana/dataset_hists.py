@@ -7,6 +7,7 @@ import numpy as np
 from . import log
 from .mem_branches import MEM_BRANCHES, VETO_BRANCHES
 from .containers import Histset
+from .weights import get_sample_variation_weight
 
 # ROOT
 import ROOT
@@ -143,6 +144,8 @@ def dataset_hists(hist_worker,
                         else:
                             sw = syst_var.title
                         eventweight = "(%s)*(%s)" % (eventweight, sw)
+
+                    eventweight = "(%s)*(%s)" % (eventweight, get_sample_variation_weight(systematic, syst_var, dataset))
 
                     # - - draw all the vars
                     for var in fields:
@@ -392,6 +395,7 @@ def dataset_hists_direct(hist_worker,
                         else:
                             sw = syst_var.title
                         eventweight = "(%s)*(%s)" % (eventweight, sw)
+                    eventweight = "(%s)*(%s)" % (eventweight, get_sample_variation_weight(systematic, syst_var, dataset))
                     event_weight = ROOT.TTreeFormula("event_weight", eventweight, tree)
                     event_weight.SetQuickLoad(True)
 

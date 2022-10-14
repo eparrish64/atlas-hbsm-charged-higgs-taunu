@@ -385,3 +385,145 @@ class Weight(object):
 
 # prep weight classes
 WEIGHTS = Weight.factory()
+
+##---------------------------------------------------------------------------------------
+##
+
+# This is for samples that need their own custom weights per variation, which may not be available in other samples
+# E.g. some ttbar theory weights
+# TODO? find somewhere better to put this function, it's thrown in here kind of ad-hoc just to have it somewhere...
+
+def get_sample_variation_weight(systematic, variation, dataset):
+
+  specialSampleDefaults = {
+    # These samples have different weights depending on the systematic variation
+    # These are the default weights to use, if it's not a variaton where a special case is needed
+
+    # ttbar nominal
+    "PhPy8EG_A14_ttbar_hdamp258p75_nonallhad": "1",
+    "PhPy8EG_A14_ttbar_hdamp258p75_allhad": "1",
+
+    # ttbar theory variations
+    "PowhegHerwig7EvtGen_H7UE_tt_hdamp258p75_704_SingleLep": "0",
+    "PowhegHerwig7EvtGen_H7UE_tt_hdamp258p75_704_dil": "0",
+    "PowhegHerwig7EvtGen_H7UE_tt_hdamp258p75_allhad": "0",
+    "PhPy8EG_A14_ttbar_hdamp517p5_SingleLep": "0",
+    "PhPy8EG_A14_ttbar_hdamp517p5_allhad": "0",
+    "PhPy8EG_A14_ttbar_hdamp517p5_dil": "0",
+    
+    # singletop nominal
+    "PhPy8EG_A14_tchan_BW50_lept_top": "1",
+    "PhPy8EG_A14_tchan_BW50_lept_antitop": "1",
+    "PowhegPythia8EvtGen_A14_singletop_schan_lept_top": "1",
+    "PowhegPythia8EvtGen_A14_singletop_schan_lept_antitop": "1",
+    "PowhegPythia8EvtGen_A14_Wt_DR_inclusive_top": "1",
+    "PowhegPythia8EvtGen_A14_Wt_DR_dilepton_top": "1",
+    "PowhegPythia8EvtGen_A14_Wt_DR_dilepton_antitop": "1",
+    
+    # singletop theory variations   
+    "PowhegHerwig7EvtGen_H7UE_704_tchan_lept_antitop": "0",
+    "PowhegHerwig7EvtGen_H7UE_704_tchan_lept_top": "0",
+    "PhHerwig7EG_H7UE_singletop_schan_lept_top": "0",
+    "PhHerwig7EG_H7UE_singletop_schan_lept_antitop": "0",
+    "PowhegHerwig7EvtGen_H7UE_Wt_DR_inclusive_top": "0",
+    "PowhegHerwig7EvtGen_H7UE_Wt_DR_inclusive_antitop": "0",
+    "PowhegHerwig7EvtGen_H7UE_Wt_DR_dilepton_top": "0",
+    "PowhegHerwig7EvtGen_H7UE_Wt_DR_dilepton_antitop": "0",
+  }
+
+  specialSampleVariations = {
+    # These samples have different weights depending on the systematic variation
+    # These are the special weights to use for certain variations
+    # For example, nominal ttbar will be disabled for certain systematics, or apply an extra weight from a branch that isn't present in other samples
+    # TODO add the variations, for now just testing that the machinery works
+
+    # ttbar nominal
+    "PhPy8EG_A14_ttbar_hdamp258p75_nonallhad": {
+      "ttbar_fragmentation_hadronization": {
+        "POWHEG_HERWIG7": "0",
+      },
+      "ttbar_ISR": {
+        "ISR_1up": "0",
+        "ISR_1down": "pmg_truth_weight_ISRLo",
+      },
+      "ttbar_FSR": {
+        "FSR_1up": "pmg_truth_weight_FSRHi",
+        "FSR_1down": "pmg_truth_weight_FSRLo",
+      },
+    },
+    "PhPy8EG_A14_ttbar_hdamp258p75_allhad": {
+      "ttbar_fragmentation_hadronization": {
+        "POWHEG_HERWIG7": "0",
+      },
+      "ttbar_ISR": {
+        "ISR_1up": "0",
+        "ISR_1down": "pmg_truth_weight_ISRLo",
+      },
+      "ttbar_FSR": {
+        "FSR_1up": "pmg_truth_weight_FSRHi",
+        "FSR_1down": "pmg_truth_weight_FSRLo",
+      },
+    },
+
+    # ttbar theory variations
+    "PowhegHerwig7EvtGen_H7UE_tt_hdamp258p75_704_SingleLep": {
+      "ttbar_fragmentation_hadronization": {
+        "POWHEG_HERWIG7": "1",
+      },
+    },
+    "PowhegHerwig7EvtGen_H7UE_tt_hdamp258p75_704_dil": {
+      "ttbar_fragmentation_hadronization": {
+        "POWHEG_HERWIG7": "1",
+      },
+    },
+    "PowhegHerwig7EvtGen_H7UE_tt_hdamp258p75_allhad": {
+      "ttbar_fragmentation_hadronization": {
+        "POWHEG_HERWIG7": "1",
+      },
+    },
+    "PhPy8EG_A14_ttbar_hdamp517p5_SingleLep": {
+      "ttbar_ISR": {
+        "ISR_1up": "1",
+      },
+    },
+    "PhPy8EG_A14_ttbar_hdamp517p5_allhad": {
+      "ttbar_ISR": {
+        "ISR_1up": "1",
+      },
+    },
+    "PhPy8EG_A14_ttbar_hdamp517p5_dil": {
+      "ttbar_ISR": {
+        "ISR_1up": "1",
+      },
+    },
+    
+    # TODO singletop
+    # singletop nominal
+    "PhPy8EG_A14_tchan_BW50_lept_top": {},
+    "PhPy8EG_A14_tchan_BW50_lept_antitop": {},
+    "PowhegPythia8EvtGen_A14_singletop_schan_lept_top": {},
+    "PowhegPythia8EvtGen_A14_singletop_schan_lept_antitop": {},
+    "PowhegPythia8EvtGen_A14_Wt_DR_inclusive_top": {},
+    "PowhegPythia8EvtGen_A14_Wt_DR_dilepton_top": {},
+    "PowhegPythia8EvtGen_A14_Wt_DR_dilepton_antitop": {},
+    
+    # singletop theory variations   
+    "PowhegHerwig7EvtGen_H7UE_704_tchan_lept_antitop": {},
+    "PowhegHerwig7EvtGen_H7UE_704_tchan_lept_top": {},
+    "PhHerwig7EG_H7UE_singletop_schan_lept_top": {},
+    "PhHerwig7EG_H7UE_singletop_schan_lept_antitop": {},
+    "PowhegHerwig7EvtGen_H7UE_Wt_DR_inclusive_top": {},
+    "PowhegHerwig7EvtGen_H7UE_Wt_DR_inclusive_antitop": {},
+    "PowhegHerwig7EvtGen_H7UE_Wt_DR_dilepton_top": {},
+    "PowhegHerwig7EvtGen_H7UE_Wt_DR_dilepton_antitop": {},
+  }
+
+  w = "1"
+  if dataset.ds in specialSampleVariations:
+    # This dataset requires some weights to be handled in a special way
+    w = specialSampleDefaults[dataset.ds] # set nominal value for this sample
+    if systematic.name in specialSampleVariations[dataset.ds]:
+      # This is a weight which requires special handling fo this sample
+      if variation.name in specialSampleVariations[dataset.ds][systematic.name]:
+        w = specialSampleVariations[dataset.ds][systematic.name][variation.name]
+  return w

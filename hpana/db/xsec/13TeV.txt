@@ -2827,3 +2827,16 @@
 362381	 Sherpa_CT10_Zee_Pt2000_E_CMS_BFilter_renorm4	 3.662e-06	 0.1692	 0.926406	 1.0
 362382	 Sherpa_CT10_Zee_Pt2000_E_CMS_BFilter_qsf025	 4.302e-06	 0.1779	 0.883504	 1.0
 362383	 Sherpa_CT10_Zee_Pt2000_E_CMS_BFilter_qsf4	 4.384e-06	 0.1863	 0.916515	 1.0
+
+## Additional theory variation samples for ttbar and singletop
+
+410480          PhPy8EG_A14_ttbar_hdamp517p5_SingleLep                 729.74                4.3852E-01    1.1398         1.0                           
+410481          PhPy8EG_A14_ttbar_hdamp517p5_allhad                    729.74                4.561919E-01  1.0            1.0                           
+410559          PowhegHerwig7EvtGen_H7UE_tt_hdamp258p75_allhad         730.15                4.562144E-01  1.1392         1.0                           
+411033          PowhegHerwig7EvtGen_H7UE_704_tchan_lept_top            37.02                 1.000000E+00  1.1927         1.0                           
+411034          PhHerwig7EG_H7UE_singletop_schan_lept_top              2.0279                1.000000E+00  1.0164         1.0                           
+411035          PhHerwig7EG_H7UE_singletop_schan_lept_antitop          1.2687                1.000000E+00  1.0157         1.0                           
+411036          PowhegHerwig7EvtGen_H7UE_Wt_DR_inclusive_top           37.957                1.000000E+00  0.9445         1.0                           
+411037          PowhegHerwig7EvtGen_H7UE_Wt_DR_inclusive_antitop       37.927                1.000000E+00  0.9452         1.0                           
+411038          PowhegHerwig7EvtGen_H7UE_Wt_DR_dilepton_top            3.9993                1.000000E+00  0.9446         1.0                           
+411039          PowhegHerwig7EvtGen_H7UE_Wt_DR_dilepton_antitop        3.9961                1.000000E+00  0.9453         1.0                           

@@ -267,6 +267,59 @@ class Weight(object):
         ),
     }
 
+    W_TTBAR_THEORY = {
+        # These theory sytematic involve per-sample weights to e.g. repalce the nominal sample with a variation
+        # The values here (1) are a placeholder, to keep all unrelated samples from being affected
+        # These values should be replaced on a per-sample basis in samples.py (similar to how we adjust PRW for signal)
+        "ttbar_fragmentation_hadronization": ( 
+            "1", #<! NOMINAL, per-sample logic goes in samples.py
+            ("POWHEG_HERWIG7", "1"), # per-sample logic goes in samples.py
+        ),
+        "ttbar_ISR": (
+            "1", #<! NOMINAL, per-sample logic goes in samples.py
+            ("ISR_1up", "1"),
+            ("ISR_1down", "1"),
+        ),
+        "ttbar_PDF": (
+            "1", #<! NOMINAL, per-sample logic goes in samples.py
+            #("TODO PDF variations", "1"),
+        ),
+        "ttbar_FSR": ( # TODO check if FSR is needed for our analysis, it's not for most, but "everyone should check"
+            "1", #<! NOMINAL, per-sample logic goes in samples.py
+            ("FSR_1up", "1"),
+            ("FSR_1down", "1"),
+        ),
+    }  # W_TTBAR_THEORY
+
+    W_SINGLETOP_THEORY = {
+        # These theory sytematic involve per-sample weights to e.g. repalce the nominal sample with a variation
+        # The values here (1) are a placeholder, to keep all unrelated samples from being affected
+        # These values should be replaced on a per-sample basis in samples.py (similar to how we adjust PRW for signal)
+        "singletop_fragmentation_hadronization": ( 
+            "1", #<! NOMINAL, per-sample logic goes in samples.py
+            ("POWHEG_HERWIG7", "1"), # per-sample logic goes in samples.py
+        ),
+        "singletop_ISR": (
+            "1", #<! NOMINAL, per-sample logic goes in samples.py
+            ("ISR_1up", "1"),
+            ("ISR_1down", "1"),
+        ),
+        "singletop_PDF": (
+            "1", #<! NOMINAL, per-sample logic goes in samples.py
+            #("TODO PDF variations", "1"),
+        ),
+        "singletop_FSR": ( # TODO check if FSR is needed for our analysis, it's not for most, but "everyone should check"
+            "1", #<! NOMINAL, per-sample logic goes in samples.py
+            ("FSR_1up", "1"),
+            ("FSR_1down", "1"),
+        ),
+        "singletop_interference": ( # TODO check if FSR is needed for our analysis, it's not for most, but "everyone should check"
+            "1", #<! NOMINAL, per-sample logic goes in samples.py
+            ("INTF_DR", "1"),
+            ("INTF_DS", "1"),
+        ),
+    }  # W_TTBAR_THEORY
+
     # different scale factor components
     TYPES = {
         "taujet": {
@@ -275,7 +328,9 @@ class Weight(object):
             "TAU": W_TAU,
             "JET": W_JET,
             "BJET": W_BJET,
-            "TRIGGER": W_TRIGGER_TAUJET
+            "TRIGGER": W_TRIGGER_TAUJET,
+            "TTBAR": W_TTBAR_THEORY,
+            "SINGLETOP": W_SINGLETOP_THEORY,
         },
 
         "taulep": {
@@ -286,6 +341,8 @@ class Weight(object):
             "BJET": W_BJET,
             "MU": W_MU,
             "EL": W_EL,
+            "TTBAR": W_TTBAR_THEORY,
+            "SINGLETOP": W_SINGLETOP_THEORY,
         },
     }
 

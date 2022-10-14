@@ -612,6 +612,10 @@ class SystematicsSample(Sample):
 
             # - - list of sample components from DataBase
             self.samples = sample_info['samples']
+            if 'systematics' in sample_info:
+              # TODO only include the systematics if systematics are enabled
+              # Otherwise it's a waste of time (e.g. NOMINAL-only runs)
+              self.samples += sample_info['systematics']
             log.debug(self.samples)
             if (self.samples is None or len(self.samples) < 1):
                 log.error("no sample is available for %s"%sample_info['name'])

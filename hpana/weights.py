@@ -417,6 +417,7 @@ def get_sample_variation_weight(systematic, variation, dataset):
     "PowhegPythia8EvtGen_A14_singletop_schan_lept_top": "1",
     "PowhegPythia8EvtGen_A14_singletop_schan_lept_antitop": "1",
     "PowhegPythia8EvtGen_A14_Wt_DR_inclusive_top": "1",
+    "PowhegPythia8EvtGen_A14_Wt_DR_inclusive_antitop": "1",
     "PowhegPythia8EvtGen_A14_Wt_DR_dilepton_top": "1",
     "PowhegPythia8EvtGen_A14_Wt_DR_dilepton_antitop": "1",
     
@@ -496,26 +497,154 @@ def get_sample_variation_weight(systematic, variation, dataset):
         "ISR_1up": "1",
       },
     },
-    
-    # TODO singletop
+
     # singletop nominal
-    "PhPy8EG_A14_tchan_BW50_lept_top": {},
-    "PhPy8EG_A14_tchan_BW50_lept_antitop": {},
-    "PowhegPythia8EvtGen_A14_singletop_schan_lept_top": {},
-    "PowhegPythia8EvtGen_A14_singletop_schan_lept_antitop": {},
-    "PowhegPythia8EvtGen_A14_Wt_DR_inclusive_top": {},
-    "PowhegPythia8EvtGen_A14_Wt_DR_dilepton_top": {},
-    "PowhegPythia8EvtGen_A14_Wt_DR_dilepton_antitop": {},
+    "PhPy8EG_A14_tchan_BW50_lept_top": {
+      "singletop_fragmentation_hadronization": {
+        "POWHEG_HERWIG7": "0",
+      },
+      "singletop_ISR": {
+        "ISR_1up": "pmg_truth_weight_ISRHi",
+        "ISR_1down": "pmg_truth_weight_ISRLo",
+      },
+      "singletop_FSR": {
+      "FSR_1up": "pmg_truth_weight_FSRHi",
+      "FSR_1down": "pmg_truth_weight_FSRLo",
+      },
+    },
+    "PhPy8EG_A14_tchan_BW50_lept_antitop": {
+      "singletop_fragmentation_hadronization": {
+        "POWHEG_HERWIG7": "0",
+      },
+      "singletop_ISR": {
+        "ISR_1up": "pmg_truth_weight_ISRHi",
+        "ISR_1down": "pmg_truth_weight_ISRLo",
+      },
+      "singletop_FSR": {
+      "FSR_1up": "pmg_truth_weight_FSRHi",
+      "FSR_1down": "pmg_truth_weight_FSRLo",
+      },
+    },
+    "PowhegPythia8EvtGen_A14_singletop_schan_lept_top": {
+      "singletop_fragmentation_hadronization": {
+        "POWHEG_HERWIG7": "0",
+      },
+      "singletop_ISR": {
+        "ISR_1up": "pmg_truth_weight_ISRHi",
+        "ISR_1down": "pmg_truth_weight_ISRLo",
+      },
+      "singletop_FSR": {
+      "FSR_1up": "pmg_truth_weight_FSRHi",
+      "FSR_1down": "pmg_truth_weight_FSRLo",
+      },
+    },
+    "PowhegPythia8EvtGen_A14_singletop_schan_lept_antitop": {
+      "singletop_fragmentation_hadronization": {
+        "POWHEG_HERWIG7": "0",
+      },
+      "singletop_ISR": {
+        "ISR_1up": "pmg_truth_weight_ISRHi",
+        "ISR_1down": "pmg_truth_weight_ISRLo",
+      },
+      "singletop_FSR": {
+      "FSR_1up": "pmg_truth_weight_FSRHi",
+      "FSR_1down": "pmg_truth_weight_FSRLo",
+      },
+    },
+    "PowhegPythia8EvtGen_A14_Wt_DR_inclusive_top": {
+      "singletop_fragmentation_hadronization": {
+        "POWHEG_HERWIG7": "0",
+      },
+      "singletop_ISR": {
+        "ISR_1up": "pmg_truth_weight_ISRHi",
+        "ISR_1down": "pmg_truth_weight_ISRLo",
+      },
+      "singletop_FSR": {
+      "FSR_1up": "pmg_truth_weight_FSRHi",
+      "FSR_1down": "pmg_truth_weight_FSRLo",
+      },
+    },
+    "PowhegPythia8EvtGen_A14_Wt_DR_inclusive_antitop": {
+      "singletop_fragmentation_hadronization": {
+        "POWHEG_HERWIG7": "0",
+      },
+      "singletop_ISR": {
+        "ISR_1up": "pmg_truth_weight_ISRHi",
+        "ISR_1down": "pmg_truth_weight_ISRLo",
+      },
+      "singletop_FSR": {
+      "FSR_1up": "pmg_truth_weight_FSRHi",
+      "FSR_1down": "pmg_truth_weight_FSRLo",
+      },
+    },
+    "PowhegPythia8EvtGen_A14_Wt_DR_dilepton_top": {
+      "singletop_fragmentation_hadronization": {
+        "POWHEG_HERWIG7": "0",
+      },
+      "singletop_ISR": {
+        "ISR_1up": "pmg_truth_weight_ISRHi",
+        "ISR_1down": "pmg_truth_weight_ISRLo",
+      },
+      "singletop_FSR": {
+      "FSR_1up": "pmg_truth_weight_FSRHi",
+      "FSR_1down": "pmg_truth_weight_FSRLo",
+      },
+    },
+    "PowhegPythia8EvtGen_A14_Wt_DR_dilepton_antitop": {
+      "singletop_fragmentation_hadronization": {
+        "POWHEG_HERWIG7": "0",
+      },
+      "singletop_ISR": {
+        "ISR_1up": "pmg_truth_weight_ISRHi",
+        "ISR_1down": "pmg_truth_weight_ISRLo",
+      },
+      "singletop_FSR": {
+      "FSR_1up": "pmg_truth_weight_FSRHi",
+      "FSR_1down": "pmg_truth_weight_FSRLo",
+      },
+    },
     
     # singletop theory variations   
-    "PowhegHerwig7EvtGen_H7UE_704_tchan_lept_antitop": {},
-    "PowhegHerwig7EvtGen_H7UE_704_tchan_lept_top": {},
-    "PhHerwig7EG_H7UE_singletop_schan_lept_top": {},
-    "PhHerwig7EG_H7UE_singletop_schan_lept_antitop": {},
-    "PowhegHerwig7EvtGen_H7UE_Wt_DR_inclusive_top": {},
-    "PowhegHerwig7EvtGen_H7UE_Wt_DR_inclusive_antitop": {},
-    "PowhegHerwig7EvtGen_H7UE_Wt_DR_dilepton_top": {},
-    "PowhegHerwig7EvtGen_H7UE_Wt_DR_dilepton_antitop": {},
+    "PowhegHerwig7EvtGen_H7UE_704_tchan_lept_antitop": {
+      "singletop_fragmentation_hadronization": {
+        "POWHEG_HERWIG7": "1",
+      },
+    },
+    "PowhegHerwig7EvtGen_H7UE_704_tchan_lept_top": {
+      "singletop_fragmentation_hadronization": {
+        "POWHEG_HERWIG7": "1",
+      },
+    },
+    "PhHerwig7EG_H7UE_singletop_schan_lept_top": {
+      "singletop_fragmentation_hadronization": {
+        "POWHEG_HERWIG7": "1",
+      },
+    },
+    "PhHerwig7EG_H7UE_singletop_schan_lept_antitop": {
+      "singletop_fragmentation_hadronization": {
+        "POWHEG_HERWIG7": "1",
+      },
+    },
+    "PowhegHerwig7EvtGen_H7UE_Wt_DR_inclusive_top": {
+      "singletop_fragmentation_hadronization": {
+        "POWHEG_HERWIG7": "1",
+      },
+    },
+    "PowhegHerwig7EvtGen_H7UE_Wt_DR_inclusive_antitop": {
+      "singletop_fragmentation_hadronization": {
+        "POWHEG_HERWIG7": "1",
+      },
+    },
+    "PowhegHerwig7EvtGen_H7UE_Wt_DR_dilepton_top": {
+      "singletop_fragmentation_hadronization": {
+        "POWHEG_HERWIG7": "1",
+      },
+    },
+    "PowhegHerwig7EvtGen_H7UE_Wt_DR_dilepton_antitop": {
+      "singletop_fragmentation_hadronization": {
+        "POWHEG_HERWIG7": "1",
+      },
+    },
   }
 
   w = "1"

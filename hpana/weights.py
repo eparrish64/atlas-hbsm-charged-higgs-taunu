@@ -280,10 +280,10 @@ class Weight(object):
             ("ISR_1up", "1"),
             ("ISR_1down", "1"),
         ),
-        "ttbar_PDF": (
-            "1", #<! NOMINAL, per-sample logic goes in samples.py
-            #("TODO PDF variations", "1"),
-        ),
+        #"ttbar_PDF": (
+        #    "1", #<! NOMINAL, per-sample logic goes in samples.py
+        #    #("TODO PDF variations", "1"),
+        #),
         "ttbar_FSR": ( # TODO check if FSR is needed for our analysis, it's not for most, but "everyone should check"
             "1", #<! NOMINAL, per-sample logic goes in samples.py
             ("FSR_1up", "1"),
@@ -299,26 +299,26 @@ class Weight(object):
             "1", #<! NOMINAL, per-sample logic goes in samples.py
             ("POWHEG_HERWIG7", "1"), # per-sample logic goes in samples.py
         ),
-        "singletop_ISR": (
-            "1", #<! NOMINAL, per-sample logic goes in samples.py
-            ("ISR_1up", "1"),
-            ("ISR_1down", "1"),
-        ),
-        "singletop_PDF": (
-            "1", #<! NOMINAL, per-sample logic goes in samples.py
-            #("TODO PDF variations", "1"),
-        ),
-        "singletop_FSR": ( # TODO check if FSR is needed for our analysis, it's not for most, but "everyone should check"
-            "1", #<! NOMINAL, per-sample logic goes in samples.py
-            ("FSR_1up", "1"),
-            ("FSR_1down", "1"),
-        ),
-        "singletop_interference": ( # TODO check if FSR is needed for our analysis, it's not for most, but "everyone should check"
-            "1", #<! NOMINAL, per-sample logic goes in samples.py
-            ("INTF_DR", "1"),
-            ("INTF_DS", "1"),
-        ),
-    }  # W_TTBAR_THEORY
+        #"singletop_ISR": (
+        #    "1", #<! NOMINAL, per-sample logic goes in samples.py
+        #    ("ISR_1up", "1"),
+        #    ("ISR_1down", "1"),
+        #),
+        #"singletop_PDF": (
+        #    "1", #<! NOMINAL, per-sample logic goes in samples.py
+        #    #("TODO PDF variations", "1"),
+        #),
+        #"singletop_FSR": ( # TODO check if FSR is needed for our analysis, it's not for most, but "everyone should check"
+        #    "1", #<! NOMINAL, per-sample logic goes in samples.py
+        #    ("FSR_1up", "1"),
+        #    ("FSR_1down", "1"),
+        #),
+        #"singletop_interference": ( # TODO check if FSR is needed for our analysis, it's not for most, but "everyone should check"
+        #    "1", #<! NOMINAL, per-sample logic goes in samples.py
+        #    ("INTF_DR", "1"),
+        #    ("INTF_DS", "1"),
+        #),
+    }  # W_SINGLETOP_THEORY
 
     # different scale factor components
     TYPES = {
@@ -503,105 +503,105 @@ def get_sample_variation_weight(systematic, variation, dataset):
       "singletop_fragmentation_hadronization": {
         "POWHEG_HERWIG7": "0",
       },
-      "singletop_ISR": {
-        "ISR_1up": "pmg_truth_weight_ISRHi",
-        "ISR_1down": "pmg_truth_weight_ISRLo",
-      },
-      "singletop_FSR": {
-      "FSR_1up": "pmg_truth_weight_FSRHi",
-      "FSR_1down": "pmg_truth_weight_FSRLo",
-      },
+      #"singletop_ISR": {
+      #  "ISR_1up": "pmg_truth_weight_ISRHi",
+      #  "ISR_1down": "pmg_truth_weight_ISRLo",
+      #},
+      #"singletop_FSR": {
+      #  "FSR_1up": "pmg_truth_weight_FSRHi",
+      #  "FSR_1down": "pmg_truth_weight_FSRLo",
+      #},
     },
     "PhPy8EG_A14_tchan_BW50_lept_antitop": {
       "singletop_fragmentation_hadronization": {
         "POWHEG_HERWIG7": "0",
       },
-      "singletop_ISR": {
-        "ISR_1up": "pmg_truth_weight_ISRHi",
-        "ISR_1down": "pmg_truth_weight_ISRLo",
-      },
-      "singletop_FSR": {
-      "FSR_1up": "pmg_truth_weight_FSRHi",
-      "FSR_1down": "pmg_truth_weight_FSRLo",
-      },
+      #"singletop_ISR": {
+      #  "ISR_1up": "pmg_truth_weight_ISRHi",
+      #  "ISR_1down": "pmg_truth_weight_ISRLo",
+      #},
+      #"singletop_FSR": {
+      #  "FSR_1up": "pmg_truth_weight_FSRHi",
+      #  "FSR_1down": "pmg_truth_weight_FSRLo",
+      #},
     },
     "PowhegPythia8EvtGen_A14_singletop_schan_lept_top": {
       "singletop_fragmentation_hadronization": {
         "POWHEG_HERWIG7": "0",
       },
-      "singletop_ISR": {
-        "ISR_1up": "pmg_truth_weight_ISRHi",
-        "ISR_1down": "pmg_truth_weight_ISRLo",
-      },
-      "singletop_FSR": {
-      "FSR_1up": "pmg_truth_weight_FSRHi",
-      "FSR_1down": "pmg_truth_weight_FSRLo",
-      },
+      #"singletop_ISR": {
+      #  "ISR_1up": "pmg_truth_weight_ISRHi",
+      #  "ISR_1down": "pmg_truth_weight_ISRLo",
+      #},
+      #"singletop_FSR": {
+      #  "FSR_1up": "pmg_truth_weight_FSRHi",
+      #  "FSR_1down": "pmg_truth_weight_FSRLo",
+      #},
     },
     "PowhegPythia8EvtGen_A14_singletop_schan_lept_antitop": {
       "singletop_fragmentation_hadronization": {
         "POWHEG_HERWIG7": "0",
       },
-      "singletop_ISR": {
-        "ISR_1up": "pmg_truth_weight_ISRHi",
-        "ISR_1down": "pmg_truth_weight_ISRLo",
-      },
-      "singletop_FSR": {
-      "FSR_1up": "pmg_truth_weight_FSRHi",
-      "FSR_1down": "pmg_truth_weight_FSRLo",
-      },
+      #"singletop_ISR": {
+      #  "ISR_1up": "pmg_truth_weight_ISRHi",
+      #  "ISR_1down": "pmg_truth_weight_ISRLo",
+      #},
+      #"singletop_FSR": {
+      #  "FSR_1up": "pmg_truth_weight_FSRHi",
+      #  "FSR_1down": "pmg_truth_weight_FSRLo",
+      #},
     },
     "PowhegPythia8EvtGen_A14_Wt_DR_inclusive_top": {
       "singletop_fragmentation_hadronization": {
         "POWHEG_HERWIG7": "0",
       },
-      "singletop_ISR": {
-        "ISR_1up": "pmg_truth_weight_ISRHi",
-        "ISR_1down": "pmg_truth_weight_ISRLo",
-      },
-      "singletop_FSR": {
-      "FSR_1up": "pmg_truth_weight_FSRHi",
-      "FSR_1down": "pmg_truth_weight_FSRLo",
-      },
+      #"singletop_ISR": {
+      #  "ISR_1up": "pmg_truth_weight_ISRHi",
+      #  "ISR_1down": "pmg_truth_weight_ISRLo",
+      #},
+      #"singletop_FSR": {
+      #  "FSR_1up": "pmg_truth_weight_FSRHi",
+      #  "FSR_1down": "pmg_truth_weight_FSRLo",
+      #},
     },
     "PowhegPythia8EvtGen_A14_Wt_DR_inclusive_antitop": {
       "singletop_fragmentation_hadronization": {
         "POWHEG_HERWIG7": "0",
       },
-      "singletop_ISR": {
-        "ISR_1up": "pmg_truth_weight_ISRHi",
-        "ISR_1down": "pmg_truth_weight_ISRLo",
-      },
-      "singletop_FSR": {
-      "FSR_1up": "pmg_truth_weight_FSRHi",
-      "FSR_1down": "pmg_truth_weight_FSRLo",
-      },
+      #"singletop_ISR": {
+      #  "ISR_1up": "pmg_truth_weight_ISRHi",
+      #  "ISR_1down": "pmg_truth_weight_ISRLo",
+      #},
+      #"singletop_FSR": {
+      #  "FSR_1up": "pmg_truth_weight_FSRHi",
+      #  "FSR_1down": "pmg_truth_weight_FSRLo",
+      #},
     },
     "PowhegPythia8EvtGen_A14_Wt_DR_dilepton_top": {
       "singletop_fragmentation_hadronization": {
         "POWHEG_HERWIG7": "0",
       },
-      "singletop_ISR": {
-        "ISR_1up": "pmg_truth_weight_ISRHi",
-        "ISR_1down": "pmg_truth_weight_ISRLo",
-      },
-      "singletop_FSR": {
-      "FSR_1up": "pmg_truth_weight_FSRHi",
-      "FSR_1down": "pmg_truth_weight_FSRLo",
-      },
+      #"singletop_ISR": {
+      #  "ISR_1up": "pmg_truth_weight_ISRHi",
+      #  "ISR_1down": "pmg_truth_weight_ISRLo",
+      #},
+      #"singletop_FSR": {
+      #  "FSR_1up": "pmg_truth_weight_FSRHi",
+      #  "FSR_1down": "pmg_truth_weight_FSRLo",
+      #},
     },
     "PowhegPythia8EvtGen_A14_Wt_DR_dilepton_antitop": {
       "singletop_fragmentation_hadronization": {
         "POWHEG_HERWIG7": "0",
       },
-      "singletop_ISR": {
-        "ISR_1up": "pmg_truth_weight_ISRHi",
-        "ISR_1down": "pmg_truth_weight_ISRLo",
-      },
-      "singletop_FSR": {
-      "FSR_1up": "pmg_truth_weight_FSRHi",
-      "FSR_1down": "pmg_truth_weight_FSRLo",
-      },
+      #"singletop_ISR": {
+      #  "ISR_1up": "pmg_truth_weight_ISRHi",
+      #  "ISR_1down": "pmg_truth_weight_ISRLo",
+      #},
+      #"singletop_FSR": {
+      #  "FSR_1up": "pmg_truth_weight_FSRHi",
+      #  "FSR_1down": "pmg_truth_weight_FSRLo",
+      #},
     },
     
     # singletop theory variations   

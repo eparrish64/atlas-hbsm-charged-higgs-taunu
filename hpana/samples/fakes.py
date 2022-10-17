@@ -119,7 +119,7 @@ class QCD(Sample):
                 ff_weights["FFs_%s"%var][category.name] = [ff_weight]
 
             # variations from template-fit 
-            for var in ["1up", "1down"]:
+            for var in ["1up", "1down", "Heavy_Flavour_FF"]:
                 if not "rQCD_%s"%var in ff_weights:
                     ff_weights["rQCD_%s"%var] = {}
                 ff_wcr = QCD.FFs["NOMINAL"]["WCR"]

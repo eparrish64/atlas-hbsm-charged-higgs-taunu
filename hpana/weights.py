@@ -271,14 +271,14 @@ class Weight(object):
         # These theory sytematic involve per-sample weights to e.g. repalce the nominal sample with a variation
         # The values here (1) are a placeholder, to keep all unrelated samples from being affected
         # These values should be replaced on a per-sample basis in samples.py (similar to how we adjust PRW for signal)
-        "ttbar_fragmentation_hadronization": ( 
+        "ttbar_model": ( 
             "1", #<! NOMINAL, per-sample logic goes in samples.py
-            ("POWHEG_HERWIG7", "1"), # per-sample logic goes in samples.py
+            ("ttbar_POWHEG_HERWIG7", "1"), # per-sample logic goes in samples.py
         ),
         "ttbar_ISR": (
             "1", #<! NOMINAL, per-sample logic goes in samples.py
-            ("ISR_1up", "1"),
-            ("ISR_1down", "1"),
+            ("ttbar_ISR_1up", "1"),
+            ("ttbar_ISR_1down", "1"),
         ),
         #"ttbar_PDF": (
         #    "1", #<! NOMINAL, per-sample logic goes in samples.py
@@ -286,8 +286,8 @@ class Weight(object):
         #),
         "ttbar_FSR": ( # TODO check if FSR is needed for our analysis, it's not for most, but "everyone should check"
             "1", #<! NOMINAL, per-sample logic goes in samples.py
-            ("FSR_1up", "1"),
-            ("FSR_1down", "1"),
+            ("ttbar_FSR_1up", "1"),
+            ("ttbar_FSR_1down", "1"),
         ),
     }  # W_TTBAR_THEORY
 
@@ -295,9 +295,9 @@ class Weight(object):
         # These theory sytematic involve per-sample weights to e.g. repalce the nominal sample with a variation
         # The values here (1) are a placeholder, to keep all unrelated samples from being affected
         # These values should be replaced on a per-sample basis in samples.py (similar to how we adjust PRW for signal)
-        "singletop_fragmentation_hadronization": ( 
+        "singletop_model": ( 
             "1", #<! NOMINAL, per-sample logic goes in samples.py
-            ("POWHEG_HERWIG7", "1"), # per-sample logic goes in samples.py
+            ("singletop_POWHEG_HERWIG7", "1"), # per-sample logic goes in samples.py
         ),
         #"singletop_ISR": (
         #    "1", #<! NOMINAL, per-sample logic goes in samples.py
@@ -404,8 +404,8 @@ def get_sample_variation_weight(systematic, variation, dataset):
     "PhPy8EG_A14_ttbar_hdamp258p75_allhad": "1",
 
     # ttbar theory variations
-    "PowhegHerwig7EvtGen_H7UE_tt_hdamp258p75_704_SingleLep": "0",
-    "PowhegHerwig7EvtGen_H7UE_tt_hdamp258p75_704_dil": "0",
+    "PowhegHerwig7EvtGen_H7UE_tt_hdamp258p75_704_singlelepton": "0",
+    "PowhegHerwig7EvtGen_H7UE_tt_hdamp258p75_704_dilepton": "0",
     "PowhegHerwig7EvtGen_H7UE_tt_hdamp258p75_allhad": "0",
     "PhPy8EG_A14_ttbar_hdamp517p5_SingleLep": "0",
     "PhPy8EG_A14_ttbar_hdamp517p5_allhad": "0",
@@ -436,72 +436,74 @@ def get_sample_variation_weight(systematic, variation, dataset):
     # These samples have different weights depending on the systematic variation
     # These are the special weights to use for certain variations
     # For example, nominal ttbar will be disabled for certain systematics, or apply an extra weight from a branch that isn't present in other samples
-    # TODO add the variations, for now just testing that the machinery works
+    # Note: These must match the physics short names from the xsec file exactly, otherwise it will silently give wrong results(!)
+    #   This may not be the same as the physics short name from e.g. getMetadata.py (from AthAnalysis)!
+    #   # TODO double check all of these!
 
     # ttbar nominal
     "PhPy8EG_A14_ttbar_hdamp258p75_nonallhad": {
-      "ttbar_fragmentation_hadronization": {
-        "POWHEG_HERWIG7": "0",
+      "ttbar_model": {
+        "ttbar_POWHEG_HERWIG7": "0",
       },
       "ttbar_ISR": {
-        "ISR_1up": "0",
-        "ISR_1down": "pmg_truth_weight_ISRLo",
+        "ttbar_ISR_1up": "0",
+        "ttbar_ISR_1down": "pmg_truth_weight_ISRLo",
       },
       "ttbar_FSR": {
-        "FSR_1up": "pmg_truth_weight_FSRHi",
-        "FSR_1down": "pmg_truth_weight_FSRLo",
+        "ttbar_FSR_1up": "pmg_truth_weight_FSRHi",
+        "ttbar_FSR_1down": "pmg_truth_weight_FSRLo",
       },
     },
     "PhPy8EG_A14_ttbar_hdamp258p75_allhad": {
-      "ttbar_fragmentation_hadronization": {
-        "POWHEG_HERWIG7": "0",
+      "ttbar_model": {
+        "ttbar_POWHEG_HERWIG7": "0",
       },
       "ttbar_ISR": {
-        "ISR_1up": "0",
-        "ISR_1down": "pmg_truth_weight_ISRLo",
+        "ttbar_ISR_1up": "0",
+        "ttbar_ISR_1down": "pmg_truth_weight_ISRLo",
       },
       "ttbar_FSR": {
-        "FSR_1up": "pmg_truth_weight_FSRHi",
-        "FSR_1down": "pmg_truth_weight_FSRLo",
+        "ttbar_FSR_1up": "pmg_truth_weight_FSRHi",
+        "ttbar_FSR_1down": "pmg_truth_weight_FSRLo",
       },
     },
 
     # ttbar theory variations
-    "PowhegHerwig7EvtGen_H7UE_tt_hdamp258p75_704_SingleLep": {
-      "ttbar_fragmentation_hadronization": {
-        "POWHEG_HERWIG7": "1",
+    "PowhegHerwig7EvtGen_H7UE_tt_hdamp258p75_704_singlelepton": {
+      "ttbar_model": {
+        "ttbar_POWHEG_HERWIG7": "1",
       },
     },
-    "PowhegHerwig7EvtGen_H7UE_tt_hdamp258p75_704_dil": {
-      "ttbar_fragmentation_hadronization": {
-        "POWHEG_HERWIG7": "1",
+    "PowhegHerwig7EvtGen_H7UE_tt_hdamp258p75_704_dilepton": {
+      "ttbar_model": {
+        "ttbar_POWHEG_HERWIG7": "1",
       },
     },
     "PowhegHerwig7EvtGen_H7UE_tt_hdamp258p75_allhad": {
-      "ttbar_fragmentation_hadronization": {
-        "POWHEG_HERWIG7": "1",
+      "ttbar_model": {
+        "ttbar_POWHEG_HERWIG7": "1",
       },
     },
     "PhPy8EG_A14_ttbar_hdamp517p5_SingleLep": {
       "ttbar_ISR": {
-        "ISR_1up": "1",
+        "ttbar_ISR_1up": "1",
       },
     },
     "PhPy8EG_A14_ttbar_hdamp517p5_allhad": {
       "ttbar_ISR": {
-        "ISR_1up": "1",
+        "ttbar_ISR_1up": "1",
       },
     },
     "PhPy8EG_A14_ttbar_hdamp517p5_dil": {
       "ttbar_ISR": {
-        "ISR_1up": "1",
+        "ttbar_ISR_1up": "1",
       },
     },
 
     # singletop nominal
     "PhPy8EG_A14_tchan_BW50_lept_top": {
-      "singletop_fragmentation_hadronization": {
-        "POWHEG_HERWIG7": "0",
+      "singletop_model": {
+        "singletop_POWHEG_HERWIG7": "0",
       },
       #"singletop_ISR": {
       #  "ISR_1up": "pmg_truth_weight_ISRHi",
@@ -513,8 +515,8 @@ def get_sample_variation_weight(systematic, variation, dataset):
       #},
     },
     "PhPy8EG_A14_tchan_BW50_lept_antitop": {
-      "singletop_fragmentation_hadronization": {
-        "POWHEG_HERWIG7": "0",
+      "singletop_model": {
+        "singletop_POWHEG_HERWIG7": "0",
       },
       #"singletop_ISR": {
       #  "ISR_1up": "pmg_truth_weight_ISRHi",
@@ -526,8 +528,8 @@ def get_sample_variation_weight(systematic, variation, dataset):
       #},
     },
     "PowhegPythia8EvtGen_A14_singletop_schan_lept_top": {
-      "singletop_fragmentation_hadronization": {
-        "POWHEG_HERWIG7": "0",
+      "singletop_model": {
+        "singletop_POWHEG_HERWIG7": "0",
       },
       #"singletop_ISR": {
       #  "ISR_1up": "pmg_truth_weight_ISRHi",
@@ -539,8 +541,8 @@ def get_sample_variation_weight(systematic, variation, dataset):
       #},
     },
     "PowhegPythia8EvtGen_A14_singletop_schan_lept_antitop": {
-      "singletop_fragmentation_hadronization": {
-        "POWHEG_HERWIG7": "0",
+      "singletop_model": {
+        "singletop_POWHEG_HERWIG7": "0",
       },
       #"singletop_ISR": {
       #  "ISR_1up": "pmg_truth_weight_ISRHi",
@@ -552,8 +554,8 @@ def get_sample_variation_weight(systematic, variation, dataset):
       #},
     },
     "PowhegPythia8EvtGen_A14_Wt_DR_inclusive_top": {
-      "singletop_fragmentation_hadronization": {
-        "POWHEG_HERWIG7": "0",
+      "singletop_model": {
+        "singletop_POWHEG_HERWIG7": "0",
       },
       #"singletop_ISR": {
       #  "ISR_1up": "pmg_truth_weight_ISRHi",
@@ -565,8 +567,8 @@ def get_sample_variation_weight(systematic, variation, dataset):
       #},
     },
     "PowhegPythia8EvtGen_A14_Wt_DR_inclusive_antitop": {
-      "singletop_fragmentation_hadronization": {
-        "POWHEG_HERWIG7": "0",
+      "singletop_model": {
+        "singletop_POWHEG_HERWIG7": "0",
       },
       #"singletop_ISR": {
       #  "ISR_1up": "pmg_truth_weight_ISRHi",
@@ -578,8 +580,8 @@ def get_sample_variation_weight(systematic, variation, dataset):
       #},
     },
     "PowhegPythia8EvtGen_A14_Wt_DR_dilepton_top": {
-      "singletop_fragmentation_hadronization": {
-        "POWHEG_HERWIG7": "0",
+      "singletop_model": {
+        "singletop_POWHEG_HERWIG7": "0",
       },
       #"singletop_ISR": {
       #  "ISR_1up": "pmg_truth_weight_ISRHi",
@@ -591,8 +593,8 @@ def get_sample_variation_weight(systematic, variation, dataset):
       #},
     },
     "PowhegPythia8EvtGen_A14_Wt_DR_dilepton_antitop": {
-      "singletop_fragmentation_hadronization": {
-        "POWHEG_HERWIG7": "0",
+      "singletop_model": {
+        "singletop_POWHEG_HERWIG7": "0",
       },
       #"singletop_ISR": {
       #  "ISR_1up": "pmg_truth_weight_ISRHi",
@@ -606,43 +608,43 @@ def get_sample_variation_weight(systematic, variation, dataset):
     
     # singletop theory variations   
     "PowhegHerwig7EvtGen_H7UE_704_tchan_lept_antitop": {
-      "singletop_fragmentation_hadronization": {
-        "POWHEG_HERWIG7": "1",
+      "singletop_model": {
+        "singletop_POWHEG_HERWIG7": "1",
       },
     },
     "PowhegHerwig7EvtGen_H7UE_704_tchan_lept_top": {
-      "singletop_fragmentation_hadronization": {
-        "POWHEG_HERWIG7": "1",
+      "singletop_model": {
+        "singletop_POWHEG_HERWIG7": "1",
       },
     },
     "PhHerwig7EG_H7UE_singletop_schan_lept_top": {
-      "singletop_fragmentation_hadronization": {
-        "POWHEG_HERWIG7": "1",
+      "singletop_model": {
+        "singletop_POWHEG_HERWIG7": "1",
       },
     },
     "PhHerwig7EG_H7UE_singletop_schan_lept_antitop": {
-      "singletop_fragmentation_hadronization": {
-        "POWHEG_HERWIG7": "1",
+      "singletop_model": {
+        "singletop_POWHEG_HERWIG7": "1",
       },
     },
     "PowhegHerwig7EvtGen_H7UE_Wt_DR_inclusive_top": {
-      "singletop_fragmentation_hadronization": {
-        "POWHEG_HERWIG7": "1",
+      "singletop_model": {
+        "singletop_POWHEG_HERWIG7": "1",
       },
     },
     "PowhegHerwig7EvtGen_H7UE_Wt_DR_inclusive_antitop": {
-      "singletop_fragmentation_hadronization": {
-        "POWHEG_HERWIG7": "1",
+      "singletop_model": {
+        "singletop_POWHEG_HERWIG7": "1",
       },
     },
     "PowhegHerwig7EvtGen_H7UE_Wt_DR_dilepton_top": {
-      "singletop_fragmentation_hadronization": {
-        "POWHEG_HERWIG7": "1",
+      "singletop_model": {
+        "singletop_POWHEG_HERWIG7": "1",
       },
     },
     "PowhegHerwig7EvtGen_H7UE_Wt_DR_dilepton_antitop": {
-      "singletop_fragmentation_hadronization": {
-        "POWHEG_HERWIG7": "1",
+      "singletop_model": {
+        "singletop_POWHEG_HERWIG7": "1",
       },
     },
   }

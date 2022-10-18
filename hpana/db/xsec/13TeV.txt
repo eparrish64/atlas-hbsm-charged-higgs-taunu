@@ -824,7 +824,7 @@
 410985	 aMcAtNloPythia8EvtGen_NNPDF30ME_A14_Q2ugambWpln	 21.559	 1.0	 1.0	 1.0
 410986	 aMcAtNloPythia8EvtGen_NNPDF30ME_A14_Q2ugambWmqq	 44.858	 1.0	 1.0	 1.0
 410987	 aMcAtNloPythia8EvtGen_NNPDF30ME_A14_Q2ugambWpqq	 44.855	 1.0	 1.0	 1.0
-411032	 aMcAtNloPythia8EvtGen_NNPDF30ME_A14_Q2ugambWpqq	 44.855	 1.0	 1.0	 1.0
+#411032	 aMcAtNloPythia8EvtGen_NNPDF30ME_A14_Q2ugambWpqq	 44.855	 1.0	 1.0	 1.0
 426072	 PowhegPythiaEvtGen_P2012_ttbar_semilep_T02C	 696.21	 0.0004761	 1.0	 1.0
 426075	 PowhegPythiaEvtGen_P2012_ttbar_semilep_T12C	 696.24	 0.0008135	 1.0	 1.0
 426076	 PowhegPythiaEvtGen_P2012_ttbar_semilep_T20C	 696.25	 0.000129	 1.0	 1.0
@@ -2832,7 +2832,8 @@
 
 410480          PhPy8EG_A14_ttbar_hdamp517p5_SingleLep                 729.74                4.3852E-01    1.1398         1.0                           
 410481          PhPy8EG_A14_ttbar_hdamp517p5_allhad                    729.74                4.561919E-01  1.0            1.0                           
-410559          PowhegHerwig7EvtGen_H7UE_tt_hdamp258p75_allhad         730.15                4.562144E-01  1.1392         1.0                           
+410559          PowhegHerwig7EvtGen_H7UE_tt_hdamp258p75_allhad         730.15                4.562144E-01  1.1392         1.0           
+411032          PowhegHerwig7EvtGen_H7UE_704_tchan_lept_antitop        22.194                1.000000E+00  1.1840         1.0                           
 411033          PowhegHerwig7EvtGen_H7UE_704_tchan_lept_top            37.02                 1.000000E+00  1.1927         1.0                           
 411034          PhHerwig7EG_H7UE_singletop_schan_lept_top              2.0279                1.000000E+00  1.0164         1.0                           
 411035          PhHerwig7EG_H7UE_singletop_schan_lept_antitop          1.2687                1.000000E+00  1.0157         1.0                           

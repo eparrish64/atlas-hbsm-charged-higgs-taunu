@@ -188,7 +188,8 @@ single_top:
     samples:
       - PhPy8EG_A14_tchan_BW50_lept_antitop
       - PhPy8EG_A14_tchan_BW50_lept_top
-      
+      #- PowhegPythia8EvtGen_A14_Wt_DR_dilepton_antitop
+      #- PowhegPythia8EvtGen_A14_Wt_DR_dilepton_top
       - PowhegPythia8EvtGen_A14_Wt_DR_inclusive_antitop
       - PowhegPythia8EvtGen_A14_Wt_DR_inclusive_top
       - PowhegPythia8EvtGen_A14_singletop_schan_lept_antitop
@@ -199,12 +200,10 @@ single_top:
       - PhHerwig7EG_H7UE_singletop_schan_lept_top
       - PowhegHerwig7EvtGen_H7UE_704_tchan_lept_antitop
       - PowhegHerwig7EvtGen_H7UE_704_tchan_lept_top
-      - PowhegHerwig7EvtGen_H7UE_Wt_DR_dilepton_antitop
-      - PowhegHerwig7EvtGen_H7UE_Wt_DR_dilepton_top
+      #- PowhegHerwig7EvtGen_H7UE_Wt_DR_dilepton_antitop
+      #- PowhegHerwig7EvtGen_H7UE_Wt_DR_dilepton_top
       - PowhegHerwig7EvtGen_H7UE_Wt_DR_inclusive_antitop
       - PowhegHerwig7EvtGen_H7UE_Wt_DR_inclusive_top
-      - PowhegPythia8EvtGen_A14_Wt_DR_dilepton_antitop
-      - PowhegPythia8EvtGen_A14_Wt_DR_dilepton_top
       
 diboson:
     name: Diboson

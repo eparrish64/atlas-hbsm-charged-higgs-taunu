@@ -270,22 +270,51 @@ class Weight(object):
     W_TTBAR_THEORY = {
         # These theory sytematic involve per-sample weights to e.g. repalce the nominal sample with a variation
         # The values here (1) are a placeholder, to keep all unrelated samples from being affected
-        # These values should be replaced on a per-sample basis in samples.py (similar to how we adjust PRW for signal)
+        # These values should be replaced on a per-sample basis in get_sample_variation_weight (similar to how we adjust PRW for signal)
         "ttbar_model": ( 
-            "1", #<! NOMINAL, per-sample logic goes in samples.py
+            "1", #<! NOMINAL, per-sample logic is in get_sample_variation_weight
             ("ttbar_model_POWHEG_HERWIG7", "1"), # per-sample logic goes in samples.py
         ),
         "ttbar_ISR": (
-            "1", #<! NOMINAL, per-sample logic goes in samples.py
+            "1", #<! NOMINAL, per-sample logic is in get_sample_variation_weight
             ("ttbar_ISR_1up", "1"),
             ("ttbar_ISR_1down", "1"),
         ),
-        #"ttbar_PDF": (
-        #    "1", #<! NOMINAL, per-sample logic goes in samples.py
-        #    #("TODO PDF variations", "1"),
-        #),
+        "ttbar_PDF": (
+            "1", #<! NOMINAL, per-sample logic is in get_sample_variation_weight
+            ("ttbar_PDF_1", "1"),
+            ("ttbar_PDF_2", "1"),
+            ("ttbar_PDF_3", "1"),
+            ("ttbar_PDF_4", "1"),
+            ("ttbar_PDF_5", "1"),
+            ("ttbar_PDF_6", "1"),
+            ("ttbar_PDF_7", "1"),
+            ("ttbar_PDF_8", "1"),
+            ("ttbar_PDF_9", "1"),
+            ("ttbar_PDF_10", "1"),
+            ("ttbar_PDF_11", "1"),
+            ("ttbar_PDF_12", "1"),
+            ("ttbar_PDF_13", "1"),
+            ("ttbar_PDF_14", "1"),
+            ("ttbar_PDF_15", "1"),
+            ("ttbar_PDF_16", "1"),
+            ("ttbar_PDF_17", "1"),
+            ("ttbar_PDF_18", "1"),
+            ("ttbar_PDF_19", "1"),
+            ("ttbar_PDF_20", "1"),
+            ("ttbar_PDF_21", "1"),
+            ("ttbar_PDF_22", "1"),
+            ("ttbar_PDF_23", "1"),
+            ("ttbar_PDF_24", "1"),
+            ("ttbar_PDF_25", "1"),
+            ("ttbar_PDF_26", "1"),
+            ("ttbar_PDF_27", "1"),
+            ("ttbar_PDF_28", "1"),
+            ("ttbar_PDF_29", "1"),
+            ("ttbar_PDF_30", "1"),
+        ),
         "ttbar_FSR": ( # TODO check if FSR is needed for our analysis, it's not for most, but "everyone should check"
-            "1", #<! NOMINAL, per-sample logic goes in samples.py
+            "1", #<! NOMINAL, per-sample logic is in get_sample_variation_weight
             ("ttbar_FSR_1up", "1"),
             ("ttbar_FSR_1down", "1"),
         ),
@@ -296,28 +325,9 @@ class Weight(object):
         # The values here (1) are a placeholder, to keep all unrelated samples from being affected
         # These values should be replaced on a per-sample basis in samples.py (similar to how we adjust PRW for signal)
         "singletop_model": ( 
-            "1", #<! NOMINAL, per-sample logic goes in samples.py
+            "1", #<! NOMINAL, per-sample logic is in get_sample_variation_weight
             ("singletop_model_POWHEG_HERWIG7", "1"), # per-sample logic goes in samples.py
         ),
-        #"singletop_ISR": (
-        #    "1", #<! NOMINAL, per-sample logic goes in samples.py
-        #    ("ISR_1up", "1"),
-        #    ("ISR_1down", "1"),
-        #),
-        #"singletop_PDF": (
-        #    "1", #<! NOMINAL, per-sample logic goes in samples.py
-        #    #("TODO PDF variations", "1"),
-        #),
-        #"singletop_FSR": ( # TODO check if FSR is needed for our analysis, it's not for most, but "everyone should check"
-        #    "1", #<! NOMINAL, per-sample logic goes in samples.py
-        #    ("FSR_1up", "1"),
-        #    ("FSR_1down", "1"),
-        #),
-        #"singletop_interference": ( # TODO check if FSR is needed for our analysis, it's not for most, but "everyone should check"
-        #    "1", #<! NOMINAL, per-sample logic goes in samples.py
-        #    ("INTF_DR", "1"),
-        #    ("INTF_DS", "1"),
-        #),
     }  # W_SINGLETOP_THEORY
 
     # different scale factor components
@@ -453,6 +463,38 @@ def get_sample_variation_weight(systematic, variation, dataset):
         "ttbar_FSR_1up": "pmg_truth_weight_FSRHi",
         "ttbar_FSR_1down": "pmg_truth_weight_FSRLo",
       },
+      "ttbar_PDF": {
+        "ttbar_PDF_1": "pmg_truth_weight_pdf_signal_weight_1/pmg_truth_weight_pdf_signal_weight_0",
+        "ttbar_PDF_2": "pmg_truth_weight_pdf_signal_weight_2/pmg_truth_weight_pdf_signal_weight_0",
+        "ttbar_PDF_3": "pmg_truth_weight_pdf_signal_weight_3/pmg_truth_weight_pdf_signal_weight_0",
+        "ttbar_PDF_4": "pmg_truth_weight_pdf_signal_weight_4/pmg_truth_weight_pdf_signal_weight_0",
+        "ttbar_PDF_5": "pmg_truth_weight_pdf_signal_weight_5/pmg_truth_weight_pdf_signal_weight_0",
+        "ttbar_PDF_6": "pmg_truth_weight_pdf_signal_weight_6/pmg_truth_weight_pdf_signal_weight_0",
+        "ttbar_PDF_7": "pmg_truth_weight_pdf_signal_weight_7/pmg_truth_weight_pdf_signal_weight_0",
+        "ttbar_PDF_8": "pmg_truth_weight_pdf_signal_weight_8/pmg_truth_weight_pdf_signal_weight_0",
+        "ttbar_PDF_9": "pmg_truth_weight_pdf_signal_weight_9/pmg_truth_weight_pdf_signal_weight_0",
+        "ttbar_PDF_10": "pmg_truth_weight_pdf_signal_weight_10/pmg_truth_weight_pdf_signal_weight_0",
+        "ttbar_PDF_11": "pmg_truth_weight_pdf_signal_weight_11/pmg_truth_weight_pdf_signal_weight_0",
+        "ttbar_PDF_12": "pmg_truth_weight_pdf_signal_weight_12/pmg_truth_weight_pdf_signal_weight_0",
+        "ttbar_PDF_13": "pmg_truth_weight_pdf_signal_weight_13/pmg_truth_weight_pdf_signal_weight_0",
+        "ttbar_PDF_14": "pmg_truth_weight_pdf_signal_weight_14/pmg_truth_weight_pdf_signal_weight_0",
+        "ttbar_PDF_15": "pmg_truth_weight_pdf_signal_weight_15/pmg_truth_weight_pdf_signal_weight_0",
+        "ttbar_PDF_16": "pmg_truth_weight_pdf_signal_weight_16/pmg_truth_weight_pdf_signal_weight_0",
+        "ttbar_PDF_17": "pmg_truth_weight_pdf_signal_weight_17/pmg_truth_weight_pdf_signal_weight_0",
+        "ttbar_PDF_18": "pmg_truth_weight_pdf_signal_weight_18/pmg_truth_weight_pdf_signal_weight_0",
+        "ttbar_PDF_19": "pmg_truth_weight_pdf_signal_weight_19/pmg_truth_weight_pdf_signal_weight_0",
+        "ttbar_PDF_20": "pmg_truth_weight_pdf_signal_weight_20/pmg_truth_weight_pdf_signal_weight_0",
+        "ttbar_PDF_21": "pmg_truth_weight_pdf_signal_weight_21/pmg_truth_weight_pdf_signal_weight_0",
+        "ttbar_PDF_22": "pmg_truth_weight_pdf_signal_weight_22/pmg_truth_weight_pdf_signal_weight_0",
+        "ttbar_PDF_23": "pmg_truth_weight_pdf_signal_weight_23/pmg_truth_weight_pdf_signal_weight_0",
+        "ttbar_PDF_24": "pmg_truth_weight_pdf_signal_weight_24/pmg_truth_weight_pdf_signal_weight_0",
+        "ttbar_PDF_25": "pmg_truth_weight_pdf_signal_weight_25/pmg_truth_weight_pdf_signal_weight_0",
+        "ttbar_PDF_26": "pmg_truth_weight_pdf_signal_weight_26/pmg_truth_weight_pdf_signal_weight_0",
+        "ttbar_PDF_27": "pmg_truth_weight_pdf_signal_weight_27/pmg_truth_weight_pdf_signal_weight_0",
+        "ttbar_PDF_28": "pmg_truth_weight_pdf_signal_weight_28/pmg_truth_weight_pdf_signal_weight_0",
+        "ttbar_PDF_29": "pmg_truth_weight_pdf_signal_weight_29/pmg_truth_weight_pdf_signal_weight_0",
+        "ttbar_PDF_30": "pmg_truth_weight_pdf_signal_weight_30/pmg_truth_weight_pdf_signal_weight_0",
+      },
     },
     "PhPy8EG_A14_ttbar_hdamp258p75_allhad": {
       "ttbar_model": {
@@ -465,6 +507,38 @@ def get_sample_variation_weight(systematic, variation, dataset):
       "ttbar_FSR": {
         "ttbar_FSR_1up": "pmg_truth_weight_FSRHi",
         "ttbar_FSR_1down": "pmg_truth_weight_FSRLo",
+      },
+      "ttbar_PDF": {
+        "ttbar_PDF_1": "pmg_truth_weight_pdf_signal_weight_1/pmg_truth_weight_pdf_signal_weight_0",
+        "ttbar_PDF_2": "pmg_truth_weight_pdf_signal_weight_2/pmg_truth_weight_pdf_signal_weight_0",
+        "ttbar_PDF_3": "pmg_truth_weight_pdf_signal_weight_3/pmg_truth_weight_pdf_signal_weight_0",
+        "ttbar_PDF_4": "pmg_truth_weight_pdf_signal_weight_4/pmg_truth_weight_pdf_signal_weight_0",
+        "ttbar_PDF_5": "pmg_truth_weight_pdf_signal_weight_5/pmg_truth_weight_pdf_signal_weight_0",
+        "ttbar_PDF_6": "pmg_truth_weight_pdf_signal_weight_6/pmg_truth_weight_pdf_signal_weight_0",
+        "ttbar_PDF_7": "pmg_truth_weight_pdf_signal_weight_7/pmg_truth_weight_pdf_signal_weight_0",
+        "ttbar_PDF_8": "pmg_truth_weight_pdf_signal_weight_8/pmg_truth_weight_pdf_signal_weight_0",
+        "ttbar_PDF_9": "pmg_truth_weight_pdf_signal_weight_9/pmg_truth_weight_pdf_signal_weight_0",
+        "ttbar_PDF_10": "pmg_truth_weight_pdf_signal_weight_10/pmg_truth_weight_pdf_signal_weight_0",
+        "ttbar_PDF_11": "pmg_truth_weight_pdf_signal_weight_11/pmg_truth_weight_pdf_signal_weight_0",
+        "ttbar_PDF_12": "pmg_truth_weight_pdf_signal_weight_12/pmg_truth_weight_pdf_signal_weight_0",
+        "ttbar_PDF_13": "pmg_truth_weight_pdf_signal_weight_13/pmg_truth_weight_pdf_signal_weight_0",
+        "ttbar_PDF_14": "pmg_truth_weight_pdf_signal_weight_14/pmg_truth_weight_pdf_signal_weight_0",
+        "ttbar_PDF_15": "pmg_truth_weight_pdf_signal_weight_15/pmg_truth_weight_pdf_signal_weight_0",
+        "ttbar_PDF_16": "pmg_truth_weight_pdf_signal_weight_16/pmg_truth_weight_pdf_signal_weight_0",
+        "ttbar_PDF_17": "pmg_truth_weight_pdf_signal_weight_17/pmg_truth_weight_pdf_signal_weight_0",
+        "ttbar_PDF_18": "pmg_truth_weight_pdf_signal_weight_18/pmg_truth_weight_pdf_signal_weight_0",
+        "ttbar_PDF_19": "pmg_truth_weight_pdf_signal_weight_19/pmg_truth_weight_pdf_signal_weight_0",
+        "ttbar_PDF_20": "pmg_truth_weight_pdf_signal_weight_20/pmg_truth_weight_pdf_signal_weight_0",
+        "ttbar_PDF_21": "pmg_truth_weight_pdf_signal_weight_21/pmg_truth_weight_pdf_signal_weight_0",
+        "ttbar_PDF_22": "pmg_truth_weight_pdf_signal_weight_22/pmg_truth_weight_pdf_signal_weight_0",
+        "ttbar_PDF_23": "pmg_truth_weight_pdf_signal_weight_23/pmg_truth_weight_pdf_signal_weight_0",
+        "ttbar_PDF_24": "pmg_truth_weight_pdf_signal_weight_24/pmg_truth_weight_pdf_signal_weight_0",
+        "ttbar_PDF_25": "pmg_truth_weight_pdf_signal_weight_25/pmg_truth_weight_pdf_signal_weight_0",
+        "ttbar_PDF_26": "pmg_truth_weight_pdf_signal_weight_26/pmg_truth_weight_pdf_signal_weight_0",
+        "ttbar_PDF_27": "pmg_truth_weight_pdf_signal_weight_27/pmg_truth_weight_pdf_signal_weight_0",
+        "ttbar_PDF_28": "pmg_truth_weight_pdf_signal_weight_28/pmg_truth_weight_pdf_signal_weight_0",
+        "ttbar_PDF_29": "pmg_truth_weight_pdf_signal_weight_29/pmg_truth_weight_pdf_signal_weight_0",
+        "ttbar_PDF_30": "pmg_truth_weight_pdf_signal_weight_30/pmg_truth_weight_pdf_signal_weight_0",
       },
     },
 
@@ -486,17 +560,17 @@ def get_sample_variation_weight(systematic, variation, dataset):
     },
     "PhPy8EG_A14_ttbar_hdamp517p5_SingleLep": {
       "ttbar_ISR": {
-        "ttbar_ISR_1up": "1",
+        "ttbar_ISR_1up": "pmg_truth_weight_ISRHi",
       },
     },
     "PhPy8EG_A14_ttbar_hdamp517p5_allhad": {
       "ttbar_ISR": {
-        "ttbar_ISR_1up": "1",
+        "ttbar_ISR_1up": "pmg_truth_weight_ISRHi",
       },
     },
     "PhPy8EG_A14_ttbar_hdamp517p5_dil": {
       "ttbar_ISR": {
-        "ttbar_ISR_1up": "1",
+        "ttbar_ISR_1up": "pmg_truth_weight_ISRHi",
       },
     },
 
@@ -505,105 +579,41 @@ def get_sample_variation_weight(systematic, variation, dataset):
       "singletop_model": {
         "singletop_model_POWHEG_HERWIG7": "0",
       },
-      #"singletop_ISR": {
-      #  "ISR_1up": "pmg_truth_weight_ISRHi",
-      #  "ISR_1down": "pmg_truth_weight_ISRLo",
-      #},
-      #"singletop_FSR": {
-      #  "FSR_1up": "pmg_truth_weight_FSRHi",
-      #  "FSR_1down": "pmg_truth_weight_FSRLo",
-      #},
     },
     "PhPy8EG_A14_tchan_BW50_lept_antitop": {
       "singletop_model": {
         "singletop_model_POWHEG_HERWIG7": "0",
       },
-      #"singletop_ISR": {
-      #  "ISR_1up": "pmg_truth_weight_ISRHi",
-      #  "ISR_1down": "pmg_truth_weight_ISRLo",
-      #},
-      #"singletop_FSR": {
-      #  "FSR_1up": "pmg_truth_weight_FSRHi",
-      #  "FSR_1down": "pmg_truth_weight_FSRLo",
-      #},
     },
     "PowhegPythia8EvtGen_A14_singletop_schan_lept_top": {
       "singletop_model": {
         "singletop_model_POWHEG_HERWIG7": "0",
       },
-      #"singletop_ISR": {
-      #  "ISR_1up": "pmg_truth_weight_ISRHi",
-      #  "ISR_1down": "pmg_truth_weight_ISRLo",
-      #},
-      #"singletop_FSR": {
-      #  "FSR_1up": "pmg_truth_weight_FSRHi",
-      #  "FSR_1down": "pmg_truth_weight_FSRLo",
-      #},
     },
     "PowhegPythia8EvtGen_A14_singletop_schan_lept_antitop": {
       "singletop_model": {
         "singletop_model_POWHEG_HERWIG7": "0",
       },
-      #"singletop_ISR": {
-      #  "ISR_1up": "pmg_truth_weight_ISRHi",
-      #  "ISR_1down": "pmg_truth_weight_ISRLo",
-      #},
-      #"singletop_FSR": {
-      #  "FSR_1up": "pmg_truth_weight_FSRHi",
-      #  "FSR_1down": "pmg_truth_weight_FSRLo",
-      #},
     },
     "PowhegPythia8EvtGen_A14_Wt_DR_inclusive_top": {
       "singletop_model": {
         "singletop_model_POWHEG_HERWIG7": "0",
       },
-      #"singletop_ISR": {
-      #  "ISR_1up": "pmg_truth_weight_ISRHi",
-      #  "ISR_1down": "pmg_truth_weight_ISRLo",
-      #},
-      #"singletop_FSR": {
-      #  "FSR_1up": "pmg_truth_weight_FSRHi",
-      #  "FSR_1down": "pmg_truth_weight_FSRLo",
-      #},
     },
     "PowhegPythia8EvtGen_A14_Wt_DR_inclusive_antitop": {
       "singletop_model": {
         "singletop_model_POWHEG_HERWIG7": "0",
       },
-      #"singletop_ISR": {
-      #  "ISR_1up": "pmg_truth_weight_ISRHi",
-      #  "ISR_1down": "pmg_truth_weight_ISRLo",
-      #},
-      #"singletop_FSR": {
-      #  "FSR_1up": "pmg_truth_weight_FSRHi",
-      #  "FSR_1down": "pmg_truth_weight_FSRLo",
-      #},
     },
     "PowhegPythia8EvtGen_A14_Wt_DR_dilepton_top": {
       "singletop_model": {
         "singletop_model_POWHEG_HERWIG7": "0",
       },
-      #"singletop_ISR": {
-      #  "ISR_1up": "pmg_truth_weight_ISRHi",
-      #  "ISR_1down": "pmg_truth_weight_ISRLo",
-      #},
-      #"singletop_FSR": {
-      #  "FSR_1up": "pmg_truth_weight_FSRHi",
-      #  "FSR_1down": "pmg_truth_weight_FSRLo",
-      #},
     },
     "PowhegPythia8EvtGen_A14_Wt_DR_dilepton_antitop": {
       "singletop_model": {
         "singletop_model_POWHEG_HERWIG7": "0",
       },
-      #"singletop_ISR": {
-      #  "ISR_1up": "pmg_truth_weight_ISRHi",
-      #  "ISR_1down": "pmg_truth_weight_ISRLo",
-      #},
-      #"singletop_FSR": {
-      #  "FSR_1up": "pmg_truth_weight_FSRHi",
-      #  "FSR_1down": "pmg_truth_weight_FSRLo",
-      #},
     },
     
     # singletop theory variations   

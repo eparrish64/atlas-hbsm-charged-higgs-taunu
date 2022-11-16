@@ -157,7 +157,9 @@ class QCD(Sample):
         ffs_rQCD_syst.variations = [
             Variation("rQCD_1up", title=ff_ws["rQCD_1up"], _type="WEIGHT"),
             Variation("rQCD_1down", title=ff_ws["rQCD_1down"], _type="WEIGHT"),
-            Variation("rQCD_Heavy_Flavour_FF", title=ff_ws["rQCD_Heavy_Flavour_FF"], _type="WEIGHT"),
+            Variation("rQCD_Heavy_Flavour_FF_1up", title=ff_ws["rQCD_Heavy_Flavour_FF"], _type="WEIGHT"),
+            #Variation("rQCD_Heavy_Flavour_FF_1down", title=ff_ws["rQCD_Heavy_Flavour_FF"], _type="WEIGHT"),
+            Variation("rQCD_Heavy_Flavour_FF_1down", title=ff_ws["NOMINAL"], _type="WEIGHT"), #Hack, we apparently need 1up/1down pairs to keep the plotting code happy
         ]
 
         return [ffs_nom, ffs_tauID_syst, ffs_rQCD_syst]

@@ -80,6 +80,38 @@ class Sample(object):
         "Sherpa_221_NNPDF30NNLO_Wtaunu_MAXHTPTV1000_E_CMS",
         "Sherpa_221_NNPDF30NNLO_Wtaunu_MAXHTPTV500_1000",
         "Sherpa_221_NNPDF30NNLO_Ztautau_MAXHTPTV500_1000",
+
+        # ttbar nominal
+        "PhPy8EG_A14_ttbar_hdamp258p75_nonallhad",
+        "PhPy8EG_A14_ttbar_hdamp258p75_allhad",
+        
+        # ttbar theory variations
+        "PowhegHerwig7EvtGen_H7UE_tt_hdamp258p75_704_singlelepton",
+        "PowhegHerwig7EvtGen_H7UE_tt_hdamp258p75_704_dilepton",
+        "PowhegHerwig7EvtGen_H7UE_tt_hdamp258p75_allhad",
+        "PhPy8EG_A14_ttbar_hdamp517p5_SingleLep",
+        "PhPy8EG_A14_ttbar_hdamp517p5_allhad",
+        "PhPy8EG_A14_ttbar_hdamp517p5_dil",
+        
+        # singletop nominal
+        "PhPy8EG_A14_tchan_BW50_lept_top",
+        "PhPy8EG_A14_tchan_BW50_lept_antitop",
+        "PowhegPythia8EvtGen_A14_singletop_schan_lept_top",
+        "PowhegPythia8EvtGen_A14_singletop_schan_lept_antitop",
+        "PowhegPythia8EvtGen_A14_Wt_DR_inclusive_top",
+        "PowhegPythia8EvtGen_A14_Wt_DR_inclusive_antitop",
+        "PowhegPythia8EvtGen_A14_Wt_DR_dilepton_top",
+        "PowhegPythia8EvtGen_A14_Wt_DR_dilepton_antitop",
+        
+        # singletop theory variations   
+        "PowhegHerwig7EvtGen_H7UE_704_tchan_lept_antitop",
+        "PowhegHerwig7EvtGen_H7UE_704_tchan_lept_top",
+        "PhHerwig7EG_H7UE_singletop_schan_lept_top",
+        "PhHerwig7EG_H7UE_singletop_schan_lept_antitop",
+        "PowhegHerwig7EvtGen_H7UE_Wt_DR_inclusive_top",
+        "PowhegHerwig7EvtGen_H7UE_Wt_DR_inclusive_antitop",
+        "PowhegHerwig7EvtGen_H7UE_Wt_DR_dilepton_top",
+        "PowhegHerwig7EvtGen_H7UE_Wt_DR_dilepton_antitop",
     ]
 
 

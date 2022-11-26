@@ -32,6 +32,7 @@ def dataset_hists(hist_worker,
     frienddir = None
     if "frienddir" in kwargs:
         frienddir = kwargs["frienddir"]
+    friendfile = None
 
     log.debug("*********** processing %s dataset ***********" % dataset.name)
     if not dataset.files:
@@ -281,6 +282,7 @@ def dataset_hists_direct(hist_worker,
     frienddir = None
     if "frienddir" in kwargs:
         frienddir = kwargs["frienddir"]
+    friendfile = None
 
     log.debug("*********** processing %s dataset ***********" % dataset.name)
     if not dataset.files:

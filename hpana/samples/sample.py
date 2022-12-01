@@ -113,6 +113,11 @@ class Sample(object):
         "PowhegHerwig7EvtGen_H7UE_Wt_DR_dilepton_top",
         "PowhegHerwig7EvtGen_H7UE_Wt_DR_dilepton_antitop",
     ]
+    # HEAVY_DATASETS needs to be disabled for full systematics to work
+    # Otherwise, we simply generate too many output files for the OS to handle in the merge step
+    # The better approach is to reduce the number of files per subdataset (to e.g. 1, this is more I/O friendly anyway with xcompressed root files)
+    # Note: This is not enough by itself, the workers functions in e.g. others.py also need to be stubbed out to prevent overriding with 1 worker per syst anyway...
+    HEAVY_DATASETS = []
 
 
     def __init__(self, config, name='Sample', label='Sample', **kwargs):

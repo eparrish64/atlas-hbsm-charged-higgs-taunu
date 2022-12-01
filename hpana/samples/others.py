@@ -80,7 +80,7 @@ class TTbar(Single_Top):
         super(TTbar, self).__init__(*args, **kwargs)
         self.kwargs = kwargs
 
-    def workers(self, **kwargs):
+    def disabled_workers(self, **kwargs):
         """ Since TTbar jobs are heavy assigning one worker per systematic
         """
         systematics = kwargs.pop("systematics", [])
@@ -184,7 +184,7 @@ class Sh_Wtaunu(MC, Background):
 
         return syst
  
-    def workers(self, **kwargs):
+    def disabled_workers(self, **kwargs):
         systematics = kwargs.pop("systematics", [])
         if not systematics:
             systematics = self.systematics

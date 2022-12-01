@@ -144,8 +144,8 @@ class QCD(Sample):
         # variations from antitau definition
         ffs_tauID_syst = Systematic("FFs_tauID", _type="WEIGHT")
         ffs_tauID_syst.variations = [
-            Variation("FFs_1up", title=ff_ws["FFs_1up"], _type="WEIGHT"),
-            Variation("FFs_1down", title=ff_ws["FFs_1down"], _type="WEIGHT"),
+            #Variation("FFs_1up", title=ff_ws["FFs_1up"], _type="WEIGHT"), # Old unused BDT variation
+            #Variation("FFs_1down", title=ff_ws["FFs_1down"], _type="WEIGHT"),
             Variation("FFs_MCSubt_1up", title=ff_ws["FFs_MCSubt_1up"], _type="WEIGHT"),
             Variation("FFs_MCSubt_1down", title=ff_ws["FFs_MCSubt_1down"], _type="WEIGHT"),
             Variation("FFs_tauID_SF_1down", title=ff_ws["FFs_tauID_SF_1down"], _type="WEIGHT"),
@@ -157,8 +157,8 @@ class QCD(Sample):
         ffs_rQCD_syst.variations = [
             Variation("rQCD_1up", title=ff_ws["rQCD_1up"], _type="WEIGHT"),
             Variation("rQCD_1down", title=ff_ws["rQCD_1down"], _type="WEIGHT"),
+            #Variation("rQCD_Heavy_Flavour_FF", title=ff_ws["rQCD_Heavy_Flavour_FF"], _type="WEIGHT"),
             Variation("rQCD_Heavy_Flavour_FF_1up", title=ff_ws["rQCD_Heavy_Flavour_FF"], _type="WEIGHT"),
-            #Variation("rQCD_Heavy_Flavour_FF_1down", title=ff_ws["rQCD_Heavy_Flavour_FF"], _type="WEIGHT"),
             Variation("rQCD_Heavy_Flavour_FF_1down", title=ff_ws["NOMINAL"], _type="WEIGHT"), #Hack, we apparently need 1up/1down pairs to keep the plotting code happy
         ]
 

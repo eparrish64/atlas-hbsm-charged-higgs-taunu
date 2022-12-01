@@ -594,7 +594,18 @@ def main():
                     log.debug("len(ana_workers): ", len(ana_workers))
                     #split_workers = list(split(ana_workers, 100))
                     #print "len(split_workers): ", len(split_workers)
-                    split_workers = list(chunks(ana_workers, 100))
+                    #split_workers = list(chunks(ana_workers, 100))
+                    ana_workers_data = [w for w in ana_workers if w.dataset.datatype == 0]
+                    ana_workers_mc = [w for w in ana_workers if w.dataset.datatype != 0]
+                    work_mc_dict = dict()
+                    work_mc_keys = []
+                    for w in ana_workers_mc:
+                      if w.dataset.name not in work_mc_dict:
+                        work_mc_keys += [w.dataset.name]
+                        work_mc_dict[w.dataset.name] = []
+                      work_mc_dict[w.dataset.name] += [w]
+                    split_workers_mc = [work_mc_dict[k] for k in work_mc_keys]
+                    split_workers = split_workers_mc + list(chunks(ana_workers_data, 50))
                     log.debug("len(split_workers): ", len(split_workers))
 
                     log.info("************** creating %i jobs for HTCondor submission ************" % len(split_workers))

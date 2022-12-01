@@ -457,11 +457,11 @@ def get_sample_variation_weight(systematic, variation, dataset):
       },
       "ttbar_ISR": {
         "ttbar_ISR_1up": "0",
-        "ttbar_ISR_1down": "pmg_truth_weight_ISRLo",
+        "ttbar_ISR_1down": "pmg_truth_weight_ISRLo*eff_mass_taujet(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt(),1003)/eff_mass_taujet(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt(),1)",
       },
       "ttbar_FSR": {
-        "ttbar_FSR_1up": "pmg_truth_weight_FSRHi",
-        "ttbar_FSR_1down": "pmg_truth_weight_FSRLo",
+        "ttbar_FSR_1up": "pmg_truth_weight_FSRHi*eff_mass_taujet(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt(),1004)/eff_mass_taujet(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt(),1)",
+        "ttbar_FSR_1down": "pmg_truth_weight_FSRLo*eff_mass_taujet(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt(),1005)/eff_mass_taujet(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt(),1)",
       },
       "ttbar_PDF": {
         "ttbar_PDF_1": "pmg_truth_weight_pdf_signal_weight_1/pmg_truth_weight_pdf_signal_weight_0",
@@ -502,11 +502,11 @@ def get_sample_variation_weight(systematic, variation, dataset):
       },
       "ttbar_ISR": {
         "ttbar_ISR_1up": "0",
-        "ttbar_ISR_1down": "pmg_truth_weight_ISRLo",
+        "ttbar_ISR_1down": "pmg_truth_weight_ISRLo*eff_mass_taujet(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt(),1003)/eff_mass_taujet(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt(),1)",
       },
       "ttbar_FSR": {
-        "ttbar_FSR_1up": "pmg_truth_weight_FSRHi",
-        "ttbar_FSR_1down": "pmg_truth_weight_FSRLo",
+        "ttbar_FSR_1up": "pmg_truth_weight_FSRHi*eff_mass_taujet(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt(),1004)/eff_mass_taujet(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt(),1)",
+        "ttbar_FSR_1down": "pmg_truth_weight_FSRLo*eff_mass_taujet(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt(),1005)/eff_mass_taujet(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt(),1)",
       },
       "ttbar_PDF": {
         "ttbar_PDF_1": "pmg_truth_weight_pdf_signal_weight_1/pmg_truth_weight_pdf_signal_weight_0",
@@ -545,32 +545,32 @@ def get_sample_variation_weight(systematic, variation, dataset):
     # ttbar theory variations
     "PowhegHerwig7EvtGen_H7UE_tt_hdamp258p75_704_singlelepton": {
       "ttbar_model": {
-        "ttbar_model_POWHEG_HERWIG7": "1",
+        "ttbar_model_POWHEG_HERWIG7": "1*eff_mass_taujet(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt(),1001)/eff_mass_taujet(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt(),1)",
       },
     },
     "PowhegHerwig7EvtGen_H7UE_tt_hdamp258p75_704_dilepton": {
       "ttbar_model": {
-        "ttbar_model_POWHEG_HERWIG7": "1",
+        "ttbar_model_POWHEG_HERWIG7": "1*eff_mass_taujet(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt(),1001)/eff_mass_taujet(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt(),1)",
       },
     },
     "PowhegHerwig7EvtGen_H7UE_tt_hdamp258p75_allhad": {
       "ttbar_model": {
-        "ttbar_model_POWHEG_HERWIG7": "1",
+        "ttbar_model_POWHEG_HERWIG7": "1*eff_mass_taujet(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt(),1001)/eff_mass_taujet(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt(),1)",
       },
     },
     "PhPy8EG_A14_ttbar_hdamp517p5_SingleLep": {
       "ttbar_ISR": {
-        "ttbar_ISR_1up": "pmg_truth_weight_ISRHi",
+        "ttbar_ISR_1up": "pmg_truth_weight_ISRHi*eff_mass_taujet(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt(),1002)/eff_mass_taujet(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt(),1)",
       },
     },
     "PhPy8EG_A14_ttbar_hdamp517p5_allhad": {
       "ttbar_ISR": {
-        "ttbar_ISR_1up": "pmg_truth_weight_ISRHi",
+        "ttbar_ISR_1up": "pmg_truth_weight_ISRHi*eff_mass_taujet(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt(),1002)/eff_mass_taujet(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt(),1)",
       },
     },
     "PhPy8EG_A14_ttbar_hdamp517p5_dil": {
       "ttbar_ISR": {
-        "ttbar_ISR_1up": "pmg_truth_weight_ISRHi",
+        "ttbar_ISR_1up": "pmg_truth_weight_ISRHi*eff_mass_taujet(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt(),1002)/eff_mass_taujet(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt(),1)",
       },
     },
 

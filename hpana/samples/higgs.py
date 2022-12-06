@@ -340,16 +340,22 @@ class Higgs(MC, Signal):
                         for l in uw_hist_dict[i][j][k]:
                             uw_hset.append(uw_hist_dict[i][j][k][l])
             uw_hist_dict = dict() # reset
+            mr_w_hset = w_hset
+            mr_uw_hset = uw_hset
+
         else:
             w_hset = filter(lambda hs: hs.sample.startswith(self.name+"WEIGHTED"), hist_set)
             uw_hset = filter(lambda hs: hs.sample.startswith(self.name+"UNWEIGHTED"), hist_set)
+            mr_w_hset = super(Higgs, self).merge_hists(hist_set=w_hset, histsdir=histsdir, hists_file=hists_file, write=False, **kwargs)
+            mr_uw_hset = super(Higgs, self).merge_hists(hist_set=uw_hset, histsdir=histsdir, hists_file=hists_file, write=False, **kwargs)
+
 
         log.debug("Weighted Hplus Hitograms")
         log.debug("Unweighted Hplus Histograms")
         log.debug(w_hset)
         ## merge weighted/unweighted hists separately and write them to disk
-        mr_w_hset = super(Higgs, self).merge_hists(hist_set=w_hset, histsdir=histsdir, hists_file=hists_file, write=False, **kwargs)
-        mr_uw_hset = super(Higgs, self).merge_hists(hist_set=uw_hset, histsdir=histsdir, hists_file=hists_file, write=False, **kwargs)
+        #mr_w_hset = super(Higgs, self).merge_hists(hist_set=w_hset, histsdir=histsdir, hists_file=hists_file, write=False, **kwargs)
+        #mr_uw_hset = super(Higgs, self).merge_hists(hist_set=uw_hset, histsdir=histsdir, hists_file=hists_file, write=False, **kwargs)
         log.debug("Merged Weighted Hplus Histograms")
         log.debug(mr_w_hset)
         log.debug("Merged Unweighted Hplus Histograms")
@@ -375,10 +381,21 @@ class Higgs(MC, Signal):
 
         ## normalized unweighted to weighted and use that in the analysis! 
         norm_hset = []
+        mr_w_hset_dict = dict()
+        for w_hs in mr_w_hset:
+          if w_hs.variable not in mr_w_hset_dict:
+            mr_w_hset_dict[w_hs.variable] = dict()
+          if w_hs.category not in mr_w_hset_dict[w_hs.variable]:
+            mr_w_hset_dict[w_hs.variable][w_hs.category] = dict()
+          if w_hs.systematic not in mr_w_hset_dict[w_hs.variable][w_hs.category]:
+            mr_w_hset_dict[w_hs.variable][w_hs.category][w_hs.systematic] = []
+          mr_w_hset_dict[w_hs.variable][w_hs.category][w_hs.systematic] += [w_hs]
         for uw_hs in mr_uw_hset:
             final_hist = uw_hs.hist.Clone()
-            w_hs = filter(
-                lambda _hs: _hs.variable==uw_hs.variable and _hs.category==uw_hs.category and _hs.systematic==uw_hs.systematic, mr_w_hset)[0]
+            ROOT.SetOwnership(final_hist, True)
+            #w_hs = filter(
+            #    lambda _hs: _hs.variable==uw_hs.variable and _hs.category==uw_hs.category and _hs.systematic==uw_hs.systematic, mr_w_hset)[0]
+            w_hs = mr_w_hset_dict[uw_hs.variable][uw_hs.category][uw_hs.systematic][0]
 
             ## proper name for outputs 
             uw_hs.sample = self.name +"UNWEIGHTED"
@@ -421,5 +438,8 @@ class Higgs(MC, Signal):
                 final_hist.Write(outname, ROOT.TObject.kOverwrite)
                 w_hist.Write(w_outname, ROOT.TObject.kOverwrite)
                 uw_hist.Write(uw_outname, ROOT.TObject.kOverwrite)
+                norm_hset = [] # Hack, we've already written it, we don't need to keep it in memory
 
+        if write:
+          ofile.Close()
         return norm_hset

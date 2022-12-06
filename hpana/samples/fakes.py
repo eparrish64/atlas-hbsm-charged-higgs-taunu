@@ -593,6 +593,7 @@ class QCD(Sample):
                         merged_hists_file.cd(rdir)
                         qcd_hsum.Write(outname, ROOT.TObject.kOverwrite)
                         merged_hist_set.append(qcd_hsum)
+                        merged_hist_set = [] # Hack, we've already written it, we don't need to keep it in memory
         
         del data_hist_set
         del mc_hist_set

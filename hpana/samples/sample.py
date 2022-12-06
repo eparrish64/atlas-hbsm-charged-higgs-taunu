@@ -573,12 +573,22 @@ class Sample(object):
 
         # - - add them up
         merged_hist_set = []
+        hist_lookup_dict = dict()
         for systematic in systematics:
-            syst_hists = filter(lambda h: h.systematic==systematic, hist_set)
+          hist_lookup_dict[systematic] = dict()
+          for var in fields:
+            hist_lookup_dict[systematic][var] = dict()
+            for cat in categories:
+              hist_lookup_dict[systematic][var][cat] = []
+        for h in hist_set:
+          hist_lookup_dict[h.systematic][h.variable][h.category] += [h]
+        for systematic in systematics:
+            #syst_hists = filter(lambda h: h.systematic==systematic, hist_set)
             for var in fields:
                 for cat in categories:
-                    hists = filter(
-                        lambda hs: (hs.variable==var and hs.category==cat), syst_hists)
+                    #hists = filter(
+                    #    lambda hs: (hs.variable==var and hs.category==cat), syst_hists)
+                    hists = hist_lookup_dict[systematic][var][cat]
                     if not hists:
                         log.warning(
                             "No hist for sample %s with systematic:%s , var:%s , and cat: %s is found!"%(self.name, systematic, var, cat))
@@ -600,8 +610,9 @@ class Sample(object):
                             merged_hists_file.mkdir(rdir)
                         merged_hists_file.cd(rdir)
                         hsum.Write(outname, ROOT.TObject.kOverwrite)
+                        merged_hist_set = [] # Hack, we've already written it, we don't need to keep it in memory
                     del hists
-            del syst_hists
+            #del syst_hists
                         
         # - - close open streams
         if write:

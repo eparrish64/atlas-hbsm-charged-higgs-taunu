@@ -345,6 +345,25 @@ def save_canvas(canvas, directory, name, formats=None):
 ##----------------------------------------------------------------------------
 ##
 def fold_overflow(hist):
+    # WARNING!!! THIS CAN BE CALLED MULTIPLE TIMES FOR DATA, IT MUST BE SAFE TO DO SO!
+    # An attempt has been made to eliminate multiple calls, in case the repeated square(root)ing causes numerical issues, but otherwise this should now be safe to call more than once.
+    if "upsilon" in hist.GetTitle().lower():
+        return
+    nbins = hist.GetNbinsX()
+    first_bin = hist.GetBinContent(0) + hist.GetBinContent(1)
+    first_bin_error = math.sqrt(hist.GetBinError(0)**2 + hist.GetBinError(1)**2)
+    hist.SetBinContent(0, 0)
+    hist.SetBinError(0, 0)
+    hist.SetBinContent(1, first_bin)
+    hist.SetBinError(1, first_bin_error)
+    last_bin = hist.GetBinContent(nbins) + hist.GetBinContent(nbins+1)
+    last_bin_error = math.sqrt(hist.GetBinError(nbins)**2 + hist.GetBinError(nbins+1)**2)
+    hist.SetBinContent(nbins, last_bin)
+    hist.SetBinError(nbins, last_bin_error)
+    hist.SetBinContent(nbins+1, 0)
+    hist.SetBinError(nbins+1, 0)
+    return
+    # The below is the obsolete code. It's not safe to call multiple times, and it may just be wrong in general... kept temporarily for easy reference.
     if "upsilon" in hist.GetTitle().lower():
         return
     if "nom" not in hist.GetTitle().lower() or "data" not in hist.GetTitle().lower():

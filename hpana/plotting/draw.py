@@ -117,9 +117,10 @@ def draw(var, category,
     hists_dict = {}
     for sample in samples:
         hists_dict[sample.name] = {}
-        s_hist = None
+        #s_hist = None
         for systematic in sample.systematics:
             for syst_var in systematic.variations:
+                s_hist = None # Reset for each systematic, so we don't use the wrong variations if one isn't found (for whatever reason, e.g. nominal-only data...)
                 if hists_file:
                     systdir = hfile.Get(syst_var.name)
                     if not systdir:
@@ -368,18 +369,24 @@ def draw(var, category,
         rhist = ratio_hist(data_hist, total_backgrounds)
         rhist.GetXaxis().SetTitle(var.title)
         rhist.GetYaxis().SetTitle('Data/Model')
-        ratio_hist_high = ratio_hist(data_hist, total_backgrounds + high_band_backgrounds)
-        ratio_hist_low = ratio_hist(data_hist, total_backgrounds - low_band_backgrounds)
+        #ratio_hist_high = ratio_hist(total_backgrounds + high_band_backgrounds, total_backgrounds)
+        #ratio_hist_low = ratio_hist(total_backgrounds - low_band_backgrounds, total_backgrounds)
+        ratio_hist_high = ratio_hist(high_band_backgrounds, total_backgrounds)
+        ratio_hist_low = ratio_hist(low_band_backgrounds, total_backgrounds)
 
         ratio_error = ROOT.TGraphAsymmErrors()
         for i in range(1, rhist.GetNbinsX()+1):
             h_cnt = ratio_hist_high.GetBinContent(i)
             l_cnt = ratio_hist_low.GetBinContent(i)
-            m_cnt = rhist.GetBinContent(i)
+            #m_cnt = rhist.GetBinContent(i)
 
-            eyh = max(h_cnt-m_cnt, l_cnt-m_cnt, 0)
-            eyl = abs(min(h_cnt-m_cnt, l_cnt-m_cnt, 0))
+            #eyh = max(h_cnt-m_cnt, l_cnt-m_cnt, 0)
+            #eyl = abs(min(h_cnt-m_cnt, l_cnt-m_cnt, 0))
             #ey = max(eyh, eyl)
+            #eyh = max(h_cnt-1., 0)
+            #eyl = max(1.-l_cnt, 0)
+            eyh = max(h_cnt, 0)
+            eyl = max(l_cnt, 0)
 
             # - - dummy x error for plotting
             exh = rhist.GetXaxis().GetBinWidth(i)/2.

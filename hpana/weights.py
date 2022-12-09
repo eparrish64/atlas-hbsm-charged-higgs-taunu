@@ -403,7 +403,7 @@ WEIGHTS = Weight.factory()
 # E.g. some ttbar theory weights
 # TODO? find somewhere better to put this function, it's thrown in here kind of ad-hoc just to have it somewhere...
 
-def get_sample_variation_weight(systematic, variation, dataset):
+def get_sample_variation_weight(systematic, variation, dataset, sample, channel):
 
   specialSampleDefaults = {
     # These samples have different weights depending on the systematic variation
@@ -457,11 +457,11 @@ def get_sample_variation_weight(systematic, variation, dataset):
       },
       "ttbar_ISR": {
         "ttbar_ISR_1up": "0",
-        "ttbar_ISR_1down": "pmg_truth_weight_ISRLo*eff_mass_taujet(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt(),1003)/eff_mass_taujet(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt(),1)",
+        "ttbar_ISR_1down": "pmg_truth_weight_ISRLo",
       },
       "ttbar_FSR": {
-        "ttbar_FSR_1up": "pmg_truth_weight_FSRHi*eff_mass_taujet(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt(),1004)/eff_mass_taujet(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt(),1)",
-        "ttbar_FSR_1down": "pmg_truth_weight_FSRLo*eff_mass_taujet(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt(),1005)/eff_mass_taujet(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt(),1)",
+        "ttbar_FSR_1up": "pmg_truth_weight_FSRHi",
+        "ttbar_FSR_1down": "pmg_truth_weight_FSRLo",
       },
       "ttbar_PDF": {
         "ttbar_PDF_1": "pmg_truth_weight_pdf_signal_weight_1/pmg_truth_weight_pdf_signal_weight_0",
@@ -502,11 +502,11 @@ def get_sample_variation_weight(systematic, variation, dataset):
       },
       "ttbar_ISR": {
         "ttbar_ISR_1up": "0",
-        "ttbar_ISR_1down": "pmg_truth_weight_ISRLo*eff_mass_taujet(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt(),1003)/eff_mass_taujet(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt(),1)",
+        "ttbar_ISR_1down": "pmg_truth_weight_ISRLo",
       },
       "ttbar_FSR": {
-        "ttbar_FSR_1up": "pmg_truth_weight_FSRHi*eff_mass_taujet(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt(),1004)/eff_mass_taujet(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt(),1)",
-        "ttbar_FSR_1down": "pmg_truth_weight_FSRLo*eff_mass_taujet(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt(),1005)/eff_mass_taujet(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt(),1)",
+        "ttbar_FSR_1up": "pmg_truth_weight_FSRHi",
+        "ttbar_FSR_1down": "pmg_truth_weight_FSRLo",
       },
       "ttbar_PDF": {
         "ttbar_PDF_1": "pmg_truth_weight_pdf_signal_weight_1/pmg_truth_weight_pdf_signal_weight_0",
@@ -545,32 +545,32 @@ def get_sample_variation_weight(systematic, variation, dataset):
     # ttbar theory variations
     "PowhegHerwig7EvtGen_H7UE_tt_hdamp258p75_704_singlelepton": {
       "ttbar_model": {
-        "ttbar_model_POWHEG_HERWIG7": "1*eff_mass_taujet(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt(),1001)/eff_mass_taujet(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt(),1)",
+        "ttbar_model_POWHEG_HERWIG7": "1",
       },
     },
     "PowhegHerwig7EvtGen_H7UE_tt_hdamp258p75_704_dilepton": {
       "ttbar_model": {
-        "ttbar_model_POWHEG_HERWIG7": "1*eff_mass_taujet(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt(),1001)/eff_mass_taujet(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt(),1)",
+        "ttbar_model_POWHEG_HERWIG7": "1",
       },
     },
     "PowhegHerwig7EvtGen_H7UE_tt_hdamp258p75_allhad": {
       "ttbar_model": {
-        "ttbar_model_POWHEG_HERWIG7": "1*eff_mass_taujet(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt(),1001)/eff_mass_taujet(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt(),1)",
+        "ttbar_model_POWHEG_HERWIG7": "1",
       },
     },
     "PhPy8EG_A14_ttbar_hdamp517p5_SingleLep": {
       "ttbar_ISR": {
-        "ttbar_ISR_1up": "pmg_truth_weight_ISRHi*eff_mass_taujet(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt(),1002)/eff_mass_taujet(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt(),1)",
+        "ttbar_ISR_1up": "pmg_truth_weight_ISRHi",
       },
     },
     "PhPy8EG_A14_ttbar_hdamp517p5_allhad": {
       "ttbar_ISR": {
-        "ttbar_ISR_1up": "pmg_truth_weight_ISRHi*eff_mass_taujet(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt(),1002)/eff_mass_taujet(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt(),1)",
+        "ttbar_ISR_1up": "pmg_truth_weight_ISRHi",
       },
     },
     "PhPy8EG_A14_ttbar_hdamp517p5_dil": {
       "ttbar_ISR": {
-        "ttbar_ISR_1up": "pmg_truth_weight_ISRHi*eff_mass_taujet(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt(),1002)/eff_mass_taujet(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt(),1)",
+        "ttbar_ISR_1up": "pmg_truth_weight_ISRHi",
       },
     },
 
@@ -659,6 +659,38 @@ def get_sample_variation_weight(systematic, variation, dataset):
     },
   }
 
+  # Dedicated reweightings, different per channel
+  sampleChannelVariations = {
+    "TTbar": { # Note that it's TTbar in general, not a specific sample, since the reweighting was found using all samples
+      "ttbar_model": {
+        "ttbar_model_POWHEG_HERWIG7": {
+          "taujet": "eff_mass_taujet(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt(),1001)/eff_mass_taujet(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt(),1)",
+          "taulep": "eff_mass_taulep(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt() + mu_0_p4->Pt() + el_0_p4->Pt(),1001)/eff_mass_taulep(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt() + mu_0_p4->Pt() + el_0_p4->Pt(),1)",
+        },
+      },
+      "ttbar_ISR": {
+        "ttbar_ISR_1up": {
+          "taujet": "eff_mass_taujet(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt(),1002)/eff_mass_taujet(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt(),1)",
+          "taulep": "eff_mass_taulep(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt() + mu_0_p4->Pt() + el_0_p4->Pt(),1002)/eff_mass_taulep(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt() + mu_0_p4->Pt() + el_0_p4->Pt(),1)",
+        },
+        "ttbar_ISR_1down": {
+          "taujet": "eff_mass_taujet(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt(),1003)/eff_mass_taujet(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt(),1)",
+          "taulep": "eff_mass_taulep(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt() + mu_0_p4->Pt() + el_0_p4->Pt(),1003)/eff_mass_taulep(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt() + mu_0_p4->Pt() + el_0_p4->Pt(),1)",
+        }, 
+      },
+      "ttbar_FSR": {
+        "ttbar_FSR_1up": {
+          "taujet": "eff_mass_taujet(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt(),1004)/eff_mass_taujet(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt(),1)",
+          "taulep": "eff_mass_taulep(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt() + mu_0_p4->Pt() + el_0_p4->Pt(),1004)/eff_mass_taulep(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt() + mu_0_p4->Pt() + el_0_p4->Pt(),1)",
+        },
+        "ttbar_FSR_1down": {
+          "taujet": "eff_mass_taujet(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt(),1005)/eff_mass_taujet(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt(),1)",
+          "taulep": "eff_mass_taulep(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt() + mu_0_p4->Pt() + el_0_p4->Pt(),1005)/eff_mass_taulep(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt() + mu_0_p4->Pt() + el_0_p4->Pt(),1)",
+        }, 
+      },
+    },
+  }
+
   w = "1"
   if dataset.ds in specialSampleVariations:
     # This dataset requires some weights to be handled in a special way
@@ -667,4 +699,10 @@ def get_sample_variation_weight(systematic, variation, dataset):
       # This is a weight which requires special handling fo this sample
       if variation.name in specialSampleVariations[dataset.ds][systematic.name]:
         w = specialSampleVariations[dataset.ds][systematic.name][variation.name]
+  if sample in sampleChannelVariations:
+    if systematic.name in sampleChannelVariations[sample]:
+      if variation.name in sampleChannelVariations[sample][systematic.name]:
+        if channel in sampleChannelVariations[sample][systematic.name][variation.name]:
+          w = "(%s)*(%s)" % (w, sampleChannelVariations[sample][systematic.name][variation.name][channel])
   return w
+

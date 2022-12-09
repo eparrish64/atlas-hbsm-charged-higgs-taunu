@@ -21,6 +21,7 @@ def dataset_hists(hist_worker,
     """ produces histograms for a dataset. 
     This static method is mainly used for parallel processing.
     """
+    sample = hist_worker.sample
     channel = hist_worker.channel
     dataset = hist_worker.dataset
     fields = hist_worker.fields
@@ -150,7 +151,7 @@ def dataset_hists(hist_worker,
                             sw = syst_var.title
                         eventweight = "(%s)*(%s)" % (eventweight, sw)
 
-                    eventweight = "(%s)*(%s)" % (eventweight, get_sample_variation_weight(systematic, syst_var, dataset))
+                    eventweight = "(%s)*(%s)" % (eventweight, get_sample_variation_weight(systematic, syst_var, dataset, sample, channel))
 
                     # - - draw all the vars
                     for var in fields:

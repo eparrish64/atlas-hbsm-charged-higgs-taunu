@@ -272,6 +272,7 @@ def dataset_hists_direct(hist_worker,
     """
     from hpana.mva.evaluation import fill_scores_mult
 
+    sample = hist_worker.sample
     channel = hist_worker.channel
     dataset = hist_worker.dataset
     fields = hist_worker.fields
@@ -406,7 +407,7 @@ def dataset_hists_direct(hist_worker,
                         else:
                             sw = syst_var.title
                         eventweight = "(%s)*(%s)" % (eventweight, sw)
-                    eventweight = "(%s)*(%s)" % (eventweight, get_sample_variation_weight(systematic, syst_var, dataset))
+                    eventweight = "(%s)*(%s)" % (eventweight, get_sample_variation_weight(systematic, syst_var, dataset, sample, channel))
                     event_weight = ROOT.TTreeFormula("event_weight", eventweight, tree)
                     event_weight.SetQuickLoad(True)
 

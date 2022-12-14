@@ -326,9 +326,25 @@ class Weight(object):
         # These values should be replaced on a per-sample basis in samples.py (similar to how we adjust PRW for signal)
         "singletop_model": ( 
             "1", #<! NOMINAL, per-sample logic is in get_sample_variation_weight
-            ("singletop_model_POWHEG_HERWIG7", "1"), # per-sample logic goes in samples.py
+            ("singletop_model_POWHEG_HERWIG7", "1"), # per-sample logic goes in get_sample_variation_weight
         ),
     }  # W_SINGLETOP_THEORY
+    
+    W_TTBAR_REWEIGHT = {
+      "wttbar_fit": (
+        "1", #<! NOMINAL, per-sample logic is in get_sample_variation_weight
+        ("wttbar_1up", "1"),
+        ("wttbar_1down", "1"),
+      ),
+    }
+    
+    W_WJETS_REWEIGHT = {
+      "wwtjets_fit": (
+        "1", #<! NOMINAL, per-sample logic is in get_sample_variation_weight
+        ("wwtjets_1up", "1"),
+        ("wwtjets_1down", "1"),
+      ),
+    }
 
     # different scale factor components
     TYPES = {
@@ -341,6 +357,8 @@ class Weight(object):
             "TRIGGER": W_TRIGGER_TAUJET,
             "TTBAR": W_TTBAR_THEORY,
             "SINGLETOP": W_SINGLETOP_THEORY,
+            "TTBAR_REWEIGHT": W_TTBAR_REWEIGHT,
+            "WJETS_REWEIGHT": W_WJETS_REWEIGHT,
         },
 
         "taulep": {
@@ -353,6 +371,8 @@ class Weight(object):
             "EL": W_EL,
             "TTBAR": W_TTBAR_THEORY,
             "SINGLETOP": W_SINGLETOP_THEORY,
+            "TTBAR_REWEIGHT": W_TTBAR_REWEIGHT,
+            "WJETS_REWEIGHT": W_WJETS_REWEIGHT,
         },
     }
 
@@ -659,34 +679,67 @@ def get_sample_variation_weight(systematic, variation, dataset, sample, channel)
     },
   }
 
+  sampleChannelDefaults = {
+    "TTbar": {
+      "taujet": "eff_mass_taujet(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt(),1)",
+      "taulep": "eff_mass_taulep(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt()+ mu_0_p4->Pt() + el_0_p4->Pt(),1)",
+    },
+    "Wtaunu": {
+      "taujet": "njets(n_jets,1)",
+      "taulep": "njets(n_jets,1)",
+    }
+  }
+
   # Dedicated reweightings, different per channel
   sampleChannelVariations = {
     "TTbar": { # Note that it's TTbar in general, not a specific sample, since the reweighting was found using all samples
       "ttbar_model": {
         "ttbar_model_POWHEG_HERWIG7": {
-          "taujet": "eff_mass_taujet(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt(),1001)/eff_mass_taujet(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt(),1)",
-          "taulep": "eff_mass_taulep(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt() + mu_0_p4->Pt() + el_0_p4->Pt(),1001)/eff_mass_taulep(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt() + mu_0_p4->Pt() + el_0_p4->Pt(),1)",
+          "taujet": "eff_mass_taujet(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt(),1001)",
+          "taulep": "eff_mass_taulep(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt() + mu_0_p4->Pt() + el_0_p4->Pt(),1001)",
         },
       },
       "ttbar_ISR": {
         "ttbar_ISR_1up": {
-          "taujet": "eff_mass_taujet(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt(),1002)/eff_mass_taujet(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt(),1)",
-          "taulep": "eff_mass_taulep(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt() + mu_0_p4->Pt() + el_0_p4->Pt(),1002)/eff_mass_taulep(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt() + mu_0_p4->Pt() + el_0_p4->Pt(),1)",
+          "taujet": "eff_mass_taujet(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt(),1002)",
+          "taulep": "eff_mass_taulep(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt() + mu_0_p4->Pt() + el_0_p4->Pt(),1002)",
         },
         "ttbar_ISR_1down": {
-          "taujet": "eff_mass_taujet(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt(),1003)/eff_mass_taujet(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt(),1)",
-          "taulep": "eff_mass_taulep(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt() + mu_0_p4->Pt() + el_0_p4->Pt(),1003)/eff_mass_taulep(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt() + mu_0_p4->Pt() + el_0_p4->Pt(),1)",
+          "taujet": "eff_mass_taujet(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt(),1003)",
+          "taulep": "eff_mass_taulep(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt() + mu_0_p4->Pt() + el_0_p4->Pt(),1003)",
         }, 
       },
       "ttbar_FSR": {
         "ttbar_FSR_1up": {
-          "taujet": "eff_mass_taujet(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt(),1004)/eff_mass_taujet(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt(),1)",
-          "taulep": "eff_mass_taulep(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt() + mu_0_p4->Pt() + el_0_p4->Pt(),1004)/eff_mass_taulep(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt() + mu_0_p4->Pt() + el_0_p4->Pt(),1)",
+          "taujet": "eff_mass_taujet(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt(),1004)",
+          "taulep": "eff_mass_taulep(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt() + mu_0_p4->Pt() + el_0_p4->Pt(),1004)",
         },
         "ttbar_FSR_1down": {
-          "taujet": "eff_mass_taujet(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt(),1005)/eff_mass_taujet(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt(),1)",
-          "taulep": "eff_mass_taulep(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt() + mu_0_p4->Pt() + el_0_p4->Pt(),1005)/eff_mass_taulep(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt() + mu_0_p4->Pt() + el_0_p4->Pt(),1)",
+          "taujet": "eff_mass_taujet(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt(),1005)",
+          "taulep": "eff_mass_taulep(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt() + mu_0_p4->Pt() + el_0_p4->Pt(),1005)",
         }, 
+      },
+      "wttbar_fit": {
+        "wttbar_1up": {
+          "taujet": "eff_mass_taujet(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt(),2)",
+          "taulep": "eff_mass_taulep(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt()+ mu_0_p4->Pt() + el_0_p4->Pt(),2)",
+        },
+        "wttbar_1down": {
+          "taujet": "eff_mass_taujet(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt(),3)",
+          "taulep": "eff_mass_taulep(jet_pt_sum + met_p4->Et() + tau_0_p4->Pt()+ mu_0_p4->Pt() + el_0_p4->Pt(),3)",
+        },
+      }
+    },
+    "Wtaunu": {
+      "wwtjets_fit": {
+        "wwtjets_1up": {
+          "taujet": "njets(n_jets,2)",
+          "taulep": "njets(n_jets,2)",
+        },
+        "wwtjets_1down": {
+          "taujet": "njets(n_jets,3)",
+          "taulep": "njets(n_jets,3)",
+        },
       },
     },
   }
@@ -699,10 +752,15 @@ def get_sample_variation_weight(systematic, variation, dataset, sample, channel)
       # This is a weight which requires special handling fo this sample
       if variation.name in specialSampleVariations[dataset.ds][systematic.name]:
         w = specialSampleVariations[dataset.ds][systematic.name][variation.name]
+  w2 = "1"
+  if sample in specialSampleDefaults:
+    if channel in specialSampleDefaults[sample]:
+      w2 = specialSampleDefaults[sample][channel]
   if sample in sampleChannelVariations:
     if systematic.name in sampleChannelVariations[sample]:
       if variation.name in sampleChannelVariations[sample][systematic.name]:
         if channel in sampleChannelVariations[sample][systematic.name][variation.name]:
-          w = "(%s)*(%s)" % (w, sampleChannelVariations[sample][systematic.name][variation.name][channel])
+          w2 = sampleChannelVariations[sample][systematic.name][variation.name][channel]
+  w = "(%s)*(%s)" % (w, w2)
   return w
 

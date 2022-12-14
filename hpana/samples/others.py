@@ -133,7 +133,7 @@ class TTbar(Single_Top):
 
 
     @property
-    def systematics(self, **kwargs):
+    def disabled_systematics(self, **kwargs):
 
         systematics = super(TTbar, self).systematics[1:] + self.systematics_reweight()     
 
@@ -201,7 +201,7 @@ class Sh_Wtaunu(MC, Background):
         return workers
 
     @property
-    def systematics(self, **kwargs):
+    def disabled_systematics(self, **kwargs):
 
         systematics = super(Sh_Wtaunu, self).systematics[1:] + self.systematics_Wtjets_reweight()          
 

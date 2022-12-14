@@ -297,7 +297,7 @@ class Sample(object):
             return []
 
         if systematics is None or len(systematics)<1:
-            systematics = self.config.systematics[:] #self.systematics[:1] #<! NOMINAL
+            systematics = self.systematics[:1] #<! NOMINAL
         else: #<! sanity check 
             systematics = filter(lambda s: s.name in [st.name for st in systematics], self.systematics)
 

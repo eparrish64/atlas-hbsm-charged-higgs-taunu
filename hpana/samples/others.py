@@ -49,7 +49,7 @@ class Single_Top(MC, Background):
         self.args = args
 
     
-    def weights(self, **kwargs):
+    def disabled_weights(self, **kwargs):
         """WIP: specific weights for Top like top pt weights
         """
         weights = super(Single_Top, self).weights(**kwargs)
@@ -155,7 +155,7 @@ class Sh_Wtaunu(MC, Background):
         super(Sh_Wtaunu, self).__init__(*args, **kwargs)
         self.kwargs = kwargs
 
-    def weights(self, **kwargs):
+    def disabled_weights(self, **kwargs):
         """WIP: specific weights for Top like top pt weights
         """
         weights = super(Sh_Wtaunu, self).weights(**kwargs)

@@ -753,9 +753,9 @@ def get_sample_variation_weight(systematic, variation, dataset, sample, channel)
       if variation.name in specialSampleVariations[dataset.ds][systematic.name]:
         w = specialSampleVariations[dataset.ds][systematic.name][variation.name]
   w2 = "1"
-  if sample in specialSampleDefaults:
-    if channel in specialSampleDefaults[sample]:
-      w2 = specialSampleDefaults[sample][channel]
+  if sample in sampleChannelDefaults:
+    if channel in sampleChannelDefaults[sample]:
+      w2 = sampleChannelDefaults[sample][channel]
   if sample in sampleChannelVariations:
     if systematic.name in sampleChannelVariations[sample]:
       if variation.name in sampleChannelVariations[sample][systematic.name]:

@@ -126,12 +126,18 @@ def draw(var, category,
                     if not systdir:
                         continue
                     keys = [k.GetName() for k in systdir.GetListOfKeys()]
-                    for k in keys:
-                        match = re.match(HIST_NAME_TEMPLATE, k)
-                        if match:
-                            if match.group("sample")==sample.name:
-                                if match.group("category")==category.name and match.group("var")==var.name:
-                                    s_hist = hfile.Get("%s/%s"%(syst_var.name,k))
+                    #for k in keys:
+                    #    match = re.match(HIST_NAME_TEMPLATE, k)
+                    #    if match:
+                    #        if match.group("sample")==sample.name:
+                    #            if match.group("category")==category.name and match.group("var")==var.name:
+                    #                s_hist = hfile.Get("%s/%s"%(syst_var.name,k))
+                    s_hist = hfile.Get("{}/{}_category_{}_var_{}".format(syst_var.name, sample.name, category.name, var.name))
+                    if not s_hist:
+                        s_hist = None
+                    #else:
+                    #  s_hist.SetDirectory(0)
+                    #  ROOT.SetOwnership(s_hist, True)
                 else:
                     for hs in hists_set:
                         if hs.systematic==syst_var.name:

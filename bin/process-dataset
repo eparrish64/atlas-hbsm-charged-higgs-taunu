@@ -55,7 +55,7 @@ if __name__=="__main__":
             systematics = filter(
                 lambda s: s.name in conf["systematics"], all_systematics)
         elif conf["systs"]:
-            systematics = [] #all_systematics
+            systematics = all_systematics
         else:
             systematics = config.systematics[:1] #<! NOMINAL
 

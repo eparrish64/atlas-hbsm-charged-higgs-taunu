@@ -457,12 +457,13 @@ class QCD(Sample):
                             log.warning("No match found for %s" %(hname))
 
                 htf.Close()
-                for i in mc_hist_dict:
-                    for j in mc_hist_dict[i]:
-                        for k in mc_hist_dict[i][j]:
-                            for l in mc_hist_dict[i][j][k]:
-                                mc_hist_set.append(mc_hist_dict[i][j][k][l])
-                mc_hist_dict = dict()
+
+            for i in mc_hist_dict:
+                for j in mc_hist_dict[i]:
+                    for k in mc_hist_dict[i][j]:
+                        for l in mc_hist_dict[i][j][k]:
+                            mc_hist_set.append(mc_hist_dict[i][j][k][l])
+            mc_hist_dict = dict()
 
             ## get QCD data component hists
             data_hist_set = []

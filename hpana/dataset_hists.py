@@ -49,17 +49,11 @@ def dataset_hists(hist_worker,
     hist_templates_tformuals = {}
     for systematic in systematics:
       for syst_var in systematic.variations:
-        if syst_var.name not in hist_set:
-          hist_set[syst_var.name] = {}
-        hist_set_syst = hist_set[syst_var.name]
         for var in fields:
           if hist_templates and var.name in hist_templates:
             if not var.name in hist_templates_tformuals:
               hist_templates_tformuals[var.name] = hist_templates[var.name].GetName()
           for category in categories:
-            if category.name not in hist_set_syst:
-              hist_set_syst[category.name] = {}
-            hist_set_cat = hist_set_syst[category.name]
             if hist_templates and var.name in hist_templates:
               hist = hist_templates[var.name]
             else:
@@ -84,12 +78,11 @@ def dataset_hists(hist_worker,
             hset.hist.Reset()
             hset.hist.SetDirectory(0)
             ROOT.SetOwnership(hset.hist, True)
-            #if syst_var.name not in hist_set:
-            #  hist_set[syst_var.name] = {}
-            #if category.name not in hist_set[syst_var.name]:
-            #  hist_set[syst_var.name][category.name] = {}
-            #hist_set[syst_var.name][category.name][var.name] = hset
-            hist_set_cat[var.name] = hset
+            if syst_var.name not in hist_set:
+              hist_set[syst_var.name] = {}
+            if category.name not in hist_set[syst_var.name]:
+              hist_set[syst_var.name][category.name] = {}
+            hist_set[syst_var.name][category.name][var.name] = hset
 
     # - - loop over dataset's files
     nevents = 0
@@ -203,11 +196,12 @@ def dataset_hists(hist_worker,
                 if not hfile.GetDirectory(rdir):
                     hfile.mkdir(rdir)
                 hfile.cd(rdir)
+                #dirObj = hfile.Get(rdir)
 
-                #for hset in filter(lambda hs: hs.systematic==syst_var.name, hist_set):
                 for caths in hist_set[syst_var.name].itervalues():
-                  for hist in caths.itervalues():
+                  for hset in caths.itervalues():
                     hist = hset.hist
+                    #hist.SetDirectory(dirObj)
                     hist.SetTitle(hist.GetName())
                     hist.Write("%s" % (hist.GetName().replace(
                         outname, prefix)), ROOT.TObject.kOverwrite)

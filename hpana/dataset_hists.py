@@ -49,7 +49,6 @@ def dataset_hists(hist_worker,
     hist_templates_tformuals = {}
     for systematic in systematics:
       for syst_var in systematic.variations:
-        print "DEBUG: setting up histograms for systematic", syst_var.name
         if syst_var.name not in hist_set:
           hist_set[syst_var.name] = {}
         hist_set_syst = hist_set[syst_var.name]
@@ -61,7 +60,6 @@ def dataset_hists(hist_worker,
             if category.name not in hist_set_syst:
               hist_set_syst[category.name] = {}
             hist_set_cat = hist_set_syst[category.name]
-            #print "DEBUG: setting up histogram:", syst_var.name, category.name, var.name
             if hist_templates and var.name in hist_templates:
               hist = hist_templates[var.name]
             else:
@@ -96,7 +94,6 @@ def dataset_hists(hist_worker,
     # - - loop over dataset's files
     nevents = 0
     for fn in dataset.files:
-      print "DEBUG: running over file {}".format(fn)
       fname = fn.split("/")[-1]
       tfile = ROOT.TFile(fn)
       if frienddir:
@@ -107,12 +104,10 @@ def dataset_hists(hist_worker,
             friendfile = None
             log.debug("Failed to open friendfile %s"%(friendpath))
       for systematic in systematics:
-        print "DEBUG: running over systematic {}".format(systematic.name)
         syst_type = systematic._type
         log.debug(
             "Doing systematic %s of type %s with %r variations"%(systematic.name, systematic._type, [v.name for v in systematic.variations]))
         for syst_var in systematic.variations:
-            print "DEBUG: running over variation {}".format(syst_var.name)
             # - - check type of systematics
             if syst_type == "TREE":
                 tree_name = syst_var.name
@@ -169,18 +164,21 @@ def dataset_hists(hist_worker,
               else:
                 form_vars[var.name] = ROOT.TTreeFormula("f_var_{}".format(var.name), var.tformula, tree)
 
-            print "DEBUG: looping over ttree {} with {} events".format(tree_name, entries)
             for entry in xrange(entries):
               tree.LoadTree(entry)
-              w = form_eventweight.EvalInstance()
-              # TODO evaluate each var formula once, instead of once per accepted category
+              cats = []
               for category in categories:
                 if form_categories[category.name].EvalInstance():
-                  for var in fields:
-                    v = form_vars[var.name].EvalInstance()
-                    hist_set[syst_var.name][category.name][var.name].hist.Fill(v, w)
-                # end if it passes the cat cut
-              # end loop over categories
+                  cats.append(category.name)
+              if len(cats) > 0:
+                w = form_eventweight.EvalInstance() # event weight
+                for var in fields:
+                  v = form_vars[var.name].EvalInstance() # var value
+                  for cat in cats:
+                    hist_set[syst_var.name][cat][var.name].hist.Fill(v, w)
+                  # End loop over categories that passed the cut
+                # End loop over fields
+              # End check if any categories past the cut
             # End loop over entries
           # End loop over variations
       if friendfile:
@@ -220,7 +218,7 @@ def dataset_hists(hist_worker,
     log.info("processed %s dataset with %i events" %
              (dataset.name, nevents))
 
-    # TODO flatten hist_set into a list, to return
+    # flatten hist_set into a list, since this is what the caller expects us to return (to match the legacy version)
     flat_hist_set = []
     for s in hist_set.itervalues():
       for c in s.itervalues():

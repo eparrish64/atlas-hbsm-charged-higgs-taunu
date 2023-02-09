@@ -4,7 +4,6 @@
 # export ALRB_rootVersion=6.18.00-x86_64-centos7-gcc8-opt
 # export ALRB_rootVersion=6.18.00-x86_64-centos7-gcc8-opt
 export ALRB_rootVersion=6.14.08-x86_64-centos7-gcc8-opt
-# export ALRB_rootVersion=6.20.06-x86_64-centos7-gcc8-opt
 
 # determine path to this script
 # http://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-stored-in
@@ -30,15 +29,15 @@ case $USER in
     klimek)
 		VENVPATH=/afs/cern.ch/work/k/klimek/private/Charged_H/Analysis_EoR2/hpana-dev-taulep-RNN-Pawel/PythonPackags/Venvs/hpanaVenv/
 		;;
-	eparrish)
+    mmlynari)
+	VENVPATH=/afs/cern.ch/user/m/mmlynari/workspace/PythonPackags/Venvs/hpanaVenv/
+		;;
+    eparrish)
 		VENVPATH=/afs/cern.ch/user/e/eparrish/workarea/public/HPlusTauNu/PythonPackages/Venvs/hpanaVenv/
 		;;
-        bburghgr)
-                VENVPATH=/afs/cern.ch/work/b/bburghgr/private/hpana/workarea/venv
-                ;;
 	*)
 		VENVPATH=""
-		echo "User not found when setting virtual envrionment, adjust setup file."
+		echo "User not found when setting virtual environment, adjust setup file."
 
 esac
 
@@ -55,13 +54,13 @@ case "$(hostname)" in
 		# source $ATLAS_LOCAL_ROOT_BASE/packageSetups/atlasLocalROOTSetup.sh 		
 		setupATLAS
 		lsetup root
+                lsetup git
 		;;
 esac
 
 ## activate the virtual env
 echo "Activating the virtual env"
 source $VENVPATH/bin/activate
-export PYTHONPATH=${VENVPATH}/lib/python2.7/site-packages${PYTHONPATH:+:$PYTHONPATH}
 echo "If this is the first time install do: pip install -r requirements.txt"
 
 export PYTHONPATH=${DIR_HPANA_SETUP}${PYTHONPATH:+:$PYTHONPATH}

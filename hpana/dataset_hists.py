@@ -2,6 +2,7 @@
 import os
 import array
 import numpy as np
+import time
 
 # local
 from . import log
@@ -13,11 +14,226 @@ from .weights import get_sample_variation_weight
 import ROOT
 
 # --------------------------------------------------------------------------
-# - - helper for Pool processing
+# - - helper for Pool processing, meant to replace dataset_hists_legacy (which was renamed)
 # --------------------------------------------------------------------------
 def dataset_hists(hist_worker,
                   outdir="histsdir",
                   **kwargs):
+    """ produces histograms for a dataset. 
+    This static method is mainly used for parallel processing.
+    """
+    sample = hist_worker.sample
+    channel = hist_worker.channel
+    dataset = hist_worker.dataset
+    fields = hist_worker.fields
+    categories = hist_worker.categories
+    weights = hist_worker.weights
+    systematics = hist_worker.systematics
+    outname = kwargs.pop("outname", hist_worker.name)
+    hist_templates = hist_worker.hist_templates
+    frienddir = None
+    if "frienddir" in kwargs:
+      frienddir = kwargs["frienddir"]
+    friendfile = None
+
+    log.debug("*********** processing %s dataset ***********" % dataset.name)
+    if not dataset.files:
+      log.warning("%s dataset is empty!!" % dataset.name)
+      return []
+    log.debug("DATASET {} files: {}".format(dataset.name, dataset.files))
+
+    canvas = ROOT.TCanvas()
+    # - - - - containers for hists
+    hist_set = {}
+    # <! since we have to update hists name, keep tformulas untouched
+    hist_templates_tformuals = {}
+    for systematic in systematics:
+      for syst_var in systematic.variations:
+        print "DEBUG: setting up histograms for systematic", syst_var.name
+        if syst_var.name not in hist_set:
+          hist_set[syst_var.name] = {}
+        hist_set_syst = hist_set[syst_var.name]
+        for var in fields:
+          if hist_templates and var.name in hist_templates:
+            if not var.name in hist_templates_tformuals:
+              hist_templates_tformuals[var.name] = hist_templates[var.name].GetName()
+          for category in categories:
+            if category.name not in hist_set_syst:
+              hist_set_syst[category.name] = {}
+            hist_set_cat = hist_set_syst[category.name]
+            #print "DEBUG: setting up histogram:", syst_var.name, category.name, var.name
+            if hist_templates and var.name in hist_templates:
+              hist = hist_templates[var.name]
+            else:
+              if var.bins:
+                hist = ROOT.TH1F(
+                    "syst_%s_category_%s_var_%s" % (
+                        syst_var.name, category.name, var.name), var.name, len(var.bins)-1, array.array("d", var.bins))
+              else:
+                hist = ROOT.TH1F(
+                    "syst_%s_category_%s_var_%s" % (
+                        syst_var.name, category.name, var.name), var.name, *var.binning)
+
+            hset = Histset(
+                name=outname,
+                sample=outname,
+                variable=var.name,
+                category=category.name,
+                hist=hist.Clone(),  # <! a copy per category
+                systematic=syst_var.name)
+
+            # - - make sure the newly created hist has no dummy value
+            hset.hist.Reset()
+            hset.hist.SetDirectory(0)
+            ROOT.SetOwnership(hset.hist, True)
+            #if syst_var.name not in hist_set:
+            #  hist_set[syst_var.name] = {}
+            #if category.name not in hist_set[syst_var.name]:
+            #  hist_set[syst_var.name][category.name] = {}
+            #hist_set[syst_var.name][category.name][var.name] = hset
+            hist_set_cat[var.name] = hset
+
+    # - - loop over dataset's files
+    nevents = 0
+    for fn in dataset.files:
+      print "DEBUG: running over file {}".format(fn)
+      fname = fn.split("/")[-1]
+      tfile = ROOT.TFile(fn)
+      if frienddir:
+          friendpath = os.path.join(frienddir, fname+".friend")
+          try:
+            friendfile = ROOT.TFile.Open(friendpath, "READONLY")
+          except:
+            friendfile = None
+            log.debug("Failed to open friendfile %s"%(friendpath))
+      for systematic in systematics:
+        print "DEBUG: running over systematic {}".format(systematic.name)
+        syst_type = systematic._type
+        log.debug(
+            "Doing systematic %s of type %s with %r variations"%(systematic.name, systematic._type, [v.name for v in systematic.variations]))
+        for syst_var in systematic.variations:
+            print "DEBUG: running over variation {}".format(syst_var.name)
+            # - - check type of systematics
+            if syst_type == "TREE":
+                tree_name = syst_var.name
+            else:
+                tree_name = "NOMINAL"
+
+            # - - check if the file is healthy
+            try:
+                tree = tfile.Get(tree_name)
+                entries = tree.GetEntries()
+                nevents += entries
+                if entries == 0:
+                    log.warning("%s tree in %s is empty, skipping!" %
+                                (tree_name, fn))
+                    continue
+            except:
+                log.warning("%s has no %s tree!" % (fn, systematic))
+                continue
+
+            if friendfile:
+                tree.AddFriend(tree_name, friendfile)
+
+            # set up ttreeformula stuff for event weight
+            # - - event weight
+            # - - if weights is not provided to the worker directly, then it's taken from systematic (the case for FFs weights)
+            eventweight = "1."
+            if weights:
+                eventweight = "*".join(weights[category.name])
+            if syst_type == "WEIGHT":
+                if isinstance(syst_var.title, dict):
+                    ######
+                    sw = syst_var.title[category.name][0]
+                    # I do not like this fix. This works for cutflows, but I doubt it will work for run-analysis
+                    ######
+                    # sw = syst_var.title["SR_%s"%(channel.upper())][0]
+                    # sw = syst_var.title["SR_TAUJET"][0]
+                else:
+                    sw = syst_var.title
+                eventweight = "(%s)*(%s)" % (eventweight, sw)
+
+            eventweight = "(%s)*(%s)" % (eventweight, get_sample_variation_weight(systematic, syst_var, dataset, sample, channel))
+            form_eventweight = ROOT.TTreeFormula("f_eventweight", eventweight, tree)
+            
+            # set up ttreeformula stuff for cuts per category
+            form_categories = {}
+            for category in categories:
+              form_categories[category.name] = ROOT.TTreeFormula("f_cat_{}".format(category.name), category.cuts.GetTitle(), tree)
+            
+            # set up ttreeformula stuff for each variable
+            form_vars = {}
+            for var in fields:
+              if var.name in hist_templates_tformuals:
+                form_vars[var.name] = ROOT.TTreeFormula("f_var_{}".format(var.name), hist_templates_tformuals[var.name], tree)
+              else:
+                form_vars[var.name] = ROOT.TTreeFormula("f_var_{}".format(var.name), var.tformula, tree)
+
+            print "DEBUG: looping over ttree {} with {} events".format(tree_name, entries)
+            for entry in xrange(entries):
+              tree.LoadTree(entry)
+              w = form_eventweight.EvalInstance()
+              # TODO evaluate each var formula once, instead of once per accepted category
+              for category in categories:
+                if form_categories[category.name].EvalInstance():
+                  for var in fields:
+                    v = form_vars[var.name].EvalInstance()
+                    hist_set[syst_var.name][category.name][var.name].hist.Fill(v, w)
+                # end if it passes the cat cut
+              # end loop over categories
+            # End loop over entries
+          # End loop over variations
+      if friendfile:
+          friendfile.Close()
+      tfile.Close()
+    # End loop over files
+
+    # write_hists = kwargs.pop("write_hists", False)
+    write_hists = True
+
+    # <! FIX ME: should give the sample name a better solution
+    prefix = kwargs.pop("prefix", outname.split(".")[0])
+    if write_hists:
+        if not os.path.isdir(outdir):
+            os.system("mkdir -p %s" % outdir)
+        for systematic in systematics:            
+            hname = "%s.root"%(outname)
+            hpath = os.path.join(outdir, hname)
+            hfile = ROOT.TFile(hpath, "UPDATE")
+            for syst_var in systematic.variations:
+                rdir = syst_var.name
+                if not hfile.GetDirectory(rdir):
+                    hfile.mkdir(rdir)
+                hfile.cd(rdir)
+
+                #for hset in filter(lambda hs: hs.systematic==syst_var.name, hist_set):
+                for caths in hist_set[syst_var.name].itervalues():
+                  for hist in caths.itervalues():
+                    hist = hset.hist
+                    hist.SetTitle(hist.GetName())
+                    hist.Write("%s" % (hist.GetName().replace(
+                        outname, prefix)), ROOT.TObject.kOverwrite)
+            hfile.Close()
+
+    canvas.Close()
+    log.debug(hist_set)
+    log.info("processed %s dataset with %i events" %
+             (dataset.name, nevents))
+
+    # TODO flatten hist_set into a list, to return
+    flat_hist_set = []
+    for s in hist_set.itervalues():
+      for c in s.itervalues():
+        flat_hist_set += c.values()
+    hist_set = flat_hist_set
+    return hist_set
+
+# --------------------------------------------------------------------------
+# - - helper for Pool processing
+# --------------------------------------------------------------------------
+def dataset_hists_legacy(hist_worker,
+                         outdir="histsdir",
+                         **kwargs):
     """ produces histograms for a dataset. 
     This static method is mainly used for parallel processing.
     """

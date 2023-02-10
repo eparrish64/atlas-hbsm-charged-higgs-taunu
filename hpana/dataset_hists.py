@@ -78,6 +78,7 @@ def dataset_hists(hist_worker,
             hset.hist.Reset()
             hset.hist.SetDirectory(0)
             ROOT.SetOwnership(hset.hist, True)
+            hset.hist.SetName("%s_category_%s_var_%s" % (outname, category.name, var.name))
             if syst_var.name not in hist_set:
               hist_set[syst_var.name] = {}
             if category.name not in hist_set[syst_var.name]:

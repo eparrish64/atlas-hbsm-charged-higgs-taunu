@@ -189,6 +189,8 @@ def dataset_hists(hist_worker,
             # End loop over fields
           # End check if any categories past the cut
         # End loop over entries
+        # Cleanup, this seems to mitigate most of the memory leaks
+        tree.Delete()
 
       if friendfile:
           friendfile.Close()

@@ -84,96 +84,111 @@ def dataset_hists(hist_worker,
               hist_set[syst_var.name][category.name] = {}
             hist_set[syst_var.name][category.name][var.name] = hset
 
+    syst_var_types = {}
+    syst_var_trees = {}
+    syst_var_systs = {}
+    for systematic in systematics:
+      syst_type = systematic._type
+      for syst_var in systematic.variations:
+        # - - check type of systematics
+        if syst_type == "TREE":
+            tree_name = syst_var.name
+        else:
+            tree_name = "NOMINAL"
+        if tree_name not in syst_var_trees:
+          syst_var_trees[tree_name] = []
+        syst_var_trees[tree_name].append(syst_var)
+        syst_var_types[syst_var.name] = syst_type
+        syst_var_systs[syst_var.name] = systematic
+
     # - - loop over dataset's files
     nevents = 0
     for fn in dataset.files:
       fname = fn.split("/")[-1]
       tfile = ROOT.TFile(fn)
       if frienddir:
-          friendpath = os.path.join(frienddir, fname+".friend")
-          try:
-            friendfile = ROOT.TFile.Open(friendpath, "READONLY")
-          except:
-            friendfile = None
-            log.debug("Failed to open friendfile %s"%(friendpath))
-      for systematic in systematics:
-        syst_type = systematic._type
-        log.debug(
-            "Doing systematic %s of type %s with %r variations"%(systematic.name, systematic._type, [v.name for v in systematic.variations]))
-        for syst_var in systematic.variations:
-            # - - check type of systematics
-            if syst_type == "TREE":
-                tree_name = syst_var.name
-            else:
-                tree_name = "NOMINAL"
-
-            # - - check if the file is healthy
-            try:
-                tree = tfile.Get(tree_name)
-                entries = tree.GetEntries()
-                nevents += entries
-                if entries == 0:
-                    log.warning("%s tree in %s is empty, skipping!" %
-                                (tree_name, fn))
-                    continue
-            except:
-                log.warning("%s has no %s tree!" % (fn, systematic))
+        friendpath = os.path.join(frienddir, fname+".friend")
+        try:
+          friendfile = ROOT.TFile.Open(friendpath, "READONLY")
+        except:
+          friendfile = None
+          log.debug("Failed to open friendfile %s"%(friendpath))
+      for tree_name, tree_syst_vars in syst_var_trees.iteritems():
+        # - - check if the file is healthy
+        try:
+            tree = tfile.Get(tree_name)
+            entries = tree.GetEntries()
+            nevents += entries
+            if entries == 0:
+                log.warning("%s tree in %s is empty, skipping!" %
+                            (tree_name, fn))
                 continue
+        except:
+            log.warning("%s has no %s tree!" % (fn, tree_name))
+            continue
 
-            if friendfile:
-                tree.AddFriend(tree_name, friendfile)
+        if friendfile:
+            tree.AddFriend(tree_name, friendfile)
 
-            # set up ttreeformula stuff for event weight
-            # - - event weight
-            # - - if weights is not provided to the worker directly, then it's taken from systematic (the case for FFs weights)
-            eventweight = "1."
-            if weights:
-                eventweight = "*".join(weights[category.name])
-            if syst_type == "WEIGHT":
-                if isinstance(syst_var.title, dict):
-                    ######
-                    sw = syst_var.title[category.name][0]
-                    # I do not like this fix. This works for cutflows, but I doubt it will work for run-analysis
-                    ######
-                    # sw = syst_var.title["SR_%s"%(channel.upper())][0]
-                    # sw = syst_var.title["SR_TAUJET"][0]
-                else:
-                    sw = syst_var.title
-                eventweight = "(%s)*(%s)" % (eventweight, sw)
-
-            eventweight = "(%s)*(%s)" % (eventweight, get_sample_variation_weight(systematic, syst_var, dataset, sample, channel))
-            form_eventweight = ROOT.TTreeFormula("f_eventweight", eventweight, tree)
-            
-            # set up ttreeformula stuff for cuts per category
-            form_categories = {}
-            for category in categories:
-              form_categories[category.name] = ROOT.TTreeFormula("f_cat_{}".format(category.name), category.cuts.GetTitle(), tree)
-            
-            # set up ttreeformula stuff for each variable
-            form_vars = {}
-            for var in fields:
-              if var.name in hist_templates_tformuals:
-                form_vars[var.name] = ROOT.TTreeFormula("f_var_{}".format(var.name), hist_templates_tformuals[var.name], tree)
+        syst_weights = {}
+        for syst_var in tree_syst_vars:
+          syst_type = syst_var_types[syst_var.name]
+          systematic = syst_var_systs[syst_var.name]
+          # set up ttreeformula stuff for event weight
+          # - - event weight
+          # - - if weights is not provided to the worker directly, then it's taken from systematic (the case for FFs weights)
+          eventweight = "1."
+          if weights:
+              eventweight = "*".join(weights[category.name])
+          if syst_type == "WEIGHT":
+              if isinstance(syst_var.title, dict):
+                  ######
+                  sw = syst_var.title[category.name][0]
+                  # I do not like this fix. This works for cutflows, but I doubt it will work for run-analysis
+                  ######
+                  # sw = syst_var.title["SR_%s"%(channel.upper())][0]
+                  # sw = syst_var.title["SR_TAUJET"][0]
               else:
-                form_vars[var.name] = ROOT.TTreeFormula("f_var_{}".format(var.name), var.tformula, tree)
+                  sw = syst_var.title
+              eventweight = "(%s)*(%s)" % (eventweight, sw)
 
-            for entry in xrange(entries):
-              tree.LoadTree(entry)
-              cats = []
-              for category in categories:
-                if form_categories[category.name].EvalInstance():
-                  cats.append(category.name)
-              if len(cats) > 0:
-                w = form_eventweight.EvalInstance() # event weight
-                for var in fields:
-                  v = form_vars[var.name].EvalInstance() # var value
-                  for cat in cats:
-                    hist_set[syst_var.name][cat][var.name].hist.Fill(v, w)
-                  # End loop over categories that passed the cut
-                # End loop over fields
-              # End check if any categories past the cut
-            # End loop over entries
-          # End loop over variations
+          eventweight = "(%s)*(%s)" % (eventweight, get_sample_variation_weight(systematic, syst_var, dataset, sample, channel))
+          syst_weights[syst_var.name] = ROOT.TTreeFormula("f_eventweight", eventweight, tree)
+
+        # set up ttreeformula stuff for cuts per category
+        form_categories = {}
+        for category in categories:
+          form_categories[category.name] = ROOT.TTreeFormula("f_cat_{}".format(category.name), category.cuts.GetTitle(), tree)
+        
+        # set up ttreeformula stuff for each variable
+        form_vars = {}
+        for var in fields:
+          if var.name in hist_templates_tformuals:
+            form_vars[var.name] = ROOT.TTreeFormula("f_var_{}".format(var.name), hist_templates_tformuals[var.name], tree)
+          else:
+            form_vars[var.name] = ROOT.TTreeFormula("f_var_{}".format(var.name), var.tformula, tree)
+
+        ws = {}
+        for entry in xrange(entries):
+          tree.LoadTree(entry)
+          cats = []
+          for category in categories:
+            if form_categories[category.name].EvalInstance():
+              cats.append(category.name)
+          if len(cats) > 0:
+            for syst_var_name in syst_weights:
+              ws[syst_var_name] = syst_weights[syst_var_name].EvalInstance()
+            for var in fields:
+              v = form_vars[var.name].EvalInstance() # var value
+              for syst_var_name,w in ws.iteritems():
+                for cat in cats:
+                  hist_set[syst_var_name][cat][var.name].hist.Fill(v, w)
+                # End loop over systematic variations
+              # End loop over categories that passed the cut
+            # End loop over fields
+          # End check if any categories past the cut
+        # End loop over entries
+
       if friendfile:
           friendfile.Close()
       tfile.Close()
@@ -196,12 +211,10 @@ def dataset_hists(hist_worker,
                 if not hfile.GetDirectory(rdir):
                     hfile.mkdir(rdir)
                 hfile.cd(rdir)
-                #dirObj = hfile.Get(rdir)
 
                 for caths in hist_set[syst_var.name].itervalues():
                   for hset in caths.itervalues():
                     hist = hset.hist
-                    #hist.SetDirectory(dirObj)
                     hist.SetTitle(hist.GetName())
                     hist.Write("%s" % (hist.GetName().replace(
                         outname, prefix)), ROOT.TObject.kOverwrite)

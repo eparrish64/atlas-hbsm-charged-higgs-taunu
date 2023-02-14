@@ -161,7 +161,11 @@ def draw(var, category,
                     else:
                         bins = var.plot_bins
 
-                    s_hist = s_hist.Rebin(len(bins)-1, "hn", array.array("d", bins))
+                    s_hist_new = s_hist.Rebin(len(bins)-1, "hn", array.array("d", bins))
+                    if s_hist_new:
+                        s_hist = s_hist_new
+                    #s_hist = s_hist.Rebin(len(bins)-1, "hn", array.array("d", bins))
+
 
 
                 ## normalize ttbar bkg

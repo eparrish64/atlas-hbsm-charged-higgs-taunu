@@ -131,7 +131,9 @@ def dataset_hists(hist_worker,
         if friendfile:
             tree.AddFriend(tree_name, friendfile)
 
-        syst_weights = {}
+        cat_syst_weights = {}
+        for category in categories:
+          cat_syst_weights[category.name] = {}
         for syst_var in tree_syst_vars:
           syst_type = syst_var_types[syst_var.name]
           systematic = syst_var_systs[syst_var.name]
@@ -139,37 +141,44 @@ def dataset_hists(hist_worker,
           # - - event weight
           # - - if weights is not provided to the worker directly, then it's taken from systematic (the case for FFs weights)
           eventweight = "1."
-          if weights:
-              eventweight = "*".join(weights[category.name])
-          if syst_type == "WEIGHT":
-              if isinstance(syst_var.title, dict):
-                  ######
-                  sw = syst_var.title[category.name][0]
-                  # I do not like this fix. This works for cutflows, but I doubt it will work for run-analysis
-                  ######
-                  # sw = syst_var.title["SR_%s"%(channel.upper())][0]
-                  # sw = syst_var.title["SR_TAUJET"][0]
-              else:
-                  sw = syst_var.title
-              eventweight = "(%s)*(%s)" % (eventweight, sw)
+          for category in categories:
+            if weights:
+                eventweight = "*".join(weights[category.name])
+            if syst_type == "WEIGHT":
+                if isinstance(syst_var.title, dict):
+                    ######
+                    sw = syst_var.title[category.name][0]
+                    # I do not like this fix. This works for cutflows, but I doubt it will work for run-analysis
+                    ######
+                    # sw = syst_var.title["SR_%s"%(channel.upper())][0]
+                    # sw = syst_var.title["SR_TAUJET"][0]
+                else:
+                    sw = syst_var.title
+                eventweight = "(%s)*(%s)" % (eventweight, sw)
 
-          eventweight = "(%s)*(%s)" % (eventweight, get_sample_variation_weight(systematic, syst_var, dataset, sample, channel))
-          syst_weights[syst_var.name] = ROOT.TTreeFormula("f_eventweight", eventweight, tree)
+            eventweight = "(%s)*(%s)" % (eventweight, get_sample_variation_weight(systematic, syst_var, dataset, sample, channel))
+            cat_syst_weights[category.name][syst_var.name] = ROOT.TTreeFormula("f_eventweight", eventweight, tree)
+            cat_syst_weights[category.name][syst_var.name].SetQuickLoad(True)
 
         # set up ttreeformula stuff for cuts per category
         form_categories = {}
         for category in categories:
           form_categories[category.name] = ROOT.TTreeFormula("f_cat_{}".format(category.name), category.cuts.GetTitle(), tree)
+          form_categories[category.name].SetQuickLoad(True)
         
         # set up ttreeformula stuff for each variable
         form_vars = {}
         for var in fields:
           if var.name in hist_templates_tformuals:
             form_vars[var.name] = ROOT.TTreeFormula("f_var_{}".format(var.name), hist_templates_tformuals[var.name], tree)
+            form_vars[var.name].SetQuickLoad(True)
           else:
             form_vars[var.name] = ROOT.TTreeFormula("f_var_{}".format(var.name), var.tformula, tree)
+            form_vars[var.name].SetQuickLoad(True)
 
-        ws = {}
+        cws = {}
+        for category in categories:
+          cws[category.name] = {}
         for entry in xrange(entries):
           tree.LoadTree(entry)
           cats = []
@@ -177,12 +186,13 @@ def dataset_hists(hist_worker,
             if form_categories[category.name].EvalInstance():
               cats.append(category.name)
           if len(cats) > 0:
-            for syst_var_name in syst_weights:
-              ws[syst_var_name] = syst_weights[syst_var_name].EvalInstance()
+            for cat in cats:
+              for syst_var_name in cat_syst_weights[cat]:
+                cws[cat][syst_var_name] = cat_syst_weights[cat][syst_var_name].EvalInstance()
             for var in fields:
               v = form_vars[var.name].EvalInstance() # var value
-              for syst_var_name,w in ws.iteritems():
-                for cat in cats:
+              for cat in cats:
+                for syst_var_name,w in cws[cat].iteritems():
                   hist_set[syst_var_name][cat][var.name].hist.Fill(v, w)
                 # End loop over systematic variations
               # End loop over categories that passed the cut
@@ -837,7 +847,9 @@ def dataset_hists_direct(hist_worker,
         if friendfile:
             tree.AddFriend(tree_name, friendfile)
 
-        syst_weights = {}
+        cat_syst_weights = {}
+        for category in categories:
+          cat_syst_weights[category.name] = {}
         for syst_var in tree_syst_vars:
           syst_type = syst_var_types[syst_var.name]
           systematic = syst_var_systs[syst_var.name]
@@ -845,27 +857,30 @@ def dataset_hists_direct(hist_worker,
           # - - event weight
           # - - if weights is not provided to the worker directly, then it's taken from systematic (the case for FFs weights)
           eventweight = "1."
-          if weights:
-              eventweight = "*".join(weights[category.name])
-          if syst_type == "WEIGHT":
-              if isinstance(syst_var.title, dict):
-                  ######
-                  sw = syst_var.title[category.name][0]
-                  # I do not like this fix. This works for cutflows, but I doubt it will work for run-analysis
-                  ######
-                  # sw = syst_var.title["SR_%s"%(channel.upper())][0]
-                  # sw = syst_var.title["SR_TAUJET"][0]
-              else:
-                  sw = syst_var.title
-              eventweight = "(%s)*(%s)" % (eventweight, sw)
+          for category in categories:
+            if weights:
+                eventweight = "*".join(weights[category.name])
+            if syst_type == "WEIGHT":
+                if isinstance(syst_var.title, dict):
+                    ######
+                    sw = syst_var.title[category.name][0]
+                    # I do not like this fix. This works for cutflows, but I doubt it will work for run-analysis
+                    ######
+                    # sw = syst_var.title["SR_%s"%(channel.upper())][0]
+                    # sw = syst_var.title["SR_TAUJET"][0]
+                else:
+                    sw = syst_var.title
+                eventweight = "(%s)*(%s)" % (eventweight, sw)
 
-          eventweight = "(%s)*(%s)" % (eventweight, get_sample_variation_weight(systematic, syst_var, dataset, sample, channel))
-          syst_weights[syst_var.name] = ROOT.TTreeFormula("f_eventweight", eventweight, tree)
+            eventweight = "(%s)*(%s)" % (eventweight, get_sample_variation_weight(systematic, syst_var, dataset, sample, channel))
+            cat_syst_weights[category.name][syst_var.name] = ROOT.TTreeFormula("f_eventweight", eventweight, tree)
+            cat_syst_weights[category.name][syst_var.name].SetQuickLoad(True)
 
         # set up ttreeformula stuff for cuts per category
         form_categories = {}
         for category in categories:
           form_categories[category.name] = ROOT.TTreeFormula("f_cat_{}".format(category.name), category.cuts.GetTitle(), tree)
+          form_categories[category.name].SetQuickLoad(True)
 
         # Lots of the below code was copy/pasted, these aliases are just to fix that, TODO: clean things up
         all_models = clf_models
@@ -882,8 +897,10 @@ def dataset_hists_direct(hist_worker,
               if feat.name in clf_feats_tf: continue
               if correct_upsilon and "upsilon" in feat.name.lower():
                   clf_feats_tf[feat.name] = ROOT.TTreeFormula(feat.name, QCD.UPSILON_CORRECTED["mc16"], tree)
+                  clf_feats_tf[feat.name].SetQuickLoad(True)
               elif feat.name.lower() == "truthmass":
                 clf_feats_tf[feat.name] = ROOT.TTreeFormula(feat.name, "80.", tree)
+                clf_feats_tf[feat.name].SetQuickLoad(True)
                 #Method 1: More elegant, but slower, modify also hpana/dataset_hists.py
                 #clf_feats_tf[feat.name] = ROOT.TTreeFormula(feat.name, hist_templates[mtag].GetTitle().split("to")[1], tree)
                 #Method 1: End
@@ -892,8 +909,10 @@ def dataset_hists_direct(hist_worker,
 
         # Used for kfolds
         event_number = ROOT.TTreeFormula("event_number", "event_number", tree)
+        event_number.SetQuickLoad(True)
         # Tau tracks used to select 1p/3p networks
         tau_0_n_tracks =  ROOT.TTreeFormula("tau_0_n_charged_tracks", "tau_0_n_charged_tracks", tree)
+        tau_0_n_tracks.SetQuickLoad(True)
         # TODO:
         # Loop over events
         # For each event, check if it passes at least 1 category
@@ -909,11 +928,16 @@ def dataset_hists_direct(hist_worker,
             if model.kfolds not in infos[mtag][model.ntracks]: infos[mtag][model.ntracks][model.kfolds] = dict()
             if model.fold_num not in infos[mtag][model.ntracks][model.kfolds]:
               infos[mtag][model.ntracks][model.kfolds][model.fold_num] = {"feats": [], "weights": {}, "categories": {}}
-              for syst_var_name in syst_weights:
-                infos[mtag][model.ntracks][model.kfolds][model.fold_num]["weights"][syst_var_name] = []
               for cat in categories:
                 infos[mtag][model.ntracks][model.kfolds][model.fold_num]["categories"][cat.name] = []
-        
+                infos[mtag][model.ntracks][model.kfolds][model.fold_num]["weights"][cat.name] = {}
+                for syst_var_name in cat_syst_weights[cat.name]:
+                  infos[mtag][model.ntracks][model.kfolds][model.fold_num]["weights"][cat.name][syst_var_name] = []
+
+        cws = {}
+        for category in categories:
+          cws[category.name] = {}
+
         for entry in xrange(entries):
           tree.LoadTree(entry)
           cats = set()
@@ -926,9 +950,9 @@ def dataset_hists_direct(hist_worker,
           ntracks = tau_0_n_tracks.EvalInstance()
           feats = { n:v.EvalInstance() for n,v in clf_feats_tf.iteritems() }
           # Now get the weights
-          ws = {}
-          for syst_var_name in syst_weights:
-            ws[syst_var_name] = syst_weights[syst_var_name].EvalInstance()
+          for cat in cats:
+            for syst_var_name in cat_syst_weights[cat]:
+              cws[cat][syst_var_name] = cat_syst_weights[cat][syst_var_name].EvalInstance()
           # Now the features
           
           ## - - build features vectors per fold
@@ -941,18 +965,14 @@ def dataset_hists_direct(hist_worker,
                   break
               for kfolds in infos[mtag][ntracks]:
                   for fold in infos[mtag][ntracks][kfolds]:
-                      #if eventnum % kfolds == fold:
-                      # tau_0_n_tracks.EvalInstance() == 0 means that there are no taus, e.g. in DILEP_BTAG region
-                      if ( ntracks == tau_0_n_tracks.EvalInstance() or (ntracks == 3 and tau_0_n_tracks.EvalInstance() == 0) ) and eventnum % kfolds == fold:
-                        infos[mtag][ntracks][kfolds][fold]["feats"].append(event_feats)
-                        for syst_var_name in syst_weights:
-                          infos[mtag][ntracks][kfolds][fold]["weights"][syst_var_name].append(ws[syst_var_name])
-                        for cat in form_categories:
-                          infos[mtag][ntracks][kfolds][fold]["categories"][cat].append(1 if cat in cats else 0)
-                          #inc = 0
-                          #if cat in cats:
-                          #  inc = 1
-                          #infos[mtag][ntracks][kfolds][fold]["categories"][cat].append(inc)
+                    #if eventnum % kfolds == fold:
+                    # tau_0_n_tracks.EvalInstance() == 0 means that there are no taus, e.g. in DILEP_BTAG region
+                    if ( ntracks == tau_0_n_tracks.EvalInstance() or (ntracks == 3 and tau_0_n_tracks.EvalInstance() == 0) ) and eventnum % kfolds == fold:
+                      infos[mtag][ntracks][kfolds][fold]["feats"].append(event_feats)
+                      for cat in form_categories:
+                        infos[mtag][ntracks][kfolds][fold]["categories"][cat].append(1 if cat in cats else 0)
+                        for syst_var_name in cat_syst_weights[cat]:
+                          infos[mtag][ntracks][kfolds][fold]["weights"][cat][syst_var_name].append(cws[cat][syst_var_name])
                 # End loop over folds
               # End lop over kfolds
             # End loop over ntracks
@@ -989,8 +1009,8 @@ def dataset_hists_direct(hist_worker,
                 for cat in cs:
                   if not cs[cat][idx]:
                     continue
-                  for syst_var in ws:
-                    hist_set[syst_var][cat][var.name].hist.Fill(scores[idx], ws[syst_var][idx])
+                  for syst_var in ws[cat]:
+                    hist_set[syst_var][cat][var.name].hist.Fill(scores[idx], ws[cat][syst_var][idx])
 
             # TODO basically method 2, but:
             # the mass comes from var.name for the histograms

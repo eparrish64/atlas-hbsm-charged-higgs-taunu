@@ -935,8 +935,10 @@ def dataset_hists_direct(hist_worker,
                   infos[mtag][model.ntracks][model.kfolds][model.fold_num]["weights"][cat.name][syst_var_name] = []
 
         cws = {}
-        for category in categories:
-          cws[category.name] = {}
+        for cat in cat_syst_weights:
+          cws[cat] = {}
+          for syst_name in cat_syst_weights[cat]:
+            cws[cat][syst_name] = []
 
         for entry in xrange(entries):
           tree.LoadTree(entry)

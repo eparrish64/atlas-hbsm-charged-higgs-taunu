@@ -190,7 +190,6 @@ def dataset_hists(hist_worker,
           for cat in cats:
             for syst_var_name in cat_syst_weights[cat]:
               w = cat_syst_weights[cat][syst_var_name].EvalInstance()
-              print "DEBUG:", entry, cat, syst_var_name, w
               for var_name in vs:
                 hist_set[syst_var_name][cat][var_name].hist.Fill(vs[var_name], w)
               # End loop over var

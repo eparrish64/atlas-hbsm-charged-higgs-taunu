@@ -140,8 +140,8 @@ def dataset_hists(hist_worker,
           # set up ttreeformula stuff for event weight
           # - - event weight
           # - - if weights is not provided to the worker directly, then it's taken from systematic (the case for FFs weights)
-          eventweight = "1."
           for category in categories:
+            eventweight = "1."
             if weights:
                 eventweight = "*".join(weights[category.name])
             if syst_type == "WEIGHT":
@@ -157,7 +157,7 @@ def dataset_hists(hist_worker,
                 eventweight = "(%s)*(%s)" % (eventweight, sw)
 
             eventweight = "(%s)*(%s)" % (eventweight, get_sample_variation_weight(systematic, syst_var, dataset, sample, channel))
-            cat_syst_weights[category.name][syst_var.name] = ROOT.TTreeFormula("f_eventweight", eventweight, tree)
+            cat_syst_weights[category.name][syst_var.name] = ROOT.TTreeFormula("f_eventweight_{}_{}".format(category.name, syst_var.name), eventweight, tree)
             cat_syst_weights[category.name][syst_var.name].SetQuickLoad(True)
 
         # set up ttreeformula stuff for cuts per category
@@ -176,28 +176,26 @@ def dataset_hists(hist_worker,
             form_vars[var.name] = ROOT.TTreeFormula("f_var_{}".format(var.name), var.tformula, tree)
             form_vars[var.name].SetQuickLoad(True)
 
-        cws = {}
-        for category in categories:
-          cws[category.name] = {}
         for entry in xrange(entries):
           tree.LoadTree(entry)
           cats = []
           for category in categories:
             if form_categories[category.name].EvalInstance():
               cats.append(category.name)
-          if len(cats) > 0:
-            for cat in cats:
-              for syst_var_name in cat_syst_weights[cat]:
-                cws[cat][syst_var_name] = cat_syst_weights[cat][syst_var_name].EvalInstance()
-            for var in fields:
-              v = form_vars[var.name].EvalInstance() # var value
-              for cat in cats:
-                for syst_var_name,w in cws[cat].iteritems():
-                  hist_set[syst_var_name][cat][var.name].hist.Fill(v, w)
-                # End loop over systematic variations
-              # End loop over categories that passed the cut
-            # End loop over fields
-          # End check if any categories past the cut
+          if len(cats) == 0: continue
+          #feats = { n:v.EvalInstance() for n,v in clf_feats_tf.iteritems() }
+          vs = {}
+          for var_name in form_vars:
+            vs[var_name] = form_vars[var_name].EvalInstance()
+          for cat in cats:
+            for syst_var_name in cat_syst_weights[cat]:
+              w = cat_syst_weights[cat][syst_var_name].EvalInstance()
+              print "DEBUG:", entry, cat, syst_var_name, w
+              for var_name in vs:
+                hist_set[syst_var_name][cat][var_name].hist.Fill(vs[var_name], w)
+              # End loop over var
+            # End loop over systematic weights
+          # End loop over categories
         # End loop over entries
         # Cleanup, this seems to mitigate most of the memory leaks
         tree.Delete()
@@ -856,8 +854,8 @@ def dataset_hists_direct(hist_worker,
           # set up ttreeformula stuff for event weight
           # - - event weight
           # - - if weights is not provided to the worker directly, then it's taken from systematic (the case for FFs weights)
-          eventweight = "1."
           for category in categories:
+            eventweight = "1."
             if weights:
                 eventweight = "*".join(weights[category.name])
             if syst_type == "WEIGHT":
@@ -873,7 +871,7 @@ def dataset_hists_direct(hist_worker,
                 eventweight = "(%s)*(%s)" % (eventweight, sw)
 
             eventweight = "(%s)*(%s)" % (eventweight, get_sample_variation_weight(systematic, syst_var, dataset, sample, channel))
-            cat_syst_weights[category.name][syst_var.name] = ROOT.TTreeFormula("f_eventweight", eventweight, tree)
+            cat_syst_weights[category.name][syst_var.name] = ROOT.TTreeFormula("f_eventweight_{}_{}".format(category.name, syst_var.name), eventweight, tree)
             cat_syst_weights[category.name][syst_var.name].SetQuickLoad(True)
 
         # set up ttreeformula stuff for cuts per category

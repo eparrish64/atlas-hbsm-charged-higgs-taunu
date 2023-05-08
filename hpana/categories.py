@@ -224,7 +224,7 @@ MASS_STR = "sqrt((tau_0_p4->E() + el_0_p4->E())**2"\
            " - (tau_0_p4->Px() + el_0_p4->Px())**2"\
            " - (tau_0_p4->Py() + el_0_p4->Py())**2"\
            " - (tau_0_p4->Pz() + el_0_p4->Pz())**2)"
-TAU_EL_MASS = ROOT.TCut("(40 < {0}) && ({0} < 140)".format(MASS_STR))
+TAU_EL_MASS = ROOT.TCut("(80 < {0}) && ({0} < 110)".format(MASS_STR))
 
 # - - - - W lep
 W_LEP_MT_60 = {
@@ -742,7 +742,7 @@ Category_ZEE = Category(
         JET_PT25,
         BVETO,
         TAU_EL_MASS,
-        MET50,
+        #MET50, No met cut, this region is NOMINAL-only (the MET cut throws out the Z->ee fake tau background
     ],
 )
 

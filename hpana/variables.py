@@ -1224,8 +1224,8 @@ tau_0_lep_0_mass = Variable(
     title='#font[52]{m}_{#tau l} [GeV]',
     latex=r"$m_{ll}$",
     tformula="sqrt((tau_0_p4->E()+el_0_p4->E())**2 - ((tau_0_p4->Px()+el_0_p4->Px())**2 + (tau_0_p4->Py()+el_0_p4->Py())**2 + (tau_0_p4->Pz()+el_0_p4->Pz())**2))",
-    binning=(50, 40, 140),
-    plot_bins=range(40, 140, 2),
+    binning=(30, 80, 110),
+    plot_bins=range(80, 110, 1),
     unit='[GeV]',
     scale=1.)
 

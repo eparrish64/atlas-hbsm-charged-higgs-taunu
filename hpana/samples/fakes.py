@@ -47,7 +47,10 @@ class QCD(Sample):
         "NOMINAL": "GetFFCombined_NOMINAL({0}, {1}, {2}, {3}, {4})",
         "1up": "GetFFCombined_1up({0}, {1}, {2}, {3}, {4})",
         "1down": "GetFFCombined_1down({0}, {1}, {2}, {3}, {4})",
-        "Heavy_Flavour_FF": "GetFFCombined_Heavy_Flavour_FF({0}, {1}, {2}, {3}, {4})",
+        "Heavy_Flavour_FF_1up": "GetFFCombined_Heavy_Flavour_FF_1up({0}, {1}, {2}, {3}, {4})",
+        "Heavy_Flavour_FF_1down": "GetFFCombined_Heavy_Flavour_FF_1down({0}, {1}, {2}, {3}, {4})",
+        "binning_1up": "GetFFCombined_binning_1up({0}, {1}, {2}, {3}, {4})",
+        "binning_1down": "GetFFCombined_binning_1down({0}, {1}, {2}, {3}, {4})",
         }
 
     ## correction factor for  (1prong) tau polarization variable (using Inverse Smirnov transformation)
@@ -119,7 +122,7 @@ class QCD(Sample):
                 ff_weights["FFs_%s"%var][category.name] = [ff_weight]
 
             # variations from template-fit 
-            for var in ["1up", "1down", "Heavy_Flavour_FF"]:
+            for var in ["1up", "1down", "Heavy_Flavour_FF_1up", "Heavy_Flavour_FF_1down", "binning_1up", "binning_1down"]:
                 if not "rQCD_%s"%var in ff_weights:
                     ff_weights["rQCD_%s"%var] = {}
                 ff_wcr = QCD.FFs["NOMINAL"]["WCR"]
@@ -144,8 +147,8 @@ class QCD(Sample):
         # variations from antitau definition
         ffs_tauID_syst = Systematic("FFs_tauID", _type="WEIGHT")
         ffs_tauID_syst.variations = [
-            Variation("FFs_1up", title=ff_ws["FFs_1up"], _type="WEIGHT"),
-            Variation("FFs_1down", title=ff_ws["FFs_1down"], _type="WEIGHT"),
+            #Variation("FFs_1up", title=ff_ws["FFs_1up"], _type="WEIGHT"), # Old unused BDT variation
+            #Variation("FFs_1down", title=ff_ws["FFs_1down"], _type="WEIGHT"),
             Variation("FFs_MCSubt_1up", title=ff_ws["FFs_MCSubt_1up"], _type="WEIGHT"),
             Variation("FFs_MCSubt_1down", title=ff_ws["FFs_MCSubt_1down"], _type="WEIGHT"),
             Variation("FFs_tauID_SF_1down", title=ff_ws["FFs_tauID_SF_1down"], _type="WEIGHT"),
@@ -157,7 +160,10 @@ class QCD(Sample):
         ffs_rQCD_syst.variations = [
             Variation("rQCD_1up", title=ff_ws["rQCD_1up"], _type="WEIGHT"),
             Variation("rQCD_1down", title=ff_ws["rQCD_1down"], _type="WEIGHT"),
-            Variation("rQCD_Heavy_Flavour_FF", title=ff_ws["rQCD_Heavy_Flavour_FF"], _type="WEIGHT"),
+            Variation("rQCD_Heavy_Flavour_FF_1up", title=ff_ws["rQCD_Heavy_Flavour_FF_1up"], _type="WEIGHT"),
+            Variation("rQCD_Heavy_Flavour_FF_1down", title=ff_ws["rQCD_Heavy_Flavour_FF_1down"], _type="WEIGHT"),
+            Variation("rQCD_binning_1up", title=ff_ws["rQCD_binning_1up"], _type="WEIGHT"),
+            Variation("rQCD_binning_1down", title=ff_ws["rQCD_binning_1down"], _type="WEIGHT"),
         ]
 
         return [ffs_nom, ffs_tauID_syst, ffs_rQCD_syst]
@@ -455,12 +461,13 @@ class QCD(Sample):
                             log.warning("No match found for %s" %(hname))
 
                 htf.Close()
-                for i in mc_hist_dict:
-                    for j in mc_hist_dict[i]:
-                        for k in mc_hist_dict[i][j]:
-                            for l in mc_hist_dict[i][j][k]:
-                                mc_hist_set.append(mc_hist_dict[i][j][k][l])
-                mc_hist_dict = dict()
+
+            for i in mc_hist_dict:
+                for j in mc_hist_dict[i]:
+                    for k in mc_hist_dict[i][j]:
+                        for l in mc_hist_dict[i][j][k]:
+                            mc_hist_set.append(mc_hist_dict[i][j][k][l])
+            mc_hist_dict = dict()
 
             ## get QCD data component hists
             data_hist_set = []
@@ -591,6 +598,7 @@ class QCD(Sample):
                         merged_hists_file.cd(rdir)
                         qcd_hsum.Write(outname, ROOT.TObject.kOverwrite)
                         merged_hist_set.append(qcd_hsum)
+                        merged_hist_set = [] # Hack, we've already written it, we don't need to keep it in memory
         
         del data_hist_set
         del mc_hist_set

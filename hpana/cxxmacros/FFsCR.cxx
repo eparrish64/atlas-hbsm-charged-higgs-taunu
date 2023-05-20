@@ -483,5 +483,3 @@ float GetFF_FF_CR_MULTIJET_STAT_1down(float pt, int nTracks){
 		 }
 	 else return 0;
 }
-
-

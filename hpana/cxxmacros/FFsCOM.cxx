@@ -376,6 +376,28 @@ float GetFFCombined_NOMINAL(float pt, int ntracks, float FF_CR_MULTIJET, float F
 		 else return 0;
 	 }
 
+	 //! Combined FFs for (MET_TRIG_EFF_CR_NOM) target region
+	 if (index==2011) {
+		 if(ntracks==1){
+			 if(pt < 40) return (-1.07*FF_CR_MULTIJET) + (2.07*FF_CR_WJETS);
+			 if(pt < 45) return (-0.83*FF_CR_MULTIJET) + (1.83*FF_CR_WJETS);
+			 if(pt < 50) return (-0.49*FF_CR_MULTIJET) + (1.49*FF_CR_WJETS);
+			 if(pt < 60) return (-0.57*FF_CR_MULTIJET) + (1.57*FF_CR_WJETS);
+			 if(pt < 80) return (-0.48*FF_CR_MULTIJET) + (1.48*FF_CR_WJETS);
+			 if(pt < 100) return (-0.3*FF_CR_MULTIJET) + (1.3*FF_CR_WJETS);
+			 if(pt < 3500) return (-0.0700000000001*FF_CR_MULTIJET) + (1.07*FF_CR_WJETS);
+			 else return 0;
+		 }
+		 if(ntracks==3){
+			 if(pt < 40) return (-0.32*FF_CR_MULTIJET) + (1.32*FF_CR_WJETS);
+			 if(pt < 60) return (-0.3*FF_CR_MULTIJET) + (1.3*FF_CR_WJETS);
+			 if(pt < 80) return (-0.24*FF_CR_MULTIJET) + (1.24*FF_CR_WJETS);
+			 if(pt < 3500) return (-0.15*FF_CR_MULTIJET) + (1.15*FF_CR_WJETS);
+			 else return 0;
+		 }
+		 else return 0;
+	 }
+
 	 else return 0;
 }
 
@@ -752,6 +774,28 @@ float GetFFCombined_1up(float pt, int ntracks, float FF_CR_MULTIJET, float FF_CR
 			 if(pt < 60) return (-0.15*FF_CR_MULTIJET) + (1.15*FF_CR_WJETS);
 			 if(pt < 80) return (-0.11*FF_CR_MULTIJET) + (1.11*FF_CR_WJETS);
 			 if(pt < 3500) return (-0.18*FF_CR_MULTIJET) + (1.18*FF_CR_WJETS);
+			 else return 0;
+		 }
+		 else return 0;
+	 }
+
+	//! Combined FFs for (MET_TRIG_EFF_CR_NOM) target region
+	 if (index==2011) {
+		 if(ntracks==1){
+			 if(pt < 40) return (-0.95*FF_CR_MULTIJET) + (1.95*FF_CR_WJETS);
+			 if(pt < 45) return (-0.73*FF_CR_MULTIJET) + (1.73*FF_CR_WJETS);
+			 if(pt < 50) return (-0.41*FF_CR_MULTIJET) + (1.41*FF_CR_WJETS);
+			 if(pt < 60) return (-0.48*FF_CR_MULTIJET) + (1.48*FF_CR_WJETS);
+			 if(pt < 80) return (-0.37*FF_CR_MULTIJET) + (1.37*FF_CR_WJETS);
+			 if(pt < 100) return (-0.14*FF_CR_MULTIJET) + (1.14*FF_CR_WJETS);
+			 if(pt < 3500) return (0.13*FF_CR_MULTIJET) + (0.87*FF_CR_WJETS);
+			 else return 0;
+		 }
+		 if(ntracks==3){
+			 if(pt < 40) return (-0.29*FF_CR_MULTIJET) + (1.29*FF_CR_WJETS);
+			 if(pt < 60) return (-0.28*FF_CR_MULTIJET) + (1.28*FF_CR_WJETS);
+			 if(pt < 80) return (-0.19*FF_CR_MULTIJET) + (1.19*FF_CR_WJETS);
+			 if(pt < 3500) return (-0.0800000000001*FF_CR_MULTIJET) + (1.08*FF_CR_WJETS);
 			 else return 0;
 		 }
 		 else return 0;
@@ -1138,6 +1182,28 @@ float GetFFCombined_1down(float pt, int ntracks, float FF_CR_MULTIJET, float FF_
 		 else return 0;
 	 }
 
+	 //! Combined FFs for (MET_TRIG_EFF_CR_NOM) target region
+	 if (index==2011) {
+		 if(ntracks==1){
+			 if(pt < 40) return (-1.19*FF_CR_MULTIJET) + (2.19*FF_CR_WJETS);
+			 if(pt < 45) return (-0.93*FF_CR_MULTIJET) + (1.93*FF_CR_WJETS);
+			 if(pt < 50) return (-0.57*FF_CR_MULTIJET) + (1.57*FF_CR_WJETS);
+			 if(pt < 60) return (-0.66*FF_CR_MULTIJET) + (1.66*FF_CR_WJETS);
+			 if(pt < 80) return (-0.58*FF_CR_MULTIJET) + (1.58*FF_CR_WJETS);
+			 if(pt < 100) return (-0.5*FF_CR_MULTIJET) + (1.5*FF_CR_WJETS);
+			 if(pt < 3500) return (-0.29*FF_CR_MULTIJET) + (1.29*FF_CR_WJETS);
+			 else return 0;
+		 }
+		 if(ntracks==3){
+			 if(pt < 40) return (-0.36*FF_CR_MULTIJET) + (1.36*FF_CR_WJETS);
+			 if(pt < 60) return (-0.33*FF_CR_MULTIJET) + (1.33*FF_CR_WJETS);
+			 if(pt < 80) return (-0.29*FF_CR_MULTIJET) + (1.29*FF_CR_WJETS);
+			 if(pt < 3500) return (-0.22*FF_CR_MULTIJET) + (1.22*FF_CR_WJETS);
+			 else return 0;
+		 }
+		 else return 0;
+	 }
+
 	 else return 0;
 }
 
@@ -1514,6 +1580,28 @@ float GetFFCombined_Heavy_Flavour_FF_1up(float pt, int ntracks, float FF_CR_MULT
 			 if(pt < 60) return (0*FF_CR_MULTIJET) + (1*FF_CR_WJETS);
 			 if(pt < 80) return (0*FF_CR_MULTIJET) + (1*FF_CR_WJETS);
 			 if(pt < 3500) return (0*FF_CR_MULTIJET) + (1*FF_CR_WJETS);
+			 else return 0;
+		 }
+		 else return 0;
+	 }
+
+	 //! Combined FFs for (MET_TRIG_EFF_CR_NOM) target region
+	 if (index==2011) {
+		 if(ntracks==1){
+			 if(pt < 40) return (-1.044534*FF_CR_MULTIJET) + (2.020734*FF_CR_WJETS);
+			 if(pt < 45) return (-0.809167*FF_CR_MULTIJET) + (1.784067*FF_CR_WJETS);
+			 if(pt < 50) return (-0.474124*FF_CR_MULTIJET) + (1.441724*FF_CR_WJETS);
+			 if(pt < 60) return (-0.556149*FF_CR_MULTIJET) + (1.531849*FF_CR_WJETS);
+			 if(pt < 80) return (-0.483696*FF_CR_MULTIJET) + (1.491396*FF_CR_WJETS);
+			 if(pt < 100) return (-0.31986*FF_CR_MULTIJET) + (1.38606*FF_CR_WJETS);
+			 if(pt < 3500) return (-0.0676480000001*FF_CR_MULTIJET) + (1.034048*FF_CR_WJETS);
+			 else return 0;
+		 }
+		 if(ntracks==3){
+			 if(pt < 40) return (-0.445248*FF_CR_MULTIJET) + (1.836648*FF_CR_WJETS);
+			 if(pt < 60) return (-0.41994*FF_CR_MULTIJET) + (1.81974*FF_CR_WJETS);
+			 if(pt < 80) return (-0.354672*FF_CR_MULTIJET) + (1.832472*FF_CR_WJETS);
+			 if(pt < 3500) return (-0.18126*FF_CR_MULTIJET) + (1.38966*FF_CR_WJETS);
 			 else return 0;
 		 }
 		 else return 0;
@@ -1900,6 +1988,28 @@ float GetFFCombined_Heavy_Flavour_FF_1down(float pt, int ntracks, float FF_CR_MU
 		 else return 0;
 	 }
 
+	 //! Combined FFs for (MET_TRIG_EFF_CR_NOM) target region
+	 if (index==2011) {
+		 if(ntracks==1){
+			 if(pt < 40) return (-1.07*FF_CR_MULTIJET) + (2.07*FF_CR_WJETS);
+			 if(pt < 45) return (-0.83*FF_CR_MULTIJET) + (1.83*FF_CR_WJETS);
+			 if(pt < 50) return (-0.49*FF_CR_MULTIJET) + (1.49*FF_CR_WJETS);
+			 if(pt < 60) return (-0.57*FF_CR_MULTIJET) + (1.57*FF_CR_WJETS);
+			 if(pt < 80) return (-0.48*FF_CR_MULTIJET) + (1.48*FF_CR_WJETS);
+			 if(pt < 100) return (-0.3*FF_CR_MULTIJET) + (1.3*FF_CR_WJETS);
+			 if(pt < 3500) return (-0.0700000000001*FF_CR_MULTIJET) + (1.07*FF_CR_WJETS);
+			 else return 0;
+		 }
+		 if(ntracks==3){
+			 if(pt < 40) return (-0.32*FF_CR_MULTIJET) + (1.32*FF_CR_WJETS);
+			 if(pt < 60) return (-0.3*FF_CR_MULTIJET) + (1.3*FF_CR_WJETS);
+			 if(pt < 80) return (-0.24*FF_CR_MULTIJET) + (1.24*FF_CR_WJETS);
+			 if(pt < 3500) return (-0.15*FF_CR_MULTIJET) + (1.15*FF_CR_WJETS);
+			 else return 0;
+		 }
+		 else return 0;
+	 }
+
 	 else return 0;
 }
 
@@ -2281,6 +2391,28 @@ float GetFFCombined_binning_1up(float pt, int ntracks, float FF_CR_MULTIJET, flo
 		 else return 0;
 	 }
 
+	 //! Combined FFs for (MET_TRIG_EFF_CR_NOM) target region
+	 if (index==2011) {
+		 if(ntracks==1){
+			 if(pt < 40) return (-1.01*FF_CR_MULTIJET) + (2.01*FF_CR_WJETS);
+			 if(pt < 45) return (-0.73*FF_CR_MULTIJET) + (1.73*FF_CR_WJETS);
+			 if(pt < 50) return (-0.49*FF_CR_MULTIJET) + (1.49*FF_CR_WJETS);
+			 if(pt < 60) return (-0.49*FF_CR_MULTIJET) + (1.49*FF_CR_WJETS);
+			 if(pt < 80) return (-0.48*FF_CR_MULTIJET) + (1.48*FF_CR_WJETS);
+			 if(pt < 100) return (-0.24*FF_CR_MULTIJET) + (1.24*FF_CR_WJETS);
+			 if(pt < 3500) return (0.84*FF_CR_MULTIJET) + (0.16*FF_CR_WJETS);
+			 else return 0;
+		 }
+		 if(ntracks==3){
+			 if(pt < 40) return (-0.32*FF_CR_MULTIJET) + (1.32*FF_CR_WJETS);
+			 if(pt < 60) return (-0.3*FF_CR_MULTIJET) + (1.3*FF_CR_WJETS);
+			 if(pt < 80) return (-0.24*FF_CR_MULTIJET) + (1.24*FF_CR_WJETS);
+			 if(pt < 3500) return (-0.15*FF_CR_MULTIJET) + (1.15*FF_CR_WJETS);
+			 else return 0;
+		 }
+		 else return 0;
+	 }
+
 	 else return 0;
 }
 
@@ -2657,6 +2789,28 @@ float GetFFCombined_binning_1down(float pt, int ntracks, float FF_CR_MULTIJET, f
 			 if(pt < 60) return (-0.17*FF_CR_MULTIJET) + (1.17*FF_CR_WJETS);
 			 if(pt < 80) return (-0.15*FF_CR_MULTIJET) + (1.15*FF_CR_WJETS);
 			 if(pt < 3500) return (-0.24*FF_CR_MULTIJET) + (1.24*FF_CR_WJETS);
+			 else return 0;
+		 }
+		 else return 0;
+	 }
+
+	 //! Combined FFs for (MET_TRIG_EFF_CR_NOM) target region
+	 if (index==2011) {
+		 if(ntracks==1){
+			 if(pt < 40) return (-1.13*FF_CR_MULTIJET) + (2.13*FF_CR_WJETS);
+			 if(pt < 45) return (-0.93*FF_CR_MULTIJET) + (1.93*FF_CR_WJETS);
+			 if(pt < 50) return (-0.49*FF_CR_MULTIJET) + (1.49*FF_CR_WJETS);
+			 if(pt < 60) return (-0.65*FF_CR_MULTIJET) + (1.65*FF_CR_WJETS);
+			 if(pt < 80) return (-0.48*FF_CR_MULTIJET) + (1.48*FF_CR_WJETS);
+			 if(pt < 100) return (-0.36*FF_CR_MULTIJET) + (1.36*FF_CR_WJETS);
+			 if(pt < 3500) return (-0.98*FF_CR_MULTIJET) + (1.98*FF_CR_WJETS);
+			 else return 0;
+		 }
+		 if(ntracks==3){
+			 if(pt < 40) return (-0.32*FF_CR_MULTIJET) + (1.32*FF_CR_WJETS);
+			 if(pt < 60) return (-0.3*FF_CR_MULTIJET) + (1.3*FF_CR_WJETS);
+			 if(pt < 80) return (-0.24*FF_CR_MULTIJET) + (1.24*FF_CR_WJETS);
+			 if(pt < 3500) return (-0.15*FF_CR_MULTIJET) + (1.15*FF_CR_WJETS);
 			 else return 0;
 		 }
 		 else return 0;

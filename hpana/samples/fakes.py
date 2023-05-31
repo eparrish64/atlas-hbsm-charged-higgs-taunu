@@ -47,7 +47,10 @@ class QCD(Sample):
         "NOMINAL": "GetFFCombined_NOMINAL({0}, {1}, {2}, {3}, {4})",
         "1up": "GetFFCombined_1up({0}, {1}, {2}, {3}, {4})",
         "1down": "GetFFCombined_1down({0}, {1}, {2}, {3}, {4})",
-        "Heavy_Flavour_FF": "GetFFCombined_Heavy_Flavour_FF({0}, {1}, {2}, {3}, {4})",
+        "Heavy_Flavour_FF_1up": "GetFFCombined_Heavy_Flavour_FF_1up({0}, {1}, {2}, {3}, {4})",
+        "Heavy_Flavour_FF_1down": "GetFFCombined_Heavy_Flavour_FF_1down({0}, {1}, {2}, {3}, {4})",
+        "binning_1up": "GetFFCombined_binning_1up({0}, {1}, {2}, {3}, {4})",
+        "binning_1down": "GetFFCombined_binning_1down({0}, {1}, {2}, {3}, {4})",
         }
 
     ## correction factor for  (1prong) tau polarization variable (using Inverse Smirnov transformation)
@@ -119,7 +122,7 @@ class QCD(Sample):
                 ff_weights["FFs_%s"%var][category.name] = [ff_weight]
 
             # variations from template-fit 
-            for var in ["1up", "1down", "Heavy_Flavour_FF"]:
+            for var in ["1up", "1down", "Heavy_Flavour_FF_1up", "Heavy_Flavour_FF_1down", "binning_1up", "binning_1down"]:
                 if not "rQCD_%s"%var in ff_weights:
                     ff_weights["rQCD_%s"%var] = {}
                 ff_wcr = QCD.FFs["NOMINAL"]["WCR"]
@@ -157,9 +160,10 @@ class QCD(Sample):
         ffs_rQCD_syst.variations = [
             Variation("rQCD_1up", title=ff_ws["rQCD_1up"], _type="WEIGHT"),
             Variation("rQCD_1down", title=ff_ws["rQCD_1down"], _type="WEIGHT"),
-            #Variation("rQCD_Heavy_Flavour_FF", title=ff_ws["rQCD_Heavy_Flavour_FF"], _type="WEIGHT"),
-            Variation("rQCD_Heavy_Flavour_FF_1up", title=ff_ws["rQCD_Heavy_Flavour_FF"], _type="WEIGHT"),
-            Variation("rQCD_Heavy_Flavour_FF_1down", title=ff_ws["NOMINAL"], _type="WEIGHT"), #Hack, we apparently need 1up/1down pairs to keep the plotting code happy
+            Variation("rQCD_Heavy_Flavour_FF_1up", title=ff_ws["rQCD_Heavy_Flavour_FF_1up"], _type="WEIGHT"),
+            Variation("rQCD_Heavy_Flavour_FF_1down", title=ff_ws["rQCD_Heavy_Flavour_FF_1down"], _type="WEIGHT"),
+            Variation("rQCD_binning_1up", title=ff_ws["rQCD_binning_1up"], _type="WEIGHT"),
+            Variation("rQCD_binning_1down", title=ff_ws["rQCD_binning_1down"], _type="WEIGHT"),
         ]
 
         return [ffs_nom, ffs_tauID_syst, ffs_rQCD_syst]

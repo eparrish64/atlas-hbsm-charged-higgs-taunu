@@ -346,6 +346,13 @@ class Weight(object):
       ),
     }
 
+    W_SIG_FILTER_EFFI = {
+      "w_sig_filter_effi": (
+        "1", #<! NOMINAL, per-sample logic is in get_sample_variation_weight
+        ("w_sig_filter_effi_met", "1"),
+      ),
+    }
+
     # different scale factor components
     TYPES = {
         "taujet": {
@@ -359,6 +366,7 @@ class Weight(object):
             "SINGLETOP": W_SINGLETOP_THEORY,
             "TTBAR_REWEIGHT": W_TTBAR_REWEIGHT,
             "WJETS_REWEIGHT": W_WJETS_REWEIGHT,
+            "FILTEREFFI": W_SIG_FILTER_EFFI,
         },
 
         "taulep": {
@@ -762,12 +770,12 @@ def get_sample_variation_weight(systematic, variation, dataset, sample, channel)
         if channel in sampleChannelVariations[sample][systematic.name][variation.name]:
           w2 = sampleChannelVariations[sample][systematic.name][variation.name][channel]
   w = "(%s)*(%s)" % (w, w2)
-  from hpana.samples import Higgs
-  if channel == "taujet" and sample.startswith("Hplus"):
-    # Scale signal by 1/(filter efficiency) for tau+jets
-    mass = int(sample[5:])
-    # FilterEffi needs met and mass in units of MeV
-    w3 = "1./FilterEffi(met_p4->Et()*1000, {}*1000)".format(mass)
-    w = "(%s)*(%s)" % (w, w3)
+  if systematic.name == "w_sig_filter_effi" and variation.name == "w_sig_filter_effi_met":
+    if channel == "taujet" and sample.startswith("Hplus"):
+      # Scale signal by 1/(filter efficiency) for tau+jets
+      mass = int(sample[5:])
+      # FilterEffi needs met and mass in units of MeV
+      w3 = "1./FilterEffi(met_p4->Et()*1000, {}*1000)".format(mass)
+      w = "(%s)*(%s)" % (w, w3)
   return w
 

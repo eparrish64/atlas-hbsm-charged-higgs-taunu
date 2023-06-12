@@ -687,7 +687,7 @@ def get_sample_variation_weight(systematic, variation, dataset, sample, channel)
     "Wtaunu": {
       "taujet": "njets(n_jets,1)",
       "taulep": "njets(n_jets,1)",
-    }
+    },
   }
 
   # Dedicated reweightings, different per channel
@@ -762,5 +762,12 @@ def get_sample_variation_weight(systematic, variation, dataset, sample, channel)
         if channel in sampleChannelVariations[sample][systematic.name][variation.name]:
           w2 = sampleChannelVariations[sample][systematic.name][variation.name][channel]
   w = "(%s)*(%s)" % (w, w2)
+  from hpana.samples import Higgs
+  if channel == "taujet" and sample.startswith("Hplus"):
+    # Scale signal by 1/(filter efficiency) for tau+jets
+    mass = int(sample[5:])
+    # FilterEffi needs met and mass in units of MeV
+    w3 = "1./FilterEffi(met_p4->Et()*1000, {}*1000)".format(mass)
+    w = "(%s)*(%s)" % (w, w3)
   return w
 

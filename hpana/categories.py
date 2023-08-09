@@ -392,6 +392,13 @@ Category_TAUJET_PRESEL = Category(
         ],
 )
 
+vetoTTBAR = dict()
+vetoTTBAR["mc15"] = None
+vetoTTBAR["mc16"] = None
+for k in vetoTTBAR.keys():
+  vetoTTBAR[k] = ROOT.TCut("!({})".format(CLEAN_EVT[k]+TAU_BASE[k]+LEP_VETO[k]+TAU_PT40[k]+NUM_JETS3+NUM_BJETS2+MET150[k]+MT_MAX100[k]))
+
+
 Category_SR_TAUJET = Category(
     name="SR_TAUJET",
     label="#tau-jet SR",
@@ -406,6 +413,7 @@ Category_SR_TAUJET = Category(
         MET150,
         MT50,
         NUM_BJETS1,
+        vetoTTBAR,
     ],
 )
 
@@ -492,6 +500,31 @@ Category_BVETO_MT100 = Category(
     ],
 )
 
+Category_OVERLAP_TAUJET = Category(
+    name="OVERLAP_TAUJET",
+    label="#tau-jet SR / t#bar{t} CR overlap",
+    ff_index=1001,
+    cuts_list = [
+        CLEAN_EVT,
+        TAU_BASE,
+        LEP_VETO,
+        TAU_PT40,
+        NUM_JETS3,
+        JET_PT25,
+        MET150,
+        MT50,
+	NUM_BJETS1,
+	CLEAN_EVT,
+        TAU_BASE,
+        LEP_VETO,
+        TAU_PT40,
+        NUM_JETS3,
+        NUM_BJETS2,
+        MET150,
+        MT_MAX100,
+        vetoTTBAR,
+    ],
+)
 
 ##------------------------------------------
 # - - taulep channel
@@ -521,6 +554,12 @@ Category_TAULEP_PRESEL = Category(
     ],
 )
 
+vetoTTBAR_TAULEP = dict()
+vetoTTBAR_TAULEP["mc15"] = None
+vetoTTBAR_TAULEP["mc16"] = None
+for k in vetoTTBAR_TAULEP.keys():
+  vetoTTBAR_TAULEP[k] = ROOT.TCut("!({})".format(CLEAN_EVT[k]+TAU_BASE[k]+LEP_BASE[k]+OS_TAU_LEP+NUM_JETS2+JET_PT25[k]+NUM_BJETS2+MT_MAX70[k]+MET80[k]))
+
 Category_SR_TAULEP = Category(
     name="SR_TAULEP",
     label="#tau-lep SR",
@@ -534,6 +573,7 @@ Category_SR_TAULEP = Category(
         JET_PT25,
         NUM_BJETS1,  
         MET50,
+        vetoTTBAR_TAULEP,
     ],
 )
 
@@ -551,6 +591,7 @@ Category_SR_TAUEL = Category(
         JET_PT25,
         NUM_BJETS1,     
         MET50,
+        vetoTTBAR_TAULEP,
     ],
 )
 
@@ -568,6 +609,7 @@ Category_SR_TAUMU = Category(
         JET_PT25,
         NUM_BJETS1,
         MET50,
+        vetoTTBAR_TAULEP,
     ],
 )
 
@@ -585,6 +627,7 @@ Category_SR_TAULEP_PARTIAL = Category(
         NUM_BJETS1,  
         MET50,
         PARTIAL_UNBLIND_TAULEP,
+        vetoTTBAR_TAULEP,
     ],
 )
 
@@ -603,6 +646,7 @@ Category_SR_TAUEL_PARTIAL = Category(
         NUM_BJETS1,
         MET50,
         PARTIAL_UNBLIND_TAULEP,
+        vetoTTBAR_TAULEP,
     ],
 )
 
@@ -621,6 +665,7 @@ Category_SR_TAUMU_PARTIAL = Category(
         NUM_BJETS1,
         MET50,
         PARTIAL_UNBLIND_TAULEP,
+        vetoTTBAR_TAULEP,
     ],
 )
 
@@ -760,6 +805,32 @@ Category_TTBAR_TAULEP = Category(
         NUM_BJETS2,
         MT_MAX70,
         MET80,
+    ],
+)
+
+Category_OVERLAP_TAULEP = Category(
+    name="OVERLAP_TAULEP",
+    label="#tau-lep SR / #tau-lep ttbar CR overlap",
+    ff_index=2001,
+    cuts_list = [
+        CLEAN_EVT,
+        TAU_BASE,
+        LEP_BASE,
+        OS_TAU_LEP,
+        NUM_JETS1,
+        JET_PT25,
+        NUM_BJETS1,
+        MET50,
+        CLEAN_EVT,
+        TAU_BASE,
+        LEP_BASE,
+        OS_TAU_LEP,
+        NUM_JETS2,
+        JET_PT25,
+        NUM_BJETS2,
+        MT_MAX70,
+        MET80,
+        vetoTTBAR_TAULEP,
     ],
 )
 
@@ -1080,6 +1151,7 @@ CATEGORIES["taujet"] = [
     Category_TAUJET_PRESEL,
     Category_BVETO_MT100,
     # Category_SR_TAUJET_PARTIAL,
+    Category_OVERLAP_TAUJET,
 ]
 
 CATEGORIES["taulep"] = [
@@ -1099,4 +1171,5 @@ CATEGORIES["taulep"] = [
     # Category_SR_TAUEL_PARTIAL,
     # Category_SR_TAUMU_PARTIAL,
     # Category_SR_TAULEP_PARTIAL,
+    Category_OVERLAP_TAULEP,
 ]

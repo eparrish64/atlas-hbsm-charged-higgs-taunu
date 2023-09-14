@@ -3,18 +3,18 @@ float GetFFCombined_NOMINAL(float pt, int ntracks, float FF_CR_MULTIJET, float F
 	 //! Combined FFs for (SR_TAUJET) target region
 	 if (index==1001) {
 		 if(ntracks==1){
-			 if(pt < 45) return (-0.0800000000001*FF_CR_MULTIJET) + (1.08*FF_CR_WJETS);
-			 if(pt < 50) return (0.22*FF_CR_MULTIJET) + (0.78*FF_CR_WJETS);
-			 if(pt < 60) return (0.0399999999999*FF_CR_MULTIJET) + (0.96*FF_CR_WJETS);
-			 if(pt < 80) return (0.16*FF_CR_MULTIJET) + (0.84*FF_CR_WJETS);
-			 if(pt < 100) return (0.33*FF_CR_MULTIJET) + (0.67*FF_CR_WJETS);
+			 if(pt < 45) return (-0.0500000000001*FF_CR_MULTIJET) + (1.05*FF_CR_WJETS);
+			 if(pt < 50) return (0.26*FF_CR_MULTIJET) + (0.74*FF_CR_WJETS);
+			 if(pt < 60) return (0.0799999999999*FF_CR_MULTIJET) + (0.92*FF_CR_WJETS);
+			 if(pt < 80) return (0.22*FF_CR_MULTIJET) + (0.78*FF_CR_WJETS);
+			 if(pt < 100) return (0.38*FF_CR_MULTIJET) + (0.62*FF_CR_WJETS);
 			 if(pt < 3500) return (0.22*FF_CR_MULTIJET) + (0.78*FF_CR_WJETS);
 			 else return 0;
 		 }
 		 if(ntracks==3){
-			 if(pt < 60) return (0.25*FF_CR_MULTIJET) + (0.75*FF_CR_WJETS);
-			 if(pt < 80) return (0.0899999999999*FF_CR_MULTIJET) + (0.91*FF_CR_WJETS);
-			 if(pt < 3500) return (0.36*FF_CR_MULTIJET) + (0.64*FF_CR_WJETS);
+			 if(pt < 60) return (0.26*FF_CR_MULTIJET) + (0.74*FF_CR_WJETS);
+			 if(pt < 80) return (0.0999999999999*FF_CR_MULTIJET) + (0.9*FF_CR_WJETS);
+			 if(pt < 3500) return (0.35*FF_CR_MULTIJET) + (0.65*FF_CR_WJETS);
 			 else return 0;
 		 }
 		 else return 0;
@@ -116,6 +116,16 @@ float GetFFCombined_NOMINAL(float pt, int ntracks, float FF_CR_MULTIJET, float F
 		 }
 		 else return 0;
 	 }
+	 //! Combined FFs for (OVERLAP_TAUJET) target region
+	 if (index==1001) {
+		 if(ntracks==1){
+			 else return 0;
+		 }
+		 if(ntracks==3){
+			 else return 0;
+		 }
+		 else return 0;
+	 }
 	 //! Combined FFs for (FF_CR_MULTIJET) target region
 	 if (index==9001) {
 	 return FF_CR_MULTIJET;
@@ -142,20 +152,20 @@ float GetFFCombined_NOMINAL(float pt, int ntracks, float FF_CR_MULTIJET, float F
 	 //! Combined FFs for (SR_TAULEP) target region
 	 if (index==2001) {
 		 if(ntracks==1){
-			 if(pt < 40) return (-0.77*FF_CR_MULTIJET) + (1.77*FF_CR_WJETS);
-			 if(pt < 45) return (-0.66*FF_CR_MULTIJET) + (1.66*FF_CR_WJETS);
+			 if(pt < 40) return (-0.78*FF_CR_MULTIJET) + (1.78*FF_CR_WJETS);
+			 if(pt < 45) return (-0.67*FF_CR_MULTIJET) + (1.67*FF_CR_WJETS);
 			 if(pt < 50) return (-0.37*FF_CR_MULTIJET) + (1.37*FF_CR_WJETS);
 			 if(pt < 60) return (-0.4*FF_CR_MULTIJET) + (1.4*FF_CR_WJETS);
-			 if(pt < 80) return (-0.31*FF_CR_MULTIJET) + (1.31*FF_CR_WJETS);
-			 if(pt < 100) return (-0.2*FF_CR_MULTIJET) + (1.2*FF_CR_WJETS);
-			 if(pt < 3500) return (-0.32*FF_CR_MULTIJET) + (1.32*FF_CR_WJETS);
+			 if(pt < 80) return (-0.32*FF_CR_MULTIJET) + (1.32*FF_CR_WJETS);
+			 if(pt < 100) return (-0.19*FF_CR_MULTIJET) + (1.19*FF_CR_WJETS);
+			 if(pt < 3500) return (-0.35*FF_CR_MULTIJET) + (1.35*FF_CR_WJETS);
 			 else return 0;
 		 }
 		 if(ntracks==3){
 			 if(pt < 40) return (-0.19*FF_CR_MULTIJET) + (1.19*FF_CR_WJETS);
 			 if(pt < 60) return (-0.17*FF_CR_MULTIJET) + (1.17*FF_CR_WJETS);
 			 if(pt < 80) return (-0.15*FF_CR_MULTIJET) + (1.15*FF_CR_WJETS);
-			 if(pt < 3500) return (-0.24*FF_CR_MULTIJET) + (1.24*FF_CR_WJETS);
+			 if(pt < 3500) return (-0.25*FF_CR_MULTIJET) + (1.25*FF_CR_WJETS);
 			 else return 0;
 		 }
 		 else return 0;
@@ -163,20 +173,20 @@ float GetFFCombined_NOMINAL(float pt, int ntracks, float FF_CR_MULTIJET, float F
 	 //! Combined FFs for (SR_TAUEL) target region
 	 if (index==2002) {
 		 if(ntracks==1){
-			 if(pt < 40) return (-0.78*FF_CR_MULTIJET) + (1.78*FF_CR_WJETS);
-			 if(pt < 45) return (-0.66*FF_CR_MULTIJET) + (1.66*FF_CR_WJETS);
+			 if(pt < 40) return (-0.8*FF_CR_MULTIJET) + (1.8*FF_CR_WJETS);
+			 if(pt < 45) return (-0.68*FF_CR_MULTIJET) + (1.68*FF_CR_WJETS);
 			 if(pt < 50) return (-0.37*FF_CR_MULTIJET) + (1.37*FF_CR_WJETS);
-			 if(pt < 60) return (-0.39*FF_CR_MULTIJET) + (1.39*FF_CR_WJETS);
+			 if(pt < 60) return (-0.38*FF_CR_MULTIJET) + (1.38*FF_CR_WJETS);
 			 if(pt < 80) return (-0.35*FF_CR_MULTIJET) + (1.35*FF_CR_WJETS);
-			 if(pt < 100) return (-0.29*FF_CR_MULTIJET) + (1.29*FF_CR_WJETS);
-			 if(pt < 3500) return (-0.42*FF_CR_MULTIJET) + (1.42*FF_CR_WJETS);
+			 if(pt < 100) return (-0.31*FF_CR_MULTIJET) + (1.31*FF_CR_WJETS);
+			 if(pt < 3500) return (-0.45*FF_CR_MULTIJET) + (1.45*FF_CR_WJETS);
 			 else return 0;
 		 }
 		 if(ntracks==3){
-			 if(pt < 40) return (-0.22*FF_CR_MULTIJET) + (1.22*FF_CR_WJETS);
+			 if(pt < 40) return (-0.24*FF_CR_MULTIJET) + (1.24*FF_CR_WJETS);
 			 if(pt < 60) return (-0.21*FF_CR_MULTIJET) + (1.21*FF_CR_WJETS);
 			 if(pt < 80) return (-0.15*FF_CR_MULTIJET) + (1.15*FF_CR_WJETS);
-			 if(pt < 3500) return (-0.26*FF_CR_MULTIJET) + (1.26*FF_CR_WJETS);
+			 if(pt < 3500) return (-0.27*FF_CR_MULTIJET) + (1.27*FF_CR_WJETS);
 			 else return 0;
 		 }
 		 else return 0;
@@ -184,19 +194,19 @@ float GetFFCombined_NOMINAL(float pt, int ntracks, float FF_CR_MULTIJET, float F
 	 //! Combined FFs for (SR_TAUMU) target region
 	 if (index==2003) {
 		 if(ntracks==1){
-			 if(pt < 40) return (-0.78*FF_CR_MULTIJET) + (1.78*FF_CR_WJETS);
+			 if(pt < 40) return (-0.77*FF_CR_MULTIJET) + (1.77*FF_CR_WJETS);
 			 if(pt < 45) return (-0.68*FF_CR_MULTIJET) + (1.68*FF_CR_WJETS);
 			 if(pt < 50) return (-0.4*FF_CR_MULTIJET) + (1.4*FF_CR_WJETS);
-			 if(pt < 60) return (-0.45*FF_CR_MULTIJET) + (1.45*FF_CR_WJETS);
+			 if(pt < 60) return (-0.46*FF_CR_MULTIJET) + (1.46*FF_CR_WJETS);
 			 if(pt < 80) return (-0.32*FF_CR_MULTIJET) + (1.32*FF_CR_WJETS);
-			 if(pt < 100) return (-0.22*FF_CR_MULTIJET) + (1.22*FF_CR_WJETS);
-			 if(pt < 3500) return (-0.14*FF_CR_MULTIJET) + (1.14*FF_CR_WJETS);
+			 if(pt < 100) return (-0.2*FF_CR_MULTIJET) + (1.2*FF_CR_WJETS);
+			 if(pt < 3500) return (-0.19*FF_CR_MULTIJET) + (1.19*FF_CR_WJETS);
 			 else return 0;
 		 }
 		 if(ntracks==3){
-			 if(pt < 40) return (-0.17*FF_CR_MULTIJET) + (1.17*FF_CR_WJETS);
+			 if(pt < 40) return (-0.16*FF_CR_MULTIJET) + (1.16*FF_CR_WJETS);
 			 if(pt < 60) return (-0.17*FF_CR_MULTIJET) + (1.17*FF_CR_WJETS);
-			 if(pt < 80) return (-0.17*FF_CR_MULTIJET) + (1.17*FF_CR_WJETS);
+			 if(pt < 80) return (-0.16*FF_CR_MULTIJET) + (1.16*FF_CR_WJETS);
 			 if(pt < 3500) return (-0.2*FF_CR_MULTIJET) + (1.2*FF_CR_WJETS);
 			 else return 0;
 		 }
@@ -286,24 +296,37 @@ float GetFFCombined_NOMINAL(float pt, int ntracks, float FF_CR_MULTIJET, float F
 		 }
 		 else return 0;
 	 }
-
-	 //! Combined FFs for (ZEE) target region
-	 if (index==2009) {
+	 //! Combined FFs for (DILEP_BTAG) target region
+	 if (index==2006) {
+	 return 0;
+	}
+	 //! Combined FFs for (DILEP_BVETO) target region
+	 if (index==2006) {
 		 if(ntracks==1){
-			 if(pt < 40) return (-0.11*FF_CR_MULTIJET) + (1.11*FF_CR_WJETS);
-			 if(pt < 45) return (-0.0100000000001*FF_CR_MULTIJET) + (1.01*FF_CR_WJETS);
-			 if(pt < 50) return (0.0299999999999*FF_CR_MULTIJET) + (0.97*FF_CR_WJETS);
-			 if(pt < 60) return (0.0199999999999*FF_CR_MULTIJET) + (0.98*FF_CR_WJETS);
-			 if(pt < 80) return (-0.0600000000001*FF_CR_MULTIJET) + (1.06*FF_CR_WJETS);
-			 if(pt < 100) return (-0.0900000000001*FF_CR_MULTIJET) + (1.09*FF_CR_WJETS);
-			 if(pt < 3500) return (-0.29*FF_CR_MULTIJET) + (1.29*FF_CR_WJETS);
 			 else return 0;
 		 }
 		 if(ntracks==3){
-			 if(pt < 40) return (-8.52651282912e-14*FF_CR_MULTIJET) + (1.0*FF_CR_WJETS);
-			 if(pt < 60) return (-0.0300000000001*FF_CR_MULTIJET) + (1.03*FF_CR_WJETS);
+			 else return 0;
+		 }
+		 else return 0;
+	 }
+	 //! Combined FFs for (ZEE) target region
+	 if (index==2009) {
+		 if(ntracks==1){
+			 if(pt < 40) return (-0.29*FF_CR_MULTIJET) + (1.29*FF_CR_WJETS);
+			 if(pt < 45) return (-0.17*FF_CR_MULTIJET) + (1.17*FF_CR_WJETS);
+			 if(pt < 50) return (0.00999999999991*FF_CR_MULTIJET) + (0.99*FF_CR_WJETS);
+			 if(pt < 60) return (-0.0400000000001*FF_CR_MULTIJET) + (1.04*FF_CR_WJETS);
 			 if(pt < 80) return (-0.0100000000001*FF_CR_MULTIJET) + (1.01*FF_CR_WJETS);
-			 if(pt < 3500) return (-0.28*FF_CR_MULTIJET) + (1.28*FF_CR_WJETS);
+			 if(pt < 100) return (0.0799999999999*FF_CR_MULTIJET) + (0.92*FF_CR_WJETS);
+			 if(pt < 3500) return (-0.46*FF_CR_MULTIJET) + (1.46*FF_CR_WJETS);
+			 else return 0;
+		 }
+		 if(ntracks==3){
+			 if(pt < 40) return (-0.15*FF_CR_MULTIJET) + (1.15*FF_CR_WJETS);
+			 if(pt < 60) return (-0.15*FF_CR_MULTIJET) + (1.15*FF_CR_WJETS);
+			 if(pt < 80) return (-0.15*FF_CR_MULTIJET) + (1.15*FF_CR_WJETS);
+			 if(pt < 3500) return (-0.51*FF_CR_MULTIJET) + (1.51*FF_CR_WJETS);
 			 else return 0;
 		 }
 		 else return 0;
@@ -350,6 +373,26 @@ float GetFFCombined_NOMINAL(float pt, int ntracks, float FF_CR_MULTIJET, float F
 		 }
 		 else return 0;
 	 }
+	 //! Combined FFs for (MET_TRIG_EFF_CR_NOM) target region
+	 if (index==2011) {
+		 if(ntracks==1){
+			 else return 0;
+		 }
+		 if(ntracks==3){
+			 else return 0;
+		 }
+		 else return 0;
+	 }
+	 //! Combined FFs for (OVERLAP_TAULEP) target region
+	 if (index==2001) {
+		 if(ntracks==1){
+			 else return 0;
+		 }
+		 if(ntracks==3){
+			 else return 0;
+		 }
+		 else return 0;
+	 }
 	 //! Combined FFs for (FF_CR_WJETS) target region
 	 if (index==9002) {
 	 return FF_CR_WJETS;
@@ -375,7 +418,16 @@ float GetFFCombined_NOMINAL(float pt, int ntracks, float FF_CR_MULTIJET, float F
 		 }
 		 else return 0;
 	 }
-
+	 //! Combined FFs for (MET_TRIG_EFF_CR_NOM) target region
+	 if (index==2011) {
+		 if(ntracks==1){
+			 else return 0;
+		 }
+		 if(ntracks==3){
+			 else return 0;
+		 }
+		 else return 0;
+	 }
 	 else return 0;
 }
 
@@ -384,18 +436,18 @@ float GetFFCombined_1up(float pt, int ntracks, float FF_CR_MULTIJET, float FF_CR
 	 //! Combined FFs for (SR_TAUJET) target region
 	 if (index==1001) {
 		 if(ntracks==1){
-			 if(pt < 45) return (0.0499999999999*FF_CR_MULTIJET) + (0.95*FF_CR_WJETS);
-			 if(pt < 50) return (0.34*FF_CR_MULTIJET) + (0.66*FF_CR_WJETS);
-			 if(pt < 60) return (0.16*FF_CR_MULTIJET) + (0.84*FF_CR_WJETS);
-			 if(pt < 80) return (0.3*FF_CR_MULTIJET) + (0.7*FF_CR_WJETS);
-			 if(pt < 100) return (0.55*FF_CR_MULTIJET) + (0.45*FF_CR_WJETS);
-			 if(pt < 3500) return (0.39*FF_CR_MULTIJET) + (0.61*FF_CR_WJETS);
+			 if(pt < 45) return (0.0799999999999*FF_CR_MULTIJET) + (0.92*FF_CR_WJETS);
+			 if(pt < 50) return (0.39*FF_CR_MULTIJET) + (0.61*FF_CR_WJETS);
+			 if(pt < 60) return (0.21*FF_CR_MULTIJET) + (0.79*FF_CR_WJETS);
+			 if(pt < 80) return (0.37*FF_CR_MULTIJET) + (0.63*FF_CR_WJETS);
+			 if(pt < 100) return (0.61*FF_CR_MULTIJET) + (0.39*FF_CR_WJETS);
+			 if(pt < 3500) return (0.4*FF_CR_MULTIJET) + (0.6*FF_CR_WJETS);
 			 else return 0;
 		 }
 		 if(ntracks==3){
-			 if(pt < 60) return (0.3*FF_CR_MULTIJET) + (0.7*FF_CR_WJETS);
-			 if(pt < 80) return (0.16*FF_CR_MULTIJET) + (0.84*FF_CR_WJETS);
-			 if(pt < 3500) return (0.43*FF_CR_MULTIJET) + (0.57*FF_CR_WJETS);
+			 if(pt < 60) return (0.31*FF_CR_MULTIJET) + (0.69*FF_CR_WJETS);
+			 if(pt < 80) return (0.17*FF_CR_MULTIJET) + (0.83*FF_CR_WJETS);
+			 if(pt < 3500) return (0.42*FF_CR_MULTIJET) + (0.58*FF_CR_WJETS);
 			 else return 0;
 		 }
 		 else return 0;
@@ -497,6 +549,16 @@ float GetFFCombined_1up(float pt, int ntracks, float FF_CR_MULTIJET, float FF_CR
 		 }
 		 else return 0;
 	 }
+	 //! Combined FFs for (OVERLAP_TAUJET) target region
+	 if (index==1001) {
+		 if(ntracks==1){
+			 else return 0;
+		 }
+		 if(ntracks==3){
+			 else return 0;
+		 }
+		 else return 0;
+	 }
 	 //! Combined FFs for (FF_CR_MULTIJET) target region
 	 if (index==9001) {
 	 return FF_CR_MULTIJET;
@@ -524,19 +586,19 @@ float GetFFCombined_1up(float pt, int ntracks, float FF_CR_MULTIJET, float FF_CR
 	 if (index==2001) {
 		 if(ntracks==1){
 			 if(pt < 40) return (-0.68*FF_CR_MULTIJET) + (1.68*FF_CR_WJETS);
-			 if(pt < 45) return (-0.57*FF_CR_MULTIJET) + (1.57*FF_CR_WJETS);
+			 if(pt < 45) return (-0.58*FF_CR_MULTIJET) + (1.58*FF_CR_WJETS);
 			 if(pt < 50) return (-0.3*FF_CR_MULTIJET) + (1.3*FF_CR_WJETS);
 			 if(pt < 60) return (-0.33*FF_CR_MULTIJET) + (1.33*FF_CR_WJETS);
-			 if(pt < 80) return (-0.22*FF_CR_MULTIJET) + (1.22*FF_CR_WJETS);
-			 if(pt < 100) return (-0.0700000000001*FF_CR_MULTIJET) + (1.07*FF_CR_WJETS);
-			 if(pt < 3500) return (-0.14*FF_CR_MULTIJET) + (1.14*FF_CR_WJETS);
+			 if(pt < 80) return (-0.23*FF_CR_MULTIJET) + (1.23*FF_CR_WJETS);
+			 if(pt < 100) return (-0.0500000000001*FF_CR_MULTIJET) + (1.05*FF_CR_WJETS);
+			 if(pt < 3500) return (-0.17*FF_CR_MULTIJET) + (1.17*FF_CR_WJETS);
 			 else return 0;
 		 }
 		 if(ntracks==3){
 			 if(pt < 40) return (-0.15*FF_CR_MULTIJET) + (1.15*FF_CR_WJETS);
 			 if(pt < 60) return (-0.15*FF_CR_MULTIJET) + (1.15*FF_CR_WJETS);
 			 if(pt < 80) return (-0.11*FF_CR_MULTIJET) + (1.11*FF_CR_WJETS);
-			 if(pt < 3500) return (-0.18*FF_CR_MULTIJET) + (1.18*FF_CR_WJETS);
+			 if(pt < 3500) return (-0.19*FF_CR_MULTIJET) + (1.19*FF_CR_WJETS);
 			 else return 0;
 		 }
 		 else return 0;
@@ -544,20 +606,20 @@ float GetFFCombined_1up(float pt, int ntracks, float FF_CR_MULTIJET, float FF_CR
 	 //! Combined FFs for (SR_TAUEL) target region
 	 if (index==2002) {
 		 if(ntracks==1){
-			 if(pt < 40) return (-0.67*FF_CR_MULTIJET) + (1.67*FF_CR_WJETS);
-			 if(pt < 45) return (-0.57*FF_CR_MULTIJET) + (1.57*FF_CR_WJETS);
+			 if(pt < 40) return (-0.69*FF_CR_MULTIJET) + (1.69*FF_CR_WJETS);
+			 if(pt < 45) return (-0.58*FF_CR_MULTIJET) + (1.58*FF_CR_WJETS);
 			 if(pt < 50) return (-0.29*FF_CR_MULTIJET) + (1.29*FF_CR_WJETS);
-			 if(pt < 60) return (-0.31*FF_CR_MULTIJET) + (1.31*FF_CR_WJETS);
-			 if(pt < 80) return (-0.24*FF_CR_MULTIJET) + (1.24*FF_CR_WJETS);
-			 if(pt < 100) return (-0.12*FF_CR_MULTIJET) + (1.12*FF_CR_WJETS);
-			 if(pt < 3500) return (-0.21*FF_CR_MULTIJET) + (1.21*FF_CR_WJETS);
+			 if(pt < 60) return (-0.29*FF_CR_MULTIJET) + (1.29*FF_CR_WJETS);
+			 if(pt < 80) return (-0.25*FF_CR_MULTIJET) + (1.25*FF_CR_WJETS);
+			 if(pt < 100) return (-0.15*FF_CR_MULTIJET) + (1.15*FF_CR_WJETS);
+			 if(pt < 3500) return (-0.23*FF_CR_MULTIJET) + (1.23*FF_CR_WJETS);
 			 else return 0;
 		 }
 		 if(ntracks==3){
-			 if(pt < 40) return (-0.18*FF_CR_MULTIJET) + (1.18*FF_CR_WJETS);
+			 if(pt < 40) return (-0.2*FF_CR_MULTIJET) + (1.2*FF_CR_WJETS);
 			 if(pt < 60) return (-0.18*FF_CR_MULTIJET) + (1.18*FF_CR_WJETS);
 			 if(pt < 80) return (-0.1*FF_CR_MULTIJET) + (1.1*FF_CR_WJETS);
-			 if(pt < 3500) return (-0.19*FF_CR_MULTIJET) + (1.19*FF_CR_WJETS);
+			 if(pt < 3500) return (-0.2*FF_CR_MULTIJET) + (1.2*FF_CR_WJETS);
 			 else return 0;
 		 }
 		 else return 0;
@@ -568,14 +630,14 @@ float GetFFCombined_1up(float pt, int ntracks, float FF_CR_MULTIJET, float FF_CR
 			 if(pt < 40) return (-0.67*FF_CR_MULTIJET) + (1.67*FF_CR_WJETS);
 			 if(pt < 45) return (-0.58*FF_CR_MULTIJET) + (1.58*FF_CR_WJETS);
 			 if(pt < 50) return (-0.31*FF_CR_MULTIJET) + (1.31*FF_CR_WJETS);
-			 if(pt < 60) return (-0.36*FF_CR_MULTIJET) + (1.36*FF_CR_WJETS);
-			 if(pt < 80) return (-0.21*FF_CR_MULTIJET) + (1.21*FF_CR_WJETS);
-			 if(pt < 100) return (-0.0500000000001*FF_CR_MULTIJET) + (1.05*FF_CR_WJETS);
-			 if(pt < 3500) return (0.0599999999999*FF_CR_MULTIJET) + (0.94*FF_CR_WJETS);
+			 if(pt < 60) return (-0.37*FF_CR_MULTIJET) + (1.37*FF_CR_WJETS);
+			 if(pt < 80) return (-0.22*FF_CR_MULTIJET) + (1.22*FF_CR_WJETS);
+			 if(pt < 100) return (-0.0300000000001*FF_CR_MULTIJET) + (1.03*FF_CR_WJETS);
+			 if(pt < 3500) return (0.0199999999999*FF_CR_MULTIJET) + (0.98*FF_CR_WJETS);
 			 else return 0;
 		 }
 		 if(ntracks==3){
-			 if(pt < 40) return (-0.13*FF_CR_MULTIJET) + (1.13*FF_CR_WJETS);
+			 if(pt < 40) return (-0.12*FF_CR_MULTIJET) + (1.12*FF_CR_WJETS);
 			 if(pt < 60) return (-0.14*FF_CR_MULTIJET) + (1.14*FF_CR_WJETS);
 			 if(pt < 80) return (-0.11*FF_CR_MULTIJET) + (1.11*FF_CR_WJETS);
 			 if(pt < 3500) return (-0.13*FF_CR_MULTIJET) + (1.13*FF_CR_WJETS);
@@ -667,24 +729,37 @@ float GetFFCombined_1up(float pt, int ntracks, float FF_CR_MULTIJET, float FF_CR
 		 }
 		 else return 0;
 	 }
-
-	 //! Combined FFs for (ZEE) target region
-	 if (index==2009) {
+	 //! Combined FFs for (DILEP_BTAG) target region
+	 if (index==2006) {
+	 return 0;
+	}
+	 //! Combined FFs for (DILEP_BVETO) target region
+	 if (index==2006) {
 		 if(ntracks==1){
-			 if(pt < 40) return (-0.0200000000001*FF_CR_MULTIJET) + (1.02*FF_CR_WJETS);
-			 if(pt < 45) return (0.0699999999999*FF_CR_MULTIJET) + (0.93*FF_CR_WJETS);
-			 if(pt < 50) return (0.11*FF_CR_MULTIJET) + (0.89*FF_CR_WJETS);
-			 if(pt < 60) return (0.11*FF_CR_MULTIJET) + (0.89*FF_CR_WJETS);
-			 if(pt < 80) return (0.0499999999999*FF_CR_MULTIJET) + (0.95*FF_CR_WJETS);
-			 if(pt < 100) return (0.0999999999999*FF_CR_MULTIJET) + (0.9*FF_CR_WJETS);
-			 if(pt < 3500) return (-8.52651282912e-14*FF_CR_MULTIJET) + (1.0*FF_CR_WJETS);
 			 else return 0;
 		 }
 		 if(ntracks==3){
-			 if(pt < 40) return (0.0299999999999*FF_CR_MULTIJET) + (0.97*FF_CR_WJETS);
-			 if(pt < 60) return (-8.52651282912e-14*FF_CR_MULTIJET) + (1.0*FF_CR_WJETS);
-			 if(pt < 80) return (0.0399999999999*FF_CR_MULTIJET) + (0.96*FF_CR_WJETS);
-			 if(pt < 3500) return (-0.19*FF_CR_MULTIJET) + (1.19*FF_CR_WJETS);
+			 else return 0;
+		 }
+		 else return 0;
+	 }
+	 //! Combined FFs for (ZEE) target region
+	 if (index==2009) {
+		 if(ntracks==1){
+			 if(pt < 40) return (-0.22*FF_CR_MULTIJET) + (1.22*FF_CR_WJETS);
+			 if(pt < 45) return (-0.0900000000001*FF_CR_MULTIJET) + (1.09*FF_CR_WJETS);
+			 if(pt < 50) return (0.0799999999999*FF_CR_MULTIJET) + (0.92*FF_CR_WJETS);
+			 if(pt < 60) return (0.0399999999999*FF_CR_MULTIJET) + (0.96*FF_CR_WJETS);
+			 if(pt < 80) return (0.0899999999999*FF_CR_MULTIJET) + (0.91*FF_CR_WJETS);
+			 if(pt < 100) return (0.33*FF_CR_MULTIJET) + (0.67*FF_CR_WJETS);
+			 if(pt < 3500) return (-0.1*FF_CR_MULTIJET) + (1.1*FF_CR_WJETS);
+			 else return 0;
+		 }
+		 if(ntracks==3){
+			 if(pt < 40) return (-0.11*FF_CR_MULTIJET) + (1.11*FF_CR_WJETS);
+			 if(pt < 60) return (-0.12*FF_CR_MULTIJET) + (1.12*FF_CR_WJETS);
+			 if(pt < 80) return (-0.1*FF_CR_MULTIJET) + (1.1*FF_CR_WJETS);
+			 if(pt < 3500) return (-0.41*FF_CR_MULTIJET) + (1.41*FF_CR_WJETS);
 			 else return 0;
 		 }
 		 else return 0;
@@ -731,6 +806,26 @@ float GetFFCombined_1up(float pt, int ntracks, float FF_CR_MULTIJET, float FF_CR
 		 }
 		 else return 0;
 	 }
+	 //! Combined FFs for (MET_TRIG_EFF_CR_NOM) target region
+	 if (index==2011) {
+		 if(ntracks==1){
+			 else return 0;
+		 }
+		 if(ntracks==3){
+			 else return 0;
+		 }
+		 else return 0;
+	 }
+	 //! Combined FFs for (OVERLAP_TAULEP) target region
+	 if (index==2001) {
+		 if(ntracks==1){
+			 else return 0;
+		 }
+		 if(ntracks==3){
+			 else return 0;
+		 }
+		 else return 0;
+	 }
 	 //! Combined FFs for (FF_CR_WJETS) target region
 	 if (index==9002) {
 	 return FF_CR_WJETS;
@@ -756,7 +851,16 @@ float GetFFCombined_1up(float pt, int ntracks, float FF_CR_MULTIJET, float FF_CR
 		 }
 		 else return 0;
 	 }
-
+	 //! Combined FFs for (MET_TRIG_EFF_CR_NOM) target region
+	 if (index==2011) {
+		 if(ntracks==1){
+			 else return 0;
+		 }
+		 if(ntracks==3){
+			 else return 0;
+		 }
+		 else return 0;
+	 }
 	 else return 0;
 }
 
@@ -765,18 +869,18 @@ float GetFFCombined_1down(float pt, int ntracks, float FF_CR_MULTIJET, float FF_
 	 //! Combined FFs for (SR_TAUJET) target region
 	 if (index==1001) {
 		 if(ntracks==1){
-			 if(pt < 45) return (-0.21*FF_CR_MULTIJET) + (1.21*FF_CR_WJETS);
-			 if(pt < 50) return (0.0899999999999*FF_CR_MULTIJET) + (0.91*FF_CR_WJETS);
-			 if(pt < 60) return (-0.0800000000001*FF_CR_MULTIJET) + (1.08*FF_CR_WJETS);
-			 if(pt < 80) return (0.0199999999999*FF_CR_MULTIJET) + (0.98*FF_CR_WJETS);
-			 if(pt < 100) return (0.0999999999999*FF_CR_MULTIJET) + (0.9*FF_CR_WJETS);
+			 if(pt < 45) return (-0.18*FF_CR_MULTIJET) + (1.18*FF_CR_WJETS);
+			 if(pt < 50) return (0.13*FF_CR_MULTIJET) + (0.87*FF_CR_WJETS);
+			 if(pt < 60) return (-0.0500000000001*FF_CR_MULTIJET) + (1.05*FF_CR_WJETS);
+			 if(pt < 80) return (0.0699999999999*FF_CR_MULTIJET) + (0.93*FF_CR_WJETS);
+			 if(pt < 100) return (0.14*FF_CR_MULTIJET) + (0.86*FF_CR_WJETS);
 			 if(pt < 3500) return (0.0299999999999*FF_CR_MULTIJET) + (0.97*FF_CR_WJETS);
 			 else return 0;
 		 }
 		 if(ntracks==3){
 			 if(pt < 60) return (0.21*FF_CR_MULTIJET) + (0.79*FF_CR_WJETS);
 			 if(pt < 80) return (0.0299999999999*FF_CR_MULTIJET) + (0.97*FF_CR_WJETS);
-			 if(pt < 3500) return (0.29*FF_CR_MULTIJET) + (0.71*FF_CR_WJETS);
+			 if(pt < 3500) return (0.27*FF_CR_MULTIJET) + (0.73*FF_CR_WJETS);
 			 else return 0;
 		 }
 		 else return 0;
@@ -878,6 +982,16 @@ float GetFFCombined_1down(float pt, int ntracks, float FF_CR_MULTIJET, float FF_
 		 }
 		 else return 0;
 	 }
+	 //! Combined FFs for (OVERLAP_TAUJET) target region
+	 if (index==1001) {
+		 if(ntracks==1){
+			 else return 0;
+		 }
+		 if(ntracks==3){
+			 else return 0;
+		 }
+		 else return 0;
+	 }
 	 //! Combined FFs for (FF_CR_MULTIJET) target region
 	 if (index==9001) {
 	 return FF_CR_MULTIJET;
@@ -904,20 +1018,20 @@ float GetFFCombined_1down(float pt, int ntracks, float FF_CR_MULTIJET, float FF_
 	 //! Combined FFs for (SR_TAULEP) target region
 	 if (index==2001) {
 		 if(ntracks==1){
-			 if(pt < 40) return (-0.87*FF_CR_MULTIJET) + (1.87*FF_CR_WJETS);
-			 if(pt < 45) return (-0.75*FF_CR_MULTIJET) + (1.75*FF_CR_WJETS);
+			 if(pt < 40) return (-0.88*FF_CR_MULTIJET) + (1.88*FF_CR_WJETS);
+			 if(pt < 45) return (-0.76*FF_CR_MULTIJET) + (1.76*FF_CR_WJETS);
 			 if(pt < 50) return (-0.44*FF_CR_MULTIJET) + (1.44*FF_CR_WJETS);
 			 if(pt < 60) return (-0.48*FF_CR_MULTIJET) + (1.48*FF_CR_WJETS);
 			 if(pt < 80) return (-0.41*FF_CR_MULTIJET) + (1.41*FF_CR_WJETS);
-			 if(pt < 100) return (-0.35*FF_CR_MULTIJET) + (1.35*FF_CR_WJETS);
-			 if(pt < 3500) return (-0.51*FF_CR_MULTIJET) + (1.51*FF_CR_WJETS);
+			 if(pt < 100) return (-0.34*FF_CR_MULTIJET) + (1.34*FF_CR_WJETS);
+			 if(pt < 3500) return (-0.55*FF_CR_MULTIJET) + (1.55*FF_CR_WJETS);
 			 else return 0;
 		 }
 		 if(ntracks==3){
 			 if(pt < 40) return (-0.22*FF_CR_MULTIJET) + (1.22*FF_CR_WJETS);
 			 if(pt < 60) return (-0.2*FF_CR_MULTIJET) + (1.2*FF_CR_WJETS);
-			 if(pt < 80) return (-0.2*FF_CR_MULTIJET) + (1.2*FF_CR_WJETS);
-			 if(pt < 3500) return (-0.3*FF_CR_MULTIJET) + (1.3*FF_CR_WJETS);
+			 if(pt < 80) return (-0.19*FF_CR_MULTIJET) + (1.19*FF_CR_WJETS);
+			 if(pt < 3500) return (-0.31*FF_CR_MULTIJET) + (1.31*FF_CR_WJETS);
 			 else return 0;
 		 }
 		 else return 0;
@@ -925,17 +1039,17 @@ float GetFFCombined_1down(float pt, int ntracks, float FF_CR_MULTIJET, float FF_
 	 //! Combined FFs for (SR_TAUEL) target region
 	 if (index==2002) {
 		 if(ntracks==1){
-			 if(pt < 40) return (-0.89*FF_CR_MULTIJET) + (1.89*FF_CR_WJETS);
-			 if(pt < 45) return (-0.76*FF_CR_MULTIJET) + (1.76*FF_CR_WJETS);
+			 if(pt < 40) return (-0.92*FF_CR_MULTIJET) + (1.92*FF_CR_WJETS);
+			 if(pt < 45) return (-0.78*FF_CR_MULTIJET) + (1.78*FF_CR_WJETS);
 			 if(pt < 50) return (-0.46*FF_CR_MULTIJET) + (1.46*FF_CR_WJETS);
-			 if(pt < 60) return (-0.49*FF_CR_MULTIJET) + (1.49*FF_CR_WJETS);
-			 if(pt < 80) return (-0.45*FF_CR_MULTIJET) + (1.45*FF_CR_WJETS);
-			 if(pt < 100) return (-0.47*FF_CR_MULTIJET) + (1.47*FF_CR_WJETS);
-			 if(pt < 3500) return (-0.67*FF_CR_MULTIJET) + (1.67*FF_CR_WJETS);
+			 if(pt < 60) return (-0.47*FF_CR_MULTIJET) + (1.47*FF_CR_WJETS);
+			 if(pt < 80) return (-0.46*FF_CR_MULTIJET) + (1.46*FF_CR_WJETS);
+			 if(pt < 100) return (-0.5*FF_CR_MULTIJET) + (1.5*FF_CR_WJETS);
+			 if(pt < 3500) return (-0.7*FF_CR_MULTIJET) + (1.7*FF_CR_WJETS);
 			 else return 0;
 		 }
 		 if(ntracks==3){
-			 if(pt < 40) return (-0.26*FF_CR_MULTIJET) + (1.26*FF_CR_WJETS);
+			 if(pt < 40) return (-0.28*FF_CR_MULTIJET) + (1.28*FF_CR_WJETS);
 			 if(pt < 60) return (-0.24*FF_CR_MULTIJET) + (1.24*FF_CR_WJETS);
 			 if(pt < 80) return (-0.2*FF_CR_MULTIJET) + (1.2*FF_CR_WJETS);
 			 if(pt < 3500) return (-0.34*FF_CR_MULTIJET) + (1.34*FF_CR_WJETS);
@@ -946,20 +1060,20 @@ float GetFFCombined_1down(float pt, int ntracks, float FF_CR_MULTIJET, float FF_
 	 //! Combined FFs for (SR_TAUMU) target region
 	 if (index==2003) {
 		 if(ntracks==1){
-			 if(pt < 40) return (-0.9*FF_CR_MULTIJET) + (1.9*FF_CR_WJETS);
+			 if(pt < 40) return (-0.89*FF_CR_MULTIJET) + (1.89*FF_CR_WJETS);
 			 if(pt < 45) return (-0.79*FF_CR_MULTIJET) + (1.79*FF_CR_WJETS);
 			 if(pt < 50) return (-0.49*FF_CR_MULTIJET) + (1.49*FF_CR_WJETS);
-			 if(pt < 60) return (-0.54*FF_CR_MULTIJET) + (1.54*FF_CR_WJETS);
+			 if(pt < 60) return (-0.55*FF_CR_MULTIJET) + (1.55*FF_CR_WJETS);
 			 if(pt < 80) return (-0.43*FF_CR_MULTIJET) + (1.43*FF_CR_WJETS);
-			 if(pt < 100) return (-0.41*FF_CR_MULTIJET) + (1.41*FF_CR_WJETS);
-			 if(pt < 3500) return (-0.37*FF_CR_MULTIJET) + (1.37*FF_CR_WJETS);
+			 if(pt < 100) return (-0.39*FF_CR_MULTIJET) + (1.39*FF_CR_WJETS);
+			 if(pt < 3500) return (-0.42*FF_CR_MULTIJET) + (1.42*FF_CR_WJETS);
 			 else return 0;
 		 }
 		 if(ntracks==3){
-			 if(pt < 40) return (-0.21*FF_CR_MULTIJET) + (1.21*FF_CR_WJETS);
+			 if(pt < 40) return (-0.2*FF_CR_MULTIJET) + (1.2*FF_CR_WJETS);
 			 if(pt < 60) return (-0.2*FF_CR_MULTIJET) + (1.2*FF_CR_WJETS);
 			 if(pt < 80) return (-0.22*FF_CR_MULTIJET) + (1.22*FF_CR_WJETS);
-			 if(pt < 3500) return (-0.27*FF_CR_MULTIJET) + (1.27*FF_CR_WJETS);
+			 if(pt < 3500) return (-0.28*FF_CR_MULTIJET) + (1.28*FF_CR_WJETS);
 			 else return 0;
 		 }
 		 else return 0;
@@ -1048,24 +1162,37 @@ float GetFFCombined_1down(float pt, int ntracks, float FF_CR_MULTIJET, float FF_
 		 }
 		 else return 0;
 	 }
-
-	 //! Combined FFs for (ZEE) target region
-	 if (index==2009) {
+	 //! Combined FFs for (DILEP_BTAG) target region
+	 if (index==2006) {
+	 return 0;
+	}
+	 //! Combined FFs for (DILEP_BVETO) target region
+	 if (index==2006) {
 		 if(ntracks==1){
-			 if(pt < 40) return (-0.2*FF_CR_MULTIJET) + (1.2*FF_CR_WJETS);
-			 if(pt < 45) return (-0.0900000000001*FF_CR_MULTIJET) + (1.09*FF_CR_WJETS);
-			 if(pt < 50) return (-0.0500000000001*FF_CR_MULTIJET) + (1.05*FF_CR_WJETS);
-			 if(pt < 60) return (-0.0600000000001*FF_CR_MULTIJET) + (1.06*FF_CR_WJETS);
-			 if(pt < 80) return (-0.18*FF_CR_MULTIJET) + (1.18*FF_CR_WJETS);
-			 if(pt < 100) return (-0.3*FF_CR_MULTIJET) + (1.3*FF_CR_WJETS);
-			 if(pt < 3500) return (-0.61*FF_CR_MULTIJET) + (1.61*FF_CR_WJETS);
 			 else return 0;
 		 }
 		 if(ntracks==3){
-			 if(pt < 40) return (-0.0400000000001*FF_CR_MULTIJET) + (1.04*FF_CR_WJETS);
-			 if(pt < 60) return (-0.0600000000001*FF_CR_MULTIJET) + (1.06*FF_CR_WJETS);
-			 if(pt < 80) return (-0.0700000000001*FF_CR_MULTIJET) + (1.07*FF_CR_WJETS);
-			 if(pt < 3500) return (-0.38*FF_CR_MULTIJET) + (1.38*FF_CR_WJETS);
+			 else return 0;
+		 }
+		 else return 0;
+	 }
+	 //! Combined FFs for (ZEE) target region
+	 if (index==2009) {
+		 if(ntracks==1){
+			 if(pt < 40) return (-0.38*FF_CR_MULTIJET) + (1.38*FF_CR_WJETS);
+			 if(pt < 45) return (-0.24*FF_CR_MULTIJET) + (1.24*FF_CR_WJETS);
+			 if(pt < 50) return (-0.0600000000001*FF_CR_MULTIJET) + (1.06*FF_CR_WJETS);
+			 if(pt < 60) return (-0.12*FF_CR_MULTIJET) + (1.12*FF_CR_WJETS);
+			 if(pt < 80) return (-0.13*FF_CR_MULTIJET) + (1.13*FF_CR_WJETS);
+			 if(pt < 100) return (-0.18*FF_CR_MULTIJET) + (1.18*FF_CR_WJETS);
+			 if(pt < 3500) return (-0.85*FF_CR_MULTIJET) + (1.85*FF_CR_WJETS);
+			 else return 0;
+		 }
+		 if(ntracks==3){
+			 if(pt < 40) return (-0.18*FF_CR_MULTIJET) + (1.18*FF_CR_WJETS);
+			 if(pt < 60) return (-0.18*FF_CR_MULTIJET) + (1.18*FF_CR_WJETS);
+			 if(pt < 80) return (-0.2*FF_CR_MULTIJET) + (1.2*FF_CR_WJETS);
+			 if(pt < 3500) return (-0.61*FF_CR_MULTIJET) + (1.61*FF_CR_WJETS);
 			 else return 0;
 		 }
 		 else return 0;
@@ -1112,6 +1239,26 @@ float GetFFCombined_1down(float pt, int ntracks, float FF_CR_MULTIJET, float FF_
 		 }
 		 else return 0;
 	 }
+	 //! Combined FFs for (MET_TRIG_EFF_CR_NOM) target region
+	 if (index==2011) {
+		 if(ntracks==1){
+			 else return 0;
+		 }
+		 if(ntracks==3){
+			 else return 0;
+		 }
+		 else return 0;
+	 }
+	 //! Combined FFs for (OVERLAP_TAULEP) target region
+	 if (index==2001) {
+		 if(ntracks==1){
+			 else return 0;
+		 }
+		 if(ntracks==3){
+			 else return 0;
+		 }
+		 else return 0;
+	 }
 	 //! Combined FFs for (FF_CR_WJETS) target region
 	 if (index==9002) {
 	 return FF_CR_WJETS;
@@ -1137,7 +1284,16 @@ float GetFFCombined_1down(float pt, int ntracks, float FF_CR_MULTIJET, float FF_
 		 }
 		 else return 0;
 	 }
-
+	 //! Combined FFs for (MET_TRIG_EFF_CR_NOM) target region
+	 if (index==2011) {
+		 if(ntracks==1){
+			 else return 0;
+		 }
+		 if(ntracks==3){
+			 else return 0;
+		 }
+		 else return 0;
+	 }
 	 else return 0;
 }
 
@@ -1146,18 +1302,18 @@ float GetFFCombined_Heavy_Flavour_FF_1up(float pt, int ntracks, float FF_CR_MULT
 	 //! Combined FFs for (SR_TAUJET) target region
 	 if (index==1001) {
 		 if(ntracks==1){
-			 if(pt < 45) return (-0.0816880000001*FF_CR_MULTIJET) + (1.102788*FF_CR_WJETS);
-			 if(pt < 50) return (0.225764*FF_CR_MULTIJET) + (0.800436*FF_CR_WJETS);
-			 if(pt < 60) return (0.0415199999999*FF_CR_MULTIJET) + (0.99648*FF_CR_WJETS);
-			 if(pt < 80) return (0.166192*FF_CR_MULTIJET) + (0.872508*FF_CR_WJETS);
-			 if(pt < 100) return (0.33858*FF_CR_MULTIJET) + (0.68742*FF_CR_WJETS);
+			 if(pt < 45) return (-0.0510550000001*FF_CR_MULTIJET) + (1.072155*FF_CR_WJETS);
+			 if(pt < 50) return (0.266812*FF_CR_MULTIJET) + (0.759388*FF_CR_WJETS);
+			 if(pt < 60) return (0.0830399999999*FF_CR_MULTIJET) + (0.95496*FF_CR_WJETS);
+			 if(pt < 80) return (0.228514*FF_CR_MULTIJET) + (0.810186*FF_CR_WJETS);
+			 if(pt < 100) return (0.38988*FF_CR_MULTIJET) + (0.63612*FF_CR_WJETS);
 			 if(pt < 3500) return (0.21549*FF_CR_MULTIJET) + (0.76401*FF_CR_WJETS);
 			 else return 0;
 		 }
 		 if(ntracks==3){
-			 if(pt < 60) return (0.3099*FF_CR_MULTIJET) + (0.9297*FF_CR_WJETS);
-			 if(pt < 80) return (0.11646*FF_CR_MULTIJET) + (1.17754*FF_CR_WJETS);
-			 if(pt < 3500) return (0.39852*FF_CR_MULTIJET) + (0.70848*FF_CR_WJETS);
+			 if(pt < 60) return (0.322296*FF_CR_MULTIJET) + (0.917304*FF_CR_WJETS);
+			 if(pt < 80) return (0.1294*FF_CR_MULTIJET) + (1.1646*FF_CR_WJETS);
+			 if(pt < 3500) return (0.38745*FF_CR_MULTIJET) + (0.71955*FF_CR_WJETS);
 			 else return 0;
 		 }
 		 else return 0;
@@ -1259,6 +1415,16 @@ float GetFFCombined_Heavy_Flavour_FF_1up(float pt, int ntracks, float FF_CR_MULT
 		 }
 		 else return 0;
 	 }
+	 //! Combined FFs for (OVERLAP_TAUJET) target region
+	 if (index==1001) {
+		 if(ntracks==1){
+			 else return 0;
+		 }
+		 if(ntracks==3){
+			 else return 0;
+		 }
+		 else return 0;
+	 }
 	 //! Combined FFs for (FF_CR_MULTIJET) target region
 	 if (index==9001) {
 	 return FF_CR_MULTIJET;
@@ -1285,20 +1451,20 @@ float GetFFCombined_Heavy_Flavour_FF_1up(float pt, int ntracks, float FF_CR_MULT
 	 //! Combined FFs for (SR_TAULEP) target region
 	 if (index==2001) {
 		 if(ntracks==1){
-			 if(pt < 40) return (-0.751674*FF_CR_MULTIJET) + (1.727874*FF_CR_WJETS);
-			 if(pt < 45) return (-0.643434*FF_CR_MULTIJET) + (1.618334*FF_CR_WJETS);
+			 if(pt < 40) return (-0.761436*FF_CR_MULTIJET) + (1.737636*FF_CR_WJETS);
+			 if(pt < 45) return (-0.653183*FF_CR_MULTIJET) + (1.628083*FF_CR_WJETS);
 			 if(pt < 50) return (-0.358012*FF_CR_MULTIJET) + (1.325612*FF_CR_WJETS);
 			 if(pt < 60) return (-0.39028*FF_CR_MULTIJET) + (1.36598*FF_CR_WJETS);
-			 if(pt < 80) return (-0.312387*FF_CR_MULTIJET) + (1.320087*FF_CR_WJETS);
-			 if(pt < 100) return (-0.21324*FF_CR_MULTIJET) + (1.27944*FF_CR_WJETS);
-			 if(pt < 3500) return (-0.309248*FF_CR_MULTIJET) + (1.275648*FF_CR_WJETS);
+			 if(pt < 80) return (-0.322464*FF_CR_MULTIJET) + (1.330164*FF_CR_WJETS);
+			 if(pt < 100) return (-0.202578*FF_CR_MULTIJET) + (1.268778*FF_CR_WJETS);
+			 if(pt < 3500) return (-0.33824*FF_CR_MULTIJET) + (1.30464*FF_CR_WJETS);
 			 else return 0;
 		 }
 		 if(ntracks==3){
 			 if(pt < 40) return (-0.264366*FF_CR_MULTIJET) + (1.655766*FF_CR_WJETS);
 			 if(pt < 60) return (-0.237966*FF_CR_MULTIJET) + (1.637766*FF_CR_WJETS);
 			 if(pt < 80) return (-0.22167*FF_CR_MULTIJET) + (1.69947*FF_CR_WJETS);
-			 if(pt < 3500) return (-0.290016*FF_CR_MULTIJET) + (1.498416*FF_CR_WJETS);
+			 if(pt < 3500) return (-0.3021*FF_CR_MULTIJET) + (1.5105*FF_CR_WJETS);
 			 else return 0;
 		 }
 		 else return 0;
@@ -1306,20 +1472,20 @@ float GetFFCombined_Heavy_Flavour_FF_1up(float pt, int ntracks, float FF_CR_MULT
 	 //! Combined FFs for (SR_TAUEL) target region
 	 if (index==2002) {
 		 if(ntracks==1){
-			 if(pt < 40) return (-0.761436*FF_CR_MULTIJET) + (1.737636*FF_CR_WJETS);
-			 if(pt < 45) return (-0.643434*FF_CR_MULTIJET) + (1.618334*FF_CR_WJETS);
+			 if(pt < 40) return (-0.78096*FF_CR_MULTIJET) + (1.75716*FF_CR_WJETS);
+			 if(pt < 45) return (-0.662932*FF_CR_MULTIJET) + (1.637832*FF_CR_WJETS);
 			 if(pt < 50) return (-0.358012*FF_CR_MULTIJET) + (1.325612*FF_CR_WJETS);
-			 if(pt < 60) return (-0.380523*FF_CR_MULTIJET) + (1.356223*FF_CR_WJETS);
+			 if(pt < 60) return (-0.370766*FF_CR_MULTIJET) + (1.346466*FF_CR_WJETS);
 			 if(pt < 80) return (-0.352695*FF_CR_MULTIJET) + (1.360395*FF_CR_WJETS);
-			 if(pt < 100) return (-0.309198*FF_CR_MULTIJET) + (1.375398*FF_CR_WJETS);
-			 if(pt < 3500) return (-0.405888*FF_CR_MULTIJET) + (1.372288*FF_CR_WJETS);
+			 if(pt < 100) return (-0.330522*FF_CR_MULTIJET) + (1.396722*FF_CR_WJETS);
+			 if(pt < 3500) return (-0.43488*FF_CR_MULTIJET) + (1.40128*FF_CR_WJETS);
 			 else return 0;
 		 }
 		 if(ntracks==3){
-			 if(pt < 40) return (-0.306108*FF_CR_MULTIJET) + (1.697508*FF_CR_WJETS);
+			 if(pt < 40) return (-0.333936*FF_CR_MULTIJET) + (1.725336*FF_CR_WJETS);
 			 if(pt < 60) return (-0.293958*FF_CR_MULTIJET) + (1.693758*FF_CR_WJETS);
 			 if(pt < 80) return (-0.22167*FF_CR_MULTIJET) + (1.69947*FF_CR_WJETS);
-			 if(pt < 3500) return (-0.314184*FF_CR_MULTIJET) + (1.522584*FF_CR_WJETS);
+			 if(pt < 3500) return (-0.326268*FF_CR_MULTIJET) + (1.534668*FF_CR_WJETS);
 			 else return 0;
 		 }
 		 else return 0;
@@ -1327,19 +1493,19 @@ float GetFFCombined_Heavy_Flavour_FF_1up(float pt, int ntracks, float FF_CR_MULT
 	 //! Combined FFs for (SR_TAUMU) target region
 	 if (index==2003) {
 		 if(ntracks==1){
-			 if(pt < 40) return (-0.761436*FF_CR_MULTIJET) + (1.737636*FF_CR_WJETS);
+			 if(pt < 40) return (-0.751674*FF_CR_MULTIJET) + (1.727874*FF_CR_WJETS);
 			 if(pt < 45) return (-0.662932*FF_CR_MULTIJET) + (1.637832*FF_CR_WJETS);
 			 if(pt < 50) return (-0.38704*FF_CR_MULTIJET) + (1.35464*FF_CR_WJETS);
-			 if(pt < 60) return (-0.439065*FF_CR_MULTIJET) + (1.414765*FF_CR_WJETS);
+			 if(pt < 60) return (-0.448822*FF_CR_MULTIJET) + (1.424522*FF_CR_WJETS);
 			 if(pt < 80) return (-0.322464*FF_CR_MULTIJET) + (1.330164*FF_CR_WJETS);
-			 if(pt < 100) return (-0.234564*FF_CR_MULTIJET) + (1.300764*FF_CR_WJETS);
-			 if(pt < 3500) return (-0.135296*FF_CR_MULTIJET) + (1.101696*FF_CR_WJETS);
+			 if(pt < 100) return (-0.21324*FF_CR_MULTIJET) + (1.27944*FF_CR_WJETS);
+			 if(pt < 3500) return (-0.183616*FF_CR_MULTIJET) + (1.150016*FF_CR_WJETS);
 			 else return 0;
 		 }
 		 if(ntracks==3){
-			 if(pt < 40) return (-0.236538*FF_CR_MULTIJET) + (1.627938*FF_CR_WJETS);
+			 if(pt < 40) return (-0.222624*FF_CR_MULTIJET) + (1.614024*FF_CR_WJETS);
 			 if(pt < 60) return (-0.237966*FF_CR_MULTIJET) + (1.637766*FF_CR_WJETS);
-			 if(pt < 80) return (-0.251226*FF_CR_MULTIJET) + (1.729026*FF_CR_WJETS);
+			 if(pt < 80) return (-0.236448*FF_CR_MULTIJET) + (1.714248*FF_CR_WJETS);
 			 if(pt < 3500) return (-0.24168*FF_CR_MULTIJET) + (1.45008*FF_CR_WJETS);
 			 else return 0;
 		 }
@@ -1429,24 +1595,37 @@ float GetFFCombined_Heavy_Flavour_FF_1up(float pt, int ntracks, float FF_CR_MULT
 		 }
 		 else return 0;
 	 }
-
-	 //! Combined FFs for (ZEE) target region
-	 if (index==2009) {
+	 //! Combined FFs for (DILEP_BTAG) target region
+	 if (index==2006) {
+	 return 0;
+	}
+	 //! Combined FFs for (DILEP_BVETO) target region
+	 if (index==2006) {
 		 if(ntracks==1){
-			 if(pt < 40) return (-0.107382*FF_CR_MULTIJET) + (1.083582*FF_CR_WJETS);
-			 if(pt < 45) return (-0.00974900000008*FF_CR_MULTIJET) + (0.984649*FF_CR_WJETS);
-			 if(pt < 50) return (0.0290279999999*FF_CR_MULTIJET) + (0.938572*FF_CR_WJETS);
-			 if(pt < 60) return (0.0195139999999*FF_CR_MULTIJET) + (0.956186*FF_CR_WJETS);
-			 if(pt < 80) return (-0.0604620000001*FF_CR_MULTIJET) + (1.068162*FF_CR_WJETS);
-			 if(pt < 100) return (-0.0959580000001*FF_CR_MULTIJET) + (1.162158*FF_CR_WJETS);
-			 if(pt < 3500) return (-0.280256*FF_CR_MULTIJET) + (1.246656*FF_CR_WJETS);
 			 else return 0;
 		 }
 		 if(ntracks==3){
-			 if(pt < 40) return (-1.18637899504e-13*FF_CR_MULTIJET) + (1.3914*FF_CR_WJETS);
-			 if(pt < 60) return (-0.0419940000001*FF_CR_MULTIJET) + (1.441794*FF_CR_WJETS);
-			 if(pt < 80) return (-0.0147780000001*FF_CR_MULTIJET) + (1.492578*FF_CR_WJETS);
-			 if(pt < 3500) return (-0.338352*FF_CR_MULTIJET) + (1.546752*FF_CR_WJETS);
+			 else return 0;
+		 }
+		 else return 0;
+	 }
+	 //! Combined FFs for (ZEE) target region
+	 if (index==2009) {
+		 if(ntracks==1){
+			 if(pt < 40) return (-0.283098*FF_CR_MULTIJET) + (1.259298*FF_CR_WJETS);
+			 if(pt < 45) return (-0.165733*FF_CR_MULTIJET) + (1.140633*FF_CR_WJETS);
+			 if(pt < 50) return (0.00967599999992*FF_CR_MULTIJET) + (0.957924*FF_CR_WJETS);
+			 if(pt < 60) return (-0.0390280000001*FF_CR_MULTIJET) + (1.014728*FF_CR_WJETS);
+			 if(pt < 80) return (-0.0100770000001*FF_CR_MULTIJET) + (1.017777*FF_CR_WJETS);
+			 if(pt < 100) return (0.0852959999999*FF_CR_MULTIJET) + (0.980904*FF_CR_WJETS);
+			 if(pt < 3500) return (-0.444544*FF_CR_MULTIJET) + (1.410944*FF_CR_WJETS);
+			 else return 0;
+		 }
+		 if(ntracks==3){
+			 if(pt < 40) return (-0.20871*FF_CR_MULTIJET) + (1.60011*FF_CR_WJETS);
+			 if(pt < 60) return (-0.20997*FF_CR_MULTIJET) + (1.60977*FF_CR_WJETS);
+			 if(pt < 80) return (-0.22167*FF_CR_MULTIJET) + (1.69947*FF_CR_WJETS);
+			 if(pt < 3500) return (-0.616284*FF_CR_MULTIJET) + (1.824684*FF_CR_WJETS);
 			 else return 0;
 		 }
 		 else return 0;
@@ -1493,6 +1672,26 @@ float GetFFCombined_Heavy_Flavour_FF_1up(float pt, int ntracks, float FF_CR_MULT
 		 }
 		 else return 0;
 	 }
+	 //! Combined FFs for (MET_TRIG_EFF_CR_NOM) target region
+	 if (index==2011) {
+		 if(ntracks==1){
+			 else return 0;
+		 }
+		 if(ntracks==3){
+			 else return 0;
+		 }
+		 else return 0;
+	 }
+	 //! Combined FFs for (OVERLAP_TAULEP) target region
+	 if (index==2001) {
+		 if(ntracks==1){
+			 else return 0;
+		 }
+		 if(ntracks==3){
+			 else return 0;
+		 }
+		 else return 0;
+	 }
 	 //! Combined FFs for (FF_CR_WJETS) target region
 	 if (index==9002) {
 	 return FF_CR_WJETS;
@@ -1518,7 +1717,16 @@ float GetFFCombined_Heavy_Flavour_FF_1up(float pt, int ntracks, float FF_CR_MULT
 		 }
 		 else return 0;
 	 }
-
+	 //! Combined FFs for (MET_TRIG_EFF_CR_NOM) target region
+	 if (index==2011) {
+		 if(ntracks==1){
+			 else return 0;
+		 }
+		 if(ntracks==3){
+			 else return 0;
+		 }
+		 else return 0;
+	 }
 	 else return 0;
 }
 
@@ -1527,18 +1735,18 @@ float GetFFCombined_Heavy_Flavour_FF_1down(float pt, int ntracks, float FF_CR_MU
 	 //! Combined FFs for (SR_TAUJET) target region
 	 if (index==1001) {
 		 if(ntracks==1){
-			 if(pt < 45) return (-0.0800000000001*FF_CR_MULTIJET) + (1.08*FF_CR_WJETS);
-			 if(pt < 50) return (0.22*FF_CR_MULTIJET) + (0.78*FF_CR_WJETS);
-			 if(pt < 60) return (0.0399999999999*FF_CR_MULTIJET) + (0.96*FF_CR_WJETS);
-			 if(pt < 80) return (0.16*FF_CR_MULTIJET) + (0.84*FF_CR_WJETS);
-			 if(pt < 100) return (0.33*FF_CR_MULTIJET) + (0.67*FF_CR_WJETS);
+			 if(pt < 45) return (-0.0500000000001*FF_CR_MULTIJET) + (1.05*FF_CR_WJETS);
+			 if(pt < 50) return (0.26*FF_CR_MULTIJET) + (0.74*FF_CR_WJETS);
+			 if(pt < 60) return (0.0799999999999*FF_CR_MULTIJET) + (0.92*FF_CR_WJETS);
+			 if(pt < 80) return (0.22*FF_CR_MULTIJET) + (0.78*FF_CR_WJETS);
+			 if(pt < 100) return (0.38*FF_CR_MULTIJET) + (0.62*FF_CR_WJETS);
 			 if(pt < 3500) return (0.22*FF_CR_MULTIJET) + (0.78*FF_CR_WJETS);
 			 else return 0;
 		 }
 		 if(ntracks==3){
-			 if(pt < 60) return (0.25*FF_CR_MULTIJET) + (0.75*FF_CR_WJETS);
-			 if(pt < 80) return (0.0899999999999*FF_CR_MULTIJET) + (0.91*FF_CR_WJETS);
-			 if(pt < 3500) return (0.36*FF_CR_MULTIJET) + (0.64*FF_CR_WJETS);
+			 if(pt < 60) return (0.26*FF_CR_MULTIJET) + (0.74*FF_CR_WJETS);
+			 if(pt < 80) return (0.0999999999999*FF_CR_MULTIJET) + (0.9*FF_CR_WJETS);
+			 if(pt < 3500) return (0.35*FF_CR_MULTIJET) + (0.65*FF_CR_WJETS);
 			 else return 0;
 		 }
 		 else return 0;
@@ -1640,6 +1848,16 @@ float GetFFCombined_Heavy_Flavour_FF_1down(float pt, int ntracks, float FF_CR_MU
 		 }
 		 else return 0;
 	 }
+	 //! Combined FFs for (OVERLAP_TAUJET) target region
+	 if (index==1001) {
+		 if(ntracks==1){
+			 else return 0;
+		 }
+		 if(ntracks==3){
+			 else return 0;
+		 }
+		 else return 0;
+	 }
 	 //! Combined FFs for (FF_CR_MULTIJET) target region
 	 if (index==9001) {
 	 return FF_CR_MULTIJET;
@@ -1666,20 +1884,20 @@ float GetFFCombined_Heavy_Flavour_FF_1down(float pt, int ntracks, float FF_CR_MU
 	 //! Combined FFs for (SR_TAULEP) target region
 	 if (index==2001) {
 		 if(ntracks==1){
-			 if(pt < 40) return (-0.77*FF_CR_MULTIJET) + (1.77*FF_CR_WJETS);
-			 if(pt < 45) return (-0.66*FF_CR_MULTIJET) + (1.66*FF_CR_WJETS);
+			 if(pt < 40) return (-0.78*FF_CR_MULTIJET) + (1.78*FF_CR_WJETS);
+			 if(pt < 45) return (-0.67*FF_CR_MULTIJET) + (1.67*FF_CR_WJETS);
 			 if(pt < 50) return (-0.37*FF_CR_MULTIJET) + (1.37*FF_CR_WJETS);
 			 if(pt < 60) return (-0.4*FF_CR_MULTIJET) + (1.4*FF_CR_WJETS);
-			 if(pt < 80) return (-0.31*FF_CR_MULTIJET) + (1.31*FF_CR_WJETS);
-			 if(pt < 100) return (-0.2*FF_CR_MULTIJET) + (1.2*FF_CR_WJETS);
-			 if(pt < 3500) return (-0.32*FF_CR_MULTIJET) + (1.32*FF_CR_WJETS);
+			 if(pt < 80) return (-0.32*FF_CR_MULTIJET) + (1.32*FF_CR_WJETS);
+			 if(pt < 100) return (-0.19*FF_CR_MULTIJET) + (1.19*FF_CR_WJETS);
+			 if(pt < 3500) return (-0.35*FF_CR_MULTIJET) + (1.35*FF_CR_WJETS);
 			 else return 0;
 		 }
 		 if(ntracks==3){
 			 if(pt < 40) return (-0.19*FF_CR_MULTIJET) + (1.19*FF_CR_WJETS);
 			 if(pt < 60) return (-0.17*FF_CR_MULTIJET) + (1.17*FF_CR_WJETS);
 			 if(pt < 80) return (-0.15*FF_CR_MULTIJET) + (1.15*FF_CR_WJETS);
-			 if(pt < 3500) return (-0.24*FF_CR_MULTIJET) + (1.24*FF_CR_WJETS);
+			 if(pt < 3500) return (-0.25*FF_CR_MULTIJET) + (1.25*FF_CR_WJETS);
 			 else return 0;
 		 }
 		 else return 0;
@@ -1687,20 +1905,20 @@ float GetFFCombined_Heavy_Flavour_FF_1down(float pt, int ntracks, float FF_CR_MU
 	 //! Combined FFs for (SR_TAUEL) target region
 	 if (index==2002) {
 		 if(ntracks==1){
-			 if(pt < 40) return (-0.78*FF_CR_MULTIJET) + (1.78*FF_CR_WJETS);
-			 if(pt < 45) return (-0.66*FF_CR_MULTIJET) + (1.66*FF_CR_WJETS);
+			 if(pt < 40) return (-0.8*FF_CR_MULTIJET) + (1.8*FF_CR_WJETS);
+			 if(pt < 45) return (-0.68*FF_CR_MULTIJET) + (1.68*FF_CR_WJETS);
 			 if(pt < 50) return (-0.37*FF_CR_MULTIJET) + (1.37*FF_CR_WJETS);
-			 if(pt < 60) return (-0.39*FF_CR_MULTIJET) + (1.39*FF_CR_WJETS);
+			 if(pt < 60) return (-0.38*FF_CR_MULTIJET) + (1.38*FF_CR_WJETS);
 			 if(pt < 80) return (-0.35*FF_CR_MULTIJET) + (1.35*FF_CR_WJETS);
-			 if(pt < 100) return (-0.29*FF_CR_MULTIJET) + (1.29*FF_CR_WJETS);
-			 if(pt < 3500) return (-0.42*FF_CR_MULTIJET) + (1.42*FF_CR_WJETS);
+			 if(pt < 100) return (-0.31*FF_CR_MULTIJET) + (1.31*FF_CR_WJETS);
+			 if(pt < 3500) return (-0.45*FF_CR_MULTIJET) + (1.45*FF_CR_WJETS);
 			 else return 0;
 		 }
 		 if(ntracks==3){
-			 if(pt < 40) return (-0.22*FF_CR_MULTIJET) + (1.22*FF_CR_WJETS);
+			 if(pt < 40) return (-0.24*FF_CR_MULTIJET) + (1.24*FF_CR_WJETS);
 			 if(pt < 60) return (-0.21*FF_CR_MULTIJET) + (1.21*FF_CR_WJETS);
 			 if(pt < 80) return (-0.15*FF_CR_MULTIJET) + (1.15*FF_CR_WJETS);
-			 if(pt < 3500) return (-0.26*FF_CR_MULTIJET) + (1.26*FF_CR_WJETS);
+			 if(pt < 3500) return (-0.27*FF_CR_MULTIJET) + (1.27*FF_CR_WJETS);
 			 else return 0;
 		 }
 		 else return 0;
@@ -1708,19 +1926,19 @@ float GetFFCombined_Heavy_Flavour_FF_1down(float pt, int ntracks, float FF_CR_MU
 	 //! Combined FFs for (SR_TAUMU) target region
 	 if (index==2003) {
 		 if(ntracks==1){
-			 if(pt < 40) return (-0.78*FF_CR_MULTIJET) + (1.78*FF_CR_WJETS);
+			 if(pt < 40) return (-0.77*FF_CR_MULTIJET) + (1.77*FF_CR_WJETS);
 			 if(pt < 45) return (-0.68*FF_CR_MULTIJET) + (1.68*FF_CR_WJETS);
 			 if(pt < 50) return (-0.4*FF_CR_MULTIJET) + (1.4*FF_CR_WJETS);
-			 if(pt < 60) return (-0.45*FF_CR_MULTIJET) + (1.45*FF_CR_WJETS);
+			 if(pt < 60) return (-0.46*FF_CR_MULTIJET) + (1.46*FF_CR_WJETS);
 			 if(pt < 80) return (-0.32*FF_CR_MULTIJET) + (1.32*FF_CR_WJETS);
-			 if(pt < 100) return (-0.22*FF_CR_MULTIJET) + (1.22*FF_CR_WJETS);
-			 if(pt < 3500) return (-0.14*FF_CR_MULTIJET) + (1.14*FF_CR_WJETS);
+			 if(pt < 100) return (-0.2*FF_CR_MULTIJET) + (1.2*FF_CR_WJETS);
+			 if(pt < 3500) return (-0.19*FF_CR_MULTIJET) + (1.19*FF_CR_WJETS);
 			 else return 0;
 		 }
 		 if(ntracks==3){
-			 if(pt < 40) return (-0.17*FF_CR_MULTIJET) + (1.17*FF_CR_WJETS);
+			 if(pt < 40) return (-0.16*FF_CR_MULTIJET) + (1.16*FF_CR_WJETS);
 			 if(pt < 60) return (-0.17*FF_CR_MULTIJET) + (1.17*FF_CR_WJETS);
-			 if(pt < 80) return (-0.17*FF_CR_MULTIJET) + (1.17*FF_CR_WJETS);
+			 if(pt < 80) return (-0.16*FF_CR_MULTIJET) + (1.16*FF_CR_WJETS);
 			 if(pt < 3500) return (-0.2*FF_CR_MULTIJET) + (1.2*FF_CR_WJETS);
 			 else return 0;
 		 }
@@ -1810,24 +2028,37 @@ float GetFFCombined_Heavy_Flavour_FF_1down(float pt, int ntracks, float FF_CR_MU
 		 }
 		 else return 0;
 	 }
-
-	 //! Combined FFs for (ZEE) target region
-	 if (index==2009) {
+	 //! Combined FFs for (DILEP_BTAG) target region
+	 if (index==2006) {
+	 return 0;
+	}
+	 //! Combined FFs for (DILEP_BVETO) target region
+	 if (index==2006) {
 		 if(ntracks==1){
-			 if(pt < 40) return (-0.11*FF_CR_MULTIJET) + (1.11*FF_CR_WJETS);
-			 if(pt < 45) return (-0.0100000000001*FF_CR_MULTIJET) + (1.01*FF_CR_WJETS);
-			 if(pt < 50) return (0.0299999999999*FF_CR_MULTIJET) + (0.97*FF_CR_WJETS);
-			 if(pt < 60) return (0.0199999999999*FF_CR_MULTIJET) + (0.98*FF_CR_WJETS);
-			 if(pt < 80) return (-0.0600000000001*FF_CR_MULTIJET) + (1.06*FF_CR_WJETS);
-			 if(pt < 100) return (-0.0900000000001*FF_CR_MULTIJET) + (1.09*FF_CR_WJETS);
-			 if(pt < 3500) return (-0.29*FF_CR_MULTIJET) + (1.29*FF_CR_WJETS);
 			 else return 0;
 		 }
 		 if(ntracks==3){
-			 if(pt < 40) return (-8.52651282912e-14*FF_CR_MULTIJET) + (1.0*FF_CR_WJETS);
-			 if(pt < 60) return (-0.0300000000001*FF_CR_MULTIJET) + (1.03*FF_CR_WJETS);
+			 else return 0;
+		 }
+		 else return 0;
+	 }
+	 //! Combined FFs for (ZEE) target region
+	 if (index==2009) {
+		 if(ntracks==1){
+			 if(pt < 40) return (-0.29*FF_CR_MULTIJET) + (1.29*FF_CR_WJETS);
+			 if(pt < 45) return (-0.17*FF_CR_MULTIJET) + (1.17*FF_CR_WJETS);
+			 if(pt < 50) return (0.00999999999991*FF_CR_MULTIJET) + (0.99*FF_CR_WJETS);
+			 if(pt < 60) return (-0.0400000000001*FF_CR_MULTIJET) + (1.04*FF_CR_WJETS);
 			 if(pt < 80) return (-0.0100000000001*FF_CR_MULTIJET) + (1.01*FF_CR_WJETS);
-			 if(pt < 3500) return (-0.28*FF_CR_MULTIJET) + (1.28*FF_CR_WJETS);
+			 if(pt < 100) return (0.0799999999999*FF_CR_MULTIJET) + (0.92*FF_CR_WJETS);
+			 if(pt < 3500) return (-0.46*FF_CR_MULTIJET) + (1.46*FF_CR_WJETS);
+			 else return 0;
+		 }
+		 if(ntracks==3){
+			 if(pt < 40) return (-0.15*FF_CR_MULTIJET) + (1.15*FF_CR_WJETS);
+			 if(pt < 60) return (-0.15*FF_CR_MULTIJET) + (1.15*FF_CR_WJETS);
+			 if(pt < 80) return (-0.15*FF_CR_MULTIJET) + (1.15*FF_CR_WJETS);
+			 if(pt < 3500) return (-0.51*FF_CR_MULTIJET) + (1.51*FF_CR_WJETS);
 			 else return 0;
 		 }
 		 else return 0;
@@ -1874,6 +2105,26 @@ float GetFFCombined_Heavy_Flavour_FF_1down(float pt, int ntracks, float FF_CR_MU
 		 }
 		 else return 0;
 	 }
+	 //! Combined FFs for (MET_TRIG_EFF_CR_NOM) target region
+	 if (index==2011) {
+		 if(ntracks==1){
+			 else return 0;
+		 }
+		 if(ntracks==3){
+			 else return 0;
+		 }
+		 else return 0;
+	 }
+	 //! Combined FFs for (OVERLAP_TAULEP) target region
+	 if (index==2001) {
+		 if(ntracks==1){
+			 else return 0;
+		 }
+		 if(ntracks==3){
+			 else return 0;
+		 }
+		 else return 0;
+	 }
 	 //! Combined FFs for (FF_CR_WJETS) target region
 	 if (index==9002) {
 	 return FF_CR_WJETS;
@@ -1899,7 +2150,16 @@ float GetFFCombined_Heavy_Flavour_FF_1down(float pt, int ntracks, float FF_CR_MU
 		 }
 		 else return 0;
 	 }
-
+	 //! Combined FFs for (MET_TRIG_EFF_CR_NOM) target region
+	 if (index==2011) {
+		 if(ntracks==1){
+			 else return 0;
+		 }
+		 if(ntracks==3){
+			 else return 0;
+		 }
+		 else return 0;
+	 }
 	 else return 0;
 }
 
@@ -1908,18 +2168,18 @@ float GetFFCombined_binning_1up(float pt, int ntracks, float FF_CR_MULTIJET, flo
 	 //! Combined FFs for (SR_TAUJET) target region
 	 if (index==1001) {
 		 if(ntracks==1){
-			 if(pt < 45) return (-0.0800000000001*FF_CR_MULTIJET) + (1.08*FF_CR_WJETS);
-			 if(pt < 50) return (0.27*FF_CR_MULTIJET) + (0.73*FF_CR_WJETS);
-			 if(pt < 60) return (0.12*FF_CR_MULTIJET) + (0.88*FF_CR_WJETS);
-			 if(pt < 80) return (0.3*FF_CR_MULTIJET) + (0.7*FF_CR_WJETS);
-			 if(pt < 100) return (0.49*FF_CR_MULTIJET) + (0.51*FF_CR_WJETS);
-			 if(pt < 3500) return (0.32*FF_CR_MULTIJET) + (0.68*FF_CR_WJETS);
+			 if(pt < 45) return (-0.0400000000001*FF_CR_MULTIJET) + (1.04*FF_CR_WJETS);
+			 if(pt < 50) return (0.33*FF_CR_MULTIJET) + (0.67*FF_CR_WJETS);
+			 if(pt < 60) return (0.15*FF_CR_MULTIJET) + (0.85*FF_CR_WJETS);
+			 if(pt < 80) return (0.32*FF_CR_MULTIJET) + (0.68*FF_CR_WJETS);
+			 if(pt < 100) return (0.71*FF_CR_MULTIJET) + (0.29*FF_CR_WJETS);
+			 if(pt < 3500) return (0.31*FF_CR_MULTIJET) + (0.69*FF_CR_WJETS);
 			 else return 0;
 		 }
 		 if(ntracks==3){
-			 if(pt < 60) return (0.25*FF_CR_MULTIJET) + (0.75*FF_CR_WJETS);
-			 if(pt < 80) return (0.0899999999999*FF_CR_MULTIJET) + (0.91*FF_CR_WJETS);
-			 if(pt < 3500) return (0.36*FF_CR_MULTIJET) + (0.64*FF_CR_WJETS);
+			 if(pt < 60) return (0.26*FF_CR_MULTIJET) + (0.74*FF_CR_WJETS);
+			 if(pt < 80) return (0.0999999999999*FF_CR_MULTIJET) + (0.9*FF_CR_WJETS);
+			 if(pt < 3500) return (0.35*FF_CR_MULTIJET) + (0.65*FF_CR_WJETS);
 			 else return 0;
 		 }
 		 else return 0;
@@ -2021,6 +2281,16 @@ float GetFFCombined_binning_1up(float pt, int ntracks, float FF_CR_MULTIJET, flo
 		 }
 		 else return 0;
 	 }
+	 //! Combined FFs for (OVERLAP_TAUJET) target region
+	 if (index==1001) {
+		 if(ntracks==1){
+			 else return 0;
+		 }
+		 if(ntracks==3){
+			 else return 0;
+		 }
+		 else return 0;
+	 }
 	 //! Combined FFs for (FF_CR_MULTIJET) target region
 	 if (index==9001) {
 	 return FF_CR_MULTIJET;
@@ -2047,20 +2317,20 @@ float GetFFCombined_binning_1up(float pt, int ntracks, float FF_CR_MULTIJET, flo
 	 //! Combined FFs for (SR_TAULEP) target region
 	 if (index==2001) {
 		 if(ntracks==1){
-			 if(pt < 40) return (-0.58*FF_CR_MULTIJET) + (1.58*FF_CR_WJETS);
-			 if(pt < 45) return (-0.55*FF_CR_MULTIJET) + (1.55*FF_CR_WJETS);
-			 if(pt < 50) return (-0.29*FF_CR_MULTIJET) + (1.29*FF_CR_WJETS);
-			 if(pt < 60) return (-0.18*FF_CR_MULTIJET) + (1.18*FF_CR_WJETS);
-			 if(pt < 80) return (-0.2*FF_CR_MULTIJET) + (1.2*FF_CR_WJETS);
-			 if(pt < 100) return (-0.12*FF_CR_MULTIJET) + (1.12*FF_CR_WJETS);
-			 if(pt < 3500) return (0.3*FF_CR_MULTIJET) + (0.7*FF_CR_WJETS);
+			 if(pt < 40) return (-0.59*FF_CR_MULTIJET) + (1.59*FF_CR_WJETS);
+			 if(pt < 45) return (-0.57*FF_CR_MULTIJET) + (1.57*FF_CR_WJETS);
+			 if(pt < 50) return (-0.28*FF_CR_MULTIJET) + (1.28*FF_CR_WJETS);
+			 if(pt < 60) return (-0.17*FF_CR_MULTIJET) + (1.17*FF_CR_WJETS);
+			 if(pt < 80) return (-0.19*FF_CR_MULTIJET) + (1.19*FF_CR_WJETS);
+			 if(pt < 100) return (-0.11*FF_CR_MULTIJET) + (1.11*FF_CR_WJETS);
+			 if(pt < 3500) return (0.23*FF_CR_MULTIJET) + (0.77*FF_CR_WJETS);
 			 else return 0;
 		 }
 		 if(ntracks==3){
 			 if(pt < 40) return (-0.19*FF_CR_MULTIJET) + (1.19*FF_CR_WJETS);
 			 if(pt < 60) return (-0.17*FF_CR_MULTIJET) + (1.17*FF_CR_WJETS);
 			 if(pt < 80) return (-0.15*FF_CR_MULTIJET) + (1.15*FF_CR_WJETS);
-			 if(pt < 3500) return (-0.24*FF_CR_MULTIJET) + (1.24*FF_CR_WJETS);
+			 if(pt < 3500) return (-0.25*FF_CR_MULTIJET) + (1.25*FF_CR_WJETS);
 			 else return 0;
 		 }
 		 else return 0;
@@ -2068,20 +2338,20 @@ float GetFFCombined_binning_1up(float pt, int ntracks, float FF_CR_MULTIJET, flo
 	 //! Combined FFs for (SR_TAUEL) target region
 	 if (index==2002) {
 		 if(ntracks==1){
-			 if(pt < 40) return (-0.63*FF_CR_MULTIJET) + (1.63*FF_CR_WJETS);
-			 if(pt < 45) return (-0.55*FF_CR_MULTIJET) + (1.55*FF_CR_WJETS);
+			 if(pt < 40) return (-0.65*FF_CR_MULTIJET) + (1.65*FF_CR_WJETS);
+			 if(pt < 45) return (-0.57*FF_CR_MULTIJET) + (1.57*FF_CR_WJETS);
 			 if(pt < 50) return (-0.23*FF_CR_MULTIJET) + (1.23*FF_CR_WJETS);
-			 if(pt < 60) return (-0.19*FF_CR_MULTIJET) + (1.19*FF_CR_WJETS);
+			 if(pt < 60) return (-0.17*FF_CR_MULTIJET) + (1.17*FF_CR_WJETS);
 			 if(pt < 80) return (-0.2*FF_CR_MULTIJET) + (1.2*FF_CR_WJETS);
-			 if(pt < 100) return (-0.22*FF_CR_MULTIJET) + (1.22*FF_CR_WJETS);
-			 if(pt < 3500) return (-0.22*FF_CR_MULTIJET) + (1.22*FF_CR_WJETS);
+			 if(pt < 100) return (-0.3*FF_CR_MULTIJET) + (1.3*FF_CR_WJETS);
+			 if(pt < 3500) return (-0.27*FF_CR_MULTIJET) + (1.27*FF_CR_WJETS);
 			 else return 0;
 		 }
 		 if(ntracks==3){
-			 if(pt < 40) return (-0.22*FF_CR_MULTIJET) + (1.22*FF_CR_WJETS);
+			 if(pt < 40) return (-0.24*FF_CR_MULTIJET) + (1.24*FF_CR_WJETS);
 			 if(pt < 60) return (-0.21*FF_CR_MULTIJET) + (1.21*FF_CR_WJETS);
 			 if(pt < 80) return (-0.15*FF_CR_MULTIJET) + (1.15*FF_CR_WJETS);
-			 if(pt < 3500) return (-0.26*FF_CR_MULTIJET) + (1.26*FF_CR_WJETS);
+			 if(pt < 3500) return (-0.27*FF_CR_MULTIJET) + (1.27*FF_CR_WJETS);
 			 else return 0;
 		 }
 		 else return 0;
@@ -2089,19 +2359,19 @@ float GetFFCombined_binning_1up(float pt, int ntracks, float FF_CR_MULTIJET, flo
 	 //! Combined FFs for (SR_TAUMU) target region
 	 if (index==2003) {
 		 if(ntracks==1){
-			 if(pt < 40) return (-0.57*FF_CR_MULTIJET) + (1.57*FF_CR_WJETS);
+			 if(pt < 40) return (-0.58*FF_CR_MULTIJET) + (1.58*FF_CR_WJETS);
 			 if(pt < 45) return (-0.62*FF_CR_MULTIJET) + (1.62*FF_CR_WJETS);
-			 if(pt < 50) return (-0.4*FF_CR_MULTIJET) + (1.4*FF_CR_WJETS);
-			 if(pt < 60) return (-0.21*FF_CR_MULTIJET) + (1.21*FF_CR_WJETS);
-			 if(pt < 80) return (-0.26*FF_CR_MULTIJET) + (1.26*FF_CR_WJETS);
-			 if(pt < 100) return (-0.0700000000001*FF_CR_MULTIJET) + (1.07*FF_CR_WJETS);
-			 if(pt < 3500) return (0.75*FF_CR_MULTIJET) + (0.25*FF_CR_WJETS);
+			 if(pt < 50) return (-0.39*FF_CR_MULTIJET) + (1.39*FF_CR_WJETS);
+			 if(pt < 60) return (-0.22*FF_CR_MULTIJET) + (1.22*FF_CR_WJETS);
+			 if(pt < 80) return (-0.24*FF_CR_MULTIJET) + (1.24*FF_CR_WJETS);
+			 if(pt < 100) return (-0.0600000000001*FF_CR_MULTIJET) + (1.06*FF_CR_WJETS);
+			 if(pt < 3500) return (0.66*FF_CR_MULTIJET) + (0.34*FF_CR_WJETS);
 			 else return 0;
 		 }
 		 if(ntracks==3){
-			 if(pt < 40) return (-0.17*FF_CR_MULTIJET) + (1.17*FF_CR_WJETS);
+			 if(pt < 40) return (-0.16*FF_CR_MULTIJET) + (1.16*FF_CR_WJETS);
 			 if(pt < 60) return (-0.17*FF_CR_MULTIJET) + (1.17*FF_CR_WJETS);
-			 if(pt < 80) return (-0.17*FF_CR_MULTIJET) + (1.17*FF_CR_WJETS);
+			 if(pt < 80) return (-0.16*FF_CR_MULTIJET) + (1.16*FF_CR_WJETS);
 			 if(pt < 3500) return (-0.2*FF_CR_MULTIJET) + (1.2*FF_CR_WJETS);
 			 else return 0;
 		 }
@@ -2191,7 +2461,20 @@ float GetFFCombined_binning_1up(float pt, int ntracks, float FF_CR_MULTIJET, flo
 		 }
 		 else return 0;
 	 }
-
+	 //! Combined FFs for (DILEP_BTAG) target region
+	 if (index==2006) {
+	 return 0;
+	}
+	 //! Combined FFs for (DILEP_BVETO) target region
+	 if (index==2006) {
+		 if(ntracks==1){
+			 else return 0;
+		 }
+		 if(ntracks==3){
+			 else return 0;
+		 }
+		 else return 0;
+	 }
 	 //! Combined FFs for (ZEE) target region
 	 if (index==2009) {
 		 if(ntracks==1){
@@ -2199,16 +2482,16 @@ float GetFFCombined_binning_1up(float pt, int ntracks, float FF_CR_MULTIJET, flo
 			 if(pt < 45) return (-0.0100000000001*FF_CR_MULTIJET) + (1.01*FF_CR_WJETS);
 			 if(pt < 50) return (0.0599999999999*FF_CR_MULTIJET) + (0.94*FF_CR_WJETS);
 			 if(pt < 60) return (0.0399999999999*FF_CR_MULTIJET) + (0.96*FF_CR_WJETS);
-			 if(pt < 80) return (0.18*FF_CR_MULTIJET) + (0.82*FF_CR_WJETS);
-			 if(pt < 100) return (0.0799999999999*FF_CR_MULTIJET) + (0.92*FF_CR_WJETS);
+			 if(pt < 80) return (0.28*FF_CR_MULTIJET) + (0.72*FF_CR_WJETS);
+			 if(pt < 100) return (0.42*FF_CR_MULTIJET) + (0.58*FF_CR_WJETS);
 			 if(pt < 3500) return (0.66*FF_CR_MULTIJET) + (0.34*FF_CR_WJETS);
 			 else return 0;
 		 }
 		 if(ntracks==3){
-			 if(pt < 40) return (-8.52651282912e-14*FF_CR_MULTIJET) + (1.0*FF_CR_WJETS);
-			 if(pt < 60) return (-0.0300000000001*FF_CR_MULTIJET) + (1.03*FF_CR_WJETS);
-			 if(pt < 80) return (-0.0100000000001*FF_CR_MULTIJET) + (1.01*FF_CR_WJETS);
-			 if(pt < 3500) return (-0.28*FF_CR_MULTIJET) + (1.28*FF_CR_WJETS);
+			 if(pt < 40) return (-0.15*FF_CR_MULTIJET) + (1.15*FF_CR_WJETS);
+			 if(pt < 60) return (-0.15*FF_CR_MULTIJET) + (1.15*FF_CR_WJETS);
+			 if(pt < 80) return (-0.15*FF_CR_MULTIJET) + (1.15*FF_CR_WJETS);
+			 if(pt < 3500) return (-0.51*FF_CR_MULTIJET) + (1.51*FF_CR_WJETS);
 			 else return 0;
 		 }
 		 else return 0;
@@ -2255,6 +2538,26 @@ float GetFFCombined_binning_1up(float pt, int ntracks, float FF_CR_MULTIJET, flo
 		 }
 		 else return 0;
 	 }
+	 //! Combined FFs for (MET_TRIG_EFF_CR_NOM) target region
+	 if (index==2011) {
+		 if(ntracks==1){
+			 else return 0;
+		 }
+		 if(ntracks==3){
+			 else return 0;
+		 }
+		 else return 0;
+	 }
+	 //! Combined FFs for (OVERLAP_TAULEP) target region
+	 if (index==2001) {
+		 if(ntracks==1){
+			 else return 0;
+		 }
+		 if(ntracks==3){
+			 else return 0;
+		 }
+		 else return 0;
+	 }
 	 //! Combined FFs for (FF_CR_WJETS) target region
 	 if (index==9002) {
 	 return FF_CR_WJETS;
@@ -2280,7 +2583,16 @@ float GetFFCombined_binning_1up(float pt, int ntracks, float FF_CR_MULTIJET, flo
 		 }
 		 else return 0;
 	 }
-
+	 //! Combined FFs for (MET_TRIG_EFF_CR_NOM) target region
+	 if (index==2011) {
+		 if(ntracks==1){
+			 else return 0;
+		 }
+		 if(ntracks==3){
+			 else return 0;
+		 }
+		 else return 0;
+	 }
 	 else return 0;
 }
 
@@ -2289,18 +2601,18 @@ float GetFFCombined_binning_1down(float pt, int ntracks, float FF_CR_MULTIJET, f
 	 //! Combined FFs for (SR_TAUJET) target region
 	 if (index==1001) {
 		 if(ntracks==1){
-			 if(pt < 45) return (-0.0800000000001*FF_CR_MULTIJET) + (1.08*FF_CR_WJETS);
-			 if(pt < 50) return (0.17*FF_CR_MULTIJET) + (0.83*FF_CR_WJETS);
-			 if(pt < 60) return (-0.0400000000001*FF_CR_MULTIJET) + (1.04*FF_CR_WJETS);
-			 if(pt < 80) return (0.0199999999999*FF_CR_MULTIJET) + (0.98*FF_CR_WJETS);
-			 if(pt < 100) return (0.17*FF_CR_MULTIJET) + (0.83*FF_CR_WJETS);
-			 if(pt < 3500) return (0.12*FF_CR_MULTIJET) + (0.88*FF_CR_WJETS);
+			 if(pt < 45) return (-0.0600000000001*FF_CR_MULTIJET) + (1.06*FF_CR_WJETS);
+			 if(pt < 50) return (0.19*FF_CR_MULTIJET) + (0.81*FF_CR_WJETS);
+			 if(pt < 60) return (0.00999999999991*FF_CR_MULTIJET) + (0.99*FF_CR_WJETS);
+			 if(pt < 80) return (0.12*FF_CR_MULTIJET) + (0.88*FF_CR_WJETS);
+			 if(pt < 100) return (0.0499999999999*FF_CR_MULTIJET) + (0.95*FF_CR_WJETS);
+			 if(pt < 3500) return (0.13*FF_CR_MULTIJET) + (0.87*FF_CR_WJETS);
 			 else return 0;
 		 }
 		 if(ntracks==3){
-			 if(pt < 60) return (0.25*FF_CR_MULTIJET) + (0.75*FF_CR_WJETS);
-			 if(pt < 80) return (0.0899999999999*FF_CR_MULTIJET) + (0.91*FF_CR_WJETS);
-			 if(pt < 3500) return (0.36*FF_CR_MULTIJET) + (0.64*FF_CR_WJETS);
+			 if(pt < 60) return (0.26*FF_CR_MULTIJET) + (0.74*FF_CR_WJETS);
+			 if(pt < 80) return (0.0999999999999*FF_CR_MULTIJET) + (0.9*FF_CR_WJETS);
+			 if(pt < 3500) return (0.35*FF_CR_MULTIJET) + (0.65*FF_CR_WJETS);
 			 else return 0;
 		 }
 		 else return 0;
@@ -2402,6 +2714,16 @@ float GetFFCombined_binning_1down(float pt, int ntracks, float FF_CR_MULTIJET, f
 		 }
 		 else return 0;
 	 }
+	 //! Combined FFs for (OVERLAP_TAUJET) target region
+	 if (index==1001) {
+		 if(ntracks==1){
+			 else return 0;
+		 }
+		 if(ntracks==3){
+			 else return 0;
+		 }
+		 else return 0;
+	 }
 	 //! Combined FFs for (FF_CR_MULTIJET) target region
 	 if (index==9001) {
 	 return FF_CR_MULTIJET;
@@ -2428,20 +2750,20 @@ float GetFFCombined_binning_1down(float pt, int ntracks, float FF_CR_MULTIJET, f
 	 //! Combined FFs for (SR_TAULEP) target region
 	 if (index==2001) {
 		 if(ntracks==1){
-			 if(pt < 40) return (-0.96*FF_CR_MULTIJET) + (1.96*FF_CR_WJETS);
+			 if(pt < 40) return (-0.97*FF_CR_MULTIJET) + (1.97*FF_CR_WJETS);
 			 if(pt < 45) return (-0.77*FF_CR_MULTIJET) + (1.77*FF_CR_WJETS);
-			 if(pt < 50) return (-0.45*FF_CR_MULTIJET) + (1.45*FF_CR_WJETS);
-			 if(pt < 60) return (-0.62*FF_CR_MULTIJET) + (1.62*FF_CR_WJETS);
-			 if(pt < 80) return (-0.42*FF_CR_MULTIJET) + (1.42*FF_CR_WJETS);
-			 if(pt < 100) return (-0.28*FF_CR_MULTIJET) + (1.28*FF_CR_WJETS);
-			 if(pt < 3500) return (-0.94*FF_CR_MULTIJET) + (1.94*FF_CR_WJETS);
+			 if(pt < 50) return (-0.46*FF_CR_MULTIJET) + (1.46*FF_CR_WJETS);
+			 if(pt < 60) return (-0.63*FF_CR_MULTIJET) + (1.63*FF_CR_WJETS);
+			 if(pt < 80) return (-0.45*FF_CR_MULTIJET) + (1.45*FF_CR_WJETS);
+			 if(pt < 100) return (-0.27*FF_CR_MULTIJET) + (1.27*FF_CR_WJETS);
+			 if(pt < 3500) return (-0.93*FF_CR_MULTIJET) + (1.93*FF_CR_WJETS);
 			 else return 0;
 		 }
 		 if(ntracks==3){
 			 if(pt < 40) return (-0.19*FF_CR_MULTIJET) + (1.19*FF_CR_WJETS);
 			 if(pt < 60) return (-0.17*FF_CR_MULTIJET) + (1.17*FF_CR_WJETS);
 			 if(pt < 80) return (-0.15*FF_CR_MULTIJET) + (1.15*FF_CR_WJETS);
-			 if(pt < 3500) return (-0.24*FF_CR_MULTIJET) + (1.24*FF_CR_WJETS);
+			 if(pt < 3500) return (-0.25*FF_CR_MULTIJET) + (1.25*FF_CR_WJETS);
 			 else return 0;
 		 }
 		 else return 0;
@@ -2449,20 +2771,20 @@ float GetFFCombined_binning_1down(float pt, int ntracks, float FF_CR_MULTIJET, f
 	 //! Combined FFs for (SR_TAUEL) target region
 	 if (index==2002) {
 		 if(ntracks==1){
-			 if(pt < 40) return (-0.93*FF_CR_MULTIJET) + (1.93*FF_CR_WJETS);
-			 if(pt < 45) return (-0.77*FF_CR_MULTIJET) + (1.77*FF_CR_WJETS);
+			 if(pt < 40) return (-0.95*FF_CR_MULTIJET) + (1.95*FF_CR_WJETS);
+			 if(pt < 45) return (-0.79*FF_CR_MULTIJET) + (1.79*FF_CR_WJETS);
 			 if(pt < 50) return (-0.51*FF_CR_MULTIJET) + (1.51*FF_CR_WJETS);
 			 if(pt < 60) return (-0.59*FF_CR_MULTIJET) + (1.59*FF_CR_WJETS);
 			 if(pt < 80) return (-0.5*FF_CR_MULTIJET) + (1.5*FF_CR_WJETS);
-			 if(pt < 100) return (-0.36*FF_CR_MULTIJET) + (1.36*FF_CR_WJETS);
-			 if(pt < 3500) return (-0.62*FF_CR_MULTIJET) + (1.62*FF_CR_WJETS);
+			 if(pt < 100) return (-0.32*FF_CR_MULTIJET) + (1.32*FF_CR_WJETS);
+			 if(pt < 3500) return (-0.63*FF_CR_MULTIJET) + (1.63*FF_CR_WJETS);
 			 else return 0;
 		 }
 		 if(ntracks==3){
-			 if(pt < 40) return (-0.22*FF_CR_MULTIJET) + (1.22*FF_CR_WJETS);
+			 if(pt < 40) return (-0.24*FF_CR_MULTIJET) + (1.24*FF_CR_WJETS);
 			 if(pt < 60) return (-0.21*FF_CR_MULTIJET) + (1.21*FF_CR_WJETS);
 			 if(pt < 80) return (-0.15*FF_CR_MULTIJET) + (1.15*FF_CR_WJETS);
-			 if(pt < 3500) return (-0.26*FF_CR_MULTIJET) + (1.26*FF_CR_WJETS);
+			 if(pt < 3500) return (-0.27*FF_CR_MULTIJET) + (1.27*FF_CR_WJETS);
 			 else return 0;
 		 }
 		 else return 0;
@@ -2470,19 +2792,19 @@ float GetFFCombined_binning_1down(float pt, int ntracks, float FF_CR_MULTIJET, f
 	 //! Combined FFs for (SR_TAUMU) target region
 	 if (index==2003) {
 		 if(ntracks==1){
-			 if(pt < 40) return (-0.99*FF_CR_MULTIJET) + (1.99*FF_CR_WJETS);
+			 if(pt < 40) return (-0.96*FF_CR_MULTIJET) + (1.96*FF_CR_WJETS);
 			 if(pt < 45) return (-0.74*FF_CR_MULTIJET) + (1.74*FF_CR_WJETS);
-			 if(pt < 50) return (-0.4*FF_CR_MULTIJET) + (1.4*FF_CR_WJETS);
-			 if(pt < 60) return (-0.69*FF_CR_MULTIJET) + (1.69*FF_CR_WJETS);
-			 if(pt < 80) return (-0.38*FF_CR_MULTIJET) + (1.38*FF_CR_WJETS);
-			 if(pt < 100) return (-0.37*FF_CR_MULTIJET) + (1.37*FF_CR_WJETS);
-			 if(pt < 3500) return (-1.03*FF_CR_MULTIJET) + (2.03*FF_CR_WJETS);
+			 if(pt < 50) return (-0.41*FF_CR_MULTIJET) + (1.41*FF_CR_WJETS);
+			 if(pt < 60) return (-0.7*FF_CR_MULTIJET) + (1.7*FF_CR_WJETS);
+			 if(pt < 80) return (-0.4*FF_CR_MULTIJET) + (1.4*FF_CR_WJETS);
+			 if(pt < 100) return (-0.34*FF_CR_MULTIJET) + (1.34*FF_CR_WJETS);
+			 if(pt < 3500) return (-1.04*FF_CR_MULTIJET) + (2.04*FF_CR_WJETS);
 			 else return 0;
 		 }
 		 if(ntracks==3){
-			 if(pt < 40) return (-0.17*FF_CR_MULTIJET) + (1.17*FF_CR_WJETS);
+			 if(pt < 40) return (-0.16*FF_CR_MULTIJET) + (1.16*FF_CR_WJETS);
 			 if(pt < 60) return (-0.17*FF_CR_MULTIJET) + (1.17*FF_CR_WJETS);
-			 if(pt < 80) return (-0.17*FF_CR_MULTIJET) + (1.17*FF_CR_WJETS);
+			 if(pt < 80) return (-0.16*FF_CR_MULTIJET) + (1.16*FF_CR_WJETS);
 			 if(pt < 3500) return (-0.2*FF_CR_MULTIJET) + (1.2*FF_CR_WJETS);
 			 else return 0;
 		 }
@@ -2572,24 +2894,37 @@ float GetFFCombined_binning_1down(float pt, int ntracks, float FF_CR_MULTIJET, f
 		 }
 		 else return 0;
 	 }
-
-	 //! Combined FFs for (ZEE) target region
-	 if (index==2009) {
+	 //! Combined FFs for (DILEP_BTAG) target region
+	 if (index==2006) {
+	 return 0;
+	}
+	 //! Combined FFs for (DILEP_BVETO) target region
+	 if (index==2006) {
 		 if(ntracks==1){
-			 if(pt < 40) return (-0.26*FF_CR_MULTIJET) + (1.26*FF_CR_WJETS);
-			 if(pt < 45) return (-0.0100000000001*FF_CR_MULTIJET) + (1.01*FF_CR_WJETS);
-			 if(pt < 50) return (-8.52651282912e-14*FF_CR_MULTIJET) + (1.0*FF_CR_WJETS);
-			 if(pt < 60) return (-8.52651282912e-14*FF_CR_MULTIJET) + (1.0*FF_CR_WJETS);
-			 if(pt < 80) return (-0.3*FF_CR_MULTIJET) + (1.3*FF_CR_WJETS);
-			 if(pt < 100) return (-0.26*FF_CR_MULTIJET) + (1.26*FF_CR_WJETS);
-			 if(pt < 3500) return (-1.24*FF_CR_MULTIJET) + (2.24*FF_CR_WJETS);
 			 else return 0;
 		 }
 		 if(ntracks==3){
-			 if(pt < 40) return (-8.52651282912e-14*FF_CR_MULTIJET) + (1.0*FF_CR_WJETS);
-			 if(pt < 60) return (-0.0300000000001*FF_CR_MULTIJET) + (1.03*FF_CR_WJETS);
-			 if(pt < 80) return (-0.0100000000001*FF_CR_MULTIJET) + (1.01*FF_CR_WJETS);
-			 if(pt < 3500) return (-0.28*FF_CR_MULTIJET) + (1.28*FF_CR_WJETS);
+			 else return 0;
+		 }
+		 else return 0;
+	 }
+	 //! Combined FFs for (ZEE) target region
+	 if (index==2009) {
+		 if(ntracks==1){
+			 if(pt < 40) return (-0.62*FF_CR_MULTIJET) + (1.62*FF_CR_WJETS);
+			 if(pt < 45) return (-0.33*FF_CR_MULTIJET) + (1.33*FF_CR_WJETS);
+			 if(pt < 50) return (-0.0400000000001*FF_CR_MULTIJET) + (1.04*FF_CR_WJETS);
+			 if(pt < 60) return (-0.12*FF_CR_MULTIJET) + (1.12*FF_CR_WJETS);
+			 if(pt < 80) return (-0.3*FF_CR_MULTIJET) + (1.3*FF_CR_WJETS);
+			 if(pt < 100) return (-0.26*FF_CR_MULTIJET) + (1.26*FF_CR_WJETS);
+			 if(pt < 3500) return (-1.58*FF_CR_MULTIJET) + (2.58*FF_CR_WJETS);
+			 else return 0;
+		 }
+		 if(ntracks==3){
+			 if(pt < 40) return (-0.15*FF_CR_MULTIJET) + (1.15*FF_CR_WJETS);
+			 if(pt < 60) return (-0.15*FF_CR_MULTIJET) + (1.15*FF_CR_WJETS);
+			 if(pt < 80) return (-0.15*FF_CR_MULTIJET) + (1.15*FF_CR_WJETS);
+			 if(pt < 3500) return (-0.51*FF_CR_MULTIJET) + (1.51*FF_CR_WJETS);
 			 else return 0;
 		 }
 		 else return 0;
@@ -2636,6 +2971,26 @@ float GetFFCombined_binning_1down(float pt, int ntracks, float FF_CR_MULTIJET, f
 		 }
 		 else return 0;
 	 }
+	 //! Combined FFs for (MET_TRIG_EFF_CR_NOM) target region
+	 if (index==2011) {
+		 if(ntracks==1){
+			 else return 0;
+		 }
+		 if(ntracks==3){
+			 else return 0;
+		 }
+		 else return 0;
+	 }
+	 //! Combined FFs for (OVERLAP_TAULEP) target region
+	 if (index==2001) {
+		 if(ntracks==1){
+			 else return 0;
+		 }
+		 if(ntracks==3){
+			 else return 0;
+		 }
+		 else return 0;
+	 }
 	 //! Combined FFs for (FF_CR_WJETS) target region
 	 if (index==9002) {
 	 return FF_CR_WJETS;
@@ -2661,7 +3016,16 @@ float GetFFCombined_binning_1down(float pt, int ntracks, float FF_CR_MULTIJET, f
 		 }
 		 else return 0;
 	 }
-
+	 //! Combined FFs for (MET_TRIG_EFF_CR_NOM) target region
+	 if (index==2011) {
+		 if(ntracks==1){
+			 else return 0;
+		 }
+		 if(ntracks==3){
+			 else return 0;
+		 }
+		 else return 0;
+	 }
 	 else return 0;
 }
 

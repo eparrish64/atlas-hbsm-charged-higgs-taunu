@@ -116,16 +116,7 @@ float GetFFCombined_NOMINAL(float pt, int ntracks, float FF_CR_MULTIJET, float F
 		 }
 		 else return 0;
 	 }
-	 //! Combined FFs for (OVERLAP_TAUJET) target region
-	 if (index==1001) {
-		 if(ntracks==1){
-			 else return 0;
-		 }
-		 if(ntracks==3){
-			 else return 0;
-		 }
-		 else return 0;
-	 }
+
 	 //! Combined FFs for (FF_CR_MULTIJET) target region
 	 if (index==9001) {
 	 return FF_CR_MULTIJET;
@@ -296,20 +287,7 @@ float GetFFCombined_NOMINAL(float pt, int ntracks, float FF_CR_MULTIJET, float F
 		 }
 		 else return 0;
 	 }
-	 //! Combined FFs for (DILEP_BTAG) target region
-	 if (index==2006) {
-	 return 0;
-	}
-	 //! Combined FFs for (DILEP_BVETO) target region
-	 if (index==2006) {
-		 if(ntracks==1){
-			 else return 0;
-		 }
-		 if(ntracks==3){
-			 else return 0;
-		 }
-		 else return 0;
-	 }
+
 	 //! Combined FFs for (ZEE) target region
 	 if (index==2009) {
 		 if(ntracks==1){
@@ -373,26 +351,8 @@ float GetFFCombined_NOMINAL(float pt, int ntracks, float FF_CR_MULTIJET, float F
 		 }
 		 else return 0;
 	 }
-	 //! Combined FFs for (MET_TRIG_EFF_CR_NOM) target region
-	 if (index==2011) {
-		 if(ntracks==1){
-			 else return 0;
-		 }
-		 if(ntracks==3){
-			 else return 0;
-		 }
-		 else return 0;
-	 }
-	 //! Combined FFs for (OVERLAP_TAULEP) target region
-	 if (index==2001) {
-		 if(ntracks==1){
-			 else return 0;
-		 }
-		 if(ntracks==3){
-			 else return 0;
-		 }
-		 else return 0;
-	 }
+
+
 	 //! Combined FFs for (FF_CR_WJETS) target region
 	 if (index==9002) {
 	 return FF_CR_WJETS;
@@ -418,16 +378,7 @@ float GetFFCombined_NOMINAL(float pt, int ntracks, float FF_CR_MULTIJET, float F
 		 }
 		 else return 0;
 	 }
-	 //! Combined FFs for (MET_TRIG_EFF_CR_NOM) target region
-	 if (index==2011) {
-		 if(ntracks==1){
-			 else return 0;
-		 }
-		 if(ntracks==3){
-			 else return 0;
-		 }
-		 else return 0;
-	 }
+
 	 else return 0;
 }
 
@@ -549,16 +500,7 @@ float GetFFCombined_1up(float pt, int ntracks, float FF_CR_MULTIJET, float FF_CR
 		 }
 		 else return 0;
 	 }
-	 //! Combined FFs for (OVERLAP_TAUJET) target region
-	 if (index==1001) {
-		 if(ntracks==1){
-			 else return 0;
-		 }
-		 if(ntracks==3){
-			 else return 0;
-		 }
-		 else return 0;
-	 }
+
 	 //! Combined FFs for (FF_CR_MULTIJET) target region
 	 if (index==9001) {
 	 return FF_CR_MULTIJET;
@@ -729,20 +671,7 @@ float GetFFCombined_1up(float pt, int ntracks, float FF_CR_MULTIJET, float FF_CR
 		 }
 		 else return 0;
 	 }
-	 //! Combined FFs for (DILEP_BTAG) target region
-	 if (index==2006) {
-	 return 0;
-	}
-	 //! Combined FFs for (DILEP_BVETO) target region
-	 if (index==2006) {
-		 if(ntracks==1){
-			 else return 0;
-		 }
-		 if(ntracks==3){
-			 else return 0;
-		 }
-		 else return 0;
-	 }
+
 	 //! Combined FFs for (ZEE) target region
 	 if (index==2009) {
 		 if(ntracks==1){
@@ -806,26 +735,7 @@ float GetFFCombined_1up(float pt, int ntracks, float FF_CR_MULTIJET, float FF_CR
 		 }
 		 else return 0;
 	 }
-	 //! Combined FFs for (MET_TRIG_EFF_CR_NOM) target region
-	 if (index==2011) {
-		 if(ntracks==1){
-			 else return 0;
-		 }
-		 if(ntracks==3){
-			 else return 0;
-		 }
-		 else return 0;
-	 }
-	 //! Combined FFs for (OVERLAP_TAULEP) target region
-	 if (index==2001) {
-		 if(ntracks==1){
-			 else return 0;
-		 }
-		 if(ntracks==3){
-			 else return 0;
-		 }
-		 else return 0;
-	 }
+
 	 //! Combined FFs for (FF_CR_WJETS) target region
 	 if (index==9002) {
 	 return FF_CR_WJETS;
@@ -851,16 +761,7 @@ float GetFFCombined_1up(float pt, int ntracks, float FF_CR_MULTIJET, float FF_CR
 		 }
 		 else return 0;
 	 }
-	 //! Combined FFs for (MET_TRIG_EFF_CR_NOM) target region
-	 if (index==2011) {
-		 if(ntracks==1){
-			 else return 0;
-		 }
-		 if(ntracks==3){
-			 else return 0;
-		 }
-		 else return 0;
-	 }
+
 	 else return 0;
 }
 
@@ -982,16 +883,7 @@ float GetFFCombined_1down(float pt, int ntracks, float FF_CR_MULTIJET, float FF_
 		 }
 		 else return 0;
 	 }
-	 //! Combined FFs for (OVERLAP_TAUJET) target region
-	 if (index==1001) {
-		 if(ntracks==1){
-			 else return 0;
-		 }
-		 if(ntracks==3){
-			 else return 0;
-		 }
-		 else return 0;
-	 }
+
 	 //! Combined FFs for (FF_CR_MULTIJET) target region
 	 if (index==9001) {
 	 return FF_CR_MULTIJET;
@@ -1162,20 +1054,7 @@ float GetFFCombined_1down(float pt, int ntracks, float FF_CR_MULTIJET, float FF_
 		 }
 		 else return 0;
 	 }
-	 //! Combined FFs for (DILEP_BTAG) target region
-	 if (index==2006) {
-	 return 0;
-	}
-	 //! Combined FFs for (DILEP_BVETO) target region
-	 if (index==2006) {
-		 if(ntracks==1){
-			 else return 0;
-		 }
-		 if(ntracks==3){
-			 else return 0;
-		 }
-		 else return 0;
-	 }
+
 	 //! Combined FFs for (ZEE) target region
 	 if (index==2009) {
 		 if(ntracks==1){
@@ -1239,26 +1118,7 @@ float GetFFCombined_1down(float pt, int ntracks, float FF_CR_MULTIJET, float FF_
 		 }
 		 else return 0;
 	 }
-	 //! Combined FFs for (MET_TRIG_EFF_CR_NOM) target region
-	 if (index==2011) {
-		 if(ntracks==1){
-			 else return 0;
-		 }
-		 if(ntracks==3){
-			 else return 0;
-		 }
-		 else return 0;
-	 }
-	 //! Combined FFs for (OVERLAP_TAULEP) target region
-	 if (index==2001) {
-		 if(ntracks==1){
-			 else return 0;
-		 }
-		 if(ntracks==3){
-			 else return 0;
-		 }
-		 else return 0;
-	 }
+
 	 //! Combined FFs for (FF_CR_WJETS) target region
 	 if (index==9002) {
 	 return FF_CR_WJETS;
@@ -1284,16 +1144,7 @@ float GetFFCombined_1down(float pt, int ntracks, float FF_CR_MULTIJET, float FF_
 		 }
 		 else return 0;
 	 }
-	 //! Combined FFs for (MET_TRIG_EFF_CR_NOM) target region
-	 if (index==2011) {
-		 if(ntracks==1){
-			 else return 0;
-		 }
-		 if(ntracks==3){
-			 else return 0;
-		 }
-		 else return 0;
-	 }
+
 	 else return 0;
 }
 
@@ -1415,16 +1266,7 @@ float GetFFCombined_Heavy_Flavour_FF_1up(float pt, int ntracks, float FF_CR_MULT
 		 }
 		 else return 0;
 	 }
-	 //! Combined FFs for (OVERLAP_TAUJET) target region
-	 if (index==1001) {
-		 if(ntracks==1){
-			 else return 0;
-		 }
-		 if(ntracks==3){
-			 else return 0;
-		 }
-		 else return 0;
-	 }
+
 	 //! Combined FFs for (FF_CR_MULTIJET) target region
 	 if (index==9001) {
 	 return FF_CR_MULTIJET;
@@ -1595,20 +1437,7 @@ float GetFFCombined_Heavy_Flavour_FF_1up(float pt, int ntracks, float FF_CR_MULT
 		 }
 		 else return 0;
 	 }
-	 //! Combined FFs for (DILEP_BTAG) target region
-	 if (index==2006) {
-	 return 0;
-	}
-	 //! Combined FFs for (DILEP_BVETO) target region
-	 if (index==2006) {
-		 if(ntracks==1){
-			 else return 0;
-		 }
-		 if(ntracks==3){
-			 else return 0;
-		 }
-		 else return 0;
-	 }
+
 	 //! Combined FFs for (ZEE) target region
 	 if (index==2009) {
 		 if(ntracks==1){
@@ -1672,26 +1501,7 @@ float GetFFCombined_Heavy_Flavour_FF_1up(float pt, int ntracks, float FF_CR_MULT
 		 }
 		 else return 0;
 	 }
-	 //! Combined FFs for (MET_TRIG_EFF_CR_NOM) target region
-	 if (index==2011) {
-		 if(ntracks==1){
-			 else return 0;
-		 }
-		 if(ntracks==3){
-			 else return 0;
-		 }
-		 else return 0;
-	 }
-	 //! Combined FFs for (OVERLAP_TAULEP) target region
-	 if (index==2001) {
-		 if(ntracks==1){
-			 else return 0;
-		 }
-		 if(ntracks==3){
-			 else return 0;
-		 }
-		 else return 0;
-	 }
+
 	 //! Combined FFs for (FF_CR_WJETS) target region
 	 if (index==9002) {
 	 return FF_CR_WJETS;
@@ -1717,16 +1527,7 @@ float GetFFCombined_Heavy_Flavour_FF_1up(float pt, int ntracks, float FF_CR_MULT
 		 }
 		 else return 0;
 	 }
-	 //! Combined FFs for (MET_TRIG_EFF_CR_NOM) target region
-	 if (index==2011) {
-		 if(ntracks==1){
-			 else return 0;
-		 }
-		 if(ntracks==3){
-			 else return 0;
-		 }
-		 else return 0;
-	 }
+
 	 else return 0;
 }
 
@@ -1848,16 +1649,7 @@ float GetFFCombined_Heavy_Flavour_FF_1down(float pt, int ntracks, float FF_CR_MU
 		 }
 		 else return 0;
 	 }
-	 //! Combined FFs for (OVERLAP_TAUJET) target region
-	 if (index==1001) {
-		 if(ntracks==1){
-			 else return 0;
-		 }
-		 if(ntracks==3){
-			 else return 0;
-		 }
-		 else return 0;
-	 }
+
 	 //! Combined FFs for (FF_CR_MULTIJET) target region
 	 if (index==9001) {
 	 return FF_CR_MULTIJET;
@@ -2028,20 +1820,7 @@ float GetFFCombined_Heavy_Flavour_FF_1down(float pt, int ntracks, float FF_CR_MU
 		 }
 		 else return 0;
 	 }
-	 //! Combined FFs for (DILEP_BTAG) target region
-	 if (index==2006) {
-	 return 0;
-	}
-	 //! Combined FFs for (DILEP_BVETO) target region
-	 if (index==2006) {
-		 if(ntracks==1){
-			 else return 0;
-		 }
-		 if(ntracks==3){
-			 else return 0;
-		 }
-		 else return 0;
-	 }
+
 	 //! Combined FFs for (ZEE) target region
 	 if (index==2009) {
 		 if(ntracks==1){
@@ -2105,26 +1884,7 @@ float GetFFCombined_Heavy_Flavour_FF_1down(float pt, int ntracks, float FF_CR_MU
 		 }
 		 else return 0;
 	 }
-	 //! Combined FFs for (MET_TRIG_EFF_CR_NOM) target region
-	 if (index==2011) {
-		 if(ntracks==1){
-			 else return 0;
-		 }
-		 if(ntracks==3){
-			 else return 0;
-		 }
-		 else return 0;
-	 }
-	 //! Combined FFs for (OVERLAP_TAULEP) target region
-	 if (index==2001) {
-		 if(ntracks==1){
-			 else return 0;
-		 }
-		 if(ntracks==3){
-			 else return 0;
-		 }
-		 else return 0;
-	 }
+
 	 //! Combined FFs for (FF_CR_WJETS) target region
 	 if (index==9002) {
 	 return FF_CR_WJETS;
@@ -2150,16 +1910,7 @@ float GetFFCombined_Heavy_Flavour_FF_1down(float pt, int ntracks, float FF_CR_MU
 		 }
 		 else return 0;
 	 }
-	 //! Combined FFs for (MET_TRIG_EFF_CR_NOM) target region
-	 if (index==2011) {
-		 if(ntracks==1){
-			 else return 0;
-		 }
-		 if(ntracks==3){
-			 else return 0;
-		 }
-		 else return 0;
-	 }
+
 	 else return 0;
 }
 
@@ -2281,16 +2032,7 @@ float GetFFCombined_binning_1up(float pt, int ntracks, float FF_CR_MULTIJET, flo
 		 }
 		 else return 0;
 	 }
-	 //! Combined FFs for (OVERLAP_TAUJET) target region
-	 if (index==1001) {
-		 if(ntracks==1){
-			 else return 0;
-		 }
-		 if(ntracks==3){
-			 else return 0;
-		 }
-		 else return 0;
-	 }
+
 	 //! Combined FFs for (FF_CR_MULTIJET) target region
 	 if (index==9001) {
 	 return FF_CR_MULTIJET;
@@ -2461,20 +2203,7 @@ float GetFFCombined_binning_1up(float pt, int ntracks, float FF_CR_MULTIJET, flo
 		 }
 		 else return 0;
 	 }
-	 //! Combined FFs for (DILEP_BTAG) target region
-	 if (index==2006) {
-	 return 0;
-	}
-	 //! Combined FFs for (DILEP_BVETO) target region
-	 if (index==2006) {
-		 if(ntracks==1){
-			 else return 0;
-		 }
-		 if(ntracks==3){
-			 else return 0;
-		 }
-		 else return 0;
-	 }
+
 	 //! Combined FFs for (ZEE) target region
 	 if (index==2009) {
 		 if(ntracks==1){
@@ -2538,26 +2267,7 @@ float GetFFCombined_binning_1up(float pt, int ntracks, float FF_CR_MULTIJET, flo
 		 }
 		 else return 0;
 	 }
-	 //! Combined FFs for (MET_TRIG_EFF_CR_NOM) target region
-	 if (index==2011) {
-		 if(ntracks==1){
-			 else return 0;
-		 }
-		 if(ntracks==3){
-			 else return 0;
-		 }
-		 else return 0;
-	 }
-	 //! Combined FFs for (OVERLAP_TAULEP) target region
-	 if (index==2001) {
-		 if(ntracks==1){
-			 else return 0;
-		 }
-		 if(ntracks==3){
-			 else return 0;
-		 }
-		 else return 0;
-	 }
+
 	 //! Combined FFs for (FF_CR_WJETS) target region
 	 if (index==9002) {
 	 return FF_CR_WJETS;
@@ -2583,16 +2293,7 @@ float GetFFCombined_binning_1up(float pt, int ntracks, float FF_CR_MULTIJET, flo
 		 }
 		 else return 0;
 	 }
-	 //! Combined FFs for (MET_TRIG_EFF_CR_NOM) target region
-	 if (index==2011) {
-		 if(ntracks==1){
-			 else return 0;
-		 }
-		 if(ntracks==3){
-			 else return 0;
-		 }
-		 else return 0;
-	 }
+
 	 else return 0;
 }
 
@@ -2714,16 +2415,7 @@ float GetFFCombined_binning_1down(float pt, int ntracks, float FF_CR_MULTIJET, f
 		 }
 		 else return 0;
 	 }
-	 //! Combined FFs for (OVERLAP_TAUJET) target region
-	 if (index==1001) {
-		 if(ntracks==1){
-			 else return 0;
-		 }
-		 if(ntracks==3){
-			 else return 0;
-		 }
-		 else return 0;
-	 }
+
 	 //! Combined FFs for (FF_CR_MULTIJET) target region
 	 if (index==9001) {
 	 return FF_CR_MULTIJET;
@@ -2894,20 +2586,7 @@ float GetFFCombined_binning_1down(float pt, int ntracks, float FF_CR_MULTIJET, f
 		 }
 		 else return 0;
 	 }
-	 //! Combined FFs for (DILEP_BTAG) target region
-	 if (index==2006) {
-	 return 0;
-	}
-	 //! Combined FFs for (DILEP_BVETO) target region
-	 if (index==2006) {
-		 if(ntracks==1){
-			 else return 0;
-		 }
-		 if(ntracks==3){
-			 else return 0;
-		 }
-		 else return 0;
-	 }
+
 	 //! Combined FFs for (ZEE) target region
 	 if (index==2009) {
 		 if(ntracks==1){
@@ -2971,26 +2650,7 @@ float GetFFCombined_binning_1down(float pt, int ntracks, float FF_CR_MULTIJET, f
 		 }
 		 else return 0;
 	 }
-	 //! Combined FFs for (MET_TRIG_EFF_CR_NOM) target region
-	 if (index==2011) {
-		 if(ntracks==1){
-			 else return 0;
-		 }
-		 if(ntracks==3){
-			 else return 0;
-		 }
-		 else return 0;
-	 }
-	 //! Combined FFs for (OVERLAP_TAULEP) target region
-	 if (index==2001) {
-		 if(ntracks==1){
-			 else return 0;
-		 }
-		 if(ntracks==3){
-			 else return 0;
-		 }
-		 else return 0;
-	 }
+	 
 	 //! Combined FFs for (FF_CR_WJETS) target region
 	 if (index==9002) {
 	 return FF_CR_WJETS;
@@ -3016,16 +2676,7 @@ float GetFFCombined_binning_1down(float pt, int ntracks, float FF_CR_MULTIJET, f
 		 }
 		 else return 0;
 	 }
-	 //! Combined FFs for (MET_TRIG_EFF_CR_NOM) target region
-	 if (index==2011) {
-		 if(ntracks==1){
-			 else return 0;
-		 }
-		 if(ntracks==3){
-			 else return 0;
-		 }
-		 else return 0;
-	 }
+
 	 else return 0;
 }
 

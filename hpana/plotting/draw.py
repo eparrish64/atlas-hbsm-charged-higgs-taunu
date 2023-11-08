@@ -122,10 +122,10 @@ def draw(var, category,
             for syst_var in systematic.variations:
                 s_hist = None # Reset for each systematic, so we don't use the wrong variations if one isn't found (for whatever reason, e.g. nominal-only data...)
                 if hists_file:
-                    systdir = hfile.Get(syst_var.name)
-                    if not systdir:
-                        continue
-                    keys = [k.GetName() for k in systdir.GetListOfKeys()]
+                    #systdir = hfile.Get(syst_var.name)
+                    #if not systdir:
+                    #    continue
+                    #keys = [k.GetName() for k in systdir.GetListOfKeys()]
                     #for k in keys:
                     #    match = re.match(HIST_NAME_TEMPLATE, k)
                     #    if match:
@@ -161,7 +161,11 @@ def draw(var, category,
                     else:
                         bins = var.plot_bins
 
-                    s_hist = s_hist.Rebin(len(bins)-1, "hn", array.array("d", bins))
+                    s_hist_new = s_hist.Rebin(len(bins)-1, "hn", array.array("d", bins))
+                    if s_hist_new:
+                        s_hist = s_hist_new
+                    #s_hist = s_hist.Rebin(len(bins)-1, "hn", array.array("d", bins))
+
 
 
                 ## normalize ttbar bkg

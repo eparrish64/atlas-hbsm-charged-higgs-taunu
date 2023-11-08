@@ -328,6 +328,14 @@ class Weight(object):
             "1", #<! NOMINAL, per-sample logic is in get_sample_variation_weight
             ("singletop_model_POWHEG_HERWIG7", "1"), # per-sample logic goes in get_sample_variation_weight
         ),
+        "singletop_DS": (
+            "1", #<! NOMINAL, per-sample logic is in get_sample_variation_weight
+            ("singletop_DS", "1"), # per-sample logic goes in get_sample_variation_weight
+        ),
+        "singletop_hdamp": (
+            "1", #<! NOMINAL, per-sample logic is in get_sample_variation_weight
+            ("singletop_hdamp", "1"), # per-sample logic goes in get_sample_variation_weight
+        ),
     }  # W_SINGLETOP_THEORY
     
     W_TTBAR_REWEIGHT = {
@@ -454,20 +462,32 @@ def get_sample_variation_weight(systematic, variation, dataset, sample, channel)
     "PhPy8EG_A14_tchan_BW50_lept_antitop": "1",
     "PowhegPythia8EvtGen_A14_singletop_schan_lept_top": "1",
     "PowhegPythia8EvtGen_A14_singletop_schan_lept_antitop": "1",
-    "PowhegPythia8EvtGen_A14_Wt_DR_inclusive_top": "1",
-    "PowhegPythia8EvtGen_A14_Wt_DR_inclusive_antitop": "1",
-    "PowhegPythia8EvtGen_A14_Wt_DR_dilepton_top": "1",
-    "PowhegPythia8EvtGen_A14_Wt_DR_dilepton_antitop": "1",
+    #"PowhegPythia8EvtGen_A14_Wt_DR_inclusive_top": "1",
+    #"PowhegPythia8EvtGen_A14_Wt_DR_inclusive_antitop": "1",
+    #"PowhegPythia8EvtGen_A14_Wt_DR_dilepton_top": "1",
+    #"PowhegPythia8EvtGen_A14_Wt_DR_dilepton_antitop": "1",
+    "PhPy8EG_tW_DR_dyn_incl_antitop": "1",
+    "PhPy8EG_tW_DR_dyn_incl_top": "1",
+
     
     # singletop theory variations   
-    "PowhegHerwig7EvtGen_H7UE_704_tchan_lept_antitop": "0",
-    "PowhegHerwig7EvtGen_H7UE_704_tchan_lept_top": "0",
-    "PhHerwig7EG_H7UE_singletop_schan_lept_top": "0",
-    "PhHerwig7EG_H7UE_singletop_schan_lept_antitop": "0",
-    "PowhegHerwig7EvtGen_H7UE_Wt_DR_inclusive_top": "0",
-    "PowhegHerwig7EvtGen_H7UE_Wt_DR_inclusive_antitop": "0",
-    "PowhegHerwig7EvtGen_H7UE_Wt_DR_dilepton_top": "0",
-    "PowhegHerwig7EvtGen_H7UE_Wt_DR_dilepton_antitop": "0",
+    #"PowhegHerwig7EvtGen_H7UE_704_tchan_lept_antitop": "0",
+    #"PowhegHerwig7EvtGen_H7UE_704_tchan_lept_top": "0",
+    #"PhHerwig7EG_H7UE_singletop_schan_lept_top": "0",
+    #"PhHerwig7EG_H7UE_singletop_schan_lept_antitop": "0",
+    #"PowhegHerwig7EvtGen_H7UE_Wt_DR_inclusive_top": "0",
+    #"PowhegHerwig7EvtGen_H7UE_Wt_DR_inclusive_antitop": "0",
+    #"PowhegHerwig7EvtGen_H7UE_Wt_DR_dilepton_top": "0",
+    #"PowhegHerwig7EvtGen_H7UE_Wt_DR_dilepton_antitop": "0",
+    "PhH7EG_H7UE_716_tchan_lept_antitop": "0",
+    "PhH7EG_H7UE_716_tchan_lept_top": "0",
+    "PhH7EG_H7UE_716_schan_lept_antitop": "0",
+    "PhH7EG_H7UE_716_schan_lept_top": "0",
+    "PhPy8EG_tW_DR_dyn_hdamp517p5_incl_antitop": "0",
+    "PhPy8EG_tW_DR_dyn_hdamp517p5_incl_top": "0",
+    "PhPy8EG_tW_DS_dyn_incl_antitop": "0",
+    "PhPy8EG_tW_DS_dyn_incl_top": "0",
+
   }
 
   specialSampleVariations = {
@@ -623,66 +643,128 @@ def get_sample_variation_weight(systematic, variation, dataset, sample, channel)
         "singletop_model_POWHEG_HERWIG7": "0",
       },
     },
-    "PowhegPythia8EvtGen_A14_Wt_DR_inclusive_top": {
-      "singletop_model": {
-        "singletop_model_POWHEG_HERWIG7": "0",
+    #"PowhegPythia8EvtGen_A14_Wt_DR_inclusive_top": {
+    #  "singletop_model": {
+    #    "singletop_model_POWHEG_HERWIG7": "0",
+    #  },
+    #},
+    #"PowhegPythia8EvtGen_A14_Wt_DR_inclusive_antitop": {
+    #  "singletop_model": {
+    #    "singletop_model_POWHEG_HERWIG7": "0",
+    #  },
+    #},
+    #"PowhegPythia8EvtGen_A14_Wt_DR_dilepton_top": {
+    #  "singletop_model": {
+    #    "singletop_model_POWHEG_HERWIG7": "0",
+    #  },
+    #},
+    #"PowhegPythia8EvtGen_A14_Wt_DR_dilepton_antitop": {
+    #  "singletop_model": {
+    #    "singletop_model_POWHEG_HERWIG7": "0",
+    #  },
+    #},
+    "PhPy8EG_tW_DR_dyn_incl_antitop": {
+      "singletop_DS": {
+        "singletop_DS": "0",
+      },
+      "singletop_hdamp": {
+        "singletop_hdamp": "0",
       },
     },
-    "PowhegPythia8EvtGen_A14_Wt_DR_inclusive_antitop": {
-      "singletop_model": {
-        "singletop_model_POWHEG_HERWIG7": "0",
+    "PhPy8EG_tW_DR_dyn_incl_top": {
+      "singletop_DS": {
+        "singletop_DS": "0",
       },
-    },
-    "PowhegPythia8EvtGen_A14_Wt_DR_dilepton_top": {
-      "singletop_model": {
-        "singletop_model_POWHEG_HERWIG7": "0",
-      },
-    },
-    "PowhegPythia8EvtGen_A14_Wt_DR_dilepton_antitop": {
-      "singletop_model": {
-        "singletop_model_POWHEG_HERWIG7": "0",
+      "singletop_hdamp": {
+        "singletop_hdamp": "0",
       },
     },
     
     # singletop theory variations   
-    "PowhegHerwig7EvtGen_H7UE_704_tchan_lept_antitop": {
+    #"PowhegHerwig7EvtGen_H7UE_704_tchan_lept_antitop": {
+    #  "singletop_model": {
+    #    "singletop_model_POWHEG_HERWIG7": "1",
+    #  },
+    #},
+    #"PowhegHerwig7EvtGen_H7UE_704_tchan_lept_top": {
+    #  "singletop_model": {
+    #    "singletop_model_POWHEG_HERWIG7": "1",
+    #  },
+    #},
+    #"PhHerwig7EG_H7UE_singletop_schan_lept_top": {
+    #  "singletop_model": {
+    #    "singletop_model_POWHEG_HERWIG7": "1",
+    #  },
+    #},
+    #"PhHerwig7EG_H7UE_singletop_schan_lept_antitop": {
+    #  "singletop_model": {
+    #    "singletop_model_POWHEG_HERWIG7": "1",
+    #  },
+    #},
+    #"PowhegHerwig7EvtGen_H7UE_Wt_DR_inclusive_top": {
+    #  "singletop_model": {
+    #    "singletop_model_POWHEG_HERWIG7": "1",
+    #  },
+    #},
+    #"PowhegHerwig7EvtGen_H7UE_Wt_DR_inclusive_antitop": {
+    #  "singletop_model": {
+    #    "singletop_model_POWHEG_HERWIG7": "1",
+    #  },
+    #},
+    #"PowhegHerwig7EvtGen_H7UE_Wt_DR_dilepton_top": {
+    #  "singletop_model": {
+    #    "singletop_model_POWHEG_HERWIG7": "1",
+    #  },
+    #},
+    #"PowhegHerwig7EvtGen_H7UE_Wt_DR_dilepton_antitop": {
+    #  "singletop_model": {
+    #    "singletop_model_POWHEG_HERWIG7": "1",
+    #  },
+    #},
+
+    # singletop PowhegHewrig7
+    "PhH7EG_H7UE_716_tchan_lept_antitop": {
       "singletop_model": {
         "singletop_model_POWHEG_HERWIG7": "1",
       },
     },
-    "PowhegHerwig7EvtGen_H7UE_704_tchan_lept_top": {
+    "PhH7EG_H7UE_716_tchan_lept_top": {
       "singletop_model": {
         "singletop_model_POWHEG_HERWIG7": "1",
       },
     },
-    "PhHerwig7EG_H7UE_singletop_schan_lept_top": {
+    "PhH7EG_H7UE_716_schan_lept_antitop": {
       "singletop_model": {
         "singletop_model_POWHEG_HERWIG7": "1",
       },
     },
-    "PhHerwig7EG_H7UE_singletop_schan_lept_antitop": {
+    "PhH7EG_H7UE_716_schan_lept_top": {
       "singletop_model": {
         "singletop_model_POWHEG_HERWIG7": "1",
       },
     },
-    "PowhegHerwig7EvtGen_H7UE_Wt_DR_inclusive_top": {
-      "singletop_model": {
-        "singletop_model_POWHEG_HERWIG7": "1",
+
+    # singletop tW hdamp
+    "PhPy8EG_tW_DR_dyn_hdamp517p5_incl_antitop": {
+      "singletop_hdamp": {
+        "singletop_hdamp": "1",
       },
     },
-    "PowhegHerwig7EvtGen_H7UE_Wt_DR_inclusive_antitop": {
-      "singletop_model": {
-        "singletop_model_POWHEG_HERWIG7": "1",
+    "PhPy8EG_tW_DR_dyn_hdamp517p5_incl_top": {
+      "singletop_hdamp": {
+        "singletop_hdamp": "1",
       },
     },
-    "PowhegHerwig7EvtGen_H7UE_Wt_DR_dilepton_top": {
-      "singletop_model": {
-        "singletop_model_POWHEG_HERWIG7": "1",
+
+    # singletop tW DS
+    "PhPy8EG_tW_DS_dyn_incl_antitop": {
+      "singletop_DS": {
+        "singletop_DS": "1",
       },
     },
-    "PowhegHerwig7EvtGen_H7UE_Wt_DR_dilepton_antitop": {
-      "singletop_model": {
-        "singletop_model_POWHEG_HERWIG7": "1",
+    "PhPy8EG_tW_DS_dyn_incl_top": {
+      "singletop_DS": {
+        "singletop_DS": "1",
       },
     },
   }

@@ -2841,3 +2841,17 @@
 411037          PowhegHerwig7EvtGen_H7UE_Wt_DR_inclusive_antitop       37.927                1.000000E+00  0.9452         1.0                           
 411038          PowhegHerwig7EvtGen_H7UE_Wt_DR_dilepton_top            3.9993                1.000000E+00  0.9446         1.0                           
 411039          PowhegHerwig7EvtGen_H7UE_Wt_DR_dilepton_antitop        3.9961                1.000000E+00  0.9453         1.0                           
+
+
+### ntuples v14, updated theory systematics ###
+
+600017	PhH7EG_H7UE_716_tchan_lept_antitop	22.194	1.0	1.0	1.0
+600018	PhH7EG_H7UE_716_tchan_lept_top	37.019	1.0	1.0	1.0
+600019	PhH7EG_H7UE_716_schan_lept_antitop	1.2687	1.0	1.0	1.0
+600020	PhH7EG_H7UE_716_schan_lept_top	2.0279	1.0	1.0	1.0
+601618	PhPy8EG_tW_DR_dyn_hdamp517p5_incl_antitop	35.972	1.0	1.0	1.0
+601619	PhPy8EG_tW_DR_dyn_incl_antitop	35.973	1.0	1.0	1.0
+601622	PhPy8EG_tW_DR_dyn_hdamp517p5_incl_top	36.002	1.0	1.0	1.0
+601623	PhPy8EG_tW_DR_dyn_incl_top	36.005	1.0	1.0	1.0
+601627	PhPy8EG_tW_DS_dyn_incl_antitop	35.932	1.0	1.0	1.0
+601631	PhPy8EG_tW_DS_dyn_incl_top	35.154	1.0	1.0	1.0

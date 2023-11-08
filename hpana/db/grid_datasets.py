@@ -8314,6 +8314,120 @@ datasets = {
       "Data": [],
     },
 	},
+	"v14": {
+    "taulep": {
+      "MC": [
+        "user.bburghgr:user.bburghgr.TL.mc16_13TeV.600017.PhH7EG_H7UE_716_tchan_lept_atop.D2.e7954_a875_r10201_p4204.v14r0_BS",
+        "user.bburghgr:user.bburghgr.TL.mc16_13TeV.600017.PhH7EG_H7UE_716_tchan_lept_atop.D2.e7954_a875_r10724_p4204.v14r0_BS",
+        "user.bburghgr:user.bburghgr.TL.mc16_13TeV.600017.PhH7EG_H7UE_716_tchan_lept_atop.D2.e7954_a875_r9364_p4204.v14r0_BS",
+        "user.bburghgr:user.bburghgr.TL.mc16_13TeV.600018.PhH7EG_H7UE_716_tchan_lept_top.D2.e7954_a875_r10201_p4204.v14r0_BS",
+        "user.bburghgr:user.bburghgr.TL.mc16_13TeV.600018.PhH7EG_H7UE_716_tchan_lept_top.D2.e7954_a875_r10724_p4204.v14r0_BS",
+        "user.bburghgr:user.bburghgr.TL.mc16_13TeV.600018.PhH7EG_H7UE_716_tchan_lept_top.D2.e7954_a875_r9364_p4204.v14r0_BS",
+        "user.bburghgr:user.bburghgr.TL.mc16_13TeV.600019.PhH7EG_H7UE_716_schan_lept_atop.D2.e7954_a875_r10201_p4204.v14r0_BS",
+        "user.bburghgr:user.bburghgr.TL.mc16_13TeV.600019.PhH7EG_H7UE_716_schan_lept_atop.D2.e7954_a875_r10724_p4204.v14r0_BS",
+        "user.bburghgr:user.bburghgr.TL.mc16_13TeV.600019.PhH7EG_H7UE_716_schan_lept_atop.D2.e7954_a875_r9364_p4204.v14r0_BS",
+        "user.bburghgr:user.bburghgr.TL.mc16_13TeV.600020.PhH7EG_H7UE_716_schan_lept_top.D2.e7954_a875_r10201_p4204.v14r0_BS",
+        "user.bburghgr:user.bburghgr.TL.mc16_13TeV.600020.PhH7EG_H7UE_716_schan_lept_top.D2.e7954_a875_r10724_p4204.v14r0_BS",
+        "user.bburghgr:user.bburghgr.TL.mc16_13TeV.600020.PhH7EG_H7UE_716_schan_lept_top.D2.e7954_a875_r9364_p4204.v14r0_BS",
+        "user.bburghgr:user.bburghgr.TL.mc16_13TeV.601618.PhPy8_tW_DR_dyn_hdamp517p5_incl_atop.D2.e8482_s3126_r10201_p4204.v14r0_BS",
+        "user.bburghgr:user.bburghgr.TL.mc16_13TeV.601618.PhPy8_tW_DR_dyn_hdamp517p5_incl_atop.D2.e8482_s3126_r10724_p4204.v14r0_BS",
+        "user.bburghgr:user.bburghgr.TL.mc16_13TeV.601618.PhPy8_tW_DR_dyn_hdamp517p5_incl_atop.D2.e8482_s3126_r9364_p4204.v14r0_BS",
+        "user.bburghgr:user.bburghgr.TL.mc16_13TeV.601619.PhPy8_tW_DR_dyn_incl_atop.D2.e8482_s3126_r10201_p4204.v14r0_BS",
+        "user.bburghgr:user.bburghgr.TL.mc16_13TeV.601619.PhPy8_tW_DR_dyn_incl_atop.D2.e8482_s3126_r10724_p4204.v14r0_BS",
+        "user.bburghgr:user.bburghgr.TL.mc16_13TeV.601619.PhPy8_tW_DR_dyn_incl_atop.D2.e8482_s3126_r9364_p4204.v14r0_BS",
+        "user.bburghgr:user.bburghgr.TL.mc16_13TeV.601622.PhPy8_tW_DR_dyn_hdamp517p5_incl_top.D2.e8482_s3126_r10201_p4204.v14r0_BS",
+        "user.bburghgr:user.bburghgr.TL.mc16_13TeV.601622.PhPy8_tW_DR_dyn_hdamp517p5_incl_top.D2.e8482_s3126_r10724_p4204.v14r0_BS",
+        "user.bburghgr:user.bburghgr.TL.mc16_13TeV.601622.PhPy8_tW_DR_dyn_hdamp517p5_incl_top.D2.e8482_s3126_r9364_p4204.v14r0_BS",
+        "user.bburghgr:user.bburghgr.TL.mc16_13TeV.601623.PhPy8_tW_DR_dyn_incl_top.D2.e8482_s3126_r10201_p4204.v14r0_BS",
+        "user.bburghgr:user.bburghgr.TL.mc16_13TeV.601623.PhPy8_tW_DR_dyn_incl_top.D2.e8482_s3126_r10724_p4204.v14r0_BS",
+        "user.bburghgr:user.bburghgr.TL.mc16_13TeV.601623.PhPy8_tW_DR_dyn_incl_top.D2.e8482_s3126_r9364_p4204.v14r0_BS",
+        "user.bburghgr:user.bburghgr.TL.mc16_13TeV.601627.PhPy8_tW_DS_dyn_incl_atop.D2.e8482_s3126_r10201_p4204.v14r0_BS",
+        "user.bburghgr:user.bburghgr.TL.mc16_13TeV.601627.PhPy8_tW_DS_dyn_incl_atop.D2.e8482_s3126_r10724_p4204.v14r0_BS",
+        "user.bburghgr:user.bburghgr.TL.mc16_13TeV.601627.PhPy8_tW_DS_dyn_incl_atop.D2.e8482_s3126_r9364_p4204.v14r0_BS",
+        "user.bburghgr:user.bburghgr.TL.mc16_13TeV.601631.PhPy8_tW_DS_dyn_incl_top.D2.e8482_s3126_r10201_p4204.v14r0_BS",
+        "user.bburghgr:user.bburghgr.TL.mc16_13TeV.601631.PhPy8_tW_DS_dyn_incl_top.D2.e8482_s3126_r10724_p4204.v14r0_BS",
+        "user.bburghgr:user.bburghgr.TL.mc16_13TeV.601631.PhPy8_tW_DS_dyn_incl_top.D2.e8482_s3126_r9364_p4204.v14r0_BS",
+      ],
+      "Data": [],
+    },
+    "taujet": {
+      "MC": [
+        "user.akaczmar:user.akaczmar.akaczmar.mc16_13TeV.364184.Sh221_PDF30_Wtaunu_MV0_70_CVBV.D1.e5340_s3126_r10201_p4204.v14r0_BS",
+        "user.akaczmar:user.akaczmar.akaczmar.mc16_13TeV.364184.Sh221_PDF30_Wtaunu_MV0_70_CVBV.D1.e5340_s3126_r10724_p4204.v14r0_BS",
+        "user.akaczmar:user.akaczmar.akaczmar.mc16_13TeV.364184.Sh221_PDF30_Wtaunu_MV0_70_CVBV.D1.e5340_s3126_r9364_p4204.v14r0_BS",
+        "user.akaczmar:user.akaczmar.akaczmar.mc16_13TeV.364185.Sh221_PDF30_Wtaunu_MV0_70_CFBV.D1.e5340_s3126_r10201_p4204.v14r0_BS",
+        "user.akaczmar:user.akaczmar.akaczmar.mc16_13TeV.364185.Sh221_PDF30_Wtaunu_MV0_70_CFBV.D1.e5340_s3126_r10724_p4204.v14r0_BS",
+        "user.akaczmar:user.akaczmar.akaczmar.mc16_13TeV.364185.Sh221_PDF30_Wtaunu_MV0_70_CFBV.D1.e5340_s3126_r9364_p4204.v14r0_BS",
+        "user.akaczmar:user.akaczmar.akaczmar.mc16_13TeV.364186.Sh221_PDF30_Wtaunu_MV0_70_BF.D1.e5340_s3126_r10201_p4204.v14r0_BS",
+        "user.akaczmar:user.akaczmar.akaczmar.mc16_13TeV.364186.Sh221_PDF30_Wtaunu_MV0_70_BF.D1.e5340_s3126_r10724_p4204.v14r0_BS",
+        "user.akaczmar:user.akaczmar.akaczmar.mc16_13TeV.364186.Sh221_PDF30_Wtaunu_MV0_70_BF.D1.e5340_s3126_r9364_p4204.v14r0_BS",
+        "user.akaczmar:user.akaczmar.akaczmar.mc16_13TeV.364187.Sh221_PDF30_Wtaunu_MV70_140_CVBV.D1.e5340_s3126_r10201_p4204.v14r0_BS",
+        "user.akaczmar:user.akaczmar.akaczmar.mc16_13TeV.364187.Sh221_PDF30_Wtaunu_MV70_140_CVBV.D1.e5340_s3126_r10724_p4204.v14r0_BS",
+        "user.akaczmar:user.akaczmar.akaczmar.mc16_13TeV.364187.Sh221_PDF30_Wtaunu_MV70_140_CVBV.D1.e5340_s3126_r9364_p4204.v14r0_BS",
+        "user.akaczmar:user.akaczmar.akaczmar.mc16_13TeV.364188.Sh221_PDF30_Wtaunu_MV70_140_CFBV.D1.e5340_s3126_r10201_p4204.v14r0_BS",
+        "user.akaczmar:user.akaczmar.akaczmar.mc16_13TeV.364188.Sh221_PDF30_Wtaunu_MV70_140_CFBV.D1.e5340_s3126_r10724_p4204.v14r0_BS",
+        "user.akaczmar:user.akaczmar.akaczmar.mc16_13TeV.364188.Sh221_PDF30_Wtaunu_MV70_140_CFBV.D1.e5340_s3126_r9364_p4204.v14r0_BS",
+        "user.akaczmar:user.akaczmar.akaczmar.mc16_13TeV.364189.Sh221_PDF30_Wtaunu_MV70_140_BF.D1.e5340_s3126_r10201_p4204.v14r0_BS",
+        "user.akaczmar:user.akaczmar.akaczmar.mc16_13TeV.364189.Sh221_PDF30_Wtaunu_MV70_140_BF.D1.e5340_s3126_r10724_p4204.v14r0_BS",
+        "user.akaczmar:user.akaczmar.akaczmar.mc16_13TeV.364189.Sh221_PDF30_Wtaunu_MV70_140_BF.D1.e5340_s3126_r9364_p4204.v14r0_BS",
+        "user.akaczmar:user.akaczmar.akaczmar.mc16_13TeV.364190.Sh221_PDF30_Wtaunu_MV140_280_CVBV.D1.e5340_s3126_r10201_p4204.v14r0_BS",
+        "user.akaczmar:user.akaczmar.akaczmar.mc16_13TeV.364190.Sh221_PDF30_Wtaunu_MV140_280_CVBV.D1.e5340_s3126_r10724_p4204.v14r0_BS",
+        "user.akaczmar:user.akaczmar.akaczmar.mc16_13TeV.364190.Sh221_PDF30_Wtaunu_MV140_280_CVBV.D1.e5340_s3126_r9364_p4204.v14r0_BS",
+        "user.akaczmar:user.akaczmar.akaczmar.mc16_13TeV.364191.Sh221_PDF30_Wtaunu_MV140_280_CFBV.D1.e5340_s3126_r10201_p4204.v14r0_BS",
+        "user.akaczmar:user.akaczmar.akaczmar.mc16_13TeV.364191.Sh221_PDF30_Wtaunu_MV140_280_CFBV.D1.e5340_s3126_r10724_p4204.v14r0_BS",
+        "user.akaczmar:user.akaczmar.akaczmar.mc16_13TeV.364191.Sh221_PDF30_Wtaunu_MV140_280_CFBV.D1.e5340_s3126_r9364_p4204.v14r0_BS",
+        "user.akaczmar:user.akaczmar.akaczmar.mc16_13TeV.364192.Sh221_PDF30_Wtaunu_MV140_280_BF.D1.e5340_s3126_r10201_p4204.v14r0_BS",
+        "user.akaczmar:user.akaczmar.akaczmar.mc16_13TeV.364192.Sh221_PDF30_Wtaunu_MV140_280_BF.D1.e5340_s3126_r10724_p4204.v14r0_BS",
+        "user.akaczmar:user.akaczmar.akaczmar.mc16_13TeV.364192.Sh221_PDF30_Wtaunu_MV140_280_BF.D1.e5340_s3126_r9364_p4204.v14r0_BS",
+        "user.akaczmar:user.akaczmar.akaczmar.mc16_13TeV.364193.Sh221_PDF30_Wtaunu_MV280_500_CVBV.D1.e5340_s3126_r10201_p4204.v14r0_BS",
+        "user.akaczmar:user.akaczmar.akaczmar.mc16_13TeV.364193.Sh221_PDF30_Wtaunu_MV280_500_CVBV.D1.e5340_s3126_r10724_p4204.v14r0_BS",
+        "user.akaczmar:user.akaczmar.akaczmar.mc16_13TeV.364193.Sh221_PDF30_Wtaunu_MV280_500_CVBV.D1.e5340_s3126_r9364_p4204.v14r0_BS",
+        "user.akaczmar:user.akaczmar.akaczmar.mc16_13TeV.364194.Sh221_PDF30_Wtaunu_MV280_500_CFBV.D1.e5340_s3126_r10201_p4204.v14r0_BS",
+        "user.akaczmar:user.akaczmar.akaczmar.mc16_13TeV.364194.Sh221_PDF30_Wtaunu_MV280_500_CFBV.D1.e5340_s3126_r10724_p4204.v14r0_BS",
+        "user.akaczmar:user.akaczmar.akaczmar.mc16_13TeV.364194.Sh221_PDF30_Wtaunu_MV280_500_CFBV.D1.e5340_s3126_r9364_p4204.v14r0_BS",
+        "user.akaczmar:user.akaczmar.akaczmar.mc16_13TeV.364195.Sh221_PDF30_Wtaunu_MV280_500_BF.D1.e5340_s3126_r10201_p4204.v14r0_BS",
+        "user.akaczmar:user.akaczmar.akaczmar.mc16_13TeV.364195.Sh221_PDF30_Wtaunu_MV280_500_BF.D1.e5340_s3126_r10724_p4204.v14r0_BS",
+        "user.akaczmar:user.akaczmar.akaczmar.mc16_13TeV.364195.Sh221_PDF30_Wtaunu_MV280_500_BF.D1.e5340_s3126_r9364_p4204.v14r0_BS",
+        "user.akaczmar:user.akaczmar.akaczmar.mc16_13TeV.364196.Sh221_PDF30_Wtaunu_MV500_1000.D1.e5340_s3126_r10201_p4204.v14r0_BS",
+        "user.akaczmar:user.akaczmar.akaczmar.mc16_13TeV.364196.Sh221_PDF30_Wtaunu_MV500_1000.D1.e5340_s3126_r10724_p4204.v14r0_BS",
+        "user.akaczmar:user.akaczmar.akaczmar.mc16_13TeV.364196.Sh221_PDF30_Wtaunu_MV500_1000.D1.e5340_s3126_r9364_p4204.v14r0_BS",
+        "user.akaczmar:user.akaczmar.akaczmar.mc16_13TeV.364197.Sh221_PDF30_Wtaunu_MV1000_E_CMS.D1.e5340_s3126_r10201_p4204.v14r0_BS",
+        "user.akaczmar:user.akaczmar.akaczmar.mc16_13TeV.364197.Sh221_PDF30_Wtaunu_MV1000_E_CMS.D1.e5340_s3126_r10724_p4204.v14r0_BS",
+        "user.akaczmar:user.akaczmar.akaczmar.mc16_13TeV.364197.Sh221_PDF30_Wtaunu_MV1000_E_CMS.D1.e5340_s3126_r9364_p4204.v14r0_BS",
+        "user.akaczmar:user.akaczmar.akaczmar.mc16_13TeV.600017.PhH7EG_H7UE_716_tchan_lept_atop.D1.e7954_a875_r10201_p4204.v14r0_BS",
+        "user.akaczmar:user.akaczmar.akaczmar.mc16_13TeV.600017.PhH7EG_H7UE_716_tchan_lept_atop.D1.e7954_a875_r10724_p4204.v14r0_BS",
+        "user.akaczmar:user.akaczmar.akaczmar.mc16_13TeV.600017.PhH7EG_H7UE_716_tchan_lept_atop.D1.e7954_a875_r9364_p4204.v14r0_BS",
+        "user.akaczmar:user.akaczmar.akaczmar.mc16_13TeV.600018.PhH7EG_H7UE_716_tchan_lept_top.D1.e7954_a875_r10201_p4204.v14r0_BS",
+        "user.akaczmar:user.akaczmar.akaczmar.mc16_13TeV.600018.PhH7EG_H7UE_716_tchan_lept_top.D1.e7954_a875_r10724_p4204.v14r0_BS",
+        "user.akaczmar:user.akaczmar.akaczmar.mc16_13TeV.600018.PhH7EG_H7UE_716_tchan_lept_top.D1.e7954_a875_r9364_p4204.v14r0_BS",
+        "user.akaczmar:user.akaczmar.akaczmar.mc16_13TeV.600019.PhH7EG_H7UE_716_schan_lept_atop.D1.e7954_a875_r10201_p4204.v14r0_BS",
+        "user.akaczmar:user.akaczmar.akaczmar.mc16_13TeV.600019.PhH7EG_H7UE_716_schan_lept_atop.D1.e7954_a875_r10724_p4204.v14r0_BS",
+        "user.akaczmar:user.akaczmar.akaczmar.mc16_13TeV.600019.PhH7EG_H7UE_716_schan_lept_atop.D1.e7954_a875_r9364_p4204.v14r0_BS",
+        "user.akaczmar:user.akaczmar.akaczmar.mc16_13TeV.600020.PhH7EG_H7UE_716_schan_lept_top.D1.e7954_a875_r10201_p4204.v14r0_BS",
+        "user.akaczmar:user.akaczmar.akaczmar.mc16_13TeV.600020.PhH7EG_H7UE_716_schan_lept_top.D1.e7954_a875_r10724_p4204.v14r0_BS",
+        "user.akaczmar:user.akaczmar.akaczmar.mc16_13TeV.600020.PhH7EG_H7UE_716_schan_lept_top.D1.e7954_a875_r9364_p4204.v14r0_BS",
+        "user.akaczmar:user.akaczmar.akaczmar.mc16_13TeV.601618.PhPy8_tW_DR_dyn_hdamp517p5_incl_atop.D1.e8482_s3126_r10201_p4204.v14r0_BS",
+        "user.akaczmar:user.akaczmar.akaczmar.mc16_13TeV.601618.PhPy8_tW_DR_dyn_hdamp517p5_incl_atop.D1.e8482_s3126_r10724_p4204.v14r0_BS",
+        "user.akaczmar:user.akaczmar.akaczmar.mc16_13TeV.601618.PhPy8_tW_DR_dyn_hdamp517p5_incl_atop.D1.e8482_s3126_r9364_p4204.v14r0_BS",
+        "user.akaczmar:user.akaczmar.akaczmar.mc16_13TeV.601619.PhPy8_tW_DR_dyn_incl_atop.D1.e8482_s3126_r10201_p4204.v14r0_BS",
+        "user.akaczmar:user.akaczmar.akaczmar.mc16_13TeV.601619.PhPy8_tW_DR_dyn_incl_atop.D1.e8482_s3126_r10724_p4204.v14r0_BS",
+        "user.akaczmar:user.akaczmar.akaczmar.mc16_13TeV.601619.PhPy8_tW_DR_dyn_incl_atop.D1.e8482_s3126_r9364_p4204.v14r0_BS",
+        "user.akaczmar:user.akaczmar.akaczmar.mc16_13TeV.601622.PhPy8_tW_DR_dyn_hdamp517p5_incl_top.D1.e8482_s3126_r10201_p4204.v14r0_BS",
+        "user.akaczmar:user.akaczmar.akaczmar.mc16_13TeV.601622.PhPy8_tW_DR_dyn_hdamp517p5_incl_top.D1.e8482_s3126_r10724_p4204.v14r0_BS",
+        "user.akaczmar:user.akaczmar.akaczmar.mc16_13TeV.601622.PhPy8_tW_DR_dyn_hdamp517p5_incl_top.D1.e8482_s3126_r9364_p4204.v14r0_BS",
+        "user.akaczmar:user.akaczmar.akaczmar.mc16_13TeV.601623.PhPy8_tW_DR_dyn_incl_top.D1.e8482_s3126_r10201_p4204.v14r0_BS",
+        "user.akaczmar:user.akaczmar.akaczmar.mc16_13TeV.601623.PhPy8_tW_DR_dyn_incl_top.D1.e8482_s3126_r10724_p4204.v14r0_BS",
+        "user.akaczmar:user.akaczmar.akaczmar.mc16_13TeV.601623.PhPy8_tW_DR_dyn_incl_top.D1.e8482_s3126_r9364_p4204.v14r0_BS",
+        "user.akaczmar:user.akaczmar.akaczmar.mc16_13TeV.601627.PhPy8_tW_DS_dyn_incl_atop.D1.e8482_s3126_r10201_p4204.v14r0_BS",
+        "user.akaczmar:user.akaczmar.akaczmar.mc16_13TeV.601627.PhPy8_tW_DS_dyn_incl_atop.D1.e8482_s3126_r10724_p4204.v14r0_BS",
+        "user.akaczmar:user.akaczmar.akaczmar.mc16_13TeV.601627.PhPy8_tW_DS_dyn_incl_atop.D1.e8482_s3126_r9364_p4204.v14r0_BS",
+        "user.akaczmar:user.akaczmar.akaczmar.mc16_13TeV.601631.PhPy8_tW_DS_dyn_incl_top.D1.e8482_s3126_r10201_p4204.v14r0_BS",
+        "user.akaczmar:user.akaczmar.akaczmar.mc16_13TeV.601631.PhPy8_tW_DS_dyn_incl_top.D1.e8482_s3126_r10724_p4204.v14r0_BS",
+        "user.akaczmar:user.akaczmar.akaczmar.mc16_13TeV.601631.PhPy8_tW_DS_dyn_incl_top.D1.e8482_s3126_r9364_p4204.v14r0_BS",
+      ],
+      "Data": [],
+    },
+	},
 }
 
 def fix13():
@@ -8331,6 +8445,24 @@ def fix13():
         datasets["v13"][channel][col].append(dsetName)
 # End fix13
 
+def fix14():
+  obsolete = [410646, 410647, 410648, 410649] # obsolete nominal tW samples
+  obsolete += [411032, 411033, 411034, 411035, 411036, 411037, 411038, 411039] # obsolete singletop PowhegHerwig7 samples
+  def getDSID(dsetName):
+    return int(dsetName.split(':')[-1].split('.')[4])
+  for channel in datasets["v14"]:
+    for col in datasets["v14"][channel]:
+      known = set()
+      for dsid in obsolete:
+        known.add(dsid) # skip obsolete samples
+      for dsetName in datasets["v14"][channel][col]:
+        known.add(getDSID(dsetName))
+      for dsetName in datasets["v13"][channel][col]:
+        if getDSID(dsetName) in known:
+          continue
+        datasets["v14"][channel][col].append(dsetName)
+
 # TODO call this to make the full set of symlinks, disabled for now just to test the new stuff only
 fix13()
+fix14()
 

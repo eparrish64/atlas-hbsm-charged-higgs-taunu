@@ -34,7 +34,7 @@ class Analysis(object):
         # - - main configuration object 
         self.config = config 
         self.suffix = suffix
-        self.cxx_macros = self.config.metTrigEff_macros + self.config.FFs_macros + self.config.upsilon_macros + self.config.effm_taujet_macros + self.config.effm_taulep_macros + self.config.njets_macros + self.config.filter_effi_macros
+        self.cxx_macros = self.config.metTrigEff_macros + self.config.FFs_macros + self.config.upsilon_macros + self.config.effm_taujet_macros + self.config.effm_taulep_macros + self.config.njets_macros + self.config.filter_effi_macros + self.config.wtaunu_theory_macros
 
         # - - loading and compiling cxx macros
         if compile_cxx:

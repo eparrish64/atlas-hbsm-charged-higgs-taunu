@@ -42,6 +42,7 @@ class Configuration(object):
                 effm_taulep_macros=["eff_mass_taulep.cxx"],
                 njets_macros=["njets.cxx"],
                 filter_effi_macros=["FilterEffi.cxx"],
+                wtaunu_theory_macros=["wtaunu_theory.cxx"],
                 root_conf_files = [],
                 ):
         self.channel = channel
@@ -58,6 +59,7 @@ class Configuration(object):
         self.effm_taulep_macros	= effm_taulep_macros
         self.njets_macros=njets_macros
         self.filter_effi_macros=filter_effi_macros
+        self.wtaunu_theory_macros=wtaunu_theory_macros
         self.root_conf_files = root_conf_files
 
         # - - - - DATA luminosity dictionary (keys are data streams)

@@ -932,7 +932,7 @@ def get_sample_variation_weight(systematic, variation, dataset, sample, channel)
       elif "MAXHTPTV500_1000" in wts:
         macroName = "500to1000"
       else:
-        macroName = "1000to2000"
+        macroName = "1000toECMS"
       specialSampleDefaults[wts] = "1"
       specialSampleVariations[wts] = {
         "wtaunu_scale": {

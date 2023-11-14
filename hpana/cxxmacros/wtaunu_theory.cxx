@@ -77,7 +77,7 @@ float wtaunu_ckkw15_280to500(int nTruthJets)
     return 0; // This never happens
 }
 
-float wtaunu_ckkw15_500to700(int nTruthJets)
+float wtaunu_ckkw15_500to1000(int nTruthJets)
 {
     int jetBin = nTruthJets+1;
     if (jetBin > 12) jetBin = 12;
@@ -96,26 +96,7 @@ float wtaunu_ckkw15_500to700(int nTruthJets)
     return 0; // This never happens
 }
 
-float wtaunu_ckkw15_700to1000(int nTruthJets)
-{
-    int jetBin = nTruthJets+1;
-    if (jetBin > 12) jetBin = 12;
-    if (jetBin == 1) return 1.67888724804;
-    if (jetBin == 2) return 1.18032371998;
-    if (jetBin == 3) return 0.941224992275;
-    if (jetBin == 4) return 0.98529201746;
-    if (jetBin == 5) return 0.954674303532;
-    if (jetBin == 6) return 0.945665955544;
-    if (jetBin == 7) return 1.40908622742;
-    if (jetBin == 8) return 0.869572520256;
-    if (jetBin == 9) return 1.92715597153;
-    if (jetBin == 10) return 1.72672605515;
-    if (jetBin == 11) return 1.24804329872;
-    if (jetBin == 12) return 0.0336218513548;
-    return 0; // This never happens
-}
-
-float wtaunu_ckkw15_1000to2000(int nTruthJets)
+float wtaunu_ckkw15_1000toECMS(int nTruthJets)
 {
     int jetBin = nTruthJets+1;
     if (jetBin > 12) jetBin = 12;
@@ -129,25 +110,6 @@ float wtaunu_ckkw15_1000to2000(int nTruthJets)
     if (jetBin == 8) return 0.750469267368;
     if (jetBin == 9) return 0.902483284473;
     if (jetBin == 10) return 0.565406620502;
-    if (jetBin == 11) return 2.30494236946;
-    if (jetBin == 12) return 0.0336218513548;
-    return 0; // This never happens
-}
-
-float wtaunu_ckkw15_2000toECMS(int nTruthJets)
-{
-    int jetBin = nTruthJets+1;
-    if (jetBin > 12) jetBin = 12;
-    if (jetBin == 1) return 1.67888724804;
-    if (jetBin == 2) return 1.55517709255;
-    if (jetBin == 3) return 0.948571264744;
-    if (jetBin == 4) return 0.91941434145;
-    if (jetBin == 5) return 0.721458852291;
-    if (jetBin == 6) return 0.944126725197;
-    if (jetBin == 7) return 0.768530964851;
-    if (jetBin == 8) return 0.937146067619;
-    if (jetBin == 9) return 0.613916039467;
-    if (jetBin == 10) return 0.82850664854;
     if (jetBin == 11) return 2.30494236946;
     if (jetBin == 12) return 0.0336218513548;
     return 0; // This never happens
@@ -229,7 +191,7 @@ float wtaunu_ckkw30_280to500(int nTruthJets)
     return 0; // This never happens
 }
 
-float wtaunu_ckkw30_500to700(int nTruthJets)
+float wtaunu_ckkw30_500to1000(int nTruthJets)
 {
     int jetBin = nTruthJets+1;
     if (jetBin > 12) jetBin = 12;
@@ -248,26 +210,7 @@ float wtaunu_ckkw30_500to700(int nTruthJets)
     return 0; // This never happens
 }
 
-float wtaunu_ckkw30_700to1000(int nTruthJets)
-{
-    int jetBin = nTruthJets+1;
-    if (jetBin > 12) jetBin = 12;
-    if (jetBin == 1) return 1.89830386639;
-    if (jetBin == 2) return 1.35393750668;
-    if (jetBin == 3) return 1.10469460487;
-    if (jetBin == 4) return 1.11507415771;
-    if (jetBin == 5) return 0.925231456757;
-    if (jetBin == 6) return 0.837897241116;
-    if (jetBin == 7) return 1.20945894718;
-    if (jetBin == 8) return 0.654149413109;
-    if (jetBin == 9) return 1.5197892189;
-    if (jetBin == 10) return 1.28196549416;
-    if (jetBin == 11) return 0.92604970932;
-    if (jetBin == 12) return 0.0353515483439;
-    return 0; // This never happens
-}
-
-float wtaunu_ckkw30_1000to2000(int nTruthJets)
+float wtaunu_ckkw30_1000toECMS(int nTruthJets)
 {
     int jetBin = nTruthJets+1;
     if (jetBin > 12) jetBin = 12;
@@ -281,25 +224,6 @@ float wtaunu_ckkw30_1000to2000(int nTruthJets)
     if (jetBin == 8) return 0.622723400593;
     if (jetBin == 9) return 0.760102212429;
     if (jetBin == 10) return 0.538535952568;
-    if (jetBin == 11) return 1.50284910202;
-    if (jetBin == 12) return 0.0353515483439;
-    return 0; // This never happens
-}
-
-float wtaunu_ckkw30_2000toECMS(int nTruthJets)
-{
-    int jetBin = nTruthJets+1;
-    if (jetBin > 12) jetBin = 12;
-    if (jetBin == 1) return 1.89830386639;
-    if (jetBin == 2) return 1.89188528061;
-    if (jetBin == 3) return 1.08213186264;
-    if (jetBin == 4) return 1.10621118546;
-    if (jetBin == 5) return 0.715335845947;
-    if (jetBin == 6) return 0.844575822353;
-    if (jetBin == 7) return 0.674536943436;
-    if (jetBin == 8) return 0.840392529964;
-    if (jetBin == 9) return 0.475037813187;
-    if (jetBin == 10) return 0.656334877014;
     if (jetBin == 11) return 1.50284910202;
     if (jetBin == 12) return 0.0353515483439;
     return 0; // This never happens
@@ -381,7 +305,7 @@ float wtaunu_fac025_280to500(int nTruthJets)
     return 0; // This never happens
 }
 
-float wtaunu_fac025_500to700(int nTruthJets)
+float wtaunu_fac025_500to1000(int nTruthJets)
 {
     int jetBin = nTruthJets+1;
     if (jetBin > 12) jetBin = 12;
@@ -400,26 +324,7 @@ float wtaunu_fac025_500to700(int nTruthJets)
     return 0; // This never happens
 }
 
-float wtaunu_fac025_700to1000(int nTruthJets)
-{
-    int jetBin = nTruthJets+1;
-    if (jetBin > 12) jetBin = 12;
-    if (jetBin == 1) return 1.66293919086;
-    if (jetBin == 2) return 1.22467398643;
-    if (jetBin == 3) return 0.991140186787;
-    if (jetBin == 4) return 1.04841542244;
-    if (jetBin == 5) return 0.917193055153;
-    if (jetBin == 6) return 0.887084305286;
-    if (jetBin == 7) return 1.3547757864;
-    if (jetBin == 8) return 0.824084639549;
-    if (jetBin == 9) return 1.79746389389;
-    if (jetBin == 10) return 1.346778512;
-    if (jetBin == 11) return 1.31084728241;
-    if (jetBin == 12) return 0.0317593067884;
-    return 0; // This never happens
-}
-
-float wtaunu_fac025_1000to2000(int nTruthJets)
+float wtaunu_fac025_1000toECMS(int nTruthJets)
 {
     int jetBin = nTruthJets+1;
     if (jetBin > 12) jetBin = 12;
@@ -433,25 +338,6 @@ float wtaunu_fac025_1000to2000(int nTruthJets)
     if (jetBin == 8) return 0.730936586857;
     if (jetBin == 9) return 0.847517669201;
     if (jetBin == 10) return 0.572398245335;
-    if (jetBin == 11) return 1.57208919525;
-    if (jetBin == 12) return 0.0317593067884;
-    return 0; // This never happens
-}
-
-float wtaunu_fac025_2000toECMS(int nTruthJets)
-{
-    int jetBin = nTruthJets+1;
-    if (jetBin > 12) jetBin = 12;
-    if (jetBin == 1) return 1.66293919086;
-    if (jetBin == 2) return 1.67812907696;
-    if (jetBin == 3) return 0.888825893402;
-    if (jetBin == 4) return 0.89136070013;
-    if (jetBin == 5) return 0.659919202328;
-    if (jetBin == 6) return 0.954383015633;
-    if (jetBin == 7) return 0.707641661167;
-    if (jetBin == 8) return 1.02888739109;
-    if (jetBin == 9) return 0.735209703445;
-    if (jetBin == 10) return 0.834466159344;
     if (jetBin == 11) return 1.57208919525;
     if (jetBin == 12) return 0.0317593067884;
     return 0; // This never happens
@@ -533,7 +419,7 @@ float wtaunu_fac4_280to500(int nTruthJets)
     return 0; // This never happens
 }
 
-float wtaunu_fac4_500to700(int nTruthJets)
+float wtaunu_fac4_500to1000(int nTruthJets)
 {
     int jetBin = nTruthJets+1;
     if (jetBin > 12) jetBin = 12;
@@ -552,26 +438,7 @@ float wtaunu_fac4_500to700(int nTruthJets)
     return 0; // This never happens
 }
 
-float wtaunu_fac4_700to1000(int nTruthJets)
-{
-    int jetBin = nTruthJets+1;
-    if (jetBin > 12) jetBin = 12;
-    if (jetBin == 1) return 0.924506783485;
-    if (jetBin == 2) return 1.27475047112;
-    if (jetBin == 3) return 0.960889995098;
-    if (jetBin == 4) return 0.963938474655;
-    if (jetBin == 5) return 0.86380058527;
-    if (jetBin == 6) return 0.833915472031;
-    if (jetBin == 7) return 1.22701048851;
-    if (jetBin == 8) return 0.747391462326;
-    if (jetBin == 9) return 1.60081267357;
-    if (jetBin == 10) return 1.39158153534;
-    if (jetBin == 11) return 1.30935406685;
-    if (jetBin == 12) return 0.0371511988342;
-    return 0; // This never happens
-}
-
-float wtaunu_fac4_1000to2000(int nTruthJets)
+float wtaunu_fac4_1000toECMS(int nTruthJets)
 {
     int jetBin = nTruthJets+1;
     if (jetBin > 12) jetBin = 12;
@@ -585,25 +452,6 @@ float wtaunu_fac4_1000to2000(int nTruthJets)
     if (jetBin == 8) return 0.71946823597;
     if (jetBin == 9) return 0.859342455864;
     if (jetBin == 10) return 0.426131486893;
-    if (jetBin == 11) return 1.46971201897;
-    if (jetBin == 12) return 0.0371511988342;
-    return 0; // This never happens
-}
-
-float wtaunu_fac4_2000toECMS(int nTruthJets)
-{
-    int jetBin = nTruthJets+1;
-    if (jetBin > 12) jetBin = 12;
-    if (jetBin == 1) return 0.924506783485;
-    if (jetBin == 2) return 1.61884093285;
-    if (jetBin == 3) return 0.994335472584;
-    if (jetBin == 4) return 0.928640425205;
-    if (jetBin == 5) return 0.641776800156;
-    if (jetBin == 6) return 0.802202224731;
-    if (jetBin == 7) return 0.635906219482;
-    if (jetBin == 8) return 0.839347183704;
-    if (jetBin == 9) return 0.478173583746;
-    if (jetBin == 10) return 0.946973264217;
     if (jetBin == 11) return 1.46971201897;
     if (jetBin == 12) return 0.0371511988342;
     return 0; // This never happens
@@ -685,7 +533,7 @@ float wtaunu_qsf025_280to500(int nTruthJets)
     return 0; // This never happens
 }
 
-float wtaunu_qsf025_500to700(int nTruthJets)
+float wtaunu_qsf025_500to1000(int nTruthJets)
 {
     int jetBin = nTruthJets+1;
     if (jetBin > 12) jetBin = 12;
@@ -704,26 +552,7 @@ float wtaunu_qsf025_500to700(int nTruthJets)
     return 0; // This never happens
 }
 
-float wtaunu_qsf025_700to1000(int nTruthJets)
-{
-    int jetBin = nTruthJets+1;
-    if (jetBin > 12) jetBin = 12;
-    if (jetBin == 1) return 0.728233575821;
-    if (jetBin == 2) return 1.29890096188;
-    if (jetBin == 3) return 1.0022881031;
-    if (jetBin == 4) return 1.0186882019;
-    if (jetBin == 5) return 0.881728291512;
-    if (jetBin == 6) return 0.842168033123;
-    if (jetBin == 7) return 1.22482335567;
-    if (jetBin == 8) return 0.747171878815;
-    if (jetBin == 9) return 1.72296130657;
-    if (jetBin == 10) return 1.34230411053;
-    if (jetBin == 11) return 0.980313956738;
-    if (jetBin == 12) return 0.0222945325077;
-    return 0; // This never happens
-}
-
-float wtaunu_qsf025_1000to2000(int nTruthJets)
+float wtaunu_qsf025_1000toECMS(int nTruthJets)
 {
     int jetBin = nTruthJets+1;
     if (jetBin > 12) jetBin = 12;
@@ -737,25 +566,6 @@ float wtaunu_qsf025_1000to2000(int nTruthJets)
     if (jetBin == 8) return 0.683405220509;
     if (jetBin == 9) return 0.882970631123;
     if (jetBin == 10) return 0.468501478434;
-    if (jetBin == 11) return 2.06036067009;
-    if (jetBin == 12) return 0.0222945325077;
-    return 0; // This never happens
-}
-
-float wtaunu_qsf025_2000toECMS(int nTruthJets)
-{
-    int jetBin = nTruthJets+1;
-    if (jetBin > 12) jetBin = 12;
-    if (jetBin == 1) return 0.728233575821;
-    if (jetBin == 2) return 1.54373705387;
-    if (jetBin == 3) return 0.878510296345;
-    if (jetBin == 4) return 0.899132430553;
-    if (jetBin == 5) return 0.609670758247;
-    if (jetBin == 6) return 0.835428476334;
-    if (jetBin == 7) return 0.621158540249;
-    if (jetBin == 8) return 0.898669183254;
-    if (jetBin == 9) return 0.647530138493;
-    if (jetBin == 10) return 0.555507302284;
     if (jetBin == 11) return 2.06036067009;
     if (jetBin == 12) return 0.0222945325077;
     return 0; // This never happens
@@ -837,7 +647,7 @@ float wtaunu_qsf4_280to500(int nTruthJets)
     return 0; // This never happens
 }
 
-float wtaunu_qsf4_500to700(int nTruthJets)
+float wtaunu_qsf4_500to1000(int nTruthJets)
 {
     int jetBin = nTruthJets+1;
     if (jetBin > 12) jetBin = 12;
@@ -856,26 +666,7 @@ float wtaunu_qsf4_500to700(int nTruthJets)
     return 0; // This never happens
 }
 
-float wtaunu_qsf4_700to1000(int nTruthJets)
-{
-    int jetBin = nTruthJets+1;
-    if (jetBin > 12) jetBin = 12;
-    if (jetBin == 1) return 1.35494339466;
-    if (jetBin == 2) return 1.23266863823;
-    if (jetBin == 3) return 0.992636084557;
-    if (jetBin == 4) return 0.969281494617;
-    if (jetBin == 5) return 0.909804821014;
-    if (jetBin == 6) return 0.867386519909;
-    if (jetBin == 7) return 1.28642714024;
-    if (jetBin == 8) return 0.807869613171;
-    if (jetBin == 9) return 1.70077264309;
-    if (jetBin == 10) return 1.38518750668;
-    if (jetBin == 11) return 1.09509551525;
-    if (jetBin == 12) return 0.0356368012726;
-    return 0; // This never happens
-}
-
-float wtaunu_qsf4_1000to2000(int nTruthJets)
+float wtaunu_qsf4_1000toECMS(int nTruthJets)
 {
     int jetBin = nTruthJets+1;
     if (jetBin > 12) jetBin = 12;
@@ -889,25 +680,6 @@ float wtaunu_qsf4_1000to2000(int nTruthJets)
     if (jetBin == 8) return 0.706145048141;
     if (jetBin == 9) return 0.940883100033;
     if (jetBin == 10) return 0.581859827042;
-    if (jetBin == 11) return 2.56305766106;
-    if (jetBin == 12) return 0.0356368012726;
-    return 0; // This never happens
-}
-
-float wtaunu_qsf4_2000toECMS(int nTruthJets)
-{
-    int jetBin = nTruthJets+1;
-    if (jetBin > 12) jetBin = 12;
-    if (jetBin == 1) return 1.35494339466;
-    if (jetBin == 2) return 1.70509314537;
-    if (jetBin == 3) return 0.977085709572;
-    if (jetBin == 4) return 0.949401438236;
-    if (jetBin == 5) return 0.661776840687;
-    if (jetBin == 6) return 0.937375605106;
-    if (jetBin == 7) return 0.728156447411;
-    if (jetBin == 8) return 0.97258657217;
-    if (jetBin == 9) return 0.612798750401;
-    if (jetBin == 10) return 0.835641205311;
     if (jetBin == 11) return 2.56305766106;
     if (jetBin == 12) return 0.0356368012726;
     return 0; // This never happens
@@ -989,7 +761,7 @@ float wtaunu_renorm025_280to500(int nTruthJets)
     return 0; // This never happens
 }
 
-float wtaunu_renorm025_500to700(int nTruthJets)
+float wtaunu_renorm025_500to1000(int nTruthJets)
 {
     int jetBin = nTruthJets+1;
     if (jetBin > 12) jetBin = 12;
@@ -1008,26 +780,7 @@ float wtaunu_renorm025_500to700(int nTruthJets)
     return 0; // This never happens
 }
 
-float wtaunu_renorm025_700to1000(int nTruthJets)
-{
-    int jetBin = nTruthJets+1;
-    if (jetBin > 12) jetBin = 12;
-    if (jetBin == 1) return 0.796396791935;
-    if (jetBin == 2) return 1.12374770641;
-    if (jetBin == 3) return 1.01478993893;
-    if (jetBin == 4) return 1.22875881195;
-    if (jetBin == 5) return 1.18497443199;
-    if (jetBin == 6) return 1.17972683907;
-    if (jetBin == 7) return 1.73925077915;
-    if (jetBin == 8) return 1.06345748901;
-    if (jetBin == 9) return 2.24881339073;
-    if (jetBin == 10) return 1.88163173199;
-    if (jetBin == 11) return 1.53797364235;
-    if (jetBin == 12) return 0.0549962110817;
-    return 0; // This never happens
-}
-
-float wtaunu_renorm025_1000to2000(int nTruthJets)
+float wtaunu_renorm025_1000toECMS(int nTruthJets)
 {
     int jetBin = nTruthJets+1;
     if (jetBin > 12) jetBin = 12;
@@ -1041,25 +794,6 @@ float wtaunu_renorm025_1000to2000(int nTruthJets)
     if (jetBin == 8) return 1.03703808784;
     if (jetBin == 9) return 1.11202514172;
     if (jetBin == 10) return 0.796731412411;
-    if (jetBin == 11) return 2.04049301147;
-    if (jetBin == 12) return 0.0549962110817;
-    return 0; // This never happens
-}
-
-float wtaunu_renorm025_2000toECMS(int nTruthJets)
-{
-    int jetBin = nTruthJets+1;
-    if (jetBin > 12) jetBin = 12;
-    if (jetBin == 1) return 0.796396791935;
-    if (jetBin == 2) return 1.60954368114;
-    if (jetBin == 3) return 1.11422944069;
-    if (jetBin == 4) return 1.18523454666;
-    if (jetBin == 5) return 0.900903999805;
-    if (jetBin == 6) return 1.16726541519;
-    if (jetBin == 7) return 0.930123090744;
-    if (jetBin == 8) return 1.18448376656;
-    if (jetBin == 9) return 0.853473603725;
-    if (jetBin == 10) return 0.763024806976;
     if (jetBin == 11) return 2.04049301147;
     if (jetBin == 12) return 0.0549962110817;
     return 0; // This never happens
@@ -1141,7 +875,7 @@ float wtaunu_renorm4_280to500(int nTruthJets)
     return 0; // This never happens
 }
 
-float wtaunu_renorm4_500to700(int nTruthJets)
+float wtaunu_renorm4_500to1000(int nTruthJets)
 {
     int jetBin = nTruthJets+1;
     if (jetBin > 12) jetBin = 12;
@@ -1160,26 +894,7 @@ float wtaunu_renorm4_500to700(int nTruthJets)
     return 0; // This never happens
 }
 
-float wtaunu_renorm4_700to1000(int nTruthJets)
-{
-    int jetBin = nTruthJets+1;
-    if (jetBin > 12) jetBin = 12;
-    if (jetBin == 1) return 2.07682871819;
-    if (jetBin == 2) return 1.23899161816;
-    if (jetBin == 3) return 0.891665399075;
-    if (jetBin == 4) return 0.798153460026;
-    if (jetBin == 5) return 0.643373727798;
-    if (jetBin == 6) return 0.632496237755;
-    if (jetBin == 7) return 0.94984382391;
-    if (jetBin == 8) return 0.542187511921;
-    if (jetBin == 9) return 1.30247402191;
-    if (jetBin == 10) return 1.0508607626;
-    if (jetBin == 11) return 0.746574521065;
-    if (jetBin == 12) return 0.0232734847814;
-    return 0; // This never happens
-}
-
-float wtaunu_renorm4_1000to2000(int nTruthJets)
+float wtaunu_renorm4_1000toECMS(int nTruthJets)
 {
     int jetBin = nTruthJets+1;
     if (jetBin > 12) jetBin = 12;
@@ -1193,25 +908,6 @@ float wtaunu_renorm4_1000to2000(int nTruthJets)
     if (jetBin == 8) return 0.507706046104;
     if (jetBin == 9) return 0.626698553562;
     if (jetBin == 10) return 0.384184122086;
-    if (jetBin == 11) return 0.778892993927;
-    if (jetBin == 12) return 0.0232734847814;
-    return 0; // This never happens
-}
-
-float wtaunu_renorm4_2000toECMS(int nTruthJets)
-{
-    int jetBin = nTruthJets+1;
-    if (jetBin > 12) jetBin = 12;
-    if (jetBin == 1) return 2.07682871819;
-    if (jetBin == 2) return 1.75131988525;
-    if (jetBin == 3) return 0.871731758118;
-    if (jetBin == 4) return 0.700257301331;
-    if (jetBin == 5) return 0.464166283607;
-    if (jetBin == 6) return 0.613311350346;
-    if (jetBin == 7) return 0.450641393661;
-    if (jetBin == 8) return 0.619004249573;
-    if (jetBin == 9) return 0.302531421185;
-    if (jetBin == 10) return 0.4734980762;
     if (jetBin == 11) return 0.778892993927;
     if (jetBin == 12) return 0.0232734847814;
     return 0; // This never happens

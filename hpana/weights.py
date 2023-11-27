@@ -1147,9 +1147,10 @@ def get_sample_variation_weight(systematic, variation, dataset, sample, channel)
   }
 
   w = "1"
+  if dataset.ds in specialSampleDefaults:
+    w = specialSampleDefaults[dataset.ds] # set nominal value for this sample
   if dataset.ds in specialSampleVariations:
     # This dataset requires some weights to be handled in a special way
-    w = specialSampleDefaults[dataset.ds] # set nominal value for this sample
     if systematic.name in specialSampleVariations[dataset.ds]:
       # This is a weight which requires special handling fo this sample
       if variation.name in specialSampleVariations[dataset.ds][systematic.name]:

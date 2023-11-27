@@ -8347,6 +8347,15 @@ datasets = {
         "user.bburghgr:user.bburghgr.TL.mc16_13TeV.601631.PhPy8_tW_DS_dyn_incl_top.D2.e8482_s3126_r10201_p4204.v14r0_BS",
         "user.bburghgr:user.bburghgr.TL.mc16_13TeV.601631.PhPy8_tW_DS_dyn_incl_top.D2.e8482_s3126_r10724_p4204.v14r0_BS",
         "user.bburghgr:user.bburghgr.TL.mc16_13TeV.601631.PhPy8_tW_DS_dyn_incl_top.D2.e8482_s3126_r9364_p4204.v14r0_BS",
+        "user.bburghgr:user.bburghgr.TL.mc16_13TeV.411233.PoHerwig7_tt_713_SLep.D2.e7580_s3126_r10201_p4204.v14r5_BS",
+        "user.bburghgr:user.bburghgr.TL.mc16_13TeV.411233.PoHerwig7_tt_713_SLep.D2.e7580_s3126_r10724_p4204.v14r5_BS",
+        "user.bburghgr:user.bburghgr.TL.mc16_13TeV.411233.PoHerwig7_tt_713_SLep.D2.e7580_s3126_r9364_p4204.v14r5_BS",
+        "user.bburghgr:user.bburghgr.TL.mc16_13TeV.411234.PoHerwig7_tt_713_dil.D2.e7580_s3126_r10201_p4204.v14r5_BS",
+        "user.bburghgr:user.bburghgr.TL.mc16_13TeV.411234.PoHerwig7_tt_713_dil.D2.e7580_s3126_r10724_p4204.v14r5_BS",
+        "user.bburghgr:user.bburghgr.TL.mc16_13TeV.411234.PoHerwig7_tt_713_dil.D2.e7580_s3126_r9364_p4204.v14r5_BS",
+        "user.bburghgr:user.bburghgr.TL.mc16_13TeV.411316.PoHerwig7_tt_713_allh.D2.e7765_s3126_r10201_p4204.v14r0_BS",
+        "user.bburghgr:user.bburghgr.TL.mc16_13TeV.411316.PoHerwig7_tt_713_allh.D2.e7765_s3126_r10724_p4204.v14r0_BS",
+        "user.bburghgr:user.bburghgr.TL.mc16_13TeV.411316.PoHerwig7_tt_713_allh.D2.e7765_s3126_r9364_p4204.v14r0_BS",
       ],
       "Data": [],
     },
@@ -8424,6 +8433,15 @@ datasets = {
         "user.akaczmar:user.akaczmar.akaczmar.mc16_13TeV.601631.PhPy8_tW_DS_dyn_incl_top.D1.e8482_s3126_r10201_p4204.v14r0_BS",
         "user.akaczmar:user.akaczmar.akaczmar.mc16_13TeV.601631.PhPy8_tW_DS_dyn_incl_top.D1.e8482_s3126_r10724_p4204.v14r0_BS",
         "user.akaczmar:user.akaczmar.akaczmar.mc16_13TeV.601631.PhPy8_tW_DS_dyn_incl_top.D1.e8482_s3126_r9364_p4204.v14r0_BS",
+        "user.bburghgr:user.bburghgr.TJ.mc16_13TeV.411233.PoHerwig7_tt_713_SLep.D1.e7580_s3126_r10201_p4204.v14r0_BS",
+        "user.bburghgr:user.bburghgr.TJ.mc16_13TeV.411233.PoHerwig7_tt_713_SLep.D1.e7580_s3126_r10724_p4204.v14r0_BS",
+        "user.bburghgr:user.bburghgr.TJ.mc16_13TeV.411233.PoHerwig7_tt_713_SLep.D1.e7580_s3126_r9364_p4204.v14r0_BS",
+        "user.bburghgr:user.bburghgr.TJ.mc16_13TeV.411234.PoHerwig7_tt_713_dil.D1.e7580_s3126_r10201_p4204.v14r0_BS",
+        "user.bburghgr:user.bburghgr.TJ.mc16_13TeV.411234.PoHerwig7_tt_713_dil.D1.e7580_s3126_r10724_p4204.v14r0_BS",
+        "user.bburghgr:user.bburghgr.TJ.mc16_13TeV.411234.PoHerwig7_tt_713_dil.D1.e7580_s3126_r9364_p4204.v14r0_BS",
+        "user.bburghgr:user.bburghgr.TJ.mc16_13TeV.411316.PoHerwig7_tt_713_allh.D1.e7765_s3126_r10201_p4204.v14r0_BS",
+        "user.bburghgr:user.bburghgr.TJ.mc16_13TeV.411316.PoHerwig7_tt_713_allh.D1.e7765_s3126_r10724_p4204.v14r0_BS",
+        "user.bburghgr:user.bburghgr.TJ.mc16_13TeV.411316.PoHerwig7_tt_713_allh.D1.e7765_s3126_r9364_p4204.v14r0_BS",
       ],
       "Data": [],
     },
@@ -8448,6 +8466,7 @@ def fix13():
 def fix14():
   obsolete = [410646, 410647, 410648, 410649] # obsolete nominal tW samples
   obsolete += [411032, 411033, 411034, 411035, 411036, 411037, 411038, 411039] # obsolete singletop PowhegHerwig7 samples
+  obsolete += [410557, 410558, 410559] # obsolete ttbar PowhegHerig7 samples
   def getDSID(dsetName):
     return int(dsetName.split(':')[-1].split('.')[4])
   for channel in datasets["v14"]:

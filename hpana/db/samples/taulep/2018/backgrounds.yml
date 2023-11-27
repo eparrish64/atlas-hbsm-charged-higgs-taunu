@@ -174,9 +174,12 @@ ttbar:
       - MadGraphPythia8EvtGen_A14NNPDF23LO_ttgamma_noallhad
 
     systematics:
-      - PowhegHerwig7EvtGen_H7UE_tt_hdamp258p75_704_singlelepton
-      - PowhegHerwig7EvtGen_H7UE_tt_hdamp258p75_704_dilepton
-      - PowhegHerwig7EvtGen_H7UE_tt_hdamp258p75_allhad
+      #- PowhegHerwig7EvtGen_H7UE_tt_hdamp258p75_704_singlelepton
+      #- PowhegHerwig7EvtGen_H7UE_tt_hdamp258p75_704_dilepton
+      #- PowhegHerwig7EvtGen_H7UE_tt_hdamp258p75_allhad
+      - PowhegHerwig7EvtGen_tt_hdamp258p75_713_SingleLep
+      - PowhegHerwig7EvtGen_tt_hdamp258p75_713_dil
+      - PowhegHerwig7EvtGen_tt_hdamp258p75_713_allhad
       - PhPy8EG_A14_ttbar_hdamp517p5_SingleLep
       - PhPy8EG_A14_ttbar_hdamp517p5_allhad
       - PhPy8EG_A14_ttbar_hdamp517p5_dil

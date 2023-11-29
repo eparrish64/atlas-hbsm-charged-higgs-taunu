@@ -585,9 +585,12 @@ def get_sample_variation_weight(systematic, variation, dataset, sample, channel)
     "PhPy8EG_A14_ttbar_hdamp258p75_allhad": "1",
 
     # ttbar theory variations
-    "PowhegHerwig7EvtGen_H7UE_tt_hdamp258p75_704_singlelepton": "0",
-    "PowhegHerwig7EvtGen_H7UE_tt_hdamp258p75_704_dilepton": "0",
-    "PowhegHerwig7EvtGen_H7UE_tt_hdamp258p75_allhad": "0",
+    #"PowhegHerwig7EvtGen_H7UE_tt_hdamp258p75_704_singlelepton": "0",
+    #"PowhegHerwig7EvtGen_H7UE_tt_hdamp258p75_704_dilepton": "0",
+    #"PowhegHerwig7EvtGen_H7UE_tt_hdamp258p75_allhad": "0",
+    "PowhegHerwig7EvtGen_tt_hdamp258p75_713_SingleLep": "0",
+    "PowhegHerwig7EvtGen_tt_hdamp258p75_713_dil": "0",
+    "PowhegHerwig7EvtGen_tt_hdamp258p75_713_allhad": "0",
     "PhPy8EG_A14_ttbar_hdamp517p5_SingleLep": "0",
     "PhPy8EG_A14_ttbar_hdamp517p5_allhad": "0",
     "PhPy8EG_A14_ttbar_hdamp517p5_dil": "0",
@@ -725,17 +728,32 @@ def get_sample_variation_weight(systematic, variation, dataset, sample, channel)
     },
 
     # ttbar theory variations
-    "PowhegHerwig7EvtGen_H7UE_tt_hdamp258p75_704_singlelepton": {
+    #"PowhegHerwig7EvtGen_H7UE_tt_hdamp258p75_704_singlelepton": {
+    #  "ttbar_model": {
+    #    "ttbar_model_POWHEG_HERWIG7": "1",
+    #  },
+    #},
+    #"PowhegHerwig7EvtGen_H7UE_tt_hdamp258p75_704_dilepton": {
+    #  "ttbar_model": {
+    #    "ttbar_model_POWHEG_HERWIG7": "1",
+    #  },
+    #},
+    #"PowhegHerwig7EvtGen_H7UE_tt_hdamp258p75_allhad": {
+    #  "ttbar_model": {
+    #    "ttbar_model_POWHEG_HERWIG7": "1",
+    #  },
+    #},
+    "PowhegHerwig7EvtGen_tt_hdamp258p75_713_SingleLep": {
       "ttbar_model": {
         "ttbar_model_POWHEG_HERWIG7": "1",
       },
     },
-    "PowhegHerwig7EvtGen_H7UE_tt_hdamp258p75_704_dilepton": {
+    "PowhegHerwig7EvtGen_tt_hdamp258p75_713_dil": {
       "ttbar_model": {
         "ttbar_model_POWHEG_HERWIG7": "1",
       },
     },
-    "PowhegHerwig7EvtGen_H7UE_tt_hdamp258p75_allhad": {
+    "PowhegHerwig7EvtGen_tt_hdamp258p75_713_allhad": {
       "ttbar_model": {
         "ttbar_model_POWHEG_HERWIG7": "1",
       },
@@ -1129,9 +1147,10 @@ def get_sample_variation_weight(systematic, variation, dataset, sample, channel)
   }
 
   w = "1"
+  if dataset.ds in specialSampleDefaults:
+    w = specialSampleDefaults[dataset.ds] # set nominal value for this sample
   if dataset.ds in specialSampleVariations:
     # This dataset requires some weights to be handled in a special way
-    w = specialSampleDefaults[dataset.ds] # set nominal value for this sample
     if systematic.name in specialSampleVariations[dataset.ds]:
       # This is a weight which requires special handling fo this sample
       if variation.name in specialSampleVariations[dataset.ds][systematic.name]:

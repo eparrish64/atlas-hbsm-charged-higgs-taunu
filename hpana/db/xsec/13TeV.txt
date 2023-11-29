@@ -2845,6 +2845,9 @@
 
 ### ntuples v14, updated theory systematics ###
 
+411233	PowhegHerwig7EvtGen_tt_hdamp258p75_713_SingleLep	730.15	0.4384847	1.0	1.0
+411234	PowhegHerwig7EvtGen_tt_hdamp258p75_713_dil	730.15	0.1053784	1.0	1.0
+411316	PowhegHerwig7EvtGen_tt_hdamp258p75_713_allhad	730.14	0.4561504	1.0	1.0
 600017	PhH7EG_H7UE_716_tchan_lept_antitop	22.194	1.0	1.0	1.0
 600018	PhH7EG_H7UE_716_tchan_lept_top	37.019	1.0	1.0	1.0
 600019	PhH7EG_H7UE_716_schan_lept_antitop	1.2687	1.0	1.0	1.0

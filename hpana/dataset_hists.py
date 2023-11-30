@@ -8,7 +8,7 @@ import time
 from . import log
 from .mem_branches import MEM_BRANCHES, VETO_BRANCHES
 from .containers import Histset
-from .weights import get_sample_variation_weight
+from .weights import get_sample_variation_weight, do_sample_variation
 
 # ROOT
 import ROOT
@@ -157,6 +157,8 @@ def dataset_hists(hist_worker,
                 eventweight = "(%s)*(%s)" % (eventweight, sw)
 
             eventweight = "(%s)*(%s)" % (eventweight, get_sample_variation_weight(systematic, syst_var, dataset, sample, channel))
+            if not do_sample_variation(systematic, syst_var, dataset):
+                continue # skip this systematic for this sample, e.g. SF systematics in nominal tree of variation samples
             cat_syst_weights[category.name][syst_var.name] = ROOT.TTreeFormula("f_eventweight_{}_{}".format(category.name, syst_var.name), eventweight, tree)
             cat_syst_weights[category.name][syst_var.name].SetQuickLoad(True)
 
@@ -870,6 +872,8 @@ def dataset_hists_direct(hist_worker,
                 eventweight = "(%s)*(%s)" % (eventweight, sw)
 
             eventweight = "(%s)*(%s)" % (eventweight, get_sample_variation_weight(systematic, syst_var, dataset, sample, channel))
+            if not do_sample_variation(systematic, syst_var, dataset):
+                continue # skip this systematic for this sample, e.g. SF systematics in nominal tree of variation samples
             cat_syst_weights[category.name][syst_var.name] = ROOT.TTreeFormula("f_eventweight_{}_{}".format(category.name, syst_var.name), eventweight, tree)
             cat_syst_weights[category.name][syst_var.name].SetQuickLoad(True)
 

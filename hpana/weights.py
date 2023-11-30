@@ -1174,3 +1174,30 @@ def get_sample_variation_weight(systematic, variation, dataset, sample, channel)
       w = "(%s)*(%s)" % (w, w3)
   return w
 
+def do_sample_variation(systematic, variation, dataset, sample, channel):
+    # A few ttbar samples are nominal-only and used as a variation
+    # We need to skip trying to process SF uncertainties when we run these samples
+    specialCases = {
+      "PowhegHerwig7EvtGen_tt_hdamp258p75_713_SingleLep": {
+        "ttbar_model": {
+          "ttbar_model_POWHEG_HERWIG7": True,
+        },
+      },
+      "PowhegHerwig7EvtGen_tt_hdamp258p75_713_dil": {
+        "ttbar_model": {
+          "ttbar_model_POWHEG_HERWIG7": True,
+        },
+      },
+      "PowhegHerwig7EvtGen_tt_hdamp258p75_713_allhad": {
+        "ttbar_model": {
+          "ttbar_model_POWHEG_HERWIG7": True,
+        },
+      },
+    }
+    if dataset.ds not in specialCases:
+      return True
+    if systematic.name not in specialCases[dataset.ds]:
+      return False
+    if variation.name not in specialCases[dataset.ds][systematic.name]:
+      return False
+    return specialCases[dataset.ds][systematic.name][variation.name]

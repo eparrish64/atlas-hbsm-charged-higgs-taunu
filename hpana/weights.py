@@ -353,21 +353,21 @@ class Weight(object):
         ("wtaunu_ckkw_1down", "1"),
         ("wtaunu_ckkw_1up", "1")
       ),
-      "wtaunu_fac": (
-        "1",
-        ("wtaunu_fac_1down", "1"),
-        ("wtaunu_fac_1up", "1"),
-      ),
+      #"wtaunu_fac": (
+      #  "1",
+      #  ("wtaunu_fac_1down", "1"),
+      #  ("wtaunu_fac_1up", "1"),
+      #),
       "wtaunu_qsf": (
         "1",
         ("wtaunu_qsf_1down", "1"),
         ("wtaunu_qsf_1up", "1"),
       ),
-      "wtaunu_renorm": (
-        "1",
-        ("wtaunu_renorm_1down", "1"),
-        ("wtaunu_renorm_1up", "1"),
-      ),
+      #"wtaunu_renorm": (
+      #  "1",
+      #  ("wtaunu_renorm_1down", "1"),
+      #  ("wtaunu_renorm_1up", "1"),
+      #),
       "wtaunu_pdf": (
         "1",
         ("wtaunu_pdf_1", "1"),
@@ -1142,6 +1142,30 @@ def get_sample_variation_weight(systematic, variation, dataset, sample, channel)
         "wwtjets_1down": {
           "taujet": "njets(n_jets,3)",
           "taulep": "njets(n_jets,3)",
+        },
+        "wtaunu_scale": {
+          "wtaunu_scale_MUR05_MUF05": "njets(n_jets,1001)",
+          "wtaunu_scale_MUR05_MUF1": "njets(n_jets,1002)",
+          "wtaunu_scale_MUR1_MUF05": "njets(n_jets,1003)",
+          "wtaunu_scale_MUR1_MUF2": "njets(n_jets,1004)",
+          "wtaunu_scale_MUR2_MUF1": "njets(n_jets,1005)",
+          "wtaunu_scale_MUR2_MUF2": "njets(n_jets,1006)",
+        },
+        "wtaunu_ckkw": {
+          "wtaunu_ckkw_1down": "njets(n_jets,1009)",
+          "wtaunu_ckkw_1up": "njets(n_jets,1010)",
+        },
+        "wtaunu_fac": {
+          "wtaunu_fac_1down": "njets(n_jets,1011)",
+          "wtaunu_fac_1up": "njets(n_jets,1012)",
+        },
+        "wtaunu_qsf": {
+          "wtaunu_qsf_1down": "njets(n_jets,1007)",
+          "wtaunu_qsf_1up": "njets(n_jets,1008)",
+        },
+        "wtaunu_renorm": {
+          "wtaunu_renorm_1down": "njets(n_jets,1013)",
+          "wtaunu_renorm_1up": "njets(n_jets,1014)",
         },
       },
     },

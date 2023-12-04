@@ -1144,30 +1144,31 @@ def get_sample_variation_weight(systematic, variation, dataset, sample, channel)
           "taujet": "njets(n_jets,3)",
           "taulep": "njets(n_jets,3)",
         },
-        "wtaunu_scale": {
-          "wtaunu_scale_MUR05_MUF05": "njets(n_jets,1001)",
-          "wtaunu_scale_MUR05_MUF1": "njets(n_jets,1002)",
-          "wtaunu_scale_MUR1_MUF05": "njets(n_jets,1003)",
-          "wtaunu_scale_MUR1_MUF2": "njets(n_jets,1004)",
-          "wtaunu_scale_MUR2_MUF1": "njets(n_jets,1005)",
-          "wtaunu_scale_MUR2_MUF2": "njets(n_jets,1006)",
-        },
-        "wtaunu_ckkw": {
-          "wtaunu_ckkw_1down": "njets(n_jets,1009)",
-          "wtaunu_ckkw_1up": "njets(n_jets,1010)",
-        },
-        "wtaunu_fac": {
-          "wtaunu_fac_1down": "njets(n_jets,1011)",
-          "wtaunu_fac_1up": "njets(n_jets,1012)",
-        },
-        "wtaunu_qsf": {
-          "wtaunu_qsf_1down": "njets(n_jets,1007)",
-          "wtaunu_qsf_1up": "njets(n_jets,1008)",
-        },
-        "wtaunu_renorm": {
-          "wtaunu_renorm_1down": "njets(n_jets,1013)",
-          "wtaunu_renorm_1up": "njets(n_jets,1014)",
-        },
+      },
+      # Theory systs only defined for taujet, so only define reweightings for that channel
+      "wtaunu_scale": {
+        "wtaunu_scale_MUR05_MUF05": {"taujet": "njets(n_jets,1001)"},
+        "wtaunu_scale_MUR05_MUF1": {"taujet": "njets(n_jets,1002)"},
+        "wtaunu_scale_MUR1_MUF05": {"taujet": "njets(n_jets,1003)"},
+        "wtaunu_scale_MUR1_MUF2": {"taujet": "njets(n_jets,1004)"},
+        "wtaunu_scale_MUR2_MUF1": {"taujet": "njets(n_jets,1005)"},
+        "wtaunu_scale_MUR2_MUF2": {"taujet": "njets(n_jets,1006)"},
+      },
+      "wtaunu_ckkw": {
+        "wtaunu_ckkw_1down": {"taujet": "njets(n_jets,1009)"},
+        "wtaunu_ckkw_1up": {"taujet": "njets(n_jets,1010)"},
+      },
+      "wtaunu_fac": {
+        "wtaunu_fac_1down": {"taujet": "njets(n_jets,1011)"},
+        "wtaunu_fac_1up": {"taujet": "njets(n_jets,1012)"},
+      },
+      "wtaunu_qsf": {
+        "wtaunu_qsf_1down": {"taujet": "njets(n_jets,1007)"},
+        "wtaunu_qsf_1up": {"taujet": "njets(n_jets,1008)"},
+      },
+      "wtaunu_renorm": {
+        "wtaunu_renorm_1down": {"taujet": "njets(n_jets,1013)"},
+        "wtaunu_renorm_1up": {"taujet": "njets(n_jets,1014)"},
       },
     },
   }

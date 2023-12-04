@@ -370,6 +370,7 @@ class Weight(object):
       #),
       "wtaunu_pdf": (
         "1",
+        ("wtaunu_pdf_0", "1"),
         ("wtaunu_pdf_1", "1"),
         ("wtaunu_pdf_2", "1"),
         ("wtaunu_pdf_3", "1"),

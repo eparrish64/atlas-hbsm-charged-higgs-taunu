@@ -368,6 +368,21 @@ class Weight(object):
       #  ("wtaunu_renorm_1down", "1"),
       #  ("wtaunu_renorm_1up", "1"),
       #),
+      "wtaunu_pdfset": (
+        "1",
+        ("wtaunu_pdfset_1down", "1"),
+        ("wtaunu_pdfset_1up", "1"),
+      ),
+      "wtaunu_alphaS": (
+        "1",
+        ("wtaunu_alphaS_1down", "1"),
+        ("wtaunu_alphaS_1up", "1"),
+      ),
+      "wtaunu_pdf_std": (
+        "1",
+        ("wtaunu_pdf_std_1down", "1"),
+        ("wtaunu_pdf_std_1up", "1"),
+      ),
       "wtaunu_pdf": (
         "1",
         ("wtaunu_pdf_0", "1"),
@@ -978,6 +993,14 @@ def get_sample_variation_weight(systematic, variation, dataset, sample, channel)
           "wtaunu_renorm_1down": "wtaunu_renorm025_{}(n_truth_jets)".format(macroName),
           "wtaunu_renorm_1up": "wtaunu_renorm4_{}(n_truth_jets)".format(macroName),
         },
+        "wtaunu_pdfset": {
+          "wtaunu_pdfset_1down": "theory_weights_CT14_pdfset/weight_mc",
+          "wtaunu_pdfset_1up": "theory_weights_MMHT_pdfset/weight_mc",
+        },
+        "wtaunu_alphaS": {
+          "wtaunu_alphaS_1down": "theory_weights_alphaS_down/weight_mc",
+          "wtaunu_alphaS_1up": "theory_weights_alphaS_up/weight_mc",
+        },
         "wtaunu_pdf": {
             "wtaunu_pdf_0": "theory_weights_pdf_ztt_weight_0/weight_mc",
             "wtaunu_pdf_1": "theory_weights_pdf_ztt_weight_1/weight_mc",
@@ -1081,6 +1104,14 @@ def get_sample_variation_weight(systematic, variation, dataset, sample, channel)
             "wtaunu_pdf_99": "theory_weights_pdf_ztt_weight_99/weight_mc",
           },
         }
+      # Standard deviation of PDFs
+      terms = []
+      for idx in xrange(100):
+        terms += ["((theory_weights_pdf_ztt_weight_{} - weight_mc)**2)".format(idx)]
+      errString = "sqrt(.01*({}))".format("+".join(terms))
+      specialSampleVariations[wts]["wtaunu_pdf_std"] = {}
+      specialSampleVariations[wts]["wtaunu_pdf_std"]["wtaunu_pdf_std_1up"] = "(weight_mc+{})/weight_mc".format(errString)
+      specialSampleVariations[wts]["wtaunu_pdf_std"]["wtaunu_pdf_std_1down"] = "(weight_mc-{})/weight_mc".format(errString)
   # End if
 
   sampleChannelDefaults = {

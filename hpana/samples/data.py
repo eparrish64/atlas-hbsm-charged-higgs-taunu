@@ -69,7 +69,7 @@ class Data(Sample):
                  streams=[],
                  blind=True,
                  blind_streams=["2017", "2018"],
-                 blind_regions=["SR_TAUJET", "SR_TAULEP", "SR_TAUEL", "SR_TAUMU"],
+                 blind_regions=["SR_TAUJET", "SR_TAULEP", "SR_TAUEL", "SR_TAUMU", "SR_TAUJET_BL", "SR_TAUJET_BM", "SR_TAUJET_BH", "SR_TAUJET_EL", "SR_TAUJET_EM", "SR_TAUJET_EH", "SR_TAUEL_BL", "SR_TAUEL_BM", "SR_TAUEL_BH", "SR_TAUEL_EL", "SR_TAUEL_EM", "SR_TAUEL_EH", "SR_TAUMU_BL", "SR_TAUMU_BM", "SR_TAUMU_BH", "SR_TAUMU_EL", "SR_TAUMU_EM", "SR_TAUMU_EH"],
                  grls=["data_2015_lumi.csv", "data_2016_lumi.csv", "data_2017_lumi.csv", "data_2018_lumi.csv"],
                  **kwargs):
 

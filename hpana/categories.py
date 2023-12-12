@@ -276,6 +276,13 @@ BJET_PT25 = {
 NEGATIVE_MC_WEIGHT = ROOT.TCut("weight_mc<0")
 POSITIVE_MC_WEIGHT = ROOT.TCut("weight_mc>=0")
 
+# WIP! - - - - cuts for pt/eta binned SRs, for TES_DETECTOR systematic
+TES_BARREL = ROOT.TCut("tau_0_p4->Eta() <= 1")
+TES_ENDCAP = ROOT.TCut("tau_0_p4->Eta() > 1")
+TES_LOW    = ROOT.TCut("tau_0_p4->Pt() < 100")
+TES_MED    = ROOT.TCut("100 <= tau_0_p4->Pt() && tau_0_p4->Pt() < 250")
+TES_HIGH   = ROOT.TCut("250 <= tau_0_p4->Pt()")
+
 #WIP! - - - - BDT scores for partial blinding 
 
 # Make that PNN scores, this is a simple <128 cut on a uint8 score for all mass points
@@ -397,6 +404,130 @@ vetoTTBAR["mc15"] = None
 vetoTTBAR["mc16"] = None
 for k in vetoTTBAR.keys():
   vetoTTBAR[k] = ROOT.TCut("!({})".format(CLEAN_EVT[k]+TAU_BASE[k]+LEP_VETO[k]+TAU_PT40[k]+NUM_JETS3+NUM_BJETS2+MET150[k]+MT_MAX100[k]))
+
+# WIP TES split regions
+
+Category_SR_TAUJET_BL = Category(
+    name="SR_TAUJET_BL",
+    label="#tau-jet SR",
+    ff_index=1001,
+    cuts_list = [
+        CLEAN_EVT,
+        TAU_BASE,
+        LEP_VETO,
+        TAU_PT40,
+        NUM_JETS3,
+        JET_PT25,
+        MET150,
+        MT50,
+        NUM_BJETS1,
+        vetoTTBAR,
+        TES_BARREL,
+        TES_LOW,
+    ],
+)
+
+Category_SR_TAUJET_BM = Category(
+    name="SR_TAUJET_BM",
+    label="#tau-jet SR",
+    ff_index=1001,
+    cuts_list = [
+        CLEAN_EVT,
+        TAU_BASE,
+        LEP_VETO,
+        TAU_PT40,
+        NUM_JETS3,
+        JET_PT25,
+        MET150,
+        MT50,
+        NUM_BJETS1,
+        vetoTTBAR,
+        TES_BARREL,
+        TES_MED,
+    ],
+)
+
+Category_SR_TAUJET_BH = Category(
+    name="SR_TAUJET_BH",
+    label="#tau-jet SR",
+    ff_index=1001,
+    cuts_list = [
+        CLEAN_EVT,
+        TAU_BASE,
+        LEP_VETO,
+        TAU_PT40,
+        NUM_JETS3,
+        JET_PT25,
+        MET150,
+        MT50,
+        NUM_BJETS1,
+        vetoTTBAR,
+        TES_BARREL,
+        TES_HIGH,
+    ],
+)
+
+Category_SR_TAUJET_EL = Category(
+    name="SR_TAUJET_EL",
+    label="#tau-jet SR",
+    ff_index=1001,
+    cuts_list = [
+        CLEAN_EVT,
+        TAU_BASE,
+        LEP_VETO,
+        TAU_PT40,
+        NUM_JETS3,
+        JET_PT25,
+        MET150,
+        MT50,
+        NUM_BJETS1,
+        vetoTTBAR,
+        TES_ENDCAP,
+        TES_LOW,
+    ],
+)
+
+Category_SR_TAUJET_EM = Category(
+    name="SR_TAUJET_EM",
+    label="#tau-jet SR",
+    ff_index=1001,
+    cuts_list = [
+        CLEAN_EVT,
+        TAU_BASE,
+        LEP_VETO,
+        TAU_PT40,
+        NUM_JETS3,
+        JET_PT25,
+        MET150,
+        MT50,
+        NUM_BJETS1,
+        vetoTTBAR,
+        TES_ENDCAP,
+        TES_MED,
+    ],
+)
+
+Category_SR_TAUJET_EH = Category(
+    name="SR_TAUJET_EH",
+    label="#tau-jet SR",
+    ff_index=1001,
+    cuts_list = [
+        CLEAN_EVT,
+        TAU_BASE,
+        LEP_VETO,
+        TAU_PT40,
+        NUM_JETS3,
+        JET_PT25,
+        MET150,
+        MT50,
+        NUM_BJETS1,
+        vetoTTBAR,
+        TES_ENDCAP,
+        TES_HIGH,
+    ],
+)
+
+# End WIP
 
 
 Category_SR_TAUJET = Category(
@@ -559,6 +690,250 @@ vetoTTBAR_TAULEP["mc15"] = None
 vetoTTBAR_TAULEP["mc16"] = None
 for k in vetoTTBAR_TAULEP.keys():
   vetoTTBAR_TAULEP[k] = ROOT.TCut("!({})".format(CLEAN_EVT[k]+TAU_BASE[k]+LEP_BASE[k]+OS_TAU_LEP+NUM_JETS2+JET_PT25[k]+NUM_BJETS2+MT_MAX70[k]+MET80[k]))
+
+# WIP TES split regions
+
+Category_SR_TAUEL_BL = Category(
+    name="SR_TAUEL_BL",
+    label="#tau-e SR",
+    ff_index=2002,
+    cuts_list = [
+        CLEAN_EVT,
+        TAU_BASE,
+        EL_BASE,
+        OS_TAU_EL,
+        VETO_MU,
+        NUM_JETS1,
+        JET_PT25,
+        NUM_BJETS1,     
+        MET50,
+        vetoTTBAR_TAULEP,
+        TES_BARREL,
+        TES_LOW,
+    ],
+)
+
+Category_SR_TAUEL_BM = Category(
+    name="SR_TAUEL_BM",
+    label="#tau-e SR",
+    ff_index=2002,
+    cuts_list = [
+        CLEAN_EVT,
+        TAU_BASE,
+        EL_BASE,
+        OS_TAU_EL,
+        VETO_MU,
+        NUM_JETS1,
+        JET_PT25,
+        NUM_BJETS1,     
+        MET50,
+        vetoTTBAR_TAULEP,
+        TES_BARREL,
+        TES_MED,
+    ],
+)
+
+Category_SR_TAUEL_BH = Category(
+    name="SR_TAUEL_BH",
+    label="#tau-e SR",
+    ff_index=2002,
+    cuts_list = [
+        CLEAN_EVT,
+        TAU_BASE,
+        EL_BASE,
+        OS_TAU_EL,
+        VETO_MU,
+        NUM_JETS1,
+        JET_PT25,
+        NUM_BJETS1,     
+        MET50,
+        vetoTTBAR_TAULEP,
+        TES_BARREL,
+        TES_HIGH,
+    ],
+)
+
+Category_SR_TAUEL_EL = Category(
+    name="SR_TAUEL_EL",
+    label="#tau-e SR",
+    ff_index=2002,
+    cuts_list = [
+        CLEAN_EVT,
+        TAU_BASE,
+        EL_BASE,
+        OS_TAU_EL,
+        VETO_MU,
+        NUM_JETS1,
+        JET_PT25,
+        NUM_BJETS1,     
+        MET50,
+        vetoTTBAR_TAULEP,
+        TES_ENDCAP,
+        TES_LOW,
+    ],
+)
+
+Category_SR_TAUEL_EM = Category(
+    name="SR_TAUEL_EM",
+    label="#tau-e SR",
+    ff_index=2002,
+    cuts_list = [
+        CLEAN_EVT,
+        TAU_BASE,
+        EL_BASE,
+        OS_TAU_EL,
+        VETO_MU,
+        NUM_JETS1,
+        JET_PT25,
+        NUM_BJETS1,     
+        MET50,
+        vetoTTBAR_TAULEP,
+        TES_ENDCAP,
+        TES_MED,
+    ],
+)
+
+Category_SR_TAUEL_EH = Category(
+    name="SR_TAUEL_EH",
+    label="#tau-e SR",
+    ff_index=2002,
+    cuts_list = [
+        CLEAN_EVT,
+        TAU_BASE,
+        EL_BASE,
+        OS_TAU_EL,
+        VETO_MU,
+        NUM_JETS1,
+        JET_PT25,
+        NUM_BJETS1,     
+        MET50,
+        vetoTTBAR_TAULEP,
+        TES_ENDCAP,
+        TES_HIGH,
+    ],
+)
+
+Category_SR_TAUMU_BL = Category(
+    name="SR_TAUMU_BL",
+    label="#tau-#mu SR",
+    ff_index=2003,
+    cuts_list = [
+        CLEAN_EVT,
+        TAU_BASE,
+        MU_BASE,
+        OS_TAU_MU,
+        VETO_EL,
+        NUM_JETS1,
+        JET_PT25,
+        NUM_BJETS1,
+        MET50,
+        vetoTTBAR_TAULEP,
+        TES_BARREL,
+        TES_LOW,
+    ],
+)
+
+Category_SR_TAUMU_BM = Category(
+    name="SR_TAUMU_BM",
+    label="#tau-#mu SR",
+    ff_index=2003,
+    cuts_list = [
+        CLEAN_EVT,
+        TAU_BASE,
+        MU_BASE,
+        OS_TAU_MU,
+        VETO_EL,
+        NUM_JETS1,
+        JET_PT25,
+        NUM_BJETS1,
+        MET50,
+        vetoTTBAR_TAULEP,
+        TES_BARREL,
+        TES_MED,
+    ],
+)
+
+Category_SR_TAUMU_BH = Category(
+    name="SR_TAUMU_BH",
+    label="#tau-#mu SR",
+    ff_index=2003,
+    cuts_list = [
+        CLEAN_EVT,
+        TAU_BASE,
+        MU_BASE,
+        OS_TAU_MU,
+        VETO_EL,
+        NUM_JETS1,
+        JET_PT25,
+        NUM_BJETS1,
+        MET50,
+        vetoTTBAR_TAULEP,
+        TES_BARREL,
+        TES_HIGH,
+    ],
+)
+
+Category_SR_TAUMU_EL = Category(
+    name="SR_TAUMU_EL",
+    label="#tau-#mu SR",
+    ff_index=2003,
+    cuts_list = [
+        CLEAN_EVT,
+        TAU_BASE,
+        MU_BASE,
+        OS_TAU_MU,
+        VETO_EL,
+        NUM_JETS1,
+        JET_PT25,
+        NUM_BJETS1,
+        MET50,
+        vetoTTBAR_TAULEP,
+        TES_ENDCAP,
+        TES_LOW,
+    ],
+)
+
+Category_SR_TAUMU_EM = Category(
+    name="SR_TAUMU_EM",
+    label="#tau-#mu SR",
+    ff_index=2003,
+    cuts_list = [
+        CLEAN_EVT,
+        TAU_BASE,
+        MU_BASE,
+        OS_TAU_MU,
+        VETO_EL,
+        NUM_JETS1,
+        JET_PT25,
+        NUM_BJETS1,
+        MET50,
+        vetoTTBAR_TAULEP,
+        TES_ENDCAP,
+        TES_MED,
+    ],
+)
+
+Category_SR_TAUMU_EH = Category(
+    name="SR_TAUMU_EH",
+    label="#tau-#mu SR",
+    ff_index=2003,
+    cuts_list = [
+        CLEAN_EVT,
+        TAU_BASE,
+        MU_BASE,
+        OS_TAU_MU,
+        VETO_EL,
+        NUM_JETS1,
+        JET_PT25,
+        NUM_BJETS1,
+        MET50,
+        vetoTTBAR_TAULEP,
+        TES_ENDCAP,
+        TES_HIGH,
+    ],
+)
+
+# WIP end
 
 Category_SR_TAULEP = Category(
     name="SR_TAULEP",
@@ -1152,6 +1527,12 @@ CATEGORIES["taujet"] = [
     Category_BVETO_MT100,
     # Category_SR_TAUJET_PARTIAL,
     Category_OVERLAP_TAUJET,
+    Category_SR_TAUJET_BL,
+    Category_SR_TAUJET_BM,
+    Category_SR_TAUJET_BH,
+    Category_SR_TAUJET_EL,
+    Category_SR_TAUJET_EM,
+    Category_SR_TAUJET_EH,
 ]
 
 CATEGORIES["taulep"] = [
@@ -1172,4 +1553,16 @@ CATEGORIES["taulep"] = [
     # Category_SR_TAUMU_PARTIAL,
     # Category_SR_TAULEP_PARTIAL,
     Category_OVERLAP_TAULEP,
+    Category_SR_TAUEL_BL,
+    Category_SR_TAUEL_BM,
+    Category_SR_TAUEL_BH,
+    Category_SR_TAUEL_EL,
+    Category_SR_TAUEL_EM,
+    Category_SR_TAUEL_EH,
+    Category_SR_TAUMU_BL,
+    Category_SR_TAUMU_BM,
+    Category_SR_TAUMU_BH,
+    Category_SR_TAUMU_EL,
+    Category_SR_TAUMU_EM,
+    Category_SR_TAUMU_EH,
 ]

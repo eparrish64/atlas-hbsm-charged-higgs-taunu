@@ -996,6 +996,18 @@ def get_sample_variation_weight(systematic, variation, dataset, sample, channel)
         "wtaunu_renorm_1down": {"taujet": "njets(n_jets,1013)"},
         "wtaunu_renorm_1up": {"taujet": "njets(n_jets,1014)"},
       },
+      "wtaunu_pdf": {
+        "wtaunu_pdf_1down": {"taujet": "njets(n_jets,1015)"},
+        "wtaunu_pdf_1up": {"taujet": "njets(n_jets,1016)"},
+      },
+      "wtaunu_pdfset": {
+        "wtaunu_pdfset_1down": {"taujet": "njets(n_jets,1017)"},
+        "wtaunu_pdfset_1up": {"taujet": "njets(n_jets,1018)"},
+      },
+      "wtaunu_alphaS": {
+        "wtaunu_alphaS_1down": {"taujet": "njets(n_jets,1019)"},
+        "wtaunu_alphaS_1up": {"taujet": "njets(n_jets,1020)"},
+      },
     },
   }
 

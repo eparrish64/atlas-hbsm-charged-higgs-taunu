@@ -8446,6 +8446,42 @@ datasets = {
       "Data": [],
     },
 	},
+	"v15": {
+    "taulep": {
+      "MC": [
+        "user.bburghgr:user.bburghgr.TL.mc16_13TeV.601352.PhPy8_tW_dyn_DR_incl_atop.D2.e8547_s3889_r10201_p4204.v15r0_BS",
+        "user.bburghgr:user.bburghgr.TL.mc16_13TeV.601352.PhPy8_tW_dyn_DR_incl_atop.D2.e8547_s3889_r10724_p4204.v15r0_BS",
+        "user.bburghgr:user.bburghgr.TL.mc16_13TeV.601352.PhPy8_tW_dyn_DR_incl_atop.D2.e8547_s3889_r9364_p4204.v15r0_BS",
+        "user.bburghgr:user.bburghgr.TL.mc16_13TeV.601355.PhPy8_tW_dyn_DR_incl_top.D2.e8547_s3889_r10201_p4204.v15r0_BS",
+        "user.bburghgr:user.bburghgr.TL.mc16_13TeV.601355.PhPy8_tW_dyn_DR_incl_top.D2.e8547_s3889_r10724_p4204.v15r0_BS",
+        "user.bburghgr:user.bburghgr.TL.mc16_13TeV.601355.PhPy8_tW_dyn_DR_incl_top.D2.e8547_s3889_r9364_p4204.v15r0_BS",
+        "user.bburghgr:user.bburghgr.TL.mc16_13TeV.601460.PhPy8_tW_dyn_hdamp517p5_DR_incl_atop.D2.e8547_s3889_r10201_p4204.v15r0_BS",
+        "user.bburghgr:user.bburghgr.TL.mc16_13TeV.601460.PhPy8_tW_dyn_hdamp517p5_DR_incl_atop.D2.e8547_s3889_r10724_p4204.v15r0_BS",
+        "user.bburghgr:user.bburghgr.TL.mc16_13TeV.601460.PhPy8_tW_dyn_hdamp517p5_DR_incl_atop.D2.e8547_s3889_r9364_p4204.v15r0_BS",
+        "user.bburghgr:user.bburghgr.TL.mc16_13TeV.601462.PhPy8_tW_dyn_hdamp517p5_DR_incl_top.D2.e8547_s3889_r10201_p4204.v15r0_BS",
+        "user.bburghgr:user.bburghgr.TL.mc16_13TeV.601462.PhPy8_tW_dyn_hdamp517p5_DR_incl_top.D2.e8547_s3889_r10724_p4204.v15r0_BS",
+        "user.bburghgr:user.bburghgr.TL.mc16_13TeV.601462.PhPy8_tW_dyn_hdamp517p5_DR_incl_top.D2.e8547_s3889_r9364_p4204.v15r0_BS",
+      ],
+      "Data": [],
+    },
+    "taujet": {
+      "MC": [
+        "user.bburghgr:user.bburghgr.TJ.mc16_13TeV.601352.PhPy8_tW_dyn_DR_incl_atop.D1.e8547_s3889_r10201_p4204.v15r0_BS",
+        "user.bburghgr:user.bburghgr.TJ.mc16_13TeV.601352.PhPy8_tW_dyn_DR_incl_atop.D1.e8547_s3889_r10724_p4204.v15r0_BS",
+        "user.bburghgr:user.bburghgr.TJ.mc16_13TeV.601352.PhPy8_tW_dyn_DR_incl_atop.D1.e8547_s3889_r9364_p4204.v15r0_BS",
+        "user.bburghgr:user.bburghgr.TJ.mc16_13TeV.601355.PhPy8_tW_dyn_DR_incl_top.D1.e8547_s3889_r10201_p4204.v15r0_BS",
+        "user.bburghgr:user.bburghgr.TJ.mc16_13TeV.601355.PhPy8_tW_dyn_DR_incl_top.D1.e8547_s3889_r10724_p4204.v15r0_BS",
+        "user.bburghgr:user.bburghgr.TJ.mc16_13TeV.601355.PhPy8_tW_dyn_DR_incl_top.D1.e8547_s3889_r9364_p4204.v15r0_BS",
+        "user.bburghgr:user.bburghgr.TJ.mc16_13TeV.601460.PhPy8_tW_dyn_hdamp517p5_DR_incl_atop.D1.e8547_s3889_r10201_p4204.v15r0_BS",
+        "user.bburghgr:user.bburghgr.TJ.mc16_13TeV.601460.PhPy8_tW_dyn_hdamp517p5_DR_incl_atop.D1.e8547_s3889_r10724_p4204.v15r0_BS",
+        "user.bburghgr:user.bburghgr.TJ.mc16_13TeV.601460.PhPy8_tW_dyn_hdamp517p5_DR_incl_atop.D1.e8547_s3889_r9364_p4204.v15r0_BS",
+        "user.bburghgr:user.bburghgr.TJ.mc16_13TeV.601462.PhPy8_tW_dyn_hdamp517p5_DR_incl_top.D1.e8547_s3889_r10201_p4204.v15r0_BS",
+        "user.bburghgr:user.bburghgr.TJ.mc16_13TeV.601462.PhPy8_tW_dyn_hdamp517p5_DR_incl_top.D1.e8547_s3889_r10724_p4204.v15r0_BS",
+        "user.bburghgr:user.bburghgr.TJ.mc16_13TeV.601462.PhPy8_tW_dyn_hdamp517p5_DR_incl_top.D1.e8547_s3889_r9364_p4204.v15r0_BS",
+      ],
+      "Data": [],
+    },
+	},
 }
 
 def fix13():
@@ -8481,7 +8517,23 @@ def fix14():
           continue
         datasets["v14"][channel][col].append(dsetName)
 
-# TODO call this to make the full set of symlinks, disabled for now just to test the new stuff only
+def fix15():
+  obsolete = [601618,601619,601622,601623] # obsolete tW DR samples (top line shape bug)
+  def getDSID(dsetName):
+    return int(dsetName.split(':')[-1].split('.')[4])
+  for channel in datasets["v15"]:
+    for col in datasets["v15"][channel]:
+      known = set()
+      for dsid in obsolete:
+        known.add(dsid) # skip obsolete samples
+      for dsetName in datasets["v15"][channel][col]:
+        known.add(getDSID(dsetName))
+      for dsetName in datasets["v14"][channel][col]:
+        if getDSID(dsetName) in known:
+          continue
+        datasets["v15"][channel][col].append(dsetName)
+
+# TODO process the sample lists once and save it, instead of patching them together on the fly like this...
 fix13()
 fix14()
-
+fix15()

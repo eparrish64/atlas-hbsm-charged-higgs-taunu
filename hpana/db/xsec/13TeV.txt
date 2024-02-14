@@ -2858,3 +2858,11 @@
 601623	PhPy8EG_tW_DR_dyn_incl_top	36.005	1.0	1.0	1.0
 601627	PhPy8EG_tW_DS_dyn_incl_antitop	35.932	1.0	1.0	1.0
 601631	PhPy8EG_tW_DS_dyn_incl_top	35.154	1.0	1.0	1.0
+
+
+### ntuples v15, updated theory systematics ###
+
+601352	PhPy8EG_tW_DR_dyn_incl_antitop	35.972	1.0	1.0	1.0
+601355	PhPy8EG_tW_DR_dyn_incl_top	36.003	1.0	1.0	1.0
+601460	PhPy8EG_tW_DR_dyn_hdamp517p5_incl_antitop	35.971	1.0	1.0	1.0
+601462	PhPy8EG_tW_DR_dyn_hdamp517p5_incl_top	36.002	1.0	1.0	1.0

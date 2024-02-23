@@ -156,7 +156,8 @@ def dataset_hists(hist_worker,
                     sw = syst_var.title
                 eventweight = "(%s)*(%s)" % (eventweight, sw)
 
-            eventweight = "(%s)*(%s)" % (eventweight, get_sample_variation_weight(systematic, syst_var, dataset, sample, channel))
+            if "UNWEIGHTED" not in hist_worker.name:
+              eventweight = "(%s)*(%s)" % (eventweight, get_sample_variation_weight(systematic, syst_var, dataset, sample, channel))
             if not do_sample_variation(systematic, syst_var, dataset):
                 continue # skip this systematic for this sample, e.g. SF systematics in nominal tree of variation samples
             cat_syst_weights[category.name][syst_var.name] = ROOT.TTreeFormula("f_eventweight_{}_{}".format(category.name, syst_var.name), eventweight, tree)
@@ -871,7 +872,8 @@ def dataset_hists_direct(hist_worker,
                     sw = syst_var.title
                 eventweight = "(%s)*(%s)" % (eventweight, sw)
 
-            eventweight = "(%s)*(%s)" % (eventweight, get_sample_variation_weight(systematic, syst_var, dataset, sample, channel))
+            if "UNWEIGHTED" not in hist_worker.name:
+              eventweight = "(%s)*(%s)" % (eventweight, get_sample_variation_weight(systematic, syst_var, dataset, sample, channel))
             if not do_sample_variation(systematic, syst_var, dataset):
                 continue # skip this systematic for this sample, e.g. SF systematics in nominal tree of variation samples
             cat_syst_weights[category.name][syst_var.name] = ROOT.TTreeFormula("f_eventweight_{}_{}".format(category.name, syst_var.name), eventweight, tree)

@@ -405,6 +405,20 @@ class Weight(object):
       "w_sig_filter_effi": (
         "1", #<! NOMINAL, per-sample logic is in get_sample_variation_weight
         ("w_sig_filter_effi_met", "1"),
+        ("w_sig_filter_effi_int", "1"),
+      ),
+    }
+
+    W_SIG_THEORY = {
+      "w_sig_theory_scale": (
+        "1", #<! NOMINAL, per-sample logic is in get_sample_variation_weight
+        ("w_sig_theory_scale_1down", "1"),
+        ("w_sig_theory_scale_1up", "1"),
+      ),
+      "w_sig_theory_pdf": (
+        "1", #<! NOMINAL, per-sample logic is in get_sample_variation_weight
+        ("w_sig_theory_pdf_1down", "1"),
+        ("w_sig_theory_pdf_1up", "1"),
       ),
     }
 
@@ -423,6 +437,7 @@ class Weight(object):
             "TTBAR_REWEIGHT": W_TTBAR_REWEIGHT,
             "WJETS_REWEIGHT": W_WJETS_REWEIGHT,
             "FILTEREFFI": W_SIG_FILTER_EFFI,
+            "SIGTHEORY": W_SIG_THEORY,
         },
 
         "taulep": {
@@ -437,6 +452,8 @@ class Weight(object):
             "SINGLETOP": W_SINGLETOP_THEORY,
             "TTBAR_REWEIGHT": W_TTBAR_REWEIGHT,
             "WJETS_REWEIGHT": W_WJETS_REWEIGHT,
+            "FILTEREFFI": W_SIG_FILTER_EFFI,
+            "SIGTHEORY": W_SIG_THEORY,
         },
     }
 
@@ -1030,13 +1047,43 @@ def get_sample_variation_weight(systematic, variation, dataset, sample, channel)
         if channel in sampleChannelVariations[sample][systematic.name][variation.name]:
           w2 = sampleChannelVariations[sample][systematic.name][variation.name][channel]
   w = "(%s)*(%s)" % (w, w2)
-  if systematic.name == "w_sig_filter_effi" and variation.name == "w_sig_filter_effi_met":
-    if channel == "taujet" and sample.startswith("Hplus"):
+  if systematic.name == "w_sig_filter_effi" and sample.startswith("Hplus"):
+    mass = int(sample[5:])
+    if channel == "taujet" and variation.name == "w_sig_filter_effi_met":
       # Scale signal by 1/(filter efficiency) for tau+jets
-      mass = int(sample[5:])
       # FilterEffi needs met and mass in units of MeV
       w3 = "1./FilterEffi(met_p4->Et()*1000, {}*1000)".format(mass)
       w = "(%s)*(%s)" % (w, w3)
+    if variation.name == "w_sig_filter_effi_int":
+      if mass in [170, 180, 190]:
+        # 3 intermediate mass points where an extra uncertainty is applied due to an observed bump in filter efficiency
+        if channel == "taujet":
+          w4 = {170: 0.867, 180: 0.864, 190: 0.863}[mass]
+          w = "(%s)*(%s)" % (w, w4)
+        if channel == "taulep":
+          w4 = {170: 0.895, 180: 0.891, 190: 0.892}[mass]
+          w = "(%s)*(%s)" % (w, w4)
+  # Note that sig theory branches are in the friend files, so this will crash if the friend files aren't being open / attached to the ttree correctly
+  if systematic.name == "w_sig_theory_scale" and sample.startswith("Hplus"):
+    # Note that sometimes event weight is negative, and that interacts badly with the SFs (how they were calculated)
+    # Workaround: up/down are the max/min SFs, not the relevant branches, to 1up is higher magnitude, not necessarily higher value
+    if variation.name == "w_sig_theory_scale_1down":
+      #w5 = "sig_theory_scale_1down"
+      w5 = "min(sig_theory_scale_1down, sig_theory_scale_1up)"
+      w = "(%s)*(%s)" % (w, w5)
+    if variation.name == "w_sig_theory_scale_1up":
+      #w5 = "sig_theory_scale_1up"
+      w5 = "max(sig_theory_scale_1down, sig_theory_scale_1up)"
+      w = "(%s)*(%s)" % (w, w5)
+  if systematic.name == "w_sig_theory_pdf" and sample.startswith("Hplus"):
+    if variation.name == "w_sig_theory_pdf_1down":
+      #w5 = "sig_theory_pdf_1down"
+      w5 = "min(sig_theory_pdf_1down, sig_theory_pdf_1up)"
+      w = "(%s)*(%s)" % (w, w5)
+    if variation.name == "w_sig_theory_pdf_1up":
+      #w5 = "sig_theory_pdf_1up"
+      w5 = "max(sig_theory_pdf_1down, sig_theory_pdf_1up)"
+      w = "(%s)*(%s)" % (w, w5)
   return w
 
 def do_sample_variation(systematic, variation, dataset):

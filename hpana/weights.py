@@ -1068,21 +1068,21 @@ def get_sample_variation_weight(systematic, variation, dataset, sample, channel)
     # Note that sometimes event weight is negative, and that interacts badly with the SFs (how they were calculated)
     # Workaround: up/down are the max/min SFs, not the relevant branches, to 1up is higher magnitude, not necessarily higher value
     if variation.name == "w_sig_theory_scale_1down":
-      #w5 = "sig_theory_scale_1down"
-      w5 = "min(sig_theory_scale_1down, sig_theory_scale_1up)"
+      w5 = "sig_theory_scale_1down"
+      #w5 = "min(sig_theory_scale_1down, sig_theory_scale_1up)"
       w = "(%s)*(%s)" % (w, w5)
     if variation.name == "w_sig_theory_scale_1up":
-      #w5 = "sig_theory_scale_1up"
-      w5 = "max(sig_theory_scale_1down, sig_theory_scale_1up)"
+      w5 = "sig_theory_scale_1up"
+      #w5 = "max(sig_theory_scale_1down, sig_theory_scale_1up)"
       w = "(%s)*(%s)" % (w, w5)
   if systematic.name == "w_sig_theory_pdf" and sample.startswith("Hplus"):
     if variation.name == "w_sig_theory_pdf_1down":
-      #w5 = "sig_theory_pdf_1down"
-      w5 = "min(sig_theory_pdf_1down, sig_theory_pdf_1up)"
+      w5 = "sig_theory_pdf_1down"
+      #w5 = "min(sig_theory_pdf_1down, sig_theory_pdf_1up)"
       w = "(%s)*(%s)" % (w, w5)
     if variation.name == "w_sig_theory_pdf_1up":
-      #w5 = "sig_theory_pdf_1up"
-      w5 = "max(sig_theory_pdf_1down, sig_theory_pdf_1up)"
+      w5 = "sig_theory_pdf_1up"
+      #w5 = "max(sig_theory_pdf_1down, sig_theory_pdf_1up)"
       w = "(%s)*(%s)" % (w, w5)
   return w
 

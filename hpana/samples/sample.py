@@ -558,12 +558,17 @@ class Sample(object):
         # - - make sure hists are for this sample
         log.debug("Full hist_set")
         log.debug(hist_set)
-        if "weighted" not in hist_set[0].name.lower() and "hplus" in hist_set[0].name.lower():
-            hist_set = filter(lambda hs: hs.sample.startswith(self.name+"."), hist_set)
-        # elif "hplus" in self.name.lower():
-        #     hist_set = filter(lambda hs: hs.sample.startswith(self.name+"."), hist_set)
+        if "Hplus" in self.name:
+            # Select first part of hs.sample, keep non-letter characters (mass), check that it matches the mass from self.name
+            hist_set = filter(lambda hs: "".join([letter for letter in hs.sample.split('.')[0] if not letter.isalpha()]) == self.name.strip("Hplus"), hist_set)
         else:
             hist_set = filter(lambda hs: hs.sample.startswith(self.name), hist_set)
+        #if "weighted" not in hist_set[0].name.lower() and "hplus" in hist_set[0].name.lower():
+        #    hist_set = filter(lambda hs: hs.sample.startswith(self.name+"."), hist_set)
+        #elif "hplus" in self.name.lower():
+        #    hist_set = filter(lambda hs: hs.sample.startswith(self.name+"."), hist_set)
+        #else:
+        #    hist_set = filter(lambda hs: hs.sample.startswith(self.name), hist_set)
         if not hist_set:
             log.warning("no hist is found for %s; skipping the merge!"%self.name)
             return []
